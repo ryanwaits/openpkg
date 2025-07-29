@@ -1,0 +1,248 @@
+{
+  "openpkg": "1.0.0",
+  "meta": {
+    "name": "openpkg",
+    "version": "1.0.0",
+    "ecosystem": "js/ts"
+  },
+  "exports": [
+    {
+      "id": "isUser",
+      "name": "isUser",
+      "kind": "function",
+      "signatures": [
+        {
+          "parameters": [
+            {
+              "name": "value",
+              "type": {
+                "$ref": "#/types/unknown"
+              },
+              "optional": false,
+              "description": "- Value to check"
+            }
+          ],
+          "returnType": {
+            "$ref": "#/types/boolean"
+          }
+        }
+      ],
+      "description": "Check if a value is a valid User",
+      "examples": [],
+      "source": {
+        "file": "test-phase3-demo.ts",
+        "line": 123
+      },
+      "flags": {},
+      "tags": [
+        {
+          "name": "param",
+          "text": "- Value to check"
+        },
+        {
+          "name": "returns",
+          "text": "True if value is a User"
+        }
+      ]
+    },
+    {
+      "id": "isAdmin",
+      "name": "isAdmin",
+      "kind": "function",
+      "signatures": [
+        {
+          "parameters": [
+            {
+              "name": "user",
+              "type": {
+                "$ref": "#/types/User"
+              },
+              "optional": false,
+              "description": "- User to check"
+            }
+          ],
+          "returnType": {
+            "$ref": "#/types/boolean"
+          }
+        }
+      ],
+      "description": "Check if a user has admin privileges",
+      "examples": [],
+      "source": {
+        "file": "test-phase3-demo.ts",
+        "line": 138
+      },
+      "flags": {},
+      "tags": [
+        {
+          "name": "param",
+          "text": "- User to check"
+        },
+        {
+          "name": "returns",
+          "text": "True if user is an admin"
+        }
+      ]
+    },
+    {
+      "id": "UserService",
+      "name": "UserService",
+      "kind": "class",
+      "description": "Service for managing users",
+      "examples": [],
+      "source": {
+        "file": "test-phase3-demo.ts",
+        "line": 64
+      },
+      "flags": {},
+      "tags": []
+    },
+    {
+      "id": "Repository",
+      "name": "Repository",
+      "kind": "class",
+      "description": "",
+      "examples": [],
+      "source": {
+        "file": "test-phase3-demo.ts",
+        "line": 147
+      },
+      "flags": {},
+      "tags": []
+    },
+    {
+      "id": "ApiClient",
+      "name": "ApiClient",
+      "kind": "class",
+      "description": "",
+      "examples": [],
+      "source": {
+        "file": "test-phase3-demo.ts",
+        "line": 192
+      },
+      "flags": {},
+      "tags": []
+    },
+    {
+      "id": "AdvancedService",
+      "name": "AdvancedService",
+      "kind": "class",
+      "description": "Advanced service showcasing all Phase 3 features",
+      "examples": [],
+      "source": {
+        "file": "test-phase3-demo.ts",
+        "line": 252
+      },
+      "flags": {},
+      "tags": []
+    }
+  ],
+  "types": [
+    {
+      "id": "User",
+      "name": "User",
+      "kind": "interface",
+      "description": "Represents a user in the system",
+      "properties": [
+        {
+          "name": "id",
+          "type": "string",
+          "optional": false,
+          "description": "Unique identifier"
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "optional": false,
+          "description": "User's full name"
+        },
+        {
+          "name": "email",
+          "type": "string",
+          "optional": false,
+          "description": "User's email address"
+        },
+        {
+          "name": "role",
+          "type": "\"admin\" | \"user\" | \"guest\"",
+          "optional": false,
+          "description": "User role in the system"
+        },
+        {
+          "name": "createdAt",
+          "type": "Date",
+          "optional": false,
+          "description": "Account creation date"
+        }
+      ],
+      "source": {
+        "file": "test-phase3-demo.ts",
+        "line": 14
+      }
+    },
+    {
+      "id": "Config",
+      "name": "Config",
+      "kind": "interface",
+      "description": "",
+      "properties": [
+        {
+          "name": "apiUrl",
+          "type": "string",
+          "optional": false,
+          "description": ""
+        },
+        {
+          "name": "timeout",
+          "type": "number",
+          "optional": false,
+          "description": ""
+        }
+      ],
+      "source": {
+        "file": "test-phase3-demo.ts",
+        "line": 35
+      }
+    },
+    {
+      "id": "UserService",
+      "name": "UserService",
+      "kind": "class",
+      "description": "Service for managing users",
+      "source": {
+        "file": "test-phase3-demo.ts",
+        "line": 64
+      }
+    },
+    {
+      "id": "Repository",
+      "name": "Repository",
+      "kind": "class",
+      "description": "",
+      "source": {
+        "file": "test-phase3-demo.ts",
+        "line": 147
+      }
+    },
+    {
+      "id": "ApiClient",
+      "name": "ApiClient",
+      "kind": "class",
+      "description": "",
+      "source": {
+        "file": "test-phase3-demo.ts",
+        "line": 192
+      }
+    },
+    {
+      "id": "AdvancedService",
+      "name": "AdvancedService",
+      "kind": "class",
+      "description": "Advanced service showcasing all Phase 3 features",
+      "source": {
+        "file": "test-phase3-demo.ts",
+        "line": 252
+      }
+    }
+  ]
+}

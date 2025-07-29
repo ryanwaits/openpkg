@@ -6,6 +6,8 @@
     "test": "bun test",
     "test:phase1": "bun test test/compiler-api.test.ts",
     "test:phase2": "bun test test/phase2-type-resolution.test.ts",
+    "test:phase3": "bun test test/phase3-advanced-features.test.ts",
+    "test:all": "bun test test/*.test.ts",
     "demo": "bun run src/cli.ts test-phase2-demo.ts --output phase2-output.json"
   },
   "dependencies": {

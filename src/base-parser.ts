@@ -7,28 +7,44 @@ import { openPkgSchema } from './types/openpkg';
 import { TypeResolverFactory } from './services/type-resolver-factory';
 import { createCompilerAPIService, loadTsConfig } from './services/compiler-api';
 import { TypeWalkerImpl } from './services/type-walker';
+import { SymbolResolver } from './services/symbol-resolver';
+import { TypeInferenceService } from './services/type-inference';
+import { TypeCache } from './services/type-cache';
+import { ErrorHandler } from './services/error-handler';
 import fs from 'fs';
 import path from 'path';
 
 export function generateBaseSpec(entryFile: string): z.infer<typeof openPkgSchema> {
-  // Initialize TypeScript Compiler API
-  const compilerService = createCompilerAPIService();
-  const tsConfig = loadTsConfig(path.dirname(entryFile));
-  const program = compilerService.createProgram([entryFile], tsConfig || undefined);
-  const typeChecker = compilerService.getTypeChecker();
-  const sourceFile = program.getSourceFile(entryFile);
+  // Initialize error handler
+  const errorHandler = new ErrorHandler({ showWarnings: true });
+  
+  try {
+    // Initialize TypeScript Compiler API
+    const compilerService = createCompilerAPIService();
+    const tsConfig = loadTsConfig(path.dirname(entryFile));
+    const program = compilerService.createProgram([entryFile], tsConfig || undefined);
+    const typeChecker = compilerService.getTypeChecker();
+    const sourceFile = program.getSourceFile(entryFile);
 
-  if (!sourceFile) {
-    throw new Error(`Could not load source file: ${entryFile}`);
-  }
+    if (!sourceFile) {
+      throw new Error(`Could not load source file: ${entryFile}`);
+    }
 
-  // Also create ts-morph project for basic operations
-  const project = new Project({ compilerOptions: tsConfig || {} });
-  const morphSourceFile = project.addSourceFileAtPath(entryFile);
+    // Initialize Phase 3 services
+    const typeCache = new TypeCache();
+    const symbolResolver = new SymbolResolver(typeChecker);
+    const typeInference = new TypeInferenceService(typeChecker);
+    
+    // Warm up cache with common types
+    typeCache.warmUp([sourceFile], typeChecker);
 
-  // Get type resolver (uses Compiler API)
-  const typeResolver = TypeResolverFactory.getCompilerResolver([entryFile]);
-  const typeWalker = new TypeWalkerImpl(typeChecker);
+    // Also create ts-morph project for basic operations
+    const project = new Project({ compilerOptions: tsConfig || {} });
+    const morphSourceFile = project.addSourceFileAtPath(entryFile);
+
+    // Get type resolver (uses Compiler API)
+    const typeResolver = TypeResolverFactory.getCompilerResolver([entryFile]);
+    const typeWalker = new TypeWalkerImpl(typeChecker);
 
   // Basic extraction: Find exports, signatures, create $refs for types
   const exports: z.infer<typeof openPkgSchema>['exports'] = [];
@@ -51,19 +67,31 @@ export function generateBaseSpec(entryFile: string): z.infer<typeof openPkgSchem
       if (ts.isFunctionDeclaration(declaration)) {
         const signature = typeChecker.getSignatureFromDeclaration(declaration);
         if (signature) {
+          // Get JSDoc information using symbol resolver
+          const jsDocInfo = symbolResolver.getJSDocFromNode(declaration);
+          
           const parameters = signature.getParameters().map(param => {
             const paramType = typeChecker.getTypeOfSymbolAtLocation(param, param.valueDeclaration!);
-            const resolvedType = typeResolver.resolveType(param.valueDeclaration as ts.Node);
+            const resolvedType = typeCache.getOrResolveType(
+              param.valueDeclaration as ts.Node,
+              () => typeResolver.resolveType(param.valueDeclaration as ts.Node)
+            );
+            
+            // Get parameter description from JSDoc
+            const paramDescription = jsDocInfo?.params.get(param.getName()) || 
+                                   ts.displayPartsToString(param.getDocumentationComment(typeChecker));
             
             return {
               name: param.getName(),
               type: TypeFormatter.createRef(typeResolver.getTypeString(paramType)),
               optional: !!(param.flags & ts.SymbolFlags.Optional),
-              description: ts.displayPartsToString(param.getDocumentationComment(typeChecker))
+              description: paramDescription
             };
           });
 
+          // Check if return type is inferred
           const returnType = signature.getReturnType();
+          const isInferredReturn = typeInference.isInferredReturnType(declaration);
           const jsDocTags = ts.getJSDocTags(declaration);
           
           exports.push({
@@ -232,8 +260,19 @@ export function generateBaseSpec(entryFile: string): z.infer<typeof openPkgSchem
     types
   };
 
-  // Clear type walker cache
-  typeWalker.clearVisited();
+    // Clear type walker cache
+    typeWalker.clearVisited();
 
-  return spec;
+    // Print cache statistics if verbose
+    const cacheStats = typeCache.getStats();
+    if (process.env.VERBOSE) {
+      console.log('Cache statistics:', cacheStats);
+    }
+
+    return spec;
+  } catch (error) {
+    errorHandler.handleTypeResolutionError(error as Error, undefined, 'generateBaseSpec');
+    errorHandler.printAll();
+    throw error;
+  }
 }
