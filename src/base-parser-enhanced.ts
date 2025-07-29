@@ -11,6 +11,7 @@ import { TypeInferenceService } from './services/type-inference';
 import { TypeCache } from './services/type-cache';
 import { ErrorHandler } from './services/error-handler';
 import { ModuleResolver } from './services/module-resolver';
+import { logger } from './utils/logger';
 import fs from 'fs';
 import path from 'path';
 
@@ -19,6 +20,7 @@ export interface EnhancedGeneratorOptions {
   includeTypeHierarchy?: boolean;
   maxDepth?: number;
   useCompilerAPI?: boolean; // Feature flag for gradual rollout
+  verbose?: boolean;
 }
 
 export function generateEnhancedSpec(
@@ -30,11 +32,17 @@ export function generateEnhancedSpec(
     includeResolvedTypes = true,
     includeTypeHierarchy = true,
     maxDepth = 5,
-    useCompilerAPI = true
+    useCompilerAPI = true,
+    verbose = false
   } = options;
 
+  // Configure logger for verbose mode
+  if (verbose) {
+    logger.setVerbose(true);
+  }
+
   // Initialize error handler
-  const errorHandler = new ErrorHandler({ showWarnings: true });
+  const errorHandler = new ErrorHandler({ showWarnings: verbose });
   
   try {
     // Initialize TypeScript Compiler API
@@ -201,8 +209,13 @@ export function generateEnhancedSpec(
 
     // Print cache statistics if verbose
     const cacheStats = typeCache.getStats();
-    if (process.env.VERBOSE) {
-      console.log('Cache statistics:', cacheStats);
+    if (verbose) {
+      logger.debug('Cache statistics:', {
+        hitRate: `${(cacheStats.hitRate * 100).toFixed(2)}%`,
+        totalEntries: cacheStats.totalEntries,
+        hits: cacheStats.hits,
+        misses: cacheStats.misses
+      });
     }
 
     return spec;

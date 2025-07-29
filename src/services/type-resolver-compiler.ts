@@ -1,6 +1,7 @@
 import * as ts from 'typescript';
 import { BaseTypeResolver, ResolvedType, PropertyInfo, ExpandedType, FunctionSignatureInfo, ParameterInfo } from './type-resolver';
 import { EnhancedTypeResolution } from './type-resolution-enhanced';
+import { logger } from '../utils/logger';
 
 export class CompilerAPITypeResolver extends BaseTypeResolver {
   private enhanced: EnhancedTypeResolution;

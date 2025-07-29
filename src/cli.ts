@@ -7,6 +7,7 @@ import { resolveSpec } from './ai-agent';
 import { enhanceWithAI } from './ai-agent-enhanced';
 import { validateOpenPkg } from './utils/validate'; // Reused
 import { getCachedSpec, cacheSpec } from './utils/cache';
+import { logger, LogLevel } from './utils/logger';
 import fs from 'fs';
 
 const program = new Command();
@@ -23,21 +24,35 @@ program
   .option('--enhance-with-ai', 'Use AI to enhance documentation and examples')
   .option('--ai-examples', 'Generate code examples using AI')
   .option('--ai-descriptions', 'Enhance descriptions using AI')
+  .option('-v, --verbose', 'Enable verbose output for debugging')
   .action(async (entry, options) => {
     try {
+      // Configure logging
+      if (options.verbose) {
+        logger.setVerbose(true);
+        logger.info('Verbose mode enabled');
+      }
+
       const entryFile = entry || 'index.ts';
       const cacheKey = `${entryFile}_depth${options.depth}`;
       
+      logger.debug(`Processing file: ${entryFile}`);
+      logger.debug('Options:', options);
+      
       // Check cache first
       if (options.cache) {
+        logger.debug('Checking cache...');
         const cached = getCachedSpec(cacheKey);
         if (cached) {
-          console.log(chalk.yellow('Using cached spec'));
+          logger.info('Using cached spec');
           fs.writeFileSync(options.output, JSON.stringify(cached, null, 2));
-          console.log(chalk.green(`✓ Cached spec written to ${options.output}`));
-          console.log(JSON.stringify(cached, null, 2));
+          logger.info(`✓ Cached spec written to ${options.output}`);
+          if (!options.verbose) {
+            console.log(JSON.stringify(cached, null, 2));
+          }
           return;
         }
+        logger.debug('Cache miss, proceeding with generation');
       }
       
       let spec;
@@ -82,12 +97,26 @@ program
       
       // Write to output file
       fs.writeFileSync(options.output, JSON.stringify(validatedSpec, null, 2));
-      console.log(chalk.green(`✓ Generated spec written to ${options.output}`));
+      logger.info(`✓ Generated spec written to ${options.output}`);
       
-      // Also log to console for debugging
-      console.log(JSON.stringify(validatedSpec, null, 2));
+      // Show output statistics in verbose mode
+      if (options.verbose) {
+        const stats = {
+          exports: validatedSpec.exports.length,
+          types: validatedSpec.types.length,
+          outputSize: JSON.stringify(validatedSpec).length
+        };
+        logger.debug('Output statistics:', stats);
+      } else {
+        // Also log to console for normal mode
+        console.log(JSON.stringify(validatedSpec, null, 2));
+      }
     } catch (error) {
-      console.error(chalk.red('Error:', (error as Error).message));
+      logger.error('Generation failed:', error as Error);
+      if (!options.verbose) {
+        console.error(chalk.red('Error:', (error as Error).message));
+        console.error(chalk.gray('Run with --verbose for more details'));
+      }
       process.exit(1);
     }
   });

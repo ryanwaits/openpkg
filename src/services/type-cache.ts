@@ -1,6 +1,7 @@
 import * as ts from 'typescript';
 import * as crypto from 'crypto';
 import { ResolvedType } from './type-resolver';
+import { logger } from '../utils/logger';
 
 /**
  * Caching service for type resolution to improve performance
@@ -29,13 +30,16 @@ export class TypeCache {
     const cached = this.typeCache.get(cacheKey);
     if (cached && !this.isExpired(cached)) {
       this.cacheHits++;
+      logger.cache('hit', cacheKey);
       return cached.resolvedType;
     }
 
     this.cacheMisses++;
+    logger.cache('miss', cacheKey);
     const resolvedType = resolver();
     
     this.setCachedType(cacheKey, resolvedType);
+    logger.cache('store', cacheKey);
     return resolvedType;
   }
 

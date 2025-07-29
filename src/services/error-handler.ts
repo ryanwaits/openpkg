@@ -1,5 +1,12 @@
 import * as ts from 'typescript';
 import chalk from 'chalk';
+import { logger } from '../utils/logger';
+import { 
+  getEnhancedErrorMessage, 
+  getEnhancedResolutionError, 
+  formatErrorLocation,
+  getErrorSuggestion 
+} from '../utils/error-messages';
 
 /**
  * Service for handling and reporting TypeScript compilation and type resolution errors
@@ -23,6 +30,8 @@ export class ErrorHandler {
    */
   handleDiagnostic(diagnostic: ts.Diagnostic): void {
     const message = ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n');
+    const code = `TS${diagnostic.code}`;
+    const enhancedMessage = getEnhancedErrorMessage(code, message);
     const severity = this.getDiagnosticSeverity(diagnostic);
 
     if (diagnostic.file && diagnostic.start !== undefined) {
@@ -31,16 +40,16 @@ export class ErrorHandler {
 
       if (severity === 'error') {
         this.addError({
-          code: `TS${diagnostic.code}`,
-          message,
+          code,
+          message: enhancedMessage,
           location,
           type: 'typescript-diagnostic',
           node: undefined
         });
       } else if (severity === 'warning' && this.options.showWarnings) {
         this.addWarning({
-          code: `TS${diagnostic.code}`,
-          message,
+          code,
+          message: enhancedMessage,
           location
         });
       }
@@ -48,8 +57,8 @@ export class ErrorHandler {
       // Global diagnostic without file location
       if (severity === 'error') {
         this.addError({
-          code: `TS${diagnostic.code}`,
-          message,
+          code,
+          message: enhancedMessage,
           type: 'typescript-diagnostic'
         });
       }
@@ -61,13 +70,21 @@ export class ErrorHandler {
    */
   handleTypeResolutionError(error: Error, node?: ts.Node, context?: string): void {
     const location = node ? this.getNodeLocation(node) : undefined;
+    const enhancedMessage = getEnhancedResolutionError(error.message);
     
     this.addError({
       code: 'TYPE_RESOLUTION_ERROR',
-      message: error.message,
+      message: enhancedMessage,
       location,
       type: 'type-resolution',
       node,
+      context,
+      stack: error.stack
+    });
+    
+    logger.debug('Type resolution error:', {
+      originalMessage: error.message,
+      location,
       context,
       stack: error.stack
     });
@@ -152,6 +169,53 @@ export class ErrorHandler {
   }
 
   /**
+   * Get user-friendly error report
+   */
+  getUserFriendlyReport(): string {
+    if (this.errors.length === 0 && this.warnings.length === 0) {
+      return chalk.green('✓ No errors or warnings found');
+    }
+
+    const lines: string[] = [];
+    
+    // Error summary
+    if (this.errors.length > 0) {
+      lines.push(chalk.red.bold(`\nFound ${this.errors.length} error${this.errors.length > 1 ? 's' : ''}:\n`));
+      
+      // Group errors by code
+      const errorsByCode = new Map<string, TypeResolutionError[]>();
+      for (const error of this.errors) {
+        const errors = errorsByCode.get(error.code) || [];
+        errors.push(error);
+        errorsByCode.set(error.code, errors);
+      }
+      
+      // Display errors grouped by type
+      let errorIndex = 1;
+      for (const [code, errors] of errorsByCode) {
+        for (const error of errors) {
+          lines.push(`${errorIndex}. ${this.formatError(error)}\n`);
+          errorIndex++;
+        }
+      }
+    }
+    
+    // Warning summary
+    if (this.warnings.length > 0 && this.options.showWarnings) {
+      lines.push(chalk.yellow.bold(`\nFound ${this.warnings.length} warning${this.warnings.length > 1 ? 's' : ''}:\n`));
+      
+      this.warnings.forEach((warning, index) => {
+        lines.push(`${index + 1}. ${this.formatWarning(warning)}\n`);
+      });
+    }
+    
+    // Add help text
+    lines.push(chalk.gray('\nFor more details, run with --verbose'));
+    
+    return lines.join('\n');
+  }
+
+  /**
    * Suppress specific errors
    */
   suppressError(code: string, location?: string): void {
@@ -202,7 +266,7 @@ export class ErrorHandler {
     const parts: string[] = [];
 
     if (error.location) {
-      parts.push(chalk.cyan(error.location));
+      parts.push(formatErrorLocation(error.location));
     }
 
     parts.push(chalk.red('error'));
@@ -211,6 +275,12 @@ export class ErrorHandler {
 
     if (error.context) {
       parts.push(chalk.gray(`(${error.context})`));
+    }
+    
+    // Add suggestion if available
+    const suggestion = getErrorSuggestion(error.code);
+    if (suggestion) {
+      parts.push('\n  ' + chalk.yellow('Suggestion:') + ' ' + suggestion);
     }
 
     return parts.join(' ');
