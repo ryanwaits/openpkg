@@ -663,7 +663,7 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 
 <file path="package.json">
 {
-  "name": "openpkg-ai",
+  "name": "openpkg",
   "version": "1.0.0",
   "scripts": {
     "start": "bun run src/cli.ts",
@@ -689,7 +689,7 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 </file>
 
 <file path="README.md">
-# openpkg-ai
+# openpkg
 
 To install dependencies:
 

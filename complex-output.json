@@ -1,7 +1,7 @@
 {
   "openpkg": "1.0.0",
   "meta": {
-    "name": "openpkg-ai",
+    "name": "openpkg",
     "version": "1.0.0",
     "ecosystem": "js/ts"
   },

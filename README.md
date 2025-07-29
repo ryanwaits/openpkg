@@ -1,4 +1,4 @@
-# openpkg-ai
+# openpkg
 
 To install dependencies:
 

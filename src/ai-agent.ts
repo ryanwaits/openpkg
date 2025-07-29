@@ -47,8 +47,10 @@ const fetchGitHubTool = tool({
 });
 
 export async function resolveSpec(baseSpec: any, depth: number) {
+  // With the new TypeScript Compiler API implementation, 
+  // AI resolution is now optional and only used for documentation enhancement
   if (!process.env.ANTHROPIC_API_KEY) {
-    console.log('Paid resolution requires API key'); // Stub for open-source
+    console.log('AI enhancement disabled - using TypeScript Compiler API for full resolution');
     return baseSpec;
   }
 
