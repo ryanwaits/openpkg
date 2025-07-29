@@ -1,0 +1,7 @@
+{
+  "name": "simple-math",
+  "version": "1.0.0",
+  "description": "Simple math utilities example",
+  "main": "index.ts",
+  "license": "MIT"
+}

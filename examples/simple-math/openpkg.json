@@ -1,0 +1,304 @@
+{
+  "openpkg": "1.0.0",
+  "meta": {
+    "name": "simple-math",
+    "version": "1.0.0",
+    "description": "Simple math utilities example",
+    "license": "MIT",
+    "repository": "",
+    "ecosystem": "js/ts"
+  },
+  "exports": [
+    {
+      "id": "distance",
+      "name": "distance",
+      "kind": "function",
+      "signatures": [
+        {
+          "parameters": [
+            {
+              "name": "a",
+              "type": {
+                "$ref": "#/types/Point"
+              },
+              "optional": false,
+              "description": "First point"
+            },
+            {
+              "name": "b",
+              "type": {
+                "$ref": "#/types/Point"
+              },
+              "optional": false,
+              "description": "Second point"
+            }
+          ],
+          "returnType": "number"
+        }
+      ],
+      "description": "Calculates the distance between two points",
+      "source": {
+        "file": "index.ts",
+        "line": 39
+      }
+    },
+    {
+      "id": "area",
+      "name": "area",
+      "kind": "function",
+      "signatures": [
+        {
+          "parameters": [
+            {
+              "name": "rect",
+              "type": {
+                "$ref": "#/types/Rectangle"
+              },
+              "optional": false,
+              "description": "The rectangle"
+            }
+          ],
+          "returnType": "number"
+        }
+      ],
+      "description": "Calculates the area of a rectangle",
+      "source": {
+        "file": "index.ts",
+        "line": 48
+      }
+    },
+    {
+      "id": "Point",
+      "name": "Point",
+      "kind": "interface",
+      "description": "Represents a 2D point in space",
+      "source": {
+        "file": "index.ts",
+        "line": 4
+      }
+    },
+    {
+      "id": "Point3D",
+      "name": "Point3D",
+      "kind": "interface",
+      "description": "Represents a 3D point in space",
+      "source": {
+        "file": "index.ts",
+        "line": 12
+      }
+    },
+    {
+      "id": "Rectangle",
+      "name": "Rectangle",
+      "kind": "interface",
+      "description": "Represents a rectangle",
+      "source": {
+        "file": "index.ts",
+        "line": 19
+      }
+    },
+    {
+      "id": "MathConstants",
+      "name": "MathConstants",
+      "kind": "enum",
+      "description": "Math constants",
+      "source": {
+        "file": "index.ts",
+        "line": 27
+      }
+    },
+    {
+      "id": "Vector",
+      "name": "Vector",
+      "kind": "class",
+      "description": "Vector operations utility class",
+      "source": {
+        "file": "index.ts",
+        "line": 57
+      }
+    },
+    {
+      "id": "Coordinate",
+      "name": "Coordinate",
+      "kind": "type",
+      "type": {
+        "$ref": "#/types/Coordinate"
+      },
+      "description": "Type alias for a coordinate tuple",
+      "source": {
+        "file": "index.ts",
+        "line": 86
+      }
+    },
+    {
+      "id": "Matrix2D",
+      "name": "Matrix2D",
+      "kind": "type",
+      "type": {
+        "$ref": "#/types/Matrix2D"
+      },
+      "description": "Type alias for a transformation matrix",
+      "source": {
+        "file": "index.ts",
+        "line": 91
+      }
+    },
+    {
+      "id": "ORIGIN",
+      "name": "ORIGIN",
+      "kind": "variable",
+      "type": {
+        "$ref": "#/types/Point"
+      },
+      "description": "The origin point",
+      "source": {
+        "file": "index.ts",
+        "line": 96
+      }
+    },
+    {
+      "id": "IDENTITY_MATRIX",
+      "name": "IDENTITY_MATRIX",
+      "kind": "variable",
+      "type": {
+        "$ref": "#/types/Matrix2D"
+      },
+      "description": "Identity matrix",
+      "source": {
+        "file": "index.ts",
+        "line": 101
+      }
+    }
+  ],
+  "types": [
+    {
+      "id": "Point",
+      "name": "Point",
+      "kind": "interface",
+      "properties": [
+        {
+          "name": "x",
+          "type": "number",
+          "optional": false,
+          "description": ""
+        },
+        {
+          "name": "y",
+          "type": "number",
+          "optional": false,
+          "description": ""
+        }
+      ],
+      "description": "Represents a 2D point in space",
+      "source": {
+        "file": "index.ts",
+        "line": 4
+      }
+    },
+    {
+      "id": "Point3D",
+      "name": "Point3D",
+      "kind": "interface",
+      "properties": [
+        {
+          "name": "z",
+          "type": "number",
+          "optional": false,
+          "description": ""
+        }
+      ],
+      "description": "Represents a 3D point in space",
+      "source": {
+        "file": "index.ts",
+        "line": 12
+      }
+    },
+    {
+      "id": "Rectangle",
+      "name": "Rectangle",
+      "kind": "interface",
+      "properties": [
+        {
+          "name": "topLeft",
+          "type": {
+            "$ref": "#/types/Point"
+          },
+          "optional": false,
+          "description": ""
+        },
+        {
+          "name": "bottomRight",
+          "type": {
+            "$ref": "#/types/Point"
+          },
+          "optional": false,
+          "description": ""
+        }
+      ],
+      "description": "Represents a rectangle",
+      "source": {
+        "file": "index.ts",
+        "line": 19
+      }
+    },
+    {
+      "id": "MathConstants",
+      "name": "MathConstants",
+      "kind": "enum",
+      "members": [
+        {
+          "name": "PI",
+          "value": "3.14159",
+          "description": ""
+        },
+        {
+          "name": "E",
+          "value": "2.71828",
+          "description": ""
+        },
+        {
+          "name": "GOLDEN_RATIO",
+          "value": "1.61803",
+          "description": ""
+        }
+      ],
+      "description": "Math constants",
+      "source": {
+        "file": "index.ts",
+        "line": 27
+      }
+    },
+    {
+      "id": "Vector",
+      "name": "Vector",
+      "kind": "class",
+      "description": "Vector operations utility class",
+      "source": {
+        "file": "index.ts",
+        "line": 57
+      }
+    },
+    {
+      "id": "Coordinate",
+      "name": "Coordinate",
+      "kind": "type",
+      "type": "Coordinate",
+      "description": "Type alias for a coordinate tuple",
+      "source": {
+        "file": "index.ts",
+        "line": 86
+      }
+    },
+    {
+      "id": "Matrix2D",
+      "name": "Matrix2D",
+      "kind": "type",
+      "type": "Matrix2D",
+      "description": "Type alias for a transformation matrix",
+      "source": {
+        "file": "index.ts",
+        "line": 91
+      }
+    }
+  ]
+}

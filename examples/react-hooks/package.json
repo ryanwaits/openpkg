@@ -1,0 +1,8 @@
+{
+  "name": "react-hooks",
+  "version": "1.0.0",
+  "description": "React hooks example",
+  "main": "index.ts",
+  "license": "MIT",
+  "repository": "https://github.com/example/react-hooks"
+}

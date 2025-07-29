@@ -1,0 +1,448 @@
+{
+  "openpkg": "1.0.0",
+  "meta": {
+    "name": "api-client",
+    "version": "2.1.0",
+    "description": "TypeScript API client with request/response types",
+    "license": "MIT",
+    "repository": "",
+    "ecosystem": "js/ts"
+  },
+  "exports": [
+    {
+      "id": "createApiClient",
+      "name": "createApiClient",
+      "kind": "function",
+      "signatures": [
+        {
+          "parameters": [
+            {
+              "name": "baseUrl",
+              "type": "string",
+              "optional": false,
+              "description": ""
+            },
+            {
+              "name": "token",
+              "type": "string",
+              "optional": true,
+              "description": ""
+            }
+          ],
+          "returnType": "ApiClient"
+        }
+      ],
+      "description": "Creates a configured API client instance",
+      "source": {
+        "file": "index.ts",
+        "line": 162
+      }
+    },
+    {
+      "id": "HttpMethod",
+      "name": "HttpMethod",
+      "kind": "type",
+      "type": {
+        "$ref": "#/types/HttpMethod"
+      },
+      "description": "HTTP methods",
+      "source": {
+        "file": "index.ts",
+        "line": 4
+      }
+    },
+    {
+      "id": "RequestConfig",
+      "name": "RequestConfig",
+      "kind": "interface",
+      "description": "Request configuration",
+      "source": {
+        "file": "index.ts",
+        "line": 9
+      }
+    },
+    {
+      "id": "ApiResponse",
+      "name": "ApiResponse",
+      "kind": "interface",
+      "description": "API response wrapper",
+      "source": {
+        "file": "index.ts",
+        "line": 20
+      }
+    },
+    {
+      "id": "ApiError",
+      "name": "ApiError",
+      "kind": "interface",
+      "description": "Error response",
+      "source": {
+        "file": "index.ts",
+        "line": 29
+      }
+    },
+    {
+      "id": "PaginationParams",
+      "name": "PaginationParams",
+      "kind": "interface",
+      "description": "Pagination parameters",
+      "source": {
+        "file": "index.ts",
+        "line": 38
+      }
+    },
+    {
+      "id": "PaginatedResponse",
+      "name": "PaginatedResponse",
+      "kind": "interface",
+      "description": "Paginated response",
+      "source": {
+        "file": "index.ts",
+        "line": 48
+      }
+    },
+    {
+      "id": "User",
+      "name": "User",
+      "kind": "interface",
+      "description": "User model",
+      "source": {
+        "file": "index.ts",
+        "line": 58
+      }
+    },
+    {
+      "id": "CreateUserRequest",
+      "name": "CreateUserRequest",
+      "kind": "interface",
+      "description": "Create user request",
+      "source": {
+        "file": "index.ts",
+        "line": 69
+      }
+    },
+    {
+      "id": "UpdateUserRequest",
+      "name": "UpdateUserRequest",
+      "kind": "type",
+      "type": "Partial<Omit<User, \"id\" | \"createdAt\" | \"updatedAt\">>",
+      "description": "Update user request",
+      "source": {
+        "file": "index.ts",
+        "line": 78
+      }
+    },
+    {
+      "id": "ApiClient",
+      "name": "ApiClient",
+      "kind": "class",
+      "description": "API client class",
+      "source": {
+        "file": "index.ts",
+        "line": 83
+      }
+    },
+    {
+      "id": "UserService",
+      "name": "UserService",
+      "kind": "class",
+      "description": "User API service",
+      "source": {
+        "file": "index.ts",
+        "line": 127
+      }
+    }
+  ],
+  "types": [
+    {
+      "id": "HttpMethod",
+      "name": "HttpMethod",
+      "kind": "type",
+      "type": "HttpMethod",
+      "description": "HTTP methods",
+      "source": {
+        "file": "index.ts",
+        "line": 4
+      }
+    },
+    {
+      "id": "RequestConfig",
+      "name": "RequestConfig",
+      "kind": "interface",
+      "properties": [
+        {
+          "name": "method",
+          "type": {
+            "$ref": "#/types/HttpMethod"
+          },
+          "optional": true,
+          "description": ""
+        },
+        {
+          "name": "headers",
+          "type": "Record<string, string>",
+          "optional": true,
+          "description": ""
+        },
+        {
+          "name": "body",
+          "type": "any",
+          "optional": true,
+          "description": ""
+        },
+        {
+          "name": "timeout",
+          "type": "number",
+          "optional": true,
+          "description": ""
+        },
+        {
+          "name": "retries",
+          "type": "number",
+          "optional": true,
+          "description": ""
+        }
+      ],
+      "description": "Request configuration",
+      "source": {
+        "file": "index.ts",
+        "line": 9
+      }
+    },
+    {
+      "id": "ApiResponse",
+      "name": "ApiResponse",
+      "kind": "interface",
+      "properties": [
+        {
+          "name": "data",
+          "type": "T",
+          "optional": false,
+          "description": ""
+        },
+        {
+          "name": "status",
+          "type": "number",
+          "optional": false,
+          "description": ""
+        },
+        {
+          "name": "headers",
+          "type": "Record<string, string>",
+          "optional": false,
+          "description": ""
+        }
+      ],
+      "description": "API response wrapper",
+      "source": {
+        "file": "index.ts",
+        "line": 20
+      }
+    },
+    {
+      "id": "ApiError",
+      "name": "ApiError",
+      "kind": "interface",
+      "properties": [
+        {
+          "name": "message",
+          "type": "string",
+          "optional": false,
+          "description": ""
+        },
+        {
+          "name": "code",
+          "type": "string",
+          "optional": false,
+          "description": ""
+        },
+        {
+          "name": "details",
+          "type": "any",
+          "optional": true,
+          "description": ""
+        }
+      ],
+      "description": "Error response",
+      "source": {
+        "file": "index.ts",
+        "line": 29
+      }
+    },
+    {
+      "id": "PaginationParams",
+      "name": "PaginationParams",
+      "kind": "interface",
+      "properties": [
+        {
+          "name": "page",
+          "type": "number",
+          "optional": false,
+          "description": ""
+        },
+        {
+          "name": "limit",
+          "type": "number",
+          "optional": false,
+          "description": ""
+        },
+        {
+          "name": "sort",
+          "type": "string",
+          "optional": true,
+          "description": ""
+        },
+        {
+          "name": "order",
+          "type": "\"asc\" | \"desc\"",
+          "optional": true,
+          "description": ""
+        }
+      ],
+      "description": "Pagination parameters",
+      "source": {
+        "file": "index.ts",
+        "line": 38
+      }
+    },
+    {
+      "id": "PaginatedResponse",
+      "name": "PaginatedResponse",
+      "kind": "interface",
+      "properties": [
+        {
+          "name": "items",
+          "type": "T[]",
+          "optional": false,
+          "description": ""
+        },
+        {
+          "name": "total",
+          "type": "number",
+          "optional": false,
+          "description": ""
+        },
+        {
+          "name": "page",
+          "type": "number",
+          "optional": false,
+          "description": ""
+        },
+        {
+          "name": "pages",
+          "type": "number",
+          "optional": false,
+          "description": ""
+        }
+      ],
+      "description": "Paginated response",
+      "source": {
+        "file": "index.ts",
+        "line": 48
+      }
+    },
+    {
+      "id": "User",
+      "name": "User",
+      "kind": "interface",
+      "properties": [
+        {
+          "name": "id",
+          "type": "string",
+          "optional": false,
+          "description": ""
+        },
+        {
+          "name": "email",
+          "type": "string",
+          "optional": false,
+          "description": ""
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "optional": false,
+          "description": ""
+        },
+        {
+          "name": "createdAt",
+          "type": "Date",
+          "optional": false,
+          "description": ""
+        },
+        {
+          "name": "updatedAt",
+          "type": "Date",
+          "optional": false,
+          "description": ""
+        }
+      ],
+      "description": "User model",
+      "source": {
+        "file": "index.ts",
+        "line": 58
+      }
+    },
+    {
+      "id": "CreateUserRequest",
+      "name": "CreateUserRequest",
+      "kind": "interface",
+      "properties": [
+        {
+          "name": "email",
+          "type": "string",
+          "optional": false,
+          "description": ""
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "optional": false,
+          "description": ""
+        },
+        {
+          "name": "password",
+          "type": "string",
+          "optional": false,
+          "description": ""
+        }
+      ],
+      "description": "Create user request",
+      "source": {
+        "file": "index.ts",
+        "line": 69
+      }
+    },
+    {
+      "id": "UpdateUserRequest",
+      "name": "UpdateUserRequest",
+      "kind": "type",
+      "type": "Partial<Omit<User, \"id\" | \"createdAt\" | \"updatedAt\">>",
+      "description": "Update user request",
+      "source": {
+        "file": "index.ts",
+        "line": 78
+      }
+    },
+    {
+      "id": "ApiClient",
+      "name": "ApiClient",
+      "kind": "class",
+      "description": "API client class",
+      "source": {
+        "file": "index.ts",
+        "line": 83
+      }
+    },
+    {
+      "id": "UserService",
+      "name": "UserService",
+      "kind": "class",
+      "description": "User API service",
+      "source": {
+        "file": "index.ts",
+        "line": 127
+      }
+    }
+  ]
+}

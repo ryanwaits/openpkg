@@ -1,0 +1,7 @@
+{
+  "name": "api-client",
+  "version": "2.1.0",
+  "description": "TypeScript API client with request/response types",
+  "main": "index.ts",
+  "license": "MIT"
+}

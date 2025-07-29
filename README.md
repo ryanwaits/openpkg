@@ -1,190 +1,261 @@
 # OpenPkg
 
-A powerful TypeScript package analyzer that generates comprehensive API specifications using the TypeScript Compiler API.
+OpenPkg is a simple standard for documenting TypeScript packages, similar to how OpenAPI documents REST APIs. It generates a JSON specification that describes the exports, types, and structure of your TypeScript library.
 
-## Features
+## What is OpenPkg?
 
-- **Full Type Resolution** - Resolves complex types including generics, utility types, and mapped types
-- **No AI Dependency** - Complete type analysis using TypeScript Compiler API (AI is optional for documentation enhancement)
-- **Cross-file Analysis** - Follows imports and resolves types across multiple files
-- **Rich Metadata** - Extracts JSDoc comments, inferred types, and type hierarchies
-- **Backward Compatible** - Maintains compatibility with existing OpenPkg specifications
+OpenPkg is:
+- 📦 A **standard format** for TypeScript package documentation
+- 🔗 Uses **`$ref` references** like OpenAPI for type definitions
+- 🚀 **Simple and lightweight** - just 2 files, ~250 lines total
+- 🎯 **Focused** on creating a consumable specification, not complex type resolution
 
-## Installation
+## Quick Start
 
 ```bash
-bun install openpkg
-# or
-npm install openpkg
+# Clone and install
+git clone https://github.com/yourusername/openpkg.git
+cd openpkg
+bun install
+
+# Generate spec for a TypeScript file
+bun run src/cli.ts path/to/index.ts
+
+# Or use with npx/bunx (once published)
+bunx openpkg src/index.ts -o openpkg.json
 ```
 
 ## Usage
 
-### CLI
+Generate an OpenPkg specification for your TypeScript package:
 
 ```bash
-# Basic usage (uses TypeScript Compiler API by default)
-openpkg src/index.ts --output api-spec.json
+# Generate from default entry point (index.ts)
+bun run src/cli.ts
 
-# Include resolved type information
-openpkg src/index.ts --include-resolved-types --output api-spec.json
+# Generate from specific file
+bun run src/cli.ts src/main.ts
 
-# Include type hierarchy
-openpkg src/index.ts --include-type-hierarchy --output api-spec.json
-
-# Use legacy ts-morph parser
-openpkg src/index.ts --use-legacy-parser --output api-spec.json
-
-# Enhance with AI (optional)
-openpkg src/index.ts --enhance-with-ai --ai-examples --output api-spec.json
+# Output to custom file
+bun run src/cli.ts src/index.ts -o api-spec.json
 ```
 
-### Programmatic API
+## Example Output
+
+Given a simple TypeScript module:
 
 ```typescript
-import { generateEnhancedSpec } from 'openpkg';
+// math.ts
+export interface Point {
+  x: number;
+  y: number;
+}
 
-const spec = generateEnhancedSpec('src/index.ts', {
-  includeResolvedTypes: true,
-  includeTypeHierarchy: true,
-  maxDepth: 5
-});
+export function distance(a: Point, b: Point): number {
+  return Math.sqrt(Math.pow(b.x - a.x, 2) + Math.pow(b.y - a.y, 2));
+}
 
-console.log(JSON.stringify(spec, null, 2));
+export const PI = 3.14159;
 ```
 
-## What's New in v2.0
+OpenPkg generates:
 
-### TypeScript Compiler API Integration
-
-OpenPkg now uses the TypeScript Compiler API directly for superior type resolution:
-
-- **Utility Type Expansion**: `Partial<User>` → shows all properties as optional
-- **Generic Resolution**: `Array<string>` → fully resolved array type
-- **Type Inference**: Detects and marks inferred return types
-- **Declaration Merging**: Handles merged interfaces and namespaces
-- **JSDoc Extraction**: Complete extraction of all JSDoc tags
-
-### Example Output
-
-```typescript
-// Input
-export type PartialUser = Partial<User>;
-
-// Output with --include-resolved-types
+```json
 {
-  "type": "Partial<User>",
-  "expandedType": {
-    "properties": [
-      { "name": "id", "type": "string", "optional": true },
-      { "name": "name", "type": "string", "optional": true },
-      { "name": "email", "type": "string", "optional": true }
-    ]
-  }
+  "openpkg": "1.0.0",
+  "meta": {
+    "name": "my-math-lib",
+    "version": "1.0.0",
+    "description": "Math utilities",
+    "ecosystem": "js/ts"
+  },
+  "exports": [
+    {
+      "id": "Point",
+      "name": "Point",
+      "kind": "interface",
+      "source": { "file": "math.ts", "line": 2 }
+    },
+    {
+      "id": "distance",
+      "name": "distance",
+      "kind": "function",
+      "signatures": [{
+        "parameters": [
+          { "name": "a", "type": { "$ref": "#/types/Point" } },
+          { "name": "b", "type": { "$ref": "#/types/Point" } }
+        ],
+        "returnType": "number"
+      }],
+      "source": { "file": "math.ts", "line": 7 }
+    },
+    {
+      "id": "PI",
+      "name": "PI",
+      "kind": "variable",
+      "type": "number",
+      "source": { "file": "math.ts", "line": 11 }
+    }
+  ],
+  "types": [
+    {
+      "id": "Point",
+      "name": "Point",
+      "kind": "interface",
+      "properties": [
+        { "name": "x", "type": "number" },
+        { "name": "y", "type": "number" }
+      ],
+      "source": { "file": "math.ts", "line": 2 }
+    }
+  ]
 }
 ```
 
-## CLI Options
+## Type Reference System
 
-| Option | Description | Default |
-|--------|-------------|---------|
-| `--output <file>` | Output file path | `output.json` |
-| `--include-resolved-types` | Include fully resolved type information | `false` |
-| `--include-type-hierarchy` | Include type inheritance hierarchy | `false` |
-| `--max-depth <number>` | Maximum depth for type resolution | `5` |
-| `--use-legacy-parser` | Use legacy ts-morph parser | `false` |
-| `--enhance-with-ai` | Use AI for documentation enhancement | `false` |
-| `--ai-examples` | Generate code examples using AI | `false` |
-| `--ai-descriptions` | Enhance descriptions using AI | `false` |
-| `--no-cache` | Disable caching | `false` |
+OpenPkg follows OpenAPI's approach to type references:
 
-## Type Resolution Examples
-
-### Utility Types
-```typescript
-export type ReadonlyUser = Readonly<User>;
-export type PartialUser = Partial<User>;
-export type RequiredUser = Required<User>;
-export type PickedUser = Pick<User, 'id' | 'name'>;
+### Primitive Types
+Primitive types are always inline:
+```json
+{ "type": "string" }
+{ "type": "number" }
+{ "type": "boolean" }
 ```
 
-### Complex Generics
-```typescript
-export interface Repository<T> {
-  items: T[];
-  add(item: T): void;
-  find(id: string): T | undefined;
-}
+### Named Types
+Types defined in your package use `$ref`:
+```json
+{ "type": { "$ref": "#/types/Point" } }
+{ "type": { "$ref": "#/types/User" } }
 ```
 
-### Type Inference
-```typescript
-// Return type is inferred
-export const double = (x: number) => x * 2;
-
-// Generic type parameters are inferred
-export function identity<T>(value: T) {
-  return value;
-}
+### Complex Types
+Complex type expressions remain as strings:
+```json
+{ "type": "Record<string, any>" }
+{ "type": "T[]" }
+{ "type": "\"success\" | \"error\"" }
+{ "type": "Partial<User>" }
 ```
 
-## Performance
+## Examples
 
-The TypeScript Compiler API implementation includes:
-- **Caching**: Type resolutions are cached for performance
-- **Incremental Analysis**: Only analyzes what's needed
-- **Configurable Depth**: Control resolution depth with `--max-depth`
-
-## Migration from v1.x
-
-See [MIGRATION-GUIDE.md](./MIGRATION-GUIDE.md) for detailed migration instructions.
-
-Key changes:
-- TypeScript Compiler API is now the default (use `--use-legacy-parser` for old behavior)
-- AI is now optional enhancement only
-- New flags for enhanced type information
-- Improved performance with caching
-
-## Development
+We include several example TypeScript packages in the `examples/` directory:
 
 ```bash
-# Install dependencies
-bun install
+# Generate specs for all examples
+bun run generate:examples
 
-# Run tests
-bun test
-
-# Run specific test suite
-bun test:phase4
-
-# Run CLI locally
-bun run src/cli.ts test/example.ts --output output.json
+# Check out the generated specs
+cat examples/simple-math/openpkg.json
+cat examples/react-hooks/openpkg.json
+cat examples/api-client/openpkg.json
 ```
 
-## Architecture
+### Example Projects
+- **simple-math**: Basic types, interfaces, functions, and enums
+- **react-hooks**: Custom React hooks with complex type parameters
+- **api-client**: REST API client with generic types and classes
 
-OpenPkg v2 is built with a modular architecture:
+## Schema Structure
 
-- **Compiler API Service** - Manages TypeScript program and type checker
-- **Type Resolver** - Handles type resolution and expansion
-- **Symbol Resolver** - Extracts JSDoc and handles symbol aliases
-- **Type Walker** - Recursively walks type structures
-- **Module Resolver** - Handles cross-file imports
-- **Type Cache** - Performance optimization layer
-- **AI Enhancement** - Optional documentation enhancement
+The OpenPkg schema has three main sections:
+
+### 1. Meta Information
+Package metadata from `package.json`:
+```json
+"meta": {
+  "name": "package-name",
+  "version": "1.0.0",
+  "description": "Package description",
+  "license": "MIT",
+  "repository": "https://github.com/...",
+  "ecosystem": "js/ts"
+}
+```
+
+### 2. Exports
+All exported members from the entry point:
+```json
+"exports": [
+  {
+    "id": "functionName",
+    "name": "functionName",
+    "kind": "function",
+    "signatures": [...],
+    "description": "JSDoc description",
+    "source": { "file": "index.ts", "line": 10 }
+  }
+]
+```
+
+### 3. Types
+Detailed type definitions referenced by exports:
+```json
+"types": [
+  {
+    "id": "InterfaceName",
+    "name": "InterfaceName",
+    "kind": "interface",
+    "properties": [...],
+    "source": { "file": "types.ts", "line": 5 }
+  }
+]
+```
+
+## Philosophy
+
+OpenPkg follows the same philosophy as OpenAPI:
+- **Standard over Implementation**: Focus on creating a standard format, not solving every edge case
+- **Simple References**: Use `$ref` for types instead of deep resolution
+- **Tool Agnostic**: The specification can be consumed by any tool
+- **Extensible**: Room for custom extensions via the `extensions` field
+
+## Use Cases
+
+- 📚 **Documentation Generation**: Build beautiful docs from the spec
+- 🤖 **AI Integration**: Feed the spec to LLMs for code understanding
+- 🔍 **API Discovery**: Understand package exports without reading source
+- 🛠️ **Tooling**: Build custom tools that consume the OpenPkg format
+
+## Comparison with TSDoc
+
+While TSDoc focuses on **comment syntax**, OpenPkg focuses on **package structure**:
+
+| Feature | TSDoc | OpenPkg |
+|---------|-------|---------|
+| Focus | Comment syntax | Package structure |
+| Output | Annotated source | JSON specification |
+| Types | In comments | Extracted with `$ref` |
+| Similar to | JSDoc | OpenAPI |
+
+## Limitations
+
+- Only analyzes TypeScript source files (not compiled JavaScript)
+- Does not follow external module imports
+- Complex generic constraints are represented as strings
+- Currently analyzes single entry points (full package analysis coming soon)
+
+## Roadmap
+
+- [ ] Multi-file package analysis
+- [ ] Watch mode for real-time updates
+- [ ] Support for monorepos
+- [ ] Plugin system for custom extractors
+- [ ] Online playground
 
 ## Contributing
 
-Contributions are welcome! Please read our contributing guidelines and submit PRs.
+OpenPkg is open source! We welcome contributions:
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ## License
 
 MIT
-
-## Acknowledgments
-
-Built with:
-- [TypeScript Compiler API](https://github.com/microsoft/TypeScript/wiki/Using-the-Compiler-API)
-- [Bun](https://bun.sh) - Fast all-in-one JavaScript runtime
-- [Commander.js](https://github.com/tj/commander.js) - CLI framework
-- [Zod](https://github.com/colinhacks/zod) - TypeScript-first schema validation

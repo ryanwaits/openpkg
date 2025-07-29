@@ -1,0 +1,377 @@
+{
+  "openpkg": "1.0.0",
+  "meta": {
+    "name": "react-hooks",
+    "version": "1.0.0",
+    "description": "React hooks example",
+    "license": "MIT",
+    "repository": "https://github.com/example/react-hooks",
+    "ecosystem": "js/ts"
+  },
+  "exports": [
+    {
+      "id": "useLocalStorage",
+      "name": "useLocalStorage",
+      "kind": "function",
+      "signatures": [
+        {
+          "parameters": [
+            {
+              "name": "key",
+              "type": "string",
+              "optional": false,
+              "description": "The localStorage key"
+            },
+            {
+              "name": "initialValue",
+              "type": "T",
+              "optional": false,
+              "description": "Initial value if key doesn't exist"
+            },
+            {
+              "name": "options",
+              "type": {
+                "$ref": "#/types/UseLocalStorageOptions"
+              },
+              "optional": true,
+              "description": "Serialization options"
+            }
+          ],
+          "returnType": "UseLocalStorageReturn<T>"
+        }
+      ],
+      "description": "Hook that syncs state with localStorage",
+      "source": {
+        "file": "examples/react-hooks/index.ts",
+        "line": 20
+      }
+    },
+    {
+      "id": "useFetch",
+      "name": "useFetch",
+      "kind": "function",
+      "signatures": [
+        {
+          "parameters": [
+            {
+              "name": "url",
+              "type": "string",
+              "optional": false,
+              "description": "The URL to fetch"
+            },
+            {
+              "name": "options",
+              "type": {
+                "$ref": "#/types/UseFetchOptions"
+              },
+              "optional": true,
+              "description": "Fetch options"
+            }
+          ],
+          "returnType": "FetchState<T>"
+        }
+      ],
+      "description": "Hook for fetching data with loading and error states",
+      "source": {
+        "file": "examples/react-hooks/index.ts",
+        "line": 53
+      }
+    },
+    {
+      "id": "useWindowSize",
+      "name": "useWindowSize",
+      "kind": "function",
+      "signatures": [
+        {
+          "parameters": [],
+          "returnType": "WindowSize"
+        }
+      ],
+      "description": "Hook that tracks window dimensions",
+      "source": {
+        "file": "examples/react-hooks/index.ts",
+        "line": 77
+      }
+    },
+    {
+      "id": "usePrevious",
+      "name": "usePrevious",
+      "kind": "function",
+      "signatures": [
+        {
+          "parameters": [
+            {
+              "name": "value",
+              "type": "T",
+              "optional": false,
+              "description": "Current value"
+            }
+          ],
+          "returnType": "T"
+        }
+      ],
+      "description": "Hook that returns previous value",
+      "source": {
+        "file": "examples/react-hooks/index.ts",
+        "line": 86
+      }
+    },
+    {
+      "id": "useDebounce",
+      "name": "useDebounce",
+      "kind": "function",
+      "signatures": [
+        {
+          "parameters": [
+            {
+              "name": "value",
+              "type": "T",
+              "optional": false,
+              "description": "Value to debounce"
+            },
+            {
+              "name": "delay",
+              "type": "number",
+              "optional": false,
+              "description": "Debounce delay in ms"
+            },
+            {
+              "name": "options",
+              "type": {
+                "$ref": "#/types/DebounceOptions"
+              },
+              "optional": true,
+              "description": "Debounce options"
+            }
+          ],
+          "returnType": "T"
+        }
+      ],
+      "description": "Hook that debounces a value",
+      "source": {
+        "file": "examples/react-hooks/index.ts",
+        "line": 106
+      }
+    },
+    {
+      "id": "UseLocalStorageOptions",
+      "name": "UseLocalStorageOptions",
+      "kind": "interface",
+      "description": "Options for the useLocalStorage hook",
+      "source": {
+        "file": "examples/react-hooks/index.ts",
+        "line": 4
+      }
+    },
+    {
+      "id": "UseLocalStorageReturn",
+      "name": "UseLocalStorageReturn",
+      "kind": "type",
+      "type": {
+        "$ref": "#/types/UseLocalStorageReturn"
+      },
+      "description": "Return type for the useLocalStorage hook",
+      "source": {
+        "file": "examples/react-hooks/index.ts",
+        "line": 12
+      }
+    },
+    {
+      "id": "UseFetchOptions",
+      "name": "UseFetchOptions",
+      "kind": "interface",
+      "description": "Options for the useFetch hook",
+      "source": {
+        "file": "examples/react-hooks/index.ts",
+        "line": 32
+      }
+    },
+    {
+      "id": "FetchState",
+      "name": "FetchState",
+      "kind": "interface",
+      "description": "State returned by the useFetch hook",
+      "source": {
+        "file": "examples/react-hooks/index.ts",
+        "line": 41
+      }
+    },
+    {
+      "id": "WindowSize",
+      "name": "WindowSize",
+      "kind": "interface",
+      "description": "Size object returned by useWindowSize",
+      "source": {
+        "file": "examples/react-hooks/index.ts",
+        "line": 69
+      }
+    },
+    {
+      "id": "DebounceOptions",
+      "name": "DebounceOptions",
+      "kind": "interface",
+      "description": "Debounce options",
+      "source": {
+        "file": "examples/react-hooks/index.ts",
+        "line": 94
+      }
+    }
+  ],
+  "types": [
+    {
+      "id": "UseLocalStorageOptions",
+      "name": "UseLocalStorageOptions",
+      "kind": "interface",
+      "properties": [
+        {
+          "name": "serializer",
+          "type": "(value: any) => string",
+          "optional": true,
+          "description": ""
+        },
+        {
+          "name": "deserializer",
+          "type": "(value: string) => any",
+          "optional": true,
+          "description": ""
+        }
+      ],
+      "description": "Options for the useLocalStorage hook",
+      "source": {
+        "file": "examples/react-hooks/index.ts",
+        "line": 4
+      }
+    },
+    {
+      "id": "UseLocalStorageReturn",
+      "name": "UseLocalStorageReturn",
+      "kind": "type",
+      "type": "UseLocalStorageReturn<T>",
+      "description": "Return type for the useLocalStorage hook",
+      "source": {
+        "file": "examples/react-hooks/index.ts",
+        "line": 12
+      }
+    },
+    {
+      "id": "UseFetchOptions",
+      "name": "UseFetchOptions",
+      "kind": "interface",
+      "properties": [
+        {
+          "name": "dependencies",
+          "type": "any[]",
+          "optional": true,
+          "description": ""
+        },
+        {
+          "name": "retryCount",
+          "type": "number",
+          "optional": true,
+          "description": ""
+        },
+        {
+          "name": "retryDelay",
+          "type": "number",
+          "optional": true,
+          "description": ""
+        }
+      ],
+      "description": "Options for the useFetch hook",
+      "source": {
+        "file": "examples/react-hooks/index.ts",
+        "line": 32
+      }
+    },
+    {
+      "id": "FetchState",
+      "name": "FetchState",
+      "kind": "interface",
+      "properties": [
+        {
+          "name": "data",
+          "type": "T",
+          "optional": false,
+          "description": ""
+        },
+        {
+          "name": "loading",
+          "type": "boolean",
+          "optional": false,
+          "description": ""
+        },
+        {
+          "name": "error",
+          "type": "Error",
+          "optional": false,
+          "description": ""
+        },
+        {
+          "name": "refetch",
+          "type": "() => void",
+          "optional": false,
+          "description": ""
+        }
+      ],
+      "description": "State returned by the useFetch hook",
+      "source": {
+        "file": "examples/react-hooks/index.ts",
+        "line": 41
+      }
+    },
+    {
+      "id": "WindowSize",
+      "name": "WindowSize",
+      "kind": "interface",
+      "properties": [
+        {
+          "name": "width",
+          "type": "number",
+          "optional": false,
+          "description": ""
+        },
+        {
+          "name": "height",
+          "type": "number",
+          "optional": false,
+          "description": ""
+        }
+      ],
+      "description": "Size object returned by useWindowSize",
+      "source": {
+        "file": "examples/react-hooks/index.ts",
+        "line": 69
+      }
+    },
+    {
+      "id": "DebounceOptions",
+      "name": "DebounceOptions",
+      "kind": "interface",
+      "properties": [
+        {
+          "name": "leading",
+          "type": "boolean",
+          "optional": true,
+          "description": ""
+        },
+        {
+          "name": "trailing",
+          "type": "boolean",
+          "optional": true,
+          "description": ""
+        },
+        {
+          "name": "maxWait",
+          "type": "number",
+          "optional": true,
+          "description": ""
+        }
+      ],
+      "description": "Debounce options",
+      "source": {
+        "file": "examples/react-hooks/index.ts",
+        "line": 94
+      }
+    }
+  ]
+}
