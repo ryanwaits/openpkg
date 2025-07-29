@@ -1,0 +1,77 @@
+{
+  "openpkg": "1.0.0",
+  "meta": {
+    "name": "unknown",
+    "version": "1.0.0",
+    "description": "",
+    "license": "",
+    "repository": "",
+    "ecosystem": "js/ts"
+  },
+  "exports": [
+    {
+      "id": "createTransaction",
+      "name": "createTransaction",
+      "kind": "function",
+      "signatures": [
+        {
+          "parameters": [
+            {
+              "name": "nonce",
+              "type": {
+                "$ref": "#/types/bigint"
+              },
+              "optional": false,
+              "description": ""
+            },
+            {
+              "name": "fee",
+              "type": {
+                "$ref": "#/types/bigint"
+              },
+              "optional": false,
+              "description": ""
+            }
+          ],
+          "returnType": {
+            "$ref": "#/types/Transaction"
+          }
+        }
+      ],
+      "description": "",
+      "examples": [],
+      "source": {
+        "file": "test/test-bigint.ts",
+        "line": 6
+      },
+      "flags": {},
+      "tags": []
+    }
+  ],
+  "types": [
+    {
+      "id": "Transaction",
+      "name": "Transaction",
+      "kind": "interface",
+      "description": "",
+      "properties": [
+        {
+          "name": "nonce",
+          "type": "bigint",
+          "optional": false,
+          "description": ""
+        },
+        {
+          "name": "fee",
+          "type": "bigint",
+          "optional": false,
+          "description": ""
+        }
+      ],
+      "source": {
+        "file": "test/test-bigint.ts",
+        "line": 1
+      }
+    }
+  ]
+}

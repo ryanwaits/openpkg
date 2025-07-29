@@ -9,9 +9,9 @@ export class ModuleResolver {
   private typeChecker: ts.TypeChecker;
   private resolvedModules = new Map<string, ts.SourceFile>();
 
-  constructor(program: ts.Program) {
+  constructor(typeChecker: ts.TypeChecker, program: ts.Program) {
     this.program = program;
-    this.typeChecker = program.getTypeChecker();
+    this.typeChecker = typeChecker;
   }
 
   /**

@@ -1,0 +1,344 @@
+{
+  "openpkg": "1.0.0",
+  "meta": {
+    "name": "openpkg",
+    "version": "1.0.0",
+    "ecosystem": "js/ts"
+  },
+  "exports": [
+    {
+      "id": "isUser",
+      "name": "isUser",
+      "kind": "function",
+      "signatures": [
+        {
+          "parameters": [
+            {
+              "name": "value",
+              "type": {
+                "$ref": "#/types/unknown"
+              },
+              "optional": false,
+              "description": "- Value to check"
+            }
+          ],
+          "returnType": {
+            "$ref": "#/types/boolean"
+          }
+        }
+      ],
+      "description": "Check if a value is a valid User",
+      "examples": [],
+      "source": {
+        "file": "test-phase3-demo.ts",
+        "line": 123
+      },
+      "flags": {
+        "isInferredReturn": false
+      },
+      "tags": []
+    },
+    {
+      "id": "isAdmin",
+      "name": "isAdmin",
+      "kind": "function",
+      "signatures": [
+        {
+          "parameters": [
+            {
+              "name": "user",
+              "type": {
+                "$ref": "#/types/User"
+              },
+              "optional": false,
+              "description": "- User to check"
+            }
+          ],
+          "returnType": {
+            "$ref": "#/types/boolean"
+          }
+        }
+      ],
+      "description": "Check if a user has admin privileges",
+      "examples": [],
+      "source": {
+        "file": "test-phase3-demo.ts",
+        "line": 138
+      },
+      "flags": {
+        "isInferredReturn": false
+      },
+      "tags": []
+    },
+    {
+      "id": "UserService",
+      "name": "UserService",
+      "kind": "class",
+      "description": "Service for managing users",
+      "examples": [],
+      "source": {
+        "file": "test-phase3-demo.ts",
+        "line": 64
+      },
+      "flags": {},
+      "tags": [
+        {
+          "name": "class",
+          "text": "*"
+        },
+        {
+          "name": "since",
+          "text": "2.0.0"
+        }
+      ]
+    },
+    {
+      "id": "Repository",
+      "name": "Repository",
+      "kind": "class",
+      "description": "",
+      "examples": [],
+      "source": {
+        "file": "test-phase3-demo.ts",
+        "line": 147
+      },
+      "flags": {},
+      "tags": []
+    },
+    {
+      "id": "ApiClient",
+      "name": "ApiClient",
+      "kind": "class",
+      "description": "",
+      "examples": [],
+      "source": {
+        "file": "test-phase3-demo.ts",
+        "line": 192
+      },
+      "flags": {},
+      "tags": []
+    },
+    {
+      "id": "AdvancedService",
+      "name": "AdvancedService",
+      "kind": "class",
+      "description": "Advanced service showcasing all Phase 3 features",
+      "examples": [],
+      "source": {
+        "file": "test-phase3-demo.ts",
+        "line": 252
+      },
+      "flags": {},
+      "tags": [
+        {
+          "name": "template",
+          "text": "- User type"
+        },
+        {
+          "name": "template",
+          "text": "- Configuration type"
+        },
+        {
+          "name": "since",
+          "text": "3.0.0"
+        }
+      ]
+    }
+  ],
+  "types": [
+    {
+      "id": "User",
+      "name": "User",
+      "kind": "interface",
+      "description": "Represents a user in the system",
+      "properties": [
+        {
+          "name": "id",
+          "type": "string",
+          "optional": false,
+          "description": "Unique identifier"
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "optional": false,
+          "description": "User's full name"
+        },
+        {
+          "name": "email",
+          "type": "string",
+          "optional": false,
+          "description": "User's email address"
+        },
+        {
+          "name": "role",
+          "type": "Array<string>",
+          "optional": false,
+          "description": "User role in the system"
+        },
+        {
+          "name": "createdAt",
+          "type": "Date",
+          "optional": false,
+          "description": "Account creation date"
+        }
+      ],
+      "source": {
+        "file": "test-phase3-demo.ts",
+        "line": 14
+      }
+    },
+    {
+      "id": "Config",
+      "name": "Config",
+      "kind": "interface",
+      "description": "",
+      "properties": [
+        {
+          "name": "apiUrl",
+          "type": "string",
+          "optional": false,
+          "description": ""
+        },
+        {
+          "name": "timeout",
+          "type": "number",
+          "optional": false,
+          "description": ""
+        },
+        {
+          "name": "retryAttempts",
+          "type": "number",
+          "optional": false,
+          "description": ""
+        },
+        {
+          "name": "debug",
+          "type": "boolean",
+          "optional": false,
+          "description": ""
+        }
+      ],
+      "source": {
+        "file": "test-phase3-demo.ts",
+        "line": 35
+      }
+    },
+    {
+      "id": "UserService",
+      "name": "UserService",
+      "kind": "class",
+      "description": "Service for managing users",
+      "members": [
+        {
+          "name": "users",
+          "description": ""
+        },
+        {
+          "name": "addUser",
+          "description": "Add a new user to the system"
+        },
+        {
+          "name": "findUsersByRole",
+          "description": "Find users by role"
+        },
+        {
+          "name": "findUsersByPredicate",
+          "description": "Find users by custom predicate"
+        },
+        {
+          "name": "generateId",
+          "description": ""
+        }
+      ],
+      "source": {
+        "file": "test-phase3-demo.ts",
+        "line": 64
+      }
+    },
+    {
+      "id": "Repository",
+      "name": "Repository",
+      "kind": "class",
+      "description": "",
+      "members": [
+        {
+          "name": "items",
+          "description": ""
+        },
+        {
+          "name": "add",
+          "description": "Add an item to the repository"
+        },
+        {
+          "name": "find",
+          "description": "Find an item by ID"
+        },
+        {
+          "name": "where",
+          "description": "Find items matching a predicate"
+        }
+      ],
+      "source": {
+        "file": "test-phase3-demo.ts",
+        "line": 147
+      }
+    },
+    {
+      "id": "ApiClient",
+      "name": "ApiClient",
+      "kind": "class",
+      "description": "",
+      "members": [
+        {
+          "name": "fetchData",
+          "description": "Fetch data from an endpoint"
+        },
+        {
+          "name": "getUsers",
+          "description": ""
+        },
+        {
+          "name": "getUserSafe",
+          "description": ""
+        }
+      ],
+      "source": {
+        "file": "test-phase3-demo.ts",
+        "line": 192
+      }
+    },
+    {
+      "id": "AdvancedService",
+      "name": "AdvancedService",
+      "kind": "class",
+      "description": "Advanced service showcasing all Phase 3 features",
+      "members": [
+        {
+          "name": "config",
+          "description": ""
+        },
+        {
+          "name": "users",
+          "description": ""
+        },
+        {
+          "name": "initialize",
+          "description": "Initialize the service"
+        },
+        {
+          "name": "processUser",
+          "description": "Process a user with type guard"
+        },
+        {
+          "name": "getAdmins",
+          "description": "Get admin users"
+        }
+      ],
+      "source": {
+        "file": "test-phase3-demo.ts",
+        "line": 252
+      }
+    }
+  ]
+}

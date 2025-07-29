@@ -2,6 +2,7 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import { generateBaseSpec } from './base-parser';
+import { generateEnhancedSpec } from './base-parser-enhanced';
 import { resolveSpec } from './ai-agent';
 import { validateOpenPkg } from './utils/validate'; // Reused
 import { getCachedSpec, cacheSpec } from './utils/cache';
@@ -14,6 +15,10 @@ program
   .option('--depth <number>', 'Resolution depth (0 for base spec)', '0')
   .option('--output <file>', 'Output file path', 'output.json')
   .option('--no-cache', 'Disable caching')
+  .option('--use-enhanced-parser', 'Use enhanced TypeScript Compiler API parser (experimental)')
+  .option('--include-resolved-types', 'Include resolved type information in output')
+  .option('--include-type-hierarchy', 'Include type hierarchy information')
+  .option('--max-depth <number>', 'Maximum depth for type resolution', '5')
   .action(async (entry, options) => {
     try {
       const entryFile = entry || 'index.ts';
@@ -31,7 +36,21 @@ program
         }
       }
       
-      let spec = generateBaseSpec(entryFile); // Base parse
+      let spec;
+      
+      // Use enhanced parser if flag is set
+      if (options.useEnhancedParser) {
+        spec = generateEnhancedSpec(entryFile, {
+          includeResolvedTypes: options.includeResolvedTypes,
+          includeTypeHierarchy: options.includeTypeHierarchy,
+          maxDepth: parseInt(options.maxDepth),
+          useCompilerAPI: true
+        });
+      } else {
+        spec = generateBaseSpec(entryFile); // Base parse
+      }
+      
+      // AI resolution if requested (works with both parsers)
       if (parseInt(options.depth) > 0) {
         spec = await resolveSpec(spec, parseInt(options.depth)); // AI resolution
       }

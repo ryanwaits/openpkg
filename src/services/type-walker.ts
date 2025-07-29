@@ -51,14 +51,16 @@ export class TypeWalkerImpl implements TypeWalker {
     this.typeChecker = typeChecker;
   }
 
-  walk(type: ts.Type, depth: number = 0): TypeStructure {
+  walk(type: ts.Type, depth: number = 0, maxDepth?: number): TypeStructure {
+    // Use provided maxDepth or default
+    const actualMaxDepth = maxDepth ?? this.maxDepth;
     // Check for cycles
     if (this.visited.has(type)) {
       return this.visited.get(type)!;
     }
 
     // Check max depth
-    if (depth > this.maxDepth) {
+    if (depth > actualMaxDepth) {
       return {
         name: '...',
         kind: 'truncated',
