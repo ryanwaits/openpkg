@@ -64,39 +64,91 @@ Output OpenPkg spec:
 ```json
 {
   "openpkg": "1.0.0",
-  "exports": [{
-    "name": "distance",
-    "kind": "function",
-    "signatures": [{
-      "parameters": [{
-        "name": "a",
-        "required": true,
-        "description": "First point",
-        "schema": { "$ref": "#/types/Point" }
-      }, {
-        "name": "b",
-        "required": true,
-        "description": "Second point",
-        "schema": { "$ref": "#/types/Point" }
-      }],
-      "returns": {
-        "schema": { "type": "number" },
-        "description": "Distance between points"
+  "meta": {
+    "name": "openpkg",
+    "version": "1.0.0",
+    "description": "OpenAPI-like specification generator for TypeScript packages",
+    "license": "",
+    "repository": "",
+    "ecosystem": "js/ts"
+  },
+  "exports": [
+    {
+      "id": "distance",
+      "name": "distance",
+      "kind": "function",
+      "signatures": [
+        {
+          "parameters": [
+            {
+              "name": "a",
+              "required": true,
+              "description": "First point",
+              "schema": {
+                "$ref": "#/types/Point"
+              }
+            },
+            {
+              "name": "b",
+              "required": true,
+              "description": "Second point",
+              "schema": {
+                "$ref": "#/types/Point"
+              }
+            }
+          ],
+          "returns": {
+            "schema": {
+              "type": "number"
+            },
+            "description": "Distance between points"
+          }
+        }
+      ],
+      "description": "Calculate distance between two points",
+      "source": {
+        "file": "<path-to-source-file>",
+        "line": 7
       }
-    }]
-  }],
-  "types": [{
-    "name": "Point",
-    "kind": "interface",
-    "schema": {
-      "type": "object",
-      "properties": {
-        "x": { "type": "number" },
-        "y": { "type": "number" }
-      },
-      "required": ["x", "y"]
+    },
+    {
+      "id": "Point",
+      "name": "Point",
+      "kind": "interface",
+      "description": "",
+      "source": {
+        "file": "<path-to-source-file>",
+        "line": 11
+      }
     }
-  }]
+  ],
+  "types": [
+    {
+      "id": "Point",
+      "name": "Point",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "number"
+          },
+          "y": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "x",
+          "y"
+        ]
+      },
+      "description": "",
+      "source": {
+        "file": "<path-to-source-file>",
+        "line": 11
+      }
+    }
+  ]
 }
 ```
 
