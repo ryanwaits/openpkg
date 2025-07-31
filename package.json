@@ -2,21 +2,32 @@
   "name": "openpkg",
   "version": "1.0.0",
   "description": "OpenAPI-like specification generator for TypeScript packages",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./cli": {
+      "import": "./dist/cli.js",
+      "types": "./dist/cli.d.ts"
+    }
+  },
   "bin": {
     "openpkg": "./dist/cli.js"
   },
   "scripts": {
-    "build": "tsc",
-    "dev": "bun run src/cli.ts",
-    "start": "node dist/cli.js",
+    "build": "bunup",
+    "dev": "bunup --watch",
+    "cli": "bun run src/cli.ts",
     "generate:examples": "cd examples && ./generate-all.sh",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "bun run build"
   },
   "files": [
-    "dist",
-    "src"
+    "dist"
   ],
   "dependencies": {
     "commander": "^14.0.0",
@@ -25,7 +36,8 @@
   },
   "devDependencies": {
     "@types/bun": "latest",
-    "@types/node": "^20.0.0"
+    "@types/node": "^20.0.0",
+    "bunup": "latest"
   },
   "peerDependencies": {
     "typescript": "^5"

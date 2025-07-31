@@ -7,7 +7,8 @@ import {
   extractTypeReferences, 
   isDestructuredParameter, 
   getDestructuredProperties,
-  collectReferencedTypes 
+  collectReferencedTypes,
+  isBuiltInType 
 } from './utils/type-utils';
 import {
   parseJSDocComment,
@@ -15,7 +16,8 @@ import {
 } from './utils/tsdoc-utils';
 import {
   structureParameter,
-  formatTypeReference
+  formatTypeReference,
+  propertiesToSchema
 } from './utils/parameter-utils';
 
 export async function extractPackageSpec(entryFile: string, packageDir?: string): Promise<z.infer<typeof openPkgSchema>> {
@@ -153,7 +155,7 @@ export async function extractPackageSpec(entryFile: string, packageDir?: string)
             id,
             name,
             kind: "interface" as const,
-            properties: getInterfaceProperties(declaration, typeChecker, typeRefs, referencedTypes),
+            schema: interfaceToSchema(declaration, typeChecker, typeRefs, referencedTypes),
             description: getJSDocComment(symbol, typeChecker),
             source: getSourceLocation(declaration)
           };
@@ -248,7 +250,7 @@ export async function extractPackageSpec(entryFile: string, packageDir?: string)
                     id: typeName,
                     name: typeName,
                     kind: "interface" as const,
-                    properties: getInterfaceProperties(declaration, typeChecker, typeRefs, referencedTypes),
+                    schema: interfaceToSchema(declaration, typeChecker, typeRefs, referencedTypes),
                     description: getJSDocComment(exportSymbol, typeChecker),
                     source: getSourceLocation(declaration)
                   };
@@ -307,16 +309,6 @@ function typeToRef(node: ts.Node, typeChecker: ts.TypeChecker, typeRefs: Map<str
   return formatTypeReference(type, typeChecker, typeRefs, referencedTypes);
 }
 
-function isBuiltInType(name: string): boolean {
-  const builtIns = [
-    'string', 'number', 'boolean', 'any', 'unknown', 'void', 
-    'undefined', 'null', 'never', 'object', 'Promise', 'Array',
-    'Map', 'Set', 'Date', 'RegExp', 'Error', 'Function',
-    'Uint8Array', 'ArrayBufferLike', 'ArrayBuffer', 'Uint8ArrayConstructor',
-    '__type' // Anonymous types
-  ];
-  return builtIns.includes(name);
-}
 
 function getFunctionSignatures(
   func: ts.FunctionDeclaration,
@@ -356,32 +348,50 @@ function getFunctionSignatures(
         referencedTypes
       );
     }),
-    returnType: signature.getReturnType() ? typeChecker.typeToString(signature.getReturnType()) : "void",
-    description: functionDoc?.returns
+    returns: {
+      schema: signature.getReturnType() ? formatTypeReference(signature.getReturnType(), typeChecker, typeRefs, referencedTypes) : { type: 'void' },
+      description: functionDoc?.returns || ''
+    }
   }];
 }
 
-function getInterfaceProperties(
+function interfaceToSchema(
   iface: ts.InterfaceDeclaration,
   typeChecker: ts.TypeChecker,
   typeRefs: Map<string, string>,
   referencedTypes?: Set<string>
-): any[] {
-  return iface.members
+): any {
+  const schema: any = {
+    type: 'object',
+    properties: {},
+  };
+  
+  const required: string[] = [];
+  
+  iface.members
     .filter(ts.isPropertySignature)
-    .map(prop => {
+    .forEach(prop => {
+      const propName = prop.name?.getText() || "";
+      
       if (prop.type && referencedTypes) {
         const propType = typeChecker.getTypeAtLocation(prop.type);
         collectReferencedTypes(propType, typeChecker, referencedTypes);
       }
       
-      return {
-        name: prop.name?.getText() || "",
-        type: prop.type ? typeToRef(prop.type, typeChecker, typeRefs, referencedTypes) : "any",
-        optional: !!prop.questionToken,
-        description: ""
-      };
+      schema.properties[propName] = prop.type 
+        ? formatTypeReference(typeChecker.getTypeAtLocation(prop.type), typeChecker, typeRefs, referencedTypes)
+        : { type: 'any' };
+      
+      if (!prop.questionToken) {
+        required.push(propName);
+      }
     });
+  
+  if (required.length > 0) {
+    schema.required = required;
+  }
+  
+  return schema;
 }
 
 function getEnumMembers(enumDecl: ts.EnumDeclaration): any[] {

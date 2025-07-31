@@ -2,14 +2,12 @@
   "compilerOptions": {
     "target": "ES2020",
     "module": "ESNext",
-    "lib": [
-      "ESNext"
-    ],
+    "lib": ["ESNext"],
     "skipLibCheck": true,
     "moduleResolution": "bundler",
-    "strict": true
+    "strict": true,
+    "declaration": true,
+    "isolatedDeclarations": true
   },
-  "include": [
-    "src/**/*.ts"
-  ]
+  "include": ["src/**/*.ts"]
 }

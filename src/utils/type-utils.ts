@@ -122,10 +122,34 @@ export function collectReferencedTypes(
 
 export function isBuiltInType(name: string): boolean {
   const builtIns = [
-    'string', 'number', 'boolean', 'any', 'unknown', 'void', 
-    'undefined', 'null', 'never', 'object', 'Promise', 'Array',
-    'Map', 'Set', 'Date', 'RegExp', 'Error', 'Function',
-    'Uint8Array', 'ArrayBufferLike', 'ArrayBuffer', 'Uint8ArrayConstructor'
+    // Primitive types
+    'string', 'number', 'boolean', 'bigint', 'symbol',
+    'undefined', 'null',
+    
+    // Special types
+    'any', 'unknown', 'never', 'void', 'object',
+    
+    // Built-in objects and constructors
+    'Array', 'Promise', 'Map', 'Set', 'WeakMap', 'WeakSet',
+    'Date', 'RegExp', 'Error', 'Function',
+    'Object', 'String', 'Number', 'Boolean', 'BigInt', 'Symbol',
+    
+    // Typed arrays
+    'Uint8Array', 'Int8Array', 'Uint16Array', 'Int16Array',
+    'Uint32Array', 'Int32Array', 'Float32Array', 'Float64Array',
+    'BigInt64Array', 'BigUint64Array',
+    'Uint8ClampedArray',
+    
+    // Array buffer related
+    'ArrayBuffer', 'ArrayBufferLike', 'DataView',
+    'Uint8ArrayConstructor', 'ArrayBufferConstructor',
+    
+    // Other built-ins
+    'JSON', 'Math', 'Reflect', 'Proxy',
+    'Intl', 'globalThis',
+    
+    // Special internal types
+    '__type' // Anonymous types
   ];
   return builtIns.includes(name);
 }

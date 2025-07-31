@@ -1,32 +1,63 @@
 import { z } from "zod";
 
-// Type can be a string, a $ref object, or an inline type definition
-const typeRefSchema = z.union([
-  z.string(),
+// OpenAPI-style schema definition
+const schemaSchema: z.ZodSchema<any> = z.lazy(() => z.union([
+  // Primitive types
   z.object({
-    $ref: z.string(), // Reference to a type in the types array
+    type: z.enum(["string", "number", "boolean", "integer", "null", "array", "object"])
+  }),
+  // Reference
+  z.object({
+    $ref: z.string()
+  }),
+  // Array with items
+  z.object({
+    type: z.literal("array"),
+    items: schemaSchema.optional(),
+    description: z.string().optional()
+  }),
+  // Object with properties
+  z.object({
+    type: z.literal("object"),
+    properties: z.record(z.string(), schemaSchema).optional(),
+    required: z.array(z.string()).optional(),
+    description: z.string().optional(),
+    additionalProperties: z.union([z.boolean(), schemaSchema]).optional()
+  }),
+  // Composition schemas
+  z.object({
+    oneOf: z.array(schemaSchema),
+    description: z.string().optional()
   }),
   z.object({
-    name: z.string(),
-    kind: z.enum(["class", "interface", "type", "enum"]),
-    properties: z.array(
-      z.object({
-        name: z.string(),
-        type: z.string(),
-        optional: z.boolean().optional(),
-        description: z.string().optional(),
-      })
-    ).optional(),
-    members: z.array(
-      z.object({
-        name: z.string(),
-        value: z.union([z.string(), z.number()]).optional(),
-        description: z.string().optional(),
-      })
-    ).optional(),
-    type: z.string().optional(),
+    anyOf: z.array(schemaSchema),
+    description: z.string().optional()
+  }),
+  z.object({
+    allOf: z.array(schemaSchema),
+    description: z.string().optional()
+  }),
+  // Enum
+  z.object({
+    enum: z.array(z.union([z.string(), z.number(), z.null()])),
+    description: z.string().optional()
   })
-]);
+]));
+
+// Parameter following OpenAPI style
+const parameterSchema = z.object({
+  name: z.string(),
+  in: z.literal("query").optional(), // We could extend this later
+  required: z.boolean().optional(),
+  description: z.string().optional(),
+  schema: schemaSchema
+});
+
+// Return type with schema
+const returnTypeSchema = z.object({
+  schema: schemaSchema,
+  description: z.string().optional()
+});
 
 const classMemberSchema = z.object({
   id: z.string(),
@@ -36,21 +67,13 @@ const classMemberSchema = z.object({
   signatures: z
     .array(
       z.object({
-        parameters: z
-          .array(
-            z.object({
-              name: z.string(),
-              type: typeRefSchema.optional(),
-              optional: z.boolean().optional(),
-              description: z.string().optional(),
-            })
-          )
-          .optional(),
-        returnType: typeRefSchema.optional(),
+        parameters: z.array(parameterSchema).optional(),
+        returns: returnTypeSchema.optional(),
+        description: z.string().optional()
       })
     )
     .optional(),
-  type: typeRefSchema.optional(),
+  schema: schemaSchema.optional(), // For properties
   description: z.string().optional(),
   examples: z.array(z.string()).optional(),
   flags: z.record(z.string(), z.boolean()).optional(),
@@ -83,22 +106,14 @@ export const openPkgSchema = z.object({
       signatures: z
         .array(
           z.object({
-            parameters: z
-              .array(
-                z.object({
-                  name: z.string(),
-                  type: typeRefSchema.optional(),
-                  optional: z.boolean().optional(),
-                  description: z.string().optional(),
-                })
-              )
-              .optional(),
-            returnType: typeRefSchema.optional(),
+            parameters: z.array(parameterSchema).optional(),
+            returns: returnTypeSchema.optional(),
+            description: z.string().optional()
           })
         )
         .optional(),
       members: z.array(memberSchema).optional(),
-      type: typeRefSchema.optional(), // For variables/accessors
+      schema: schemaSchema.optional(), // For variables/constants
       description: z.string().optional(),
       examples: z.array(z.string()).optional(),
       source: z
@@ -108,7 +123,7 @@ export const openPkgSchema = z.object({
           url: z.string().optional(),
         })
         .optional(),
-      flags: z.record(z.string(), z.unknown()).optional(), // Changed to z.unknown() for flexibility
+      flags: z.record(z.string(), z.unknown()).optional(),
       tags: z.array(z.object({ 
         name: z.string(), 
         text: z.string() 
@@ -121,24 +136,8 @@ export const openPkgSchema = z.object({
       name: z.string(),
       kind: z.enum(["class", "interface", "type", "enum"]),
       description: z.string().optional(),
-      // For classes - constructor parameters define the shape
-      parameters: z.array(
-        z.object({
-          name: z.string(),
-          type: z.string(),
-          optional: z.boolean().optional(),
-          description: z.string().optional(),
-        })
-      ).optional(),
-      // For interfaces and type aliases - properties define the shape
-      properties: z.array(
-        z.object({
-          name: z.string(),
-          type: z.string(),
-          optional: z.boolean().optional(),
-          description: z.string().optional(),
-        })
-      ).optional(),
+      // Schema defines the shape of the type
+      schema: schemaSchema.optional(),
       // For enums - members with values
       members: z.array(
         z.object({
@@ -147,8 +146,6 @@ export const openPkgSchema = z.object({
           description: z.string().optional(),
         })
       ).optional(),
-      // For type aliases - the actual type definition
-      type: z.string().optional(),
       source: z.object({
         file: z.string().optional(),
         line: z.number().optional(),

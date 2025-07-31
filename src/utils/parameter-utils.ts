@@ -9,6 +9,60 @@ export interface StructuredProperty {
   optional?: boolean;
 }
 
+// Convert array of properties to OpenAPI-style object schema
+export function propertiesToSchema(
+  properties: StructuredProperty[],
+  description?: string
+): any {
+  const schema: any = {
+    type: 'object',
+    properties: {},
+  };
+  
+  const required: string[] = [];
+  
+  for (const prop of properties) {
+    const propType = prop.type;
+    // Convert the type to proper schema format
+    let propSchema: any;
+    
+    if (typeof propType === 'string') {
+      // Handle primitive types
+      if (['string', 'number', 'boolean', 'bigint', 'null'].includes(propType)) {
+        propSchema = { type: propType === 'bigint' ? 'string' : propType };
+      } else {
+        // Complex type string
+        propSchema = { type: propType };
+      }
+    } else if (propType && typeof propType === 'object') {
+      // Already a proper schema object ($ref, anyOf, etc.)
+      propSchema = propType;
+    } else {
+      propSchema = { type: 'any' };
+    }
+    
+    if (prop.description) {
+      propSchema.description = prop.description;
+    }
+    
+    schema.properties[prop.name] = propSchema;
+    
+    if (!prop.optional) {
+      required.push(prop.name);
+    }
+  }
+  
+  if (required.length > 0) {
+    schema.required = required;
+  }
+  
+  if (description) {
+    schema.description = description;
+  }
+  
+  return schema;
+}
+
 export interface TypeDefinition {
   properties?: Array<{
     name: string;
@@ -77,9 +131,18 @@ export function formatTypeReference(
   const typeString = typeChecker.typeToString(type);
   
   // Check if this is a primitive type
-  const primitives = ['string', 'number', 'boolean', 'any', 'unknown', 'void', 'undefined', 'null', 'never'];
+  const primitives = ['string', 'number', 'boolean', 'bigint', 'symbol', 'any', 'unknown', 'void', 'undefined', 'null', 'never'];
   if (primitives.includes(typeString)) {
-    return typeString;
+    // Convert to OpenAPI schema format
+    if (typeString === 'bigint') {
+      return { type: 'string', format: 'bigint' };
+    } else if (typeString === 'undefined' || typeString === 'null') {
+      return { type: 'null' };
+    } else if (typeString === 'void' || typeString === 'never') {
+      return { type: 'null' }; // Best approximation
+    } else {
+      return { type: typeString };
+    }
   }
   
   // Handle union types (e.g., "A | B | undefined")
@@ -89,12 +152,7 @@ export function formatTypeReference(
       formatTypeReference(t, typeChecker, typeRefs, referencedTypes)
     );
     
-    // If all parts are strings, join them
-    if (parts.every(p => typeof p === 'string')) {
-      return parts.join(' | ');
-    }
-    
-    // Otherwise, return as an anyOf array (OpenAPI style)
+    // Return as an anyOf array (OpenAPI style)
     return {
       anyOf: parts
     };
@@ -115,11 +173,18 @@ export function formatTypeReference(
       // Add to referenced types for potential collection
       if (referencedTypes && !isBuiltInType(symbolName)) {
         referencedTypes.add(symbolName);
+        return { $ref: `#/types/${symbolName}` };
       }
       
-      // For types not in our package, return the string to avoid broken refs
-      // This includes imported types from other packages
-      return symbolName;
+      // For built-in complex types
+      if (symbolName === 'Array') {
+        return { type: 'array' };
+      } else if (symbolName === 'Promise' || symbolName === 'Uint8Array') {
+        return { type: symbolName };
+      }
+      
+      // For types not in our package, still use $ref
+      return { $ref: `#/types/${symbolName}` };
     }
   }
   
@@ -127,9 +192,11 @@ export function formatTypeReference(
   if (type.isLiteral()) {
     // TypeScript returns string literals with quotes, so we need to parse them
     if (typeString.startsWith('"') && typeString.endsWith('"')) {
-      return typeString.slice(1, -1); // Remove surrounding quotes
+      const literalValue = typeString.slice(1, -1); // Remove surrounding quotes
+      return { enum: [literalValue] };
     }
-    return typeString;
+    // Number literal
+    return { enum: [Number(typeString)] };
   }
   
   // For complex types without symbols, parse the string to find references
@@ -143,7 +210,7 @@ export function formatTypeReference(
         return {
           anyOf: [
             { $ref: `#/types/${typeName}` },
-            'undefined'
+            { type: 'null' }
           ]
         };
       }
@@ -151,8 +218,8 @@ export function formatTypeReference(
     }
   }
   
-  // Default: return as string
-  return typeString;
+  // Default: return as complex type string
+  return { type: typeString };
 }
 
 
@@ -231,12 +298,12 @@ export function structureParameter(
       }
     }
     
+    const actualName = paramName === '__0' && functionDoc ? getActualParamName(functionDoc) : paramName;
     return {
-      name: paramName === '__0' && functionDoc ? getActualParamName(functionDoc) : paramName,
-      type: 'object',
-      properties,
-      optional: typeChecker.isOptionalParameter(paramDecl),
-      description: paramDoc?.description || ''
+      name: actualName,
+      required: !typeChecker.isOptionalParameter(paramDecl),
+      description: paramDoc?.description || '',
+      schema: propertiesToSchema(properties)
     };
   }
   
@@ -279,20 +346,62 @@ export function structureParameter(
     if (objectOptions.length > 0 && !hasNonObjectTypes) {
       return {
         name: paramName,
-        type: 'object',
-        oneOf: objectOptions,
-        optional: typeChecker.isOptionalParameter(paramDecl),
-        description: paramDoc?.description || ''
+        required: !typeChecker.isOptionalParameter(paramDecl),
+        description: paramDoc?.description || '',
+        schema: {
+          oneOf: objectOptions.map(opt => propertiesToSchema(opt.properties))
+        }
       };
     }
   }
   
+  // Check if this is an inline object type
+  const symbol = paramType.getSymbol();
+  if (symbol && symbol.getName() === '__type' && paramType.getProperties().length > 0) {
+    // This is an inline object literal
+    const properties: StructuredProperty[] = [];
+    
+    for (const prop of paramType.getProperties()) {
+      const propType = typeChecker.getTypeOfSymbolAtLocation(prop, prop.valueDeclaration!);
+      
+      properties.push({
+        name: prop.getName(),
+        type: formatTypeReference(propType, typeChecker, typeRefs, referencedTypes),
+        description: '',
+        optional: !!(prop.flags & ts.SymbolFlags.Optional)
+      });
+    }
+    
+    return {
+      name: paramName,
+      required: !typeChecker.isOptionalParameter(paramDecl),
+      description: paramDoc?.description || '',
+      schema: propertiesToSchema(properties)
+    };
+  }
+  
   // Handle regular parameters
+  const typeRef = formatTypeReference(paramType, typeChecker, typeRefs, referencedTypes);
+  let schema: any;
+  
+  if (typeof typeRef === 'string') {
+    // Primitive or simple type
+    if (['string', 'number', 'boolean', 'null', 'undefined', 'any', 'unknown', 'never', 'void'].includes(typeRef)) {
+      schema = { type: typeRef };
+    } else {
+      // Complex type string (e.g., "Array<string>", "Promise<T>")
+      schema = { type: typeRef };
+    }
+  } else {
+    // Already a schema object ($ref, anyOf, etc.)
+    schema = typeRef;
+  }
+  
   return {
     name: paramName,
-    type: formatTypeReference(paramType, typeChecker, typeRefs, referencedTypes),
-    optional: typeChecker.isOptionalParameter(paramDecl),
-    description: paramDoc?.description || ''
+    required: !typeChecker.isOptionalParameter(paramDecl),
+    description: paramDoc?.description || '',
+    schema
   };
 }
 
