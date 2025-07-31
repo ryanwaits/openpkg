@@ -240,10 +240,57 @@ export function structureParameter(
     };
   }
   
+  // Check if this is a union type with object literals
+  if (paramType.isUnion()) {
+    const unionType = paramType as ts.UnionType;
+    const objectOptions: any[] = [];
+    let hasNonObjectTypes = false;
+    
+    // Check each union member
+    for (const subType of unionType.types) {
+      const symbol = subType.getSymbol();
+      
+      // Check if this is an object literal
+      if (!symbol || symbol.getName() === '__type') {
+        const properties: StructuredProperty[] = [];
+        
+        // Extract properties from the object literal
+        for (const prop of subType.getProperties()) {
+          const propType = typeChecker.getTypeOfSymbolAtLocation(prop, prop.valueDeclaration!);
+          
+          properties.push({
+            name: prop.getName(),
+            type: formatTypeReference(propType, typeChecker, typeRefs, referencedTypes),
+            description: '',
+            optional: !!(prop.flags & ts.SymbolFlags.Optional)
+          });
+        }
+        
+        if (properties.length > 0) {
+          objectOptions.push({ properties });
+        }
+      } else {
+        // This is a named type, not an object literal
+        hasNonObjectTypes = true;
+      }
+    }
+    
+    // If all union members are object literals, structure with oneOf
+    if (objectOptions.length > 0 && !hasNonObjectTypes) {
+      return {
+        name: paramName,
+        type: 'object',
+        oneOf: objectOptions,
+        optional: typeChecker.isOptionalParameter(paramDecl),
+        description: paramDoc?.description || ''
+      };
+    }
+  }
+  
   // Handle regular parameters
   return {
     name: paramName,
-    type: formatTypeReference(paramType, typeChecker, typeRefs),
+    type: formatTypeReference(paramType, typeChecker, typeRefs, referencedTypes),
     optional: typeChecker.isOptionalParameter(paramDecl),
     description: paramDoc?.description || ''
   };
