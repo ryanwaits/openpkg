@@ -120,7 +120,7 @@ export function collectReferencedTypes(
   }
 }
 
-function isBuiltInType(name: string): boolean {
+export function isBuiltInType(name: string): boolean {
   const builtIns = [
     'string', 'number', 'boolean', 'any', 'unknown', 'void', 
     'undefined', 'null', 'never', 'object', 'Promise', 'Array',

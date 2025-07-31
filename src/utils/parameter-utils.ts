@@ -1,5 +1,6 @@
 import * as ts from 'typescript';
 import { ParsedJSDoc } from './tsdoc-utils';
+import { isBuiltInType } from './type-utils';
 
 export interface StructuredProperty {
   name: string;
@@ -46,7 +47,7 @@ export function parseIntersectionType(
           const propType = typeChecker.getTypeOfSymbolAtLocation(prop, prop.valueDeclaration!);
           properties.push({
             name: prop.getName(),
-            type: formatTypeReference(propType, typeChecker, typeRefs),
+            type: formatTypeReference(propType, typeChecker, typeRefs, referencedTypes),
             optional: !!(prop.flags & ts.SymbolFlags.Optional)
           });
         }
@@ -65,32 +66,95 @@ export function parseIntersectionType(
 
 /**
  * Format a type as either a string or a reference object
+ * Following OpenAPI standards: use $ref for all named types
  */
 export function formatTypeReference(
   type: ts.Type,
   typeChecker: ts.TypeChecker,
-  typeRefs: Map<string, string>
+  typeRefs: Map<string, string>,
+  referencedTypes?: Set<string>
 ): any {
   const typeString = typeChecker.typeToString(type);
   
-  // Check if this is a known type
-  const symbol = type.getSymbol();
-  if (symbol && typeRefs.has(symbol.getName())) {
-    return { $ref: `#/types/${typeRefs.get(symbol.getName())}` };
+  // Check if this is a primitive type
+  const primitives = ['string', 'number', 'boolean', 'any', 'unknown', 'void', 'undefined', 'null', 'never'];
+  if (primitives.includes(typeString)) {
+    return typeString;
   }
   
-  // Check for common patterns in type string
-  if (typeRefs.size > 0) {
-    for (const [typeName, typeId] of typeRefs.entries()) {
-      if (typeString === typeName || typeString.startsWith(typeName + '<')) {
-        return { $ref: `#/types/${typeId}` };
+  // Handle union types (e.g., "A | B | undefined")
+  if (type.isUnion()) {
+    const unionType = type as ts.UnionType;
+    const parts = unionType.types.map(t => 
+      formatTypeReference(t, typeChecker, typeRefs, referencedTypes)
+    );
+    
+    // If all parts are strings, join them
+    if (parts.every(p => typeof p === 'string')) {
+      return parts.join(' | ');
+    }
+    
+    // Otherwise, return as an anyOf array (OpenAPI style)
+    return {
+      anyOf: parts
+    };
+  }
+  
+  // Check if this is a known type
+  const symbol = type.getSymbol();
+  if (symbol) {
+    const symbolName = symbol.getName();
+    
+    // Skip anonymous types
+    if (symbolName !== '__type') {
+      // Check if this type is in our current package's types
+      if (typeRefs.has(symbolName)) {
+        return { $ref: `#/types/${symbolName}` };
       }
+      
+      // Add to referenced types for potential collection
+      if (referencedTypes && !isBuiltInType(symbolName)) {
+        referencedTypes.add(symbolName);
+      }
+      
+      // For types not in our package, return the string to avoid broken refs
+      // This includes imported types from other packages
+      return symbolName;
     }
   }
   
-  // Return as string for primitives and complex types
+  // Handle literal types (e.g., "mainnet")
+  if (type.isLiteral()) {
+    // TypeScript returns string literals with quotes, so we need to parse them
+    if (typeString.startsWith('"') && typeString.endsWith('"')) {
+      return typeString.slice(1, -1); // Remove surrounding quotes
+    }
+    return typeString;
+  }
+  
+  // For complex types without symbols, parse the string to find references
+  // This handles cases like "ClientOpts | undefined"
+  const typePattern = /^(\w+)(\s*\|\s*undefined)?$/;
+  const match = typeString.match(typePattern);
+  if (match) {
+    const [, typeName, hasUndefined] = match;
+    if (typeRefs.has(typeName) || !isBuiltInType(typeName)) {
+      if (hasUndefined) {
+        return {
+          anyOf: [
+            { $ref: `#/types/${typeName}` },
+            'undefined'
+          ]
+        };
+      }
+      return { $ref: `#/types/${typeName}` };
+    }
+  }
+  
+  // Default: return as string
   return typeString;
 }
+
 
 /**
  * Structure a parameter based on its type and TSDoc
@@ -102,7 +166,8 @@ export function structureParameter(
   typeChecker: ts.TypeChecker,
   typeRefs: Map<string, string>,
   functionDoc?: ParsedJSDoc | null,
-  paramDoc?: any
+  paramDoc?: any,
+  referencedTypes?: Set<string>
 ): any {
   const paramName = param.getName();
   
@@ -143,7 +208,7 @@ export function structureParameter(
           
           properties.push({
             name: prop.getName(),
-            type: formatTypeReference(propType, typeChecker, typeRefs),
+            type: formatTypeReference(propType, typeChecker, typeRefs, referencedTypes),
             description,
             optional: !!(prop.flags & ts.SymbolFlags.Optional)
           });
@@ -158,7 +223,7 @@ export function structureParameter(
           
           properties.push({
             name: prop.getName(),
-            type: formatTypeReference(propType, typeChecker, typeRefs),
+            type: formatTypeReference(propType, typeChecker, typeRefs, referencedTypes),
             description: '',
             optional: !!(prop.flags & ts.SymbolFlags.Optional)
           });

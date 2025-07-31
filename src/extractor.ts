@@ -14,7 +14,8 @@ import {
   getParameterDocumentation
 } from './utils/tsdoc-utils';
 import {
-  structureParameter
+  structureParameter,
+  formatTypeReference
 } from './utils/parameter-utils';
 
 export async function extractPackageSpec(entryFile: string, packageDir?: string): Promise<z.infer<typeof openPkgSchema>> {
@@ -296,42 +297,14 @@ function getSourceLocation(node: ts.Node): { file: string; line: number } {
 
 function typeToRef(node: ts.Node, typeChecker: ts.TypeChecker, typeRefs: Map<string, string>, referencedTypes?: Set<string>): any {
   const type = typeChecker.getTypeAtLocation(node);
-  const typeString = typeChecker.typeToString(type);
-  
-  // Check if this is a primitive type
-  if (['string', 'number', 'boolean', 'any', 'unknown', 'void', 'undefined', 'null', 'never'].includes(typeString)) {
-    return typeString;
-  }
   
   // Collect referenced types if provided
   if (referencedTypes) {
     collectReferencedTypes(type, typeChecker, referencedTypes);
   }
   
-  // Check if this is a known type by analyzing the type string
-  // This handles cases where the symbol might not be directly available
-  for (const [typeName, typeId] of typeRefs.entries()) {
-    if (typeString === typeName || typeString.startsWith(typeName + '<')) {
-      return { $ref: `#/types/${typeId}` };
-    }
-  }
-  
-  // Check if this is a known type via symbol
-  const symbol = type.getSymbol();
-  if (symbol) {
-    const symbolName = symbol.getName();
-    if (typeRefs.has(symbolName)) {
-      return { $ref: `#/types/${symbolName}` };
-    }
-    // Add to referenced types for later processing
-    if (referencedTypes && !isBuiltInType(symbolName)) {
-      referencedTypes.add(symbolName);
-      return { $ref: `#/types/${symbolName}` };
-    }
-  }
-  
-  // Otherwise return as string (for complex types, arrays, unions, etc.)
-  return typeString;
+  // Use the consistent formatTypeReference function
+  return formatTypeReference(type, typeChecker, typeRefs, referencedTypes);
 }
 
 function isBuiltInType(name: string): boolean {
@@ -379,7 +352,8 @@ function getFunctionSignatures(
         typeChecker,
         typeRefs,
         functionDoc,
-        paramDoc
+        paramDoc,
+        referencedTypes
       );
     }),
     returnType: signature.getReturnType() ? typeChecker.typeToString(signature.getReturnType()) : "void",
