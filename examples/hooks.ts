@@ -20,7 +20,7 @@ export type UseLocalStorageReturn<T> = [T, (value: T) => void, () => void];
 export function useLocalStorage<T>(
   key: string,
   initialValue: T,
-  options?: UseLocalStorageOptions
+  options?: UseLocalStorageOptions,
 ): UseLocalStorageReturn<T> {
   // Implementation would go here
   return [initialValue, () => {}, () => {}];
@@ -52,14 +52,14 @@ export interface FetchState<T> {
  */
 export function useFetch<T = any>(
   url: string,
-  options?: UseFetchOptions
+  options?: UseFetchOptions,
 ): FetchState<T> {
   // Implementation would go here
   return {
     data: null,
     loading: false,
     error: null,
-    refetch: () => {}
+    refetch: () => {},
   };
 }
 
@@ -106,7 +106,7 @@ export interface DebounceOptions {
 export function useDebounce<T>(
   value: T,
   delay: number,
-  options?: DebounceOptions
+  options?: DebounceOptions,
 ): T {
   // Implementation would go here
   return value;

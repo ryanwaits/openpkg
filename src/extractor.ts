@@ -1,15 +1,49 @@
 import * as ts from 'typescript';
 import * as path from 'path';
+import * as fs from 'fs';
 import { z } from 'zod';
 import { openPkgSchema } from './types/openpkg';
+import { 
+  extractTypeReferences, 
+  isDestructuredParameter, 
+  getDestructuredProperties,
+  collectReferencedTypes 
+} from './utils/type-utils';
+import {
+  parseJSDocComment,
+  getParameterDocumentation
+} from './utils/tsdoc-utils';
+import {
+  structureParameter
+} from './utils/parameter-utils';
 
-export function extractPackageSpec(entryFile: string): z.infer<typeof openPkgSchema> {
-  // Create program
-  const program = ts.createProgram([entryFile], {
+export async function extractPackageSpec(entryFile: string, packageDir?: string): Promise<z.infer<typeof openPkgSchema>> {
+  // Use package directory or derive from entry file
+  const baseDir = packageDir || path.dirname(entryFile);
+  
+  // Load project's tsconfig if available
+  const configPath = ts.findConfigFile(baseDir, ts.sys.fileExists, 'tsconfig.json');
+  let compilerOptions: ts.CompilerOptions = {
     target: ts.ScriptTarget.Latest,
     module: ts.ModuleKind.CommonJS,
     lib: ["lib.es2021.d.ts"],
-  });
+    allowJs: true,
+    declaration: true,
+    moduleResolution: ts.ModuleResolutionKind.NodeJs,
+  };
+
+  if (configPath) {
+    const configFile = ts.readConfigFile(configPath, ts.sys.readFile);
+    const parsedConfig = ts.parseJsonConfigFileContent(
+      configFile.config,
+      ts.sys,
+      path.dirname(configPath)
+    );
+    compilerOptions = { ...compilerOptions, ...parsedConfig.options };
+  }
+
+  // Create program with proper config
+  const program = ts.createProgram([entryFile], compilerOptions);
   
   const typeChecker = program.getTypeChecker();
   const sourceFile = program.getSourceFile(entryFile);
@@ -18,9 +52,11 @@ export function extractPackageSpec(entryFile: string): z.infer<typeof openPkgSch
     throw new Error(`Could not load ${entryFile}`);
   }
   
-  // Get package.json info
-  const packageJsonPath = findPackageJson(entryFile);
-  const packageJson = packageJsonPath ? require(packageJsonPath) : {};
+  // Get package.json info from package directory
+  const packageJsonPath = path.join(baseDir, 'package.json');
+  const packageJson = fs.existsSync(packageJsonPath) 
+    ? JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'))
+    : {};
   
   const spec: z.infer<typeof openPkgSchema> = {
     openpkg: "1.0.0",
@@ -38,6 +74,8 @@ export function extractPackageSpec(entryFile: string): z.infer<typeof openPkgSch
   
   // Track types we've seen
   const typeRefs = new Map<string, string>(); // typeName -> typeId
+  const typeDefinitions = new Map<string, any>(); // typeName -> type definition (to avoid duplicates)
+  const referencedTypes = new Set<string>(); // Track all types that are referenced
   let typeCounter = 0;
   
   // Get exports
@@ -45,7 +83,7 @@ export function extractPackageSpec(entryFile: string): z.infer<typeof openPkgSch
   if (moduleSymbol) {
     const exports = typeChecker.getExportsOfModule(moduleSymbol);
     
-    // First pass: collect all type names
+    // First pass: collect all exported type names
     for (const symbol of exports) {
       const declaration = symbol.valueDeclaration || symbol.declarations?.[0];
       if (!declaration) continue;
@@ -73,7 +111,7 @@ export function extractPackageSpec(entryFile: string): z.infer<typeof openPkgSch
           id,
           name,
           kind: "function",
-          signatures: getFunctionSignatures(declaration, typeChecker, typeRefs),
+          signatures: getFunctionSignatures(declaration, typeChecker, typeRefs, referencedTypes),
           description: getJSDocComment(symbol, typeChecker),
           source: getSourceLocation(declaration)
         });
@@ -86,15 +124,19 @@ export function extractPackageSpec(entryFile: string): z.infer<typeof openPkgSch
           source: getSourceLocation(declaration)
         });
         
-        // Add to types
-        spec.types.push({
-          id,
-          name,
-          kind: "class",
-          description: getJSDocComment(symbol, typeChecker),
-          source: getSourceLocation(declaration)
-        });
-        typeRefs.set(name, id);
+        // Add to types (avoid duplicates)
+        if (!typeDefinitions.has(name)) {
+          const typeDef = {
+            id,
+            name,
+            kind: "class" as const,
+            description: getJSDocComment(symbol, typeChecker),
+            source: getSourceLocation(declaration)
+          };
+          typeDefinitions.set(name, typeDef);
+          spec.types?.push(typeDef);
+          typeRefs.set(name, id);
+        }
       } else if (ts.isInterfaceDeclaration(declaration)) {
         spec.exports.push({
           id,
@@ -104,16 +146,20 @@ export function extractPackageSpec(entryFile: string): z.infer<typeof openPkgSch
           source: getSourceLocation(declaration)
         });
         
-        // Add to types with properties
-        spec.types.push({
-          id,
-          name,
-          kind: "interface",
-          properties: getInterfaceProperties(declaration, typeChecker, typeRefs),
-          description: getJSDocComment(symbol, typeChecker),
-          source: getSourceLocation(declaration)
-        });
-        typeRefs.set(name, id);
+        // Add to types with properties (avoid duplicates)
+        if (!typeDefinitions.has(name)) {
+          const typeDef = {
+            id,
+            name,
+            kind: "interface" as const,
+            properties: getInterfaceProperties(declaration, typeChecker, typeRefs, referencedTypes),
+            description: getJSDocComment(symbol, typeChecker),
+            source: getSourceLocation(declaration)
+          };
+          typeDefinitions.set(name, typeDef);
+          spec.types?.push(typeDef);
+          typeRefs.set(name, id);
+        }
       } else if (ts.isTypeAliasDeclaration(declaration)) {
         spec.exports.push({
           id,
@@ -124,16 +170,20 @@ export function extractPackageSpec(entryFile: string): z.infer<typeof openPkgSch
           source: getSourceLocation(declaration)
         });
         
-        // Add to types
-        spec.types.push({
-          id,
-          name,
-          kind: "type",
-          type: typeChecker.typeToString(typeChecker.getTypeAtLocation(declaration)),
-          description: getJSDocComment(symbol, typeChecker),
-          source: getSourceLocation(declaration)
-        });
-        typeRefs.set(name, id);
+        // Add to types (avoid duplicates)
+        if (!typeDefinitions.has(name)) {
+          const typeDef = {
+            id,
+            name,
+            kind: "type" as const,
+            type: typeChecker.typeToString(typeChecker.getTypeAtLocation(declaration)),
+            description: getJSDocComment(symbol, typeChecker),
+            source: getSourceLocation(declaration)
+          };
+          typeDefinitions.set(name, typeDef);
+          spec.types?.push(typeDef);
+          typeRefs.set(name, id);
+        }
       } else if (ts.isEnumDeclaration(declaration)) {
         spec.exports.push({
           id,
@@ -143,16 +193,20 @@ export function extractPackageSpec(entryFile: string): z.infer<typeof openPkgSch
           source: getSourceLocation(declaration)
         });
         
-        // Add to types with members
-        spec.types.push({
-          id,
-          name,
-          kind: "enum",
-          members: getEnumMembers(declaration),
-          description: getJSDocComment(symbol, typeChecker),
-          source: getSourceLocation(declaration)
-        });
-        typeRefs.set(name, id);
+        // Add to types with members (avoid duplicates)
+        if (!typeDefinitions.has(name)) {
+          const typeDef = {
+            id,
+            name,
+            kind: "enum" as const,
+            members: getEnumMembers(declaration),
+            description: getJSDocComment(symbol, typeChecker),
+            source: getSourceLocation(declaration)
+          };
+          typeDefinitions.set(name, typeDef);
+          spec.types?.push(typeDef);
+          typeRefs.set(name, id);
+        }
       } else if (ts.isVariableDeclaration(declaration)) {
         const type = typeChecker.getTypeAtLocation(declaration);
         spec.exports.push({
@@ -165,26 +219,66 @@ export function extractPackageSpec(entryFile: string): z.infer<typeof openPkgSch
         });
       }
     }
+    
+    // Third pass: Add referenced types that weren't directly exported
+    for (const typeName of referencedTypes) {
+      if (!typeRefs.has(typeName) && !typeDefinitions.has(typeName)) {
+        // Try to find this type in the program
+        const allSourceFiles = program.getSourceFiles();
+        
+        for (const file of allSourceFiles) {
+          // Skip node_modules and declaration files from other packages
+          if (file.fileName.includes('node_modules') || 
+              (file.fileName.endsWith('.d.ts') && !file.fileName.startsWith(baseDir))) {
+            continue;
+          }
+          
+          const fileSymbol = typeChecker.getSymbolAtLocation(file);
+          if (fileSymbol) {
+            const exports = typeChecker.getExportsOfModule(fileSymbol);
+            
+            for (const exportSymbol of exports) {
+              if (exportSymbol.getName() === typeName && !typeDefinitions.has(typeName)) {
+                const declaration = exportSymbol.valueDeclaration || exportSymbol.declarations?.[0];
+                if (!declaration) continue;
+                
+                if (ts.isInterfaceDeclaration(declaration)) {
+                  const typeDef = {
+                    id: typeName,
+                    name: typeName,
+                    kind: "interface" as const,
+                    properties: getInterfaceProperties(declaration, typeChecker, typeRefs, referencedTypes),
+                    description: getJSDocComment(exportSymbol, typeChecker),
+                    source: getSourceLocation(declaration)
+                  };
+                  typeDefinitions.set(typeName, typeDef);
+                  spec.types?.push(typeDef);
+                  typeRefs.set(typeName, typeName);
+                } else if (ts.isTypeAliasDeclaration(declaration)) {
+                  const typeDef = {
+                    id: typeName,
+                    name: typeName,
+                    kind: "type" as const,
+                    type: typeChecker.typeToString(typeChecker.getTypeAtLocation(declaration)),
+                    description: getJSDocComment(exportSymbol, typeChecker),
+                    source: getSourceLocation(declaration)
+                  };
+                  typeDefinitions.set(typeName, typeDef);
+                  spec.types?.push(typeDef);
+                  typeRefs.set(typeName, typeName);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
   }
   
   return spec;
 }
 
 // Helper functions
-
-function findPackageJson(startPath: string): string | null {
-  let currentPath = path.dirname(path.resolve(startPath));
-  
-  while (currentPath !== path.dirname(currentPath)) {
-    const packageJsonPath = path.join(currentPath, 'package.json');
-    if (require('fs').existsSync(packageJsonPath)) {
-      return packageJsonPath;
-    }
-    currentPath = path.dirname(currentPath);
-  }
-  
-  return null;
-}
 
 function getJSDocComment(symbol: ts.Symbol, typeChecker: ts.TypeChecker): string {
   const comments = symbol.getDocumentationComment(typeChecker);
@@ -200,13 +294,18 @@ function getSourceLocation(node: ts.Node): { file: string; line: number } {
   };
 }
 
-function typeToRef(node: ts.Node, typeChecker: ts.TypeChecker, typeRefs: Map<string, string>): any {
+function typeToRef(node: ts.Node, typeChecker: ts.TypeChecker, typeRefs: Map<string, string>, referencedTypes?: Set<string>): any {
   const type = typeChecker.getTypeAtLocation(node);
   const typeString = typeChecker.typeToString(type);
   
   // Check if this is a primitive type
-  if (['string', 'number', 'boolean', 'any', 'unknown', 'void', 'undefined', 'null'].includes(typeString)) {
+  if (['string', 'number', 'boolean', 'any', 'unknown', 'void', 'undefined', 'null', 'never'].includes(typeString)) {
     return typeString;
+  }
+  
+  // Collect referenced types if provided
+  if (referencedTypes) {
+    collectReferencedTypes(type, typeChecker, referencedTypes);
   }
   
   // Check if this is a known type by analyzing the type string
@@ -219,49 +318,96 @@ function typeToRef(node: ts.Node, typeChecker: ts.TypeChecker, typeRefs: Map<str
   
   // Check if this is a known type via symbol
   const symbol = type.getSymbol();
-  if (symbol && typeRefs.has(symbol.getName())) {
-    return { $ref: `#/types/${typeRefs.get(symbol.getName())}` };
+  if (symbol) {
+    const symbolName = symbol.getName();
+    if (typeRefs.has(symbolName)) {
+      return { $ref: `#/types/${symbolName}` };
+    }
+    // Add to referenced types for later processing
+    if (referencedTypes && !isBuiltInType(symbolName)) {
+      referencedTypes.add(symbolName);
+      return { $ref: `#/types/${symbolName}` };
+    }
   }
   
   // Otherwise return as string (for complex types, arrays, unions, etc.)
   return typeString;
 }
 
+function isBuiltInType(name: string): boolean {
+  const builtIns = [
+    'string', 'number', 'boolean', 'any', 'unknown', 'void', 
+    'undefined', 'null', 'never', 'object', 'Promise', 'Array',
+    'Map', 'Set', 'Date', 'RegExp', 'Error', 'Function',
+    'Uint8Array', 'ArrayBufferLike', 'ArrayBuffer', 'Uint8ArrayConstructor',
+    '__type' // Anonymous types
+  ];
+  return builtIns.includes(name);
+}
+
 function getFunctionSignatures(
   func: ts.FunctionDeclaration,
   typeChecker: ts.TypeChecker,
-  typeRefs: Map<string, string>
+  typeRefs: Map<string, string>,
+  referencedTypes?: Set<string>
 ): any[] {
   const signature = typeChecker.getSignatureFromDeclaration(func);
   if (!signature) return [];
   
+  // Get function documentation
+  const funcSymbol = typeChecker.getSymbolAtLocation(func.name || func);
+  const functionDoc = funcSymbol ? parseJSDocComment(funcSymbol, typeChecker) : null;
+  
   return [{
     parameters: signature.getParameters().map(param => {
       const paramDecl = param.valueDeclaration as ts.ParameterDeclaration;
-      return {
-        name: param.getName(),
-        type: typeToRef(paramDecl, typeChecker, typeRefs),
-        optional: typeChecker.isOptionalParameter(paramDecl),
-        description: getJSDocComment(param, typeChecker)
-      };
+      const paramType = typeChecker.getTypeAtLocation(paramDecl);
+      
+      // Collect referenced types from parameter
+      if (referencedTypes) {
+        collectReferencedTypes(paramType, typeChecker, referencedTypes);
+      }
+      
+      // Get parameter documentation from TSDoc
+      const paramDoc = getParameterDocumentation(param, paramDecl, typeChecker);
+      
+      // Use the new parameter structuring
+      return structureParameter(
+        param,
+        paramDecl,
+        paramType,
+        typeChecker,
+        typeRefs,
+        functionDoc,
+        paramDoc
+      );
     }),
-    returnType: signature.getReturnType() ? typeChecker.typeToString(signature.getReturnType()) : "void"
+    returnType: signature.getReturnType() ? typeChecker.typeToString(signature.getReturnType()) : "void",
+    description: functionDoc?.returns
   }];
 }
 
 function getInterfaceProperties(
   iface: ts.InterfaceDeclaration,
   typeChecker: ts.TypeChecker,
-  typeRefs: Map<string, string>
+  typeRefs: Map<string, string>,
+  referencedTypes?: Set<string>
 ): any[] {
   return iface.members
     .filter(ts.isPropertySignature)
-    .map(prop => ({
-      name: prop.name?.getText() || "",
-      type: prop.type ? typeToRef(prop.type, typeChecker, typeRefs) : "any",
-      optional: !!prop.questionToken,
-      description: ""
-    }));
+    .map(prop => {
+      if (prop.type && referencedTypes) {
+        const propType = typeChecker.getTypeAtLocation(prop.type);
+        collectReferencedTypes(propType, typeChecker, referencedTypes);
+      }
+      
+      return {
+        name: prop.name?.getText() || "",
+        type: prop.type ? typeToRef(prop.type, typeChecker, typeRefs, referencedTypes) : "any",
+        optional: !!prop.questionToken,
+        description: ""
+      };
+    });
 }
 
 function getEnumMembers(enumDecl: ts.EnumDeclaration): any[] {

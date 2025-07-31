@@ -27,7 +27,7 @@ export interface Rectangle {
 export enum MathConstants {
   PI = 3.14159,
   E = 2.71828,
-  GOLDEN_RATIO = 1.61803
+  GOLDEN_RATIO = 1.61803,
 }
 
 /**
@@ -55,7 +55,10 @@ export function area(rect: Rectangle): number {
  * Vector operations utility class
  */
 export class Vector {
-  constructor(public x: number, public y: number) {}
+  constructor(
+    public x: number,
+    public y: number,
+  ) {}
 
   /**
    * Adds another vector to this one
@@ -98,4 +101,7 @@ export const ORIGIN: Point = { x: 0, y: 0 };
 /**
  * Identity matrix
  */
-export const IDENTITY_MATRIX: Matrix2D = [[1, 0], [0, 1]];
+export const IDENTITY_MATRIX: Matrix2D = [
+  [1, 0],
+  [0, 1],
+];
