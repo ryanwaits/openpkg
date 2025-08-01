@@ -103,24 +103,62 @@ program
   .command('analyze <url>')
   .description('Analyze TypeScript code from a URL (Studio feature)')
   .option('-o, --output <file>', 'Output file for OpenPkg spec', 'openpkg.json')
-  .option('--imports', 'Show import analysis only')
-  .option('--verbose', 'Show detailed summary')
-  .option('--debug', 'Show debug output')
+  .option('--show <items>', 'What to display: spec (default), imports, summary, debug (comma-separated)', 'spec')
+  .option('--follow <items>', 'What to follow: imports (comma-separated)')
+  .option('--max-depth <depth>', 'Maximum depth for import resolution', '5')
   .action(async (url, options) => {
     try {
+      // Parse comma-separated values
+      const showItems = options.show.split(',').map((s: string) => s.trim());
+      const followItems = options.follow ? options.follow.split(',').map((s: string) => s.trim()) : [];
+      
+      // Validate show items
+      const validShowItems = ['spec', 'imports', 'summary', 'debug'];
+      const invalidShow = showItems.filter(item => !validShowItems.includes(item));
+      if (invalidShow.length > 0) {
+        console.error(chalk.red(`Invalid --show values: ${invalidShow.join(', ')}`));
+        console.log(chalk.gray(`Valid options: ${validShowItems.join(', ')}`));
+        process.exit(1);
+      }
+      
+      // Validate follow items
+      const validFollowItems = ['imports'];
+      const invalidFollow = followItems.filter(item => !validFollowItems.includes(item));
+      if (invalidFollow.length > 0) {
+        console.error(chalk.red(`Invalid --follow values: ${invalidFollow.join(', ')}`));
+        console.log(chalk.gray(`Valid options: ${validFollowItems.join(', ')}`));
+        process.exit(1);
+      }
+      
       // Check if user is authenticated (for now, just warn)
       console.warn(chalk.yellow('⚠️  You are not authenticated with OpenPkg Studio. Some features may be limited.'));
       
       const spinner = ora(`Fetching ${path.basename(url)}...`).start();
       
       try {
+        // Build request body with options
+        const requestBody: any = { source: url };
+        
+        // Add options if specified
+        if (followItems.includes('imports') || options.maxDepth !== '5') {
+          requestBody.options = {};
+          
+          if (followItems.includes('imports')) {
+            requestBody.options.followImports = true;
+          }
+          
+          if (options.maxDepth !== '5') {
+            requestBody.options.maxDepth = parseInt(options.maxDepth, 10);
+          }
+        }
+        
         // Call Studio API
         const response = await fetch('http://localhost:3000/api/analyze', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ source: url }),
+          body: JSON.stringify(requestBody),
         });
         
         const data = await response.json();
@@ -161,8 +199,35 @@ program
         
         spinner.succeed(`Fetched ${path.basename(url)}`);
         
-        // Handle imports-only display
-        if (options.imports) {
+        // Show dependency graph if imports were followed
+        if (followItems.includes('imports') && data.metadata?.dependencyGraph) {
+          const graph = data.metadata.dependencyGraph;
+          console.log();
+          console.log(chalk.bold('Dependency Graph:'));
+          console.log(chalk.gray(`├── Total files: ${graph.totalFiles}`));
+          console.log(chalk.gray(`├── Analyzed: ${graph.analyzedFiles}`));
+          if (graph.errorFiles > 0) {
+            console.log(chalk.yellow(`├── Errors: ${graph.errorFiles}`));
+          }
+          console.log(chalk.gray(`├── Total imports: ${graph.totalImports}`));
+          console.log(chalk.gray(`└── Max depth reached: ${graph.maxDepth}`));
+          
+          // Show fetched files if showing summary
+          if (showItems.includes('summary') && data.files) {
+            console.log();
+            console.log(chalk.bold('Files analyzed:'));
+            const fileUrls = Object.keys(data.files);
+            fileUrls.forEach((fileUrl, index) => {
+              const isLast = index === fileUrls.length - 1;
+              const fileName = path.basename(fileUrl);
+              console.log(`${isLast ? '└──' : '├──'} ${fileName}`);
+            });
+          }
+          console.log();
+        }
+        
+        // Handle imports display
+        if (showItems.includes('imports')) {
           // Check for parse errors first
           if (data.parseErrors && data.parseErrors.length > 0) {
             console.warn(chalk.yellow('\n⚠️  Parse errors detected:\n'));
@@ -253,8 +318,11 @@ program
           } else {
             console.log(chalk.gray('No imports found'));
           }
-        } else {
-          // Default behavior: generate and save OpenPkg spec
+        }
+        
+        // Handle spec display and saving
+        if (showItems.includes('spec')) {
+          // Generate and save OpenPkg spec
           if (data.spec) {
             const parseSpinner = ora('Parsing TypeScript...').start();
             parseSpinner.succeed();
@@ -297,8 +365,8 @@ program
             console.log(`- ${typeCount} type${typeCount !== 1 ? 's' : ''} defined`);
             console.log(chalk.gray(`- File analyzed in ${data.metadata.duration}ms`));
             
-            // Show detailed summary if verbose
-            if (options.verbose && (exportCount > 0 || typeCount > 0)) {
+            // Show detailed summary if requested
+            if (showItems.includes('summary') && (exportCount > 0 || typeCount > 0)) {
               console.log();
               
               if (exportCount > 0) {
@@ -363,13 +431,17 @@ program
           }
         }
         
-        if (options.debug) {
+        if (showItems.includes('debug')) {
           console.log(chalk.gray('\nDebug info:'));
           console.log(chalk.gray(`Files analyzed: ${data.metadata.filesAnalyzed}`));
           console.log(chalk.gray(`Duration: ${data.metadata.duration}ms`));
           console.log(chalk.gray(`Cached: ${data.metadata.cached}`));
           if (data.spec) {
             console.log(chalk.gray(`Spec version: ${data.spec.openpkg}`));
+          }
+          if (followItems.includes('imports') && data.metadata.dependencyGraph) {
+            console.log(chalk.gray('\nDependency resolution:'));
+            console.log(chalk.gray(JSON.stringify(data.metadata.dependencyGraph, null, 2)));
           }
           console.log();
         }

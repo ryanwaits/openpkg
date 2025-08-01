@@ -27,7 +27,215 @@
           ],
           "returns": {
             "schema": {
-              "$ref": "#/types/__object"
+              "type": "object",
+              "properties": {
+                "chats": {
+                  "type": "object",
+                  "properties": {
+                    "create": {
+                      "$ref": "#/types/create"
+                    },
+                    "find": {
+                      "$ref": "#/types/find"
+                    },
+                    "init": {
+                      "$ref": "#/types/init"
+                    },
+                    "delete": {
+                      "$ref": "#/types/delete"
+                    },
+                    "getById": {
+                      "$ref": "#/types/getById"
+                    },
+                    "update": {
+                      "$ref": "#/types/update"
+                    },
+                    "favorite": {
+                      "$ref": "#/types/favorite"
+                    },
+                    "fork": {
+                      "$ref": "#/types/fork"
+                    },
+                    "sendMessage": {
+                      "$ref": "#/types/sendMessage"
+                    },
+                    "resume": {
+                      "$ref": "#/types/resume"
+                    }
+                  },
+                  "required": [
+                    "create",
+                    "find",
+                    "init",
+                    "delete",
+                    "getById",
+                    "update",
+                    "favorite",
+                    "fork",
+                    "sendMessage",
+                    "resume"
+                  ]
+                },
+                "projects": {
+                  "type": "object",
+                  "properties": {
+                    "getByChatId": {
+                      "$ref": "#/types/getByChatId"
+                    },
+                    "find": {
+                      "$ref": "#/types/find"
+                    },
+                    "create": {
+                      "$ref": "#/types/create"
+                    },
+                    "getById": {
+                      "$ref": "#/types/getById"
+                    },
+                    "assign": {
+                      "$ref": "#/types/assign"
+                    }
+                  },
+                  "required": [
+                    "getByChatId",
+                    "find",
+                    "create",
+                    "getById",
+                    "assign"
+                  ]
+                },
+                "deployments": {
+                  "type": "object",
+                  "properties": {
+                    "find": {
+                      "$ref": "#/types/find"
+                    },
+                    "create": {
+                      "$ref": "#/types/create"
+                    },
+                    "getById": {
+                      "$ref": "#/types/getById"
+                    },
+                    "delete": {
+                      "$ref": "#/types/delete"
+                    },
+                    "findLogs": {
+                      "$ref": "#/types/findLogs"
+                    },
+                    "findErrors": {
+                      "$ref": "#/types/findErrors"
+                    }
+                  },
+                  "required": [
+                    "find",
+                    "create",
+                    "getById",
+                    "delete",
+                    "findLogs",
+                    "findErrors"
+                  ]
+                },
+                "hooks": {
+                  "type": "object",
+                  "properties": {
+                    "find": {
+                      "$ref": "#/types/find"
+                    },
+                    "create": {
+                      "$ref": "#/types/create"
+                    },
+                    "getById": {
+                      "$ref": "#/types/getById"
+                    },
+                    "update": {
+                      "$ref": "#/types/update"
+                    },
+                    "delete": {
+                      "$ref": "#/types/delete"
+                    }
+                  },
+                  "required": [
+                    "find",
+                    "create",
+                    "getById",
+                    "update",
+                    "delete"
+                  ]
+                },
+                "integrations": {
+                  "type": "object",
+                  "properties": {
+                    "vercel": {
+                      "type": "object",
+                      "properties": {
+                        "projects": {
+                          "type": "object",
+                          "properties": {
+                            "find": {
+                              "$ref": "#/types/find"
+                            },
+                            "create": {
+                              "$ref": "#/types/create"
+                            }
+                          },
+                          "required": [
+                            "find",
+                            "create"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "projects"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "vercel"
+                  ]
+                },
+                "rateLimits": {
+                  "type": "object",
+                  "properties": {
+                    "find": {
+                      "$ref": "#/types/find"
+                    }
+                  },
+                  "required": [
+                    "find"
+                  ]
+                },
+                "user": {
+                  "type": "object",
+                  "properties": {
+                    "get": {
+                      "$ref": "#/types/get"
+                    },
+                    "getBilling": {
+                      "$ref": "#/types/getBilling"
+                    },
+                    "getPlan": {
+                      "$ref": "#/types/getPlan"
+                    },
+                    "getScopes": {
+                      "$ref": "#/types/getScopes"
+                    }
+                  },
+                  "required": [
+                    "get",
+                    "getBilling",
+                    "getPlan",
+                    "getScopes"
+                  ]
+                }
+              },
+              "required": [
+                "chats",
+                "projects",
+                "deployments",
+                "hooks",
+                "integrations",
+                "rateLimits",
+                "user"
+              ]
             },
             "description": ""
           }
@@ -44,7 +252,171 @@
       "name": "ChatDetail",
       "kind": "type",
       "type": {
-        "$ref": "#/types/ChatDetail"
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "object": {
+            "enum": [
+              "chat"
+            ]
+          },
+          "shareable": {
+            "type": "boolean"
+          },
+          "privacy": {
+            "anyOf": [
+              {
+                "enum": [
+                  "public"
+                ]
+              },
+              {
+                "enum": [
+                  "private"
+                ]
+              },
+              {
+                "enum": [
+                  "team"
+                ]
+              },
+              {
+                "enum": [
+                  "team-edit"
+                ]
+              },
+              {
+                "enum": [
+                  "unlisted"
+                ]
+              }
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          },
+          "favorite": {
+            "type": "boolean"
+          },
+          "authorId": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "latestVersion": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "object": {
+                "enum": [
+                  "version"
+                ]
+              },
+              "status": {
+                "anyOf": [
+                  {
+                    "enum": [
+                      "pending"
+                    ]
+                  },
+                  {
+                    "enum": [
+                      "completed"
+                    ]
+                  },
+                  {
+                    "enum": [
+                      "failed"
+                    ]
+                  }
+                ]
+              },
+              "demoUrl": {
+                "type": "string"
+              },
+              "files": {
+                "type": "array"
+              }
+            },
+            "required": [
+              "id",
+              "object",
+              "status",
+              "files"
+            ]
+          },
+          "url": {
+            "type": "string"
+          },
+          "messages": {
+            "type": "array"
+          },
+          "files": {
+            "type": "array"
+          },
+          "demo": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "modelConfiguration": {
+            "type": "object",
+            "properties": {
+              "modelId": {
+                "anyOf": [
+                  {
+                    "enum": [
+                      "v0-1.5-sm"
+                    ]
+                  },
+                  {
+                    "enum": [
+                      "v0-1.5-md"
+                    ]
+                  },
+                  {
+                    "enum": [
+                      "v0-1.5-lg"
+                    ]
+                  }
+                ]
+              },
+              "imageGenerations": {
+                "type": "boolean"
+              },
+              "thinking": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "modelId"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "object",
+          "shareable",
+          "privacy",
+          "favorite",
+          "authorId",
+          "url",
+          "messages",
+          "text",
+          "modelConfiguration"
+        ]
       },
       "description": "",
       "source": {
@@ -57,7 +429,115 @@
       "name": "ChatSummary",
       "kind": "type",
       "type": {
-        "$ref": "#/types/ChatSummary"
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "object": {
+            "enum": [
+              "chat"
+            ]
+          },
+          "shareable": {
+            "type": "boolean"
+          },
+          "privacy": {
+            "anyOf": [
+              {
+                "enum": [
+                  "public"
+                ]
+              },
+              {
+                "enum": [
+                  "private"
+                ]
+              },
+              {
+                "enum": [
+                  "team"
+                ]
+              },
+              {
+                "enum": [
+                  "team-edit"
+                ]
+              },
+              {
+                "enum": [
+                  "unlisted"
+                ]
+              }
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          },
+          "favorite": {
+            "type": "boolean"
+          },
+          "authorId": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "latestVersion": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "object": {
+                "enum": [
+                  "version"
+                ]
+              },
+              "status": {
+                "anyOf": [
+                  {
+                    "enum": [
+                      "pending"
+                    ]
+                  },
+                  {
+                    "enum": [
+                      "completed"
+                    ]
+                  },
+                  {
+                    "enum": [
+                      "failed"
+                    ]
+                  }
+                ]
+              },
+              "demoUrl": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "object",
+              "status"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "object",
+          "shareable",
+          "privacy",
+          "favorite",
+          "authorId"
+        ]
       },
       "description": "",
       "source": {
@@ -110,7 +590,39 @@
       "name": "HookDetail",
       "kind": "type",
       "type": {
-        "$ref": "#/types/HookDetail"
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "object": {
+            "enum": [
+              "hook"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "events": {
+            "type": "array"
+          },
+          "chatId": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "object",
+          "name",
+          "events",
+          "url"
+        ]
       },
       "description": "",
       "source": {
@@ -123,7 +635,94 @@
       "name": "HookEventDetail",
       "kind": "type",
       "type": {
-        "$ref": "#/types/HookEventDetail"
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "object": {
+            "enum": [
+              "hookEvent"
+            ]
+          },
+          "event": {
+            "anyOf": [
+              {
+                "enum": [
+                  "chat.created"
+                ]
+              },
+              {
+                "enum": [
+                  "chat.updated"
+                ]
+              },
+              {
+                "enum": [
+                  "chat.deleted"
+                ]
+              },
+              {
+                "enum": [
+                  "message.created"
+                ]
+              },
+              {
+                "enum": [
+                  "message.updated"
+                ]
+              },
+              {
+                "enum": [
+                  "message.deleted"
+                ]
+              },
+              {
+                "enum": [
+                  "project.created"
+                ]
+              },
+              {
+                "enum": [
+                  "project.updated"
+                ]
+              },
+              {
+                "enum": [
+                  "project.deleted"
+                ]
+              }
+            ]
+          },
+          "status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "pending"
+                ]
+              },
+              {
+                "enum": [
+                  "success"
+                ]
+              },
+              {
+                "enum": [
+                  "error"
+                ]
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "object",
+          "event",
+          "createdAt"
+        ]
       },
       "description": "",
       "source": {
@@ -146,7 +745,74 @@
       "name": "MessageDetail",
       "kind": "type",
       "type": {
-        "$ref": "#/types/MessageDetail"
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "object": {
+            "enum": [
+              "message"
+            ]
+          },
+          "chatId": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "files": {
+            "type": "array"
+          },
+          "demo": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "modelConfiguration": {
+            "type": "object",
+            "properties": {
+              "modelId": {
+                "anyOf": [
+                  {
+                    "enum": [
+                      "v0-1.5-sm"
+                    ]
+                  },
+                  {
+                    "enum": [
+                      "v0-1.5-md"
+                    ]
+                  },
+                  {
+                    "enum": [
+                      "v0-1.5-lg"
+                    ]
+                  }
+                ]
+              },
+              "imageGenerations": {
+                "type": "boolean"
+              },
+              "thinking": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "modelId"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "object",
+          "chatId",
+          "url",
+          "files",
+          "text",
+          "modelConfiguration"
+        ]
       },
       "description": "",
       "source": {
@@ -159,7 +825,129 @@
       "name": "MessageSummary",
       "kind": "type",
       "type": {
-        "$ref": "#/types/MessageSummary"
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "object": {
+            "enum": [
+              "message"
+            ]
+          },
+          "content": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "type": {
+            "anyOf": [
+              {
+                "enum": [
+                  "message"
+                ]
+              },
+              {
+                "enum": [
+                  "forked-block"
+                ]
+              },
+              {
+                "enum": [
+                  "forked-chat"
+                ]
+              },
+              {
+                "enum": [
+                  "open-in-v0"
+                ]
+              },
+              {
+                "enum": [
+                  "refinement"
+                ]
+              },
+              {
+                "enum": [
+                  "added-environment-variables"
+                ]
+              },
+              {
+                "enum": [
+                  "added-integration"
+                ]
+              },
+              {
+                "enum": [
+                  "deleted-file"
+                ]
+              },
+              {
+                "enum": [
+                  "moved-file"
+                ]
+              },
+              {
+                "enum": [
+                  "renamed-file"
+                ]
+              },
+              {
+                "enum": [
+                  "edited-file"
+                ]
+              },
+              {
+                "enum": [
+                  "replace-src"
+                ]
+              },
+              {
+                "enum": [
+                  "reverted-block"
+                ]
+              },
+              {
+                "enum": [
+                  "fix-with-v0"
+                ]
+              },
+              {
+                "enum": [
+                  "auto-fix-with-v0"
+                ]
+              },
+              {
+                "enum": [
+                  "sync-git"
+                ]
+              }
+            ]
+          },
+          "role": {
+            "anyOf": [
+              {
+                "enum": [
+                  "user"
+                ]
+              },
+              {
+                "enum": [
+                  "assistant"
+                ]
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "object",
+          "content",
+          "createdAt",
+          "type",
+          "role"
+        ]
       },
       "description": "",
       "source": {
@@ -172,7 +960,47 @@
       "name": "ProjectDetail",
       "kind": "type",
       "type": {
-        "$ref": "#/types/ProjectDetail"
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "object": {
+            "enum": [
+              "project"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "vercelProjectId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          },
+          "apiUrl": {
+            "type": "string"
+          },
+          "webUrl": {
+            "type": "string"
+          },
+          "chats": {
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "object",
+          "name",
+          "createdAt",
+          "apiUrl",
+          "webUrl",
+          "chats"
+        ]
       },
       "description": "",
       "source": {
@@ -205,7 +1033,42 @@
       "name": "SearchResultItem",
       "kind": "type",
       "type": {
-        "$ref": "#/types/SearchResultItem"
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "object": {
+            "anyOf": [
+              {
+                "enum": [
+                  "chat"
+                ]
+              },
+              {
+                "enum": [
+                  "project"
+                ]
+              }
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "apiUrl": {
+            "type": "string"
+          },
+          "webUrl": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "object",
+          "name",
+          "apiUrl",
+          "webUrl"
+        ]
       },
       "description": "",
       "source": {
@@ -238,7 +1101,48 @@
       "name": "VersionDetail",
       "kind": "type",
       "type": {
-        "$ref": "#/types/VersionDetail"
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "object": {
+            "enum": [
+              "version"
+            ]
+          },
+          "status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "pending"
+                ]
+              },
+              {
+                "enum": [
+                  "completed"
+                ]
+              },
+              {
+                "enum": [
+                  "failed"
+                ]
+              }
+            ]
+          },
+          "demoUrl": {
+            "type": "string"
+          },
+          "files": {
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "object",
+          "status",
+          "files"
+        ]
       },
       "description": "",
       "source": {
@@ -251,7 +1155,44 @@
       "name": "VersionSummary",
       "kind": "type",
       "type": {
-        "$ref": "#/types/VersionSummary"
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "object": {
+            "enum": [
+              "version"
+            ]
+          },
+          "status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "pending"
+                ]
+              },
+              {
+                "enum": [
+                  "completed"
+                ]
+              },
+              {
+                "enum": [
+                  "failed"
+                ]
+              }
+            ]
+          },
+          "demoUrl": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "object",
+          "status"
+        ]
       },
       "description": "",
       "source": {
@@ -274,7 +1215,171 @@
       "name": "ChatsCreateResponse",
       "kind": "type",
       "type": {
-        "$ref": "#/types/ChatDetail"
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "object": {
+            "enum": [
+              "chat"
+            ]
+          },
+          "shareable": {
+            "type": "boolean"
+          },
+          "privacy": {
+            "anyOf": [
+              {
+                "enum": [
+                  "public"
+                ]
+              },
+              {
+                "enum": [
+                  "private"
+                ]
+              },
+              {
+                "enum": [
+                  "team"
+                ]
+              },
+              {
+                "enum": [
+                  "team-edit"
+                ]
+              },
+              {
+                "enum": [
+                  "unlisted"
+                ]
+              }
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          },
+          "favorite": {
+            "type": "boolean"
+          },
+          "authorId": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "latestVersion": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "object": {
+                "enum": [
+                  "version"
+                ]
+              },
+              "status": {
+                "anyOf": [
+                  {
+                    "enum": [
+                      "pending"
+                    ]
+                  },
+                  {
+                    "enum": [
+                      "completed"
+                    ]
+                  },
+                  {
+                    "enum": [
+                      "failed"
+                    ]
+                  }
+                ]
+              },
+              "demoUrl": {
+                "type": "string"
+              },
+              "files": {
+                "type": "array"
+              }
+            },
+            "required": [
+              "id",
+              "object",
+              "status",
+              "files"
+            ]
+          },
+          "url": {
+            "type": "string"
+          },
+          "messages": {
+            "type": "array"
+          },
+          "files": {
+            "type": "array"
+          },
+          "demo": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "modelConfiguration": {
+            "type": "object",
+            "properties": {
+              "modelId": {
+                "anyOf": [
+                  {
+                    "enum": [
+                      "v0-1.5-sm"
+                    ]
+                  },
+                  {
+                    "enum": [
+                      "v0-1.5-md"
+                    ]
+                  },
+                  {
+                    "enum": [
+                      "v0-1.5-lg"
+                    ]
+                  }
+                ]
+              },
+              "imageGenerations": {
+                "type": "boolean"
+              },
+              "thinking": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "modelId"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "object",
+          "shareable",
+          "privacy",
+          "favorite",
+          "authorId",
+          "url",
+          "messages",
+          "text",
+          "modelConfiguration"
+        ]
       },
       "description": "",
       "source": {
@@ -299,16 +1404,16 @@
       "type": {
         "anyOf": [
           {
-            "type": "{ name?: string; chatPrivacy?: \"public\" | \"private\" | \"team-edit\" | \"team\" | \"unlisted\"; projectId?: string; } & { type: \"files\"; files: ({ name: string; url: string; content?: never; } | { name: string; content: string; url?: never; })[]; repo?: never; registry?: never; zip?: never; }"
+            "type": "{ name?: string; chatPrivacy?: \"public\" | \"private\" | \"team\" | \"team-edit\" | \"unlisted\"; projectId?: string; } & { type: \"files\"; files: ({ name: string; url: string; content?: never; } | { name: string; content: string; url?: never; })[]; repo?: never; registry?: never; zip?: never; }"
           },
           {
-            "type": "{ name?: string; chatPrivacy?: \"public\" | \"private\" | \"team-edit\" | \"team\" | \"unlisted\"; projectId?: string; } & { type: \"repo\"; repo: { url: string; branch?: string; }; files?: never; registry?: never; zip?: never; }"
+            "type": "{ name?: string; chatPrivacy?: \"public\" | \"private\" | \"team\" | \"team-edit\" | \"unlisted\"; projectId?: string; } & { type: \"repo\"; repo: { url: string; branch?: string; }; files?: never; registry?: never; zip?: never; }"
           },
           {
-            "type": "{ name?: string; chatPrivacy?: \"public\" | \"private\" | \"team-edit\" | \"team\" | \"unlisted\"; projectId?: string; } & { type: \"registry\"; registry: { url: string; }; files?: never; repo?: never; zip?: never; }"
+            "type": "{ name?: string; chatPrivacy?: \"public\" | \"private\" | \"team\" | \"team-edit\" | \"unlisted\"; projectId?: string; } & { type: \"registry\"; registry: { url: string; }; files?: never; repo?: never; zip?: never; }"
           },
           {
-            "type": "{ name?: string; chatPrivacy?: \"public\" | \"private\" | \"team-edit\" | \"team\" | \"unlisted\"; projectId?: string; } & { type: \"zip\"; zip: { url: string; }; files?: never; repo?: never; registry?: never; }"
+            "type": "{ name?: string; chatPrivacy?: \"public\" | \"private\" | \"team\" | \"team-edit\" | \"unlisted\"; projectId?: string; } & { type: \"zip\"; zip: { url: string; }; files?: never; repo?: never; registry?: never; }"
           }
         ]
       },
@@ -323,7 +1428,137 @@
       "name": "ChatsInitResponse",
       "kind": "type",
       "type": {
-        "$ref": "#/types/ChatsInitResponse"
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "object": {
+            "enum": [
+              "chat"
+            ]
+          },
+          "shareable": {
+            "type": "boolean"
+          },
+          "privacy": {
+            "anyOf": [
+              {
+                "enum": [
+                  "public"
+                ]
+              },
+              {
+                "enum": [
+                  "private"
+                ]
+              },
+              {
+                "enum": [
+                  "team"
+                ]
+              },
+              {
+                "enum": [
+                  "team-edit"
+                ]
+              },
+              {
+                "enum": [
+                  "unlisted"
+                ]
+              }
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          },
+          "favorite": {
+            "type": "boolean"
+          },
+          "authorId": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "latestVersion": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "object": {
+                "enum": [
+                  "version"
+                ]
+              },
+              "status": {
+                "anyOf": [
+                  {
+                    "enum": [
+                      "pending"
+                    ]
+                  },
+                  {
+                    "enum": [
+                      "completed"
+                    ]
+                  },
+                  {
+                    "enum": [
+                      "failed"
+                    ]
+                  }
+                ]
+              },
+              "demoUrl": {
+                "type": "string"
+              },
+              "files": {
+                "type": "array"
+              }
+            },
+            "required": [
+              "id",
+              "object",
+              "status",
+              "files"
+            ]
+          },
+          "url": {
+            "type": "string"
+          },
+          "messages": {
+            "type": "array"
+          },
+          "files": {
+            "type": "array"
+          },
+          "demo": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "object",
+          "shareable",
+          "privacy",
+          "favorite",
+          "authorId",
+          "url",
+          "messages",
+          "text"
+        ]
       },
       "description": "",
       "source": {
@@ -346,7 +1581,137 @@
       "name": "ChatsGetByIdResponse",
       "kind": "type",
       "type": {
-        "$ref": "#/types/ChatsGetByIdResponse"
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "object": {
+            "enum": [
+              "chat"
+            ]
+          },
+          "shareable": {
+            "type": "boolean"
+          },
+          "privacy": {
+            "anyOf": [
+              {
+                "enum": [
+                  "public"
+                ]
+              },
+              {
+                "enum": [
+                  "private"
+                ]
+              },
+              {
+                "enum": [
+                  "team"
+                ]
+              },
+              {
+                "enum": [
+                  "team-edit"
+                ]
+              },
+              {
+                "enum": [
+                  "unlisted"
+                ]
+              }
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          },
+          "favorite": {
+            "type": "boolean"
+          },
+          "authorId": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "latestVersion": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "object": {
+                "enum": [
+                  "version"
+                ]
+              },
+              "status": {
+                "anyOf": [
+                  {
+                    "enum": [
+                      "pending"
+                    ]
+                  },
+                  {
+                    "enum": [
+                      "completed"
+                    ]
+                  },
+                  {
+                    "enum": [
+                      "failed"
+                    ]
+                  }
+                ]
+              },
+              "demoUrl": {
+                "type": "string"
+              },
+              "files": {
+                "type": "array"
+              }
+            },
+            "required": [
+              "id",
+              "object",
+              "status",
+              "files"
+            ]
+          },
+          "url": {
+            "type": "string"
+          },
+          "messages": {
+            "type": "array"
+          },
+          "files": {
+            "type": "array"
+          },
+          "demo": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "object",
+          "shareable",
+          "privacy",
+          "favorite",
+          "authorId",
+          "url",
+          "messages",
+          "text"
+        ]
       },
       "description": "",
       "source": {
@@ -369,7 +1734,137 @@
       "name": "ChatsUpdateResponse",
       "kind": "type",
       "type": {
-        "$ref": "#/types/ChatsUpdateResponse"
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "object": {
+            "enum": [
+              "chat"
+            ]
+          },
+          "shareable": {
+            "type": "boolean"
+          },
+          "privacy": {
+            "anyOf": [
+              {
+                "enum": [
+                  "public"
+                ]
+              },
+              {
+                "enum": [
+                  "private"
+                ]
+              },
+              {
+                "enum": [
+                  "team"
+                ]
+              },
+              {
+                "enum": [
+                  "team-edit"
+                ]
+              },
+              {
+                "enum": [
+                  "unlisted"
+                ]
+              }
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          },
+          "favorite": {
+            "type": "boolean"
+          },
+          "authorId": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "latestVersion": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "object": {
+                "enum": [
+                  "version"
+                ]
+              },
+              "status": {
+                "anyOf": [
+                  {
+                    "enum": [
+                      "pending"
+                    ]
+                  },
+                  {
+                    "enum": [
+                      "completed"
+                    ]
+                  },
+                  {
+                    "enum": [
+                      "failed"
+                    ]
+                  }
+                ]
+              },
+              "demoUrl": {
+                "type": "string"
+              },
+              "files": {
+                "type": "array"
+              }
+            },
+            "required": [
+              "id",
+              "object",
+              "status",
+              "files"
+            ]
+          },
+          "url": {
+            "type": "string"
+          },
+          "messages": {
+            "type": "array"
+          },
+          "files": {
+            "type": "array"
+          },
+          "demo": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "object",
+          "shareable",
+          "privacy",
+          "favorite",
+          "authorId",
+          "url",
+          "messages",
+          "text"
+        ]
       },
       "description": "",
       "source": {
@@ -412,7 +1907,137 @@
       "name": "ChatsForkResponse",
       "kind": "type",
       "type": {
-        "$ref": "#/types/ChatsForkResponse"
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "object": {
+            "enum": [
+              "chat"
+            ]
+          },
+          "shareable": {
+            "type": "boolean"
+          },
+          "privacy": {
+            "anyOf": [
+              {
+                "enum": [
+                  "public"
+                ]
+              },
+              {
+                "enum": [
+                  "private"
+                ]
+              },
+              {
+                "enum": [
+                  "team"
+                ]
+              },
+              {
+                "enum": [
+                  "team-edit"
+                ]
+              },
+              {
+                "enum": [
+                  "unlisted"
+                ]
+              }
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          },
+          "favorite": {
+            "type": "boolean"
+          },
+          "authorId": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "latestVersion": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "object": {
+                "enum": [
+                  "version"
+                ]
+              },
+              "status": {
+                "anyOf": [
+                  {
+                    "enum": [
+                      "pending"
+                    ]
+                  },
+                  {
+                    "enum": [
+                      "completed"
+                    ]
+                  },
+                  {
+                    "enum": [
+                      "failed"
+                    ]
+                  }
+                ]
+              },
+              "demoUrl": {
+                "type": "string"
+              },
+              "files": {
+                "type": "array"
+              }
+            },
+            "required": [
+              "id",
+              "object",
+              "status",
+              "files"
+            ]
+          },
+          "url": {
+            "type": "string"
+          },
+          "messages": {
+            "type": "array"
+          },
+          "files": {
+            "type": "array"
+          },
+          "demo": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "object",
+          "shareable",
+          "privacy",
+          "favorite",
+          "authorId",
+          "url",
+          "messages",
+          "text"
+        ]
       },
       "description": "",
       "source": {
@@ -425,7 +2050,47 @@
       "name": "ProjectsGetByChatIdResponse",
       "kind": "type",
       "type": {
-        "$ref": "#/types/ProjectDetail"
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "object": {
+            "enum": [
+              "project"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "vercelProjectId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          },
+          "apiUrl": {
+            "type": "string"
+          },
+          "webUrl": {
+            "type": "string"
+          },
+          "chats": {
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "object",
+          "name",
+          "createdAt",
+          "apiUrl",
+          "webUrl",
+          "chats"
+        ]
       },
       "description": "",
       "source": {
@@ -448,7 +2113,175 @@
       "name": "ChatsSendMessageResponse",
       "kind": "type",
       "type": {
-        "$ref": "#/types/ChatsSendMessageResponse"
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "object": {
+            "enum": [
+              "chat"
+            ]
+          },
+          "shareable": {
+            "type": "boolean"
+          },
+          "privacy": {
+            "anyOf": [
+              {
+                "enum": [
+                  "public"
+                ]
+              },
+              {
+                "enum": [
+                  "private"
+                ]
+              },
+              {
+                "enum": [
+                  "team"
+                ]
+              },
+              {
+                "enum": [
+                  "team-edit"
+                ]
+              },
+              {
+                "enum": [
+                  "unlisted"
+                ]
+              }
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          },
+          "favorite": {
+            "type": "boolean"
+          },
+          "authorId": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "latestVersion": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "object": {
+                "enum": [
+                  "version"
+                ]
+              },
+              "status": {
+                "anyOf": [
+                  {
+                    "enum": [
+                      "pending"
+                    ]
+                  },
+                  {
+                    "enum": [
+                      "completed"
+                    ]
+                  },
+                  {
+                    "enum": [
+                      "failed"
+                    ]
+                  }
+                ]
+              },
+              "demoUrl": {
+                "type": "string"
+              },
+              "files": {
+                "type": "array"
+              }
+            },
+            "required": [
+              "id",
+              "object",
+              "status",
+              "files"
+            ]
+          },
+          "url": {
+            "type": "string"
+          },
+          "messages": {
+            "type": "array"
+          },
+          "files": {
+            "type": "array"
+          },
+          "demo": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "modelConfiguration": {
+            "type": "object",
+            "properties": {
+              "modelId": {
+                "anyOf": [
+                  {
+                    "enum": [
+                      "v0-1.5-sm"
+                    ]
+                  },
+                  {
+                    "enum": [
+                      "v0-1.5-md"
+                    ]
+                  },
+                  {
+                    "enum": [
+                      "v0-1.5-lg"
+                    ]
+                  }
+                ]
+              },
+              "imageGenerations": {
+                "type": "boolean"
+              },
+              "thinking": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "modelId"
+            ]
+          },
+          "chatId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "object",
+          "shareable",
+          "privacy",
+          "favorite",
+          "authorId",
+          "url",
+          "messages",
+          "text",
+          "modelConfiguration",
+          "chatId"
+        ]
       },
       "description": "",
       "source": {
@@ -461,7 +2294,74 @@
       "name": "ChatsResumeResponse",
       "kind": "type",
       "type": {
-        "$ref": "#/types/MessageDetail"
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "object": {
+            "enum": [
+              "message"
+            ]
+          },
+          "chatId": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "files": {
+            "type": "array"
+          },
+          "demo": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "modelConfiguration": {
+            "type": "object",
+            "properties": {
+              "modelId": {
+                "anyOf": [
+                  {
+                    "enum": [
+                      "v0-1.5-sm"
+                    ]
+                  },
+                  {
+                    "enum": [
+                      "v0-1.5-md"
+                    ]
+                  },
+                  {
+                    "enum": [
+                      "v0-1.5-lg"
+                    ]
+                  }
+                ]
+              },
+              "imageGenerations": {
+                "type": "boolean"
+              },
+              "thinking": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "modelId"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "object",
+          "chatId",
+          "url",
+          "files",
+          "text",
+          "modelConfiguration"
+        ]
       },
       "description": "",
       "source": {
@@ -570,7 +2470,39 @@
       "name": "HooksCreateResponse",
       "kind": "type",
       "type": {
-        "$ref": "#/types/HookDetail"
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "object": {
+            "enum": [
+              "hook"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "events": {
+            "type": "array"
+          },
+          "chatId": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "object",
+          "name",
+          "events",
+          "url"
+        ]
       },
       "description": "",
       "source": {
@@ -583,7 +2515,39 @@
       "name": "HooksGetByIdResponse",
       "kind": "type",
       "type": {
-        "$ref": "#/types/HookDetail"
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "object": {
+            "enum": [
+              "hook"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "events": {
+            "type": "array"
+          },
+          "chatId": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "object",
+          "name",
+          "events",
+          "url"
+        ]
       },
       "description": "",
       "source": {
@@ -606,7 +2570,39 @@
       "name": "HooksUpdateResponse",
       "kind": "type",
       "type": {
-        "$ref": "#/types/HookDetail"
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "object": {
+            "enum": [
+              "hook"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "events": {
+            "type": "array"
+          },
+          "chatId": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "object",
+          "name",
+          "events",
+          "url"
+        ]
       },
       "description": "",
       "source": {
@@ -682,7 +2678,47 @@
       "name": "ProjectsCreateResponse",
       "kind": "type",
       "type": {
-        "$ref": "#/types/ProjectDetail"
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "object": {
+            "enum": [
+              "project"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "vercelProjectId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          },
+          "apiUrl": {
+            "type": "string"
+          },
+          "webUrl": {
+            "type": "string"
+          },
+          "chats": {
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "object",
+          "name",
+          "createdAt",
+          "apiUrl",
+          "webUrl",
+          "chats"
+        ]
       },
       "description": "",
       "source": {
@@ -695,7 +2731,47 @@
       "name": "ProjectsGetByIdResponse",
       "kind": "type",
       "type": {
-        "$ref": "#/types/ProjectDetail"
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "object": {
+            "enum": [
+              "project"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "vercelProjectId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          },
+          "apiUrl": {
+            "type": "string"
+          },
+          "webUrl": {
+            "type": "string"
+          },
+          "chats": {
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "object",
+          "name",
+          "createdAt",
+          "apiUrl",
+          "webUrl",
+          "chats"
+        ]
       },
       "description": "",
       "source": {
@@ -753,10 +2829,116 @@
       "type": {
         "anyOf": [
           {
-            "type": "{ billingType: \"token\"; data: { plan: string; billingMode?: \"test\"; role: string; billingCycle: { start: number; end: number; }; balance: { remaining: number; total: number; }; onDemand: { balance: number; blocks?: { ...; }[]; }; }; }"
+            "type": "object",
+            "properties": {
+              "billingType": {
+                "enum": [
+                  "token"
+                ]
+              },
+              "data": {
+                "type": "object",
+                "properties": {
+                  "plan": {
+                    "type": "string"
+                  },
+                  "billingMode": {
+                    "enum": [
+                      "test"
+                    ]
+                  },
+                  "role": {
+                    "type": "string"
+                  },
+                  "billingCycle": {
+                    "type": "object",
+                    "properties": {
+                      "start": {
+                        "type": "number"
+                      },
+                      "end": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "start",
+                      "end"
+                    ]
+                  },
+                  "balance": {
+                    "type": "object",
+                    "properties": {
+                      "remaining": {
+                        "type": "number"
+                      },
+                      "total": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "remaining",
+                      "total"
+                    ]
+                  },
+                  "onDemand": {
+                    "type": "object",
+                    "properties": {
+                      "balance": {
+                        "type": "number"
+                      },
+                      "blocks": {
+                        "type": "array"
+                      }
+                    },
+                    "required": [
+                      "balance"
+                    ]
+                  }
+                },
+                "required": [
+                  "plan",
+                  "role",
+                  "billingCycle",
+                  "balance",
+                  "onDemand"
+                ]
+              }
+            },
+            "required": [
+              "billingType",
+              "data"
+            ]
           },
           {
-            "type": "{ billingType: \"legacy\"; data: { remaining?: number; reset?: number; limit: number; }; }"
+            "type": "object",
+            "properties": {
+              "billingType": {
+                "enum": [
+                  "legacy"
+                ]
+              },
+              "data": {
+                "type": "object",
+                "properties": {
+                  "remaining": {
+                    "type": "number"
+                  },
+                  "reset": {
+                    "type": "number"
+                  },
+                  "limit": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "limit"
+                ]
+              }
+            },
+            "required": [
+              "billingType",
+              "data"
+            ]
           }
         ]
       },
@@ -801,7 +2983,215 @@
       "name": "v0",
       "kind": "variable",
       "type": {
-        "$ref": "#/types/__object"
+        "type": "object",
+        "properties": {
+          "chats": {
+            "type": "object",
+            "properties": {
+              "create": {
+                "$ref": "#/types/create"
+              },
+              "find": {
+                "$ref": "#/types/find"
+              },
+              "init": {
+                "$ref": "#/types/init"
+              },
+              "delete": {
+                "$ref": "#/types/delete"
+              },
+              "getById": {
+                "$ref": "#/types/getById"
+              },
+              "update": {
+                "$ref": "#/types/update"
+              },
+              "favorite": {
+                "$ref": "#/types/favorite"
+              },
+              "fork": {
+                "$ref": "#/types/fork"
+              },
+              "sendMessage": {
+                "$ref": "#/types/sendMessage"
+              },
+              "resume": {
+                "$ref": "#/types/resume"
+              }
+            },
+            "required": [
+              "create",
+              "find",
+              "init",
+              "delete",
+              "getById",
+              "update",
+              "favorite",
+              "fork",
+              "sendMessage",
+              "resume"
+            ]
+          },
+          "projects": {
+            "type": "object",
+            "properties": {
+              "getByChatId": {
+                "$ref": "#/types/getByChatId"
+              },
+              "find": {
+                "$ref": "#/types/find"
+              },
+              "create": {
+                "$ref": "#/types/create"
+              },
+              "getById": {
+                "$ref": "#/types/getById"
+              },
+              "assign": {
+                "$ref": "#/types/assign"
+              }
+            },
+            "required": [
+              "getByChatId",
+              "find",
+              "create",
+              "getById",
+              "assign"
+            ]
+          },
+          "deployments": {
+            "type": "object",
+            "properties": {
+              "find": {
+                "$ref": "#/types/find"
+              },
+              "create": {
+                "$ref": "#/types/create"
+              },
+              "getById": {
+                "$ref": "#/types/getById"
+              },
+              "delete": {
+                "$ref": "#/types/delete"
+              },
+              "findLogs": {
+                "$ref": "#/types/findLogs"
+              },
+              "findErrors": {
+                "$ref": "#/types/findErrors"
+              }
+            },
+            "required": [
+              "find",
+              "create",
+              "getById",
+              "delete",
+              "findLogs",
+              "findErrors"
+            ]
+          },
+          "hooks": {
+            "type": "object",
+            "properties": {
+              "find": {
+                "$ref": "#/types/find"
+              },
+              "create": {
+                "$ref": "#/types/create"
+              },
+              "getById": {
+                "$ref": "#/types/getById"
+              },
+              "update": {
+                "$ref": "#/types/update"
+              },
+              "delete": {
+                "$ref": "#/types/delete"
+              }
+            },
+            "required": [
+              "find",
+              "create",
+              "getById",
+              "update",
+              "delete"
+            ]
+          },
+          "integrations": {
+            "type": "object",
+            "properties": {
+              "vercel": {
+                "type": "object",
+                "properties": {
+                  "projects": {
+                    "type": "object",
+                    "properties": {
+                      "find": {
+                        "$ref": "#/types/find"
+                      },
+                      "create": {
+                        "$ref": "#/types/create"
+                      }
+                    },
+                    "required": [
+                      "find",
+                      "create"
+                    ]
+                  }
+                },
+                "required": [
+                  "projects"
+                ]
+              }
+            },
+            "required": [
+              "vercel"
+            ]
+          },
+          "rateLimits": {
+            "type": "object",
+            "properties": {
+              "find": {
+                "$ref": "#/types/find"
+              }
+            },
+            "required": [
+              "find"
+            ]
+          },
+          "user": {
+            "type": "object",
+            "properties": {
+              "get": {
+                "$ref": "#/types/get"
+              },
+              "getBilling": {
+                "$ref": "#/types/getBilling"
+              },
+              "getPlan": {
+                "$ref": "#/types/getPlan"
+              },
+              "getScopes": {
+                "$ref": "#/types/getScopes"
+              }
+            },
+            "required": [
+              "get",
+              "getBilling",
+              "getPlan",
+              "getScopes"
+            ]
+          }
+        },
+        "required": [
+          "chats",
+          "projects",
+          "deployments",
+          "hooks",
+          "integrations",
+          "rateLimits",
+          "user"
+        ]
       },
       "description": "",
       "source": {
@@ -1290,12 +3680,12 @@
               },
               {
                 "enum": [
-                  "team-edit"
+                  "team"
                 ]
               },
               {
                 "enum": [
-                  "team"
+                  "team-edit"
                 ]
               },
               {
@@ -1309,7 +3699,37 @@
             "type": "string"
           },
           "modelConfiguration": {
-            "type": "{ modelId: \"v0-1.5-sm\" | \"v0-1.5-md\" | \"v0-1.5-lg\"; imageGenerations?: boolean; thinking?: boolean; }"
+            "type": "object",
+            "properties": {
+              "modelId": {
+                "anyOf": [
+                  {
+                    "enum": [
+                      "v0-1.5-sm"
+                    ]
+                  },
+                  {
+                    "enum": [
+                      "v0-1.5-md"
+                    ]
+                  },
+                  {
+                    "enum": [
+                      "v0-1.5-lg"
+                    ]
+                  }
+                ]
+              },
+              "imageGenerations": {
+                "type": "boolean"
+              },
+              "thinking": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "modelId"
+            ]
           },
           "responseMode": {
             "anyOf": [
@@ -1462,12 +3882,12 @@
               },
               {
                 "enum": [
-                  "team-edit"
+                  "team"
                 ]
               },
               {
                 "enum": [
-                  "team"
+                  "team-edit"
                 ]
               },
               {
@@ -1602,7 +4022,37 @@
             "type": "array"
           },
           "modelConfiguration": {
-            "type": "{ modelId: \"v0-1.5-sm\" | \"v0-1.5-md\" | \"v0-1.5-lg\"; imageGenerations?: boolean; thinking?: boolean; }"
+            "type": "object",
+            "properties": {
+              "modelId": {
+                "anyOf": [
+                  {
+                    "enum": [
+                      "v0-1.5-sm"
+                    ]
+                  },
+                  {
+                    "enum": [
+                      "v0-1.5-md"
+                    ]
+                  },
+                  {
+                    "enum": [
+                      "v0-1.5-lg"
+                    ]
+                  }
+                ]
+              },
+              "imageGenerations": {
+                "type": "boolean"
+              },
+              "thinking": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "modelId"
+            ]
           },
           "responseMode": {
             "anyOf": [
@@ -2226,10 +4676,34 @@
             "type": "string"
           },
           "billingCycle": {
-            "type": "{ start: number; end: number; }"
+            "type": "object",
+            "properties": {
+              "start": {
+                "type": "number"
+              },
+              "end": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "start",
+              "end"
+            ]
           },
           "balance": {
-            "type": "{ remaining: number; total: number; }"
+            "type": "object",
+            "properties": {
+              "remaining": {
+                "type": "number"
+              },
+              "total": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "remaining",
+              "total"
+            ]
           }
         },
         "required": [
