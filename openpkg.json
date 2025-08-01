@@ -1,0 +1,1333 @@
+{
+  "openpkg": "1.0.0",
+  "meta": {
+    "name": "analyzed-file",
+    "version": "1.0.0",
+    "description": "Single file analysis",
+    "ecosystem": "js/ts"
+  },
+  "exports": [
+    {
+      "id": "createClient",
+      "name": "createClient",
+      "kind": "function",
+      "signatures": [
+        {
+          "parameters": [
+            {
+              "name": "config",
+              "required": false,
+              "schema": {
+                "type": "string"
+              },
+              "description": ""
+            }
+          ],
+          "returns": {
+            "schema": {
+              "type": "string"
+            },
+            "description": ""
+          },
+          "description": ""
+        }
+      ],
+      "description": ""
+    },
+    {
+      "id": "v0",
+      "name": "v0",
+      "kind": "variable",
+      "schema": {
+        "type": "string"
+      },
+      "description": ""
+    }
+  ],
+  "types": [
+    {
+      "id": "ChatDetail",
+      "name": "ChatDetail",
+      "kind": "type",
+      "schema": {
+        "type": "string"
+      },
+      "description": ""
+    },
+    {
+      "id": "ChatSummary",
+      "name": "ChatSummary",
+      "kind": "type",
+      "schema": {
+        "type": "string"
+      },
+      "description": ""
+    },
+    {
+      "id": "DeploymentDetail",
+      "name": "DeploymentDetail",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": ""
+          },
+          "object": {
+            "type": "string",
+            "description": ""
+          },
+          "inspectorUrl": {
+            "type": "string",
+            "description": ""
+          },
+          "chatId": {
+            "type": "string",
+            "description": ""
+          },
+          "projectId": {
+            "type": "string",
+            "description": ""
+          },
+          "versionId": {
+            "type": "string",
+            "description": ""
+          },
+          "apiUrl": {
+            "type": "string",
+            "description": ""
+          },
+          "webUrl": {
+            "type": "string",
+            "description": ""
+          }
+        },
+        "required": [
+          "id",
+          "object",
+          "inspectorUrl",
+          "chatId",
+          "projectId",
+          "versionId",
+          "apiUrl",
+          "webUrl"
+        ]
+      },
+      "description": ""
+    },
+    {
+      "id": "DeploymentSummary",
+      "name": "DeploymentSummary",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": ""
+          },
+          "object": {
+            "type": "string",
+            "description": ""
+          },
+          "inspectorUrl": {
+            "type": "string",
+            "description": ""
+          },
+          "chatId": {
+            "type": "string",
+            "description": ""
+          },
+          "projectId": {
+            "type": "string",
+            "description": ""
+          },
+          "versionId": {
+            "type": "string",
+            "description": ""
+          },
+          "apiUrl": {
+            "type": "string",
+            "description": ""
+          },
+          "webUrl": {
+            "type": "string",
+            "description": ""
+          }
+        },
+        "required": [
+          "id",
+          "object",
+          "inspectorUrl",
+          "chatId",
+          "projectId",
+          "versionId",
+          "apiUrl",
+          "webUrl"
+        ]
+      },
+      "description": ""
+    },
+    {
+      "id": "FileDetail",
+      "name": "FileDetail",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "object": {
+            "type": "string",
+            "description": ""
+          },
+          "name": {
+            "type": "string",
+            "description": ""
+          },
+          "content": {
+            "type": "string",
+            "description": ""
+          }
+        },
+        "required": [
+          "object",
+          "name",
+          "content"
+        ]
+      },
+      "description": ""
+    },
+    {
+      "id": "FileSummary",
+      "name": "FileSummary",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "object": {
+            "type": "string",
+            "description": ""
+          },
+          "name": {
+            "type": "string",
+            "description": ""
+          }
+        },
+        "required": [
+          "object",
+          "name"
+        ]
+      },
+      "description": ""
+    },
+    {
+      "id": "HookDetail",
+      "name": "HookDetail",
+      "kind": "type",
+      "schema": {
+        "type": "string"
+      },
+      "description": ""
+    },
+    {
+      "id": "HookEventDetail",
+      "name": "HookEventDetail",
+      "kind": "type",
+      "schema": {
+        "type": "string"
+      },
+      "description": ""
+    },
+    {
+      "id": "HookSummary",
+      "name": "HookSummary",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": ""
+          },
+          "object": {
+            "type": "string",
+            "description": ""
+          },
+          "name": {
+            "type": "string",
+            "description": ""
+          }
+        },
+        "required": [
+          "id",
+          "object",
+          "name"
+        ]
+      },
+      "description": ""
+    },
+    {
+      "id": "MessageDetail",
+      "name": "MessageDetail",
+      "kind": "type",
+      "schema": {
+        "type": "string"
+      },
+      "description": ""
+    },
+    {
+      "id": "MessageSummary",
+      "name": "MessageSummary",
+      "kind": "type",
+      "schema": {
+        "type": "string"
+      },
+      "description": ""
+    },
+    {
+      "id": "ProjectDetail",
+      "name": "ProjectDetail",
+      "kind": "type",
+      "schema": {
+        "type": "string"
+      },
+      "description": ""
+    },
+    {
+      "id": "ProjectSummary",
+      "name": "ProjectSummary",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": ""
+          },
+          "object": {
+            "type": "string",
+            "description": ""
+          },
+          "name": {
+            "type": "string",
+            "description": ""
+          },
+          "vercelProjectId": {
+            "type": "string",
+            "description": ""
+          },
+          "createdAt": {
+            "type": "string",
+            "description": ""
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": ""
+          },
+          "apiUrl": {
+            "type": "string",
+            "description": ""
+          },
+          "webUrl": {
+            "type": "string",
+            "description": ""
+          }
+        },
+        "required": [
+          "id",
+          "object",
+          "name",
+          "createdAt",
+          "apiUrl",
+          "webUrl"
+        ]
+      },
+      "description": ""
+    },
+    {
+      "id": "ScopeSummary",
+      "name": "ScopeSummary",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": ""
+          },
+          "object": {
+            "type": "string",
+            "description": ""
+          },
+          "name": {
+            "type": "string",
+            "description": ""
+          }
+        },
+        "required": [
+          "id",
+          "object"
+        ]
+      },
+      "description": ""
+    },
+    {
+      "id": "SearchResultItem",
+      "name": "SearchResultItem",
+      "kind": "type",
+      "schema": {
+        "type": "string"
+      },
+      "description": ""
+    },
+    {
+      "id": "UserDetail",
+      "name": "UserDetail",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": ""
+          },
+          "object": {
+            "type": "string",
+            "description": ""
+          },
+          "name": {
+            "type": "string",
+            "description": ""
+          },
+          "email": {
+            "type": "string",
+            "description": ""
+          },
+          "avatar": {
+            "type": "string",
+            "description": ""
+          }
+        },
+        "required": [
+          "id",
+          "object",
+          "email",
+          "avatar"
+        ]
+      },
+      "description": ""
+    },
+    {
+      "id": "VercelProjectDetail",
+      "name": "VercelProjectDetail",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": ""
+          },
+          "object": {
+            "type": "string",
+            "description": ""
+          },
+          "name": {
+            "type": "string",
+            "description": ""
+          }
+        },
+        "required": [
+          "id",
+          "object",
+          "name"
+        ]
+      },
+      "description": ""
+    },
+    {
+      "id": "VersionDetail",
+      "name": "VersionDetail",
+      "kind": "type",
+      "schema": {
+        "type": "string"
+      },
+      "description": ""
+    },
+    {
+      "id": "VersionSummary",
+      "name": "VersionSummary",
+      "kind": "type",
+      "schema": {
+        "type": "string"
+      },
+      "description": ""
+    },
+    {
+      "id": "ChatsCreateRequest",
+      "name": "ChatsCreateRequest",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": ""
+          },
+          "attachments": {
+            "type": "string",
+            "description": ""
+          },
+          "system": {
+            "type": "string",
+            "description": ""
+          },
+          "chatPrivacy": {
+            "type": "string",
+            "description": ""
+          },
+          "projectId": {
+            "type": "string",
+            "description": ""
+          },
+          "modelConfiguration": {
+            "type": "string",
+            "description": ""
+          },
+          "responseMode": {
+            "type": "string",
+            "description": ""
+          }
+        },
+        "required": [
+          "message"
+        ]
+      },
+      "description": ""
+    },
+    {
+      "id": "ChatsCreateResponse",
+      "name": "ChatsCreateResponse",
+      "kind": "type",
+      "schema": {
+        "type": "string"
+      },
+      "description": ""
+    },
+    {
+      "id": "ChatsFindResponse",
+      "name": "ChatsFindResponse",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "object": {
+            "type": "string",
+            "description": ""
+          },
+          "data": {
+            "type": "string",
+            "description": ""
+          }
+        },
+        "required": [
+          "object",
+          "data"
+        ]
+      },
+      "description": ""
+    },
+    {
+      "id": "ChatsInitRequest",
+      "name": "ChatsInitRequest",
+      "kind": "type",
+      "schema": {
+        "type": "string"
+      },
+      "description": ""
+    },
+    {
+      "id": "ChatsInitResponse",
+      "name": "ChatsInitResponse",
+      "kind": "type",
+      "schema": {
+        "type": "string"
+      },
+      "description": ""
+    },
+    {
+      "id": "ChatsDeleteResponse",
+      "name": "ChatsDeleteResponse",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": ""
+          },
+          "object": {
+            "type": "string",
+            "description": ""
+          },
+          "deleted": {
+            "type": "string",
+            "description": ""
+          }
+        },
+        "required": [
+          "id",
+          "object",
+          "deleted"
+        ]
+      },
+      "description": ""
+    },
+    {
+      "id": "ChatsGetByIdResponse",
+      "name": "ChatsGetByIdResponse",
+      "kind": "type",
+      "schema": {
+        "type": "string"
+      },
+      "description": ""
+    },
+    {
+      "id": "ChatsUpdateRequest",
+      "name": "ChatsUpdateRequest",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": ""
+          },
+          "privacy": {
+            "type": "string",
+            "description": ""
+          }
+        }
+      },
+      "description": ""
+    },
+    {
+      "id": "ChatsUpdateResponse",
+      "name": "ChatsUpdateResponse",
+      "kind": "type",
+      "schema": {
+        "type": "string"
+      },
+      "description": ""
+    },
+    {
+      "id": "ChatsFavoriteRequest",
+      "name": "ChatsFavoriteRequest",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "isFavorite": {
+            "type": "string",
+            "description": ""
+          }
+        },
+        "required": [
+          "isFavorite"
+        ]
+      },
+      "description": ""
+    },
+    {
+      "id": "ChatsFavoriteResponse",
+      "name": "ChatsFavoriteResponse",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": ""
+          },
+          "object": {
+            "type": "string",
+            "description": ""
+          },
+          "favorited": {
+            "type": "string",
+            "description": ""
+          }
+        },
+        "required": [
+          "id",
+          "object",
+          "favorited"
+        ]
+      },
+      "description": ""
+    },
+    {
+      "id": "ChatsForkRequest",
+      "name": "ChatsForkRequest",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "versionId": {
+            "type": "string",
+            "description": ""
+          }
+        }
+      },
+      "description": ""
+    },
+    {
+      "id": "ChatsForkResponse",
+      "name": "ChatsForkResponse",
+      "kind": "type",
+      "schema": {
+        "type": "string"
+      },
+      "description": ""
+    },
+    {
+      "id": "ProjectsGetByChatIdResponse",
+      "name": "ProjectsGetByChatIdResponse",
+      "kind": "type",
+      "schema": {
+        "type": "string"
+      },
+      "description": ""
+    },
+    {
+      "id": "ChatsSendMessageRequest",
+      "name": "ChatsSendMessageRequest",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": ""
+          },
+          "attachments": {
+            "type": "string",
+            "description": ""
+          },
+          "modelConfiguration": {
+            "type": "string",
+            "description": ""
+          },
+          "responseMode": {
+            "type": "string",
+            "description": ""
+          }
+        },
+        "required": [
+          "message"
+        ]
+      },
+      "description": ""
+    },
+    {
+      "id": "ChatsSendMessageResponse",
+      "name": "ChatsSendMessageResponse",
+      "kind": "type",
+      "schema": {
+        "type": "string"
+      },
+      "description": ""
+    },
+    {
+      "id": "ChatsResumeResponse",
+      "name": "ChatsResumeResponse",
+      "kind": "type",
+      "schema": {
+        "type": "string"
+      },
+      "description": ""
+    },
+    {
+      "id": "DeploymentsFindResponse",
+      "name": "DeploymentsFindResponse",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "object": {
+            "type": "string",
+            "description": ""
+          },
+          "data": {
+            "type": "string",
+            "description": ""
+          }
+        },
+        "required": [
+          "object",
+          "data"
+        ]
+      },
+      "description": ""
+    },
+    {
+      "id": "DeploymentsCreateRequest",
+      "name": "DeploymentsCreateRequest",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "description": ""
+          },
+          "chatId": {
+            "type": "string",
+            "description": ""
+          },
+          "versionId": {
+            "type": "string",
+            "description": ""
+          }
+        },
+        "required": [
+          "projectId",
+          "chatId",
+          "versionId"
+        ]
+      },
+      "description": ""
+    },
+    {
+      "id": "DeploymentsCreateResponse",
+      "name": "DeploymentsCreateResponse",
+      "kind": "type",
+      "schema": {
+        "type": "string"
+      },
+      "description": ""
+    },
+    {
+      "id": "DeploymentsGetByIdResponse",
+      "name": "DeploymentsGetByIdResponse",
+      "kind": "type",
+      "schema": {
+        "type": "string"
+      },
+      "description": ""
+    },
+    {
+      "id": "DeploymentsDeleteResponse",
+      "name": "DeploymentsDeleteResponse",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": ""
+          },
+          "object": {
+            "type": "string",
+            "description": ""
+          },
+          "deleted": {
+            "type": "string",
+            "description": ""
+          }
+        },
+        "required": [
+          "id",
+          "object",
+          "deleted"
+        ]
+      },
+      "description": ""
+    },
+    {
+      "id": "DeploymentsFindLogsResponse",
+      "name": "DeploymentsFindLogsResponse",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": ""
+          },
+          "logs": {
+            "type": "string",
+            "description": ""
+          },
+          "nextSince": {
+            "type": "string",
+            "description": ""
+          }
+        },
+        "required": [
+          "logs"
+        ]
+      },
+      "description": ""
+    },
+    {
+      "id": "DeploymentsFindErrorsResponse",
+      "name": "DeploymentsFindErrorsResponse",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": ""
+          },
+          "fullErrorText": {
+            "type": "string",
+            "description": ""
+          },
+          "errorType": {
+            "type": "string",
+            "description": ""
+          },
+          "formattedError": {
+            "type": "string",
+            "description": ""
+          }
+        }
+      },
+      "description": ""
+    },
+    {
+      "id": "HooksFindResponse",
+      "name": "HooksFindResponse",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "object": {
+            "type": "string",
+            "description": ""
+          },
+          "data": {
+            "type": "string",
+            "description": ""
+          }
+        },
+        "required": [
+          "object",
+          "data"
+        ]
+      },
+      "description": ""
+    },
+    {
+      "id": "HooksCreateRequest",
+      "name": "HooksCreateRequest",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": ""
+          },
+          "events": {
+            "type": "string",
+            "description": ""
+          },
+          "chatId": {
+            "type": "string",
+            "description": ""
+          },
+          "projectId": {
+            "type": "string",
+            "description": ""
+          },
+          "url": {
+            "type": "string",
+            "description": ""
+          }
+        },
+        "required": [
+          "name",
+          "events",
+          "url"
+        ]
+      },
+      "description": ""
+    },
+    {
+      "id": "HooksCreateResponse",
+      "name": "HooksCreateResponse",
+      "kind": "type",
+      "schema": {
+        "type": "string"
+      },
+      "description": ""
+    },
+    {
+      "id": "HooksGetByIdResponse",
+      "name": "HooksGetByIdResponse",
+      "kind": "type",
+      "schema": {
+        "type": "string"
+      },
+      "description": ""
+    },
+    {
+      "id": "HooksUpdateRequest",
+      "name": "HooksUpdateRequest",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": ""
+          },
+          "events": {
+            "type": "string",
+            "description": ""
+          },
+          "url": {
+            "type": "string",
+            "description": ""
+          }
+        }
+      },
+      "description": ""
+    },
+    {
+      "id": "HooksUpdateResponse",
+      "name": "HooksUpdateResponse",
+      "kind": "type",
+      "schema": {
+        "type": "string"
+      },
+      "description": ""
+    },
+    {
+      "id": "HooksDeleteResponse",
+      "name": "HooksDeleteResponse",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": ""
+          },
+          "object": {
+            "type": "string",
+            "description": ""
+          },
+          "deleted": {
+            "type": "string",
+            "description": ""
+          }
+        },
+        "required": [
+          "id",
+          "object",
+          "deleted"
+        ]
+      },
+      "description": ""
+    },
+    {
+      "id": "IntegrationsVercelProjectsFindResponse",
+      "name": "IntegrationsVercelProjectsFindResponse",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "object": {
+            "type": "string",
+            "description": ""
+          },
+          "data": {
+            "type": "string",
+            "description": ""
+          }
+        },
+        "required": [
+          "object",
+          "data"
+        ]
+      },
+      "description": ""
+    },
+    {
+      "id": "IntegrationsVercelProjectsCreateRequest",
+      "name": "IntegrationsVercelProjectsCreateRequest",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "description": ""
+          },
+          "name": {
+            "type": "string",
+            "description": ""
+          }
+        },
+        "required": [
+          "projectId",
+          "name"
+        ]
+      },
+      "description": ""
+    },
+    {
+      "id": "IntegrationsVercelProjectsCreateResponse",
+      "name": "IntegrationsVercelProjectsCreateResponse",
+      "kind": "type",
+      "schema": {
+        "type": "string"
+      },
+      "description": ""
+    },
+    {
+      "id": "ProjectsFindResponse",
+      "name": "ProjectsFindResponse",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "object": {
+            "type": "string",
+            "description": ""
+          },
+          "data": {
+            "type": "string",
+            "description": ""
+          }
+        },
+        "required": [
+          "object",
+          "data"
+        ]
+      },
+      "description": ""
+    },
+    {
+      "id": "ProjectsCreateRequest",
+      "name": "ProjectsCreateRequest",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": ""
+          },
+          "description": {
+            "type": "string",
+            "description": ""
+          },
+          "icon": {
+            "type": "string",
+            "description": ""
+          },
+          "environmentVariables": {
+            "type": "string",
+            "description": ""
+          },
+          "instructions": {
+            "type": "string",
+            "description": ""
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "description": ""
+    },
+    {
+      "id": "ProjectsCreateResponse",
+      "name": "ProjectsCreateResponse",
+      "kind": "type",
+      "schema": {
+        "type": "string"
+      },
+      "description": ""
+    },
+    {
+      "id": "ProjectsGetByIdResponse",
+      "name": "ProjectsGetByIdResponse",
+      "kind": "type",
+      "schema": {
+        "type": "string"
+      },
+      "description": ""
+    },
+    {
+      "id": "ProjectsAssignRequest",
+      "name": "ProjectsAssignRequest",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "chatId": {
+            "type": "string",
+            "description": ""
+          }
+        },
+        "required": [
+          "chatId"
+        ]
+      },
+      "description": ""
+    },
+    {
+      "id": "ProjectsAssignResponse",
+      "name": "ProjectsAssignResponse",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "object": {
+            "type": "string",
+            "description": ""
+          },
+          "id": {
+            "type": "string",
+            "description": ""
+          },
+          "assigned": {
+            "type": "string",
+            "description": ""
+          }
+        },
+        "required": [
+          "object",
+          "id",
+          "assigned"
+        ]
+      },
+      "description": ""
+    },
+    {
+      "id": "RateLimitsFindResponse",
+      "name": "RateLimitsFindResponse",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "remaining": {
+            "type": "string",
+            "description": ""
+          },
+          "reset": {
+            "type": "string",
+            "description": ""
+          },
+          "limit": {
+            "type": "string",
+            "description": ""
+          }
+        },
+        "required": [
+          "limit"
+        ]
+      },
+      "description": ""
+    },
+    {
+      "id": "UserGetResponse",
+      "name": "UserGetResponse",
+      "kind": "type",
+      "schema": {
+        "type": "string"
+      },
+      "description": ""
+    },
+    {
+      "id": "UserGetBillingResponse",
+      "name": "UserGetBillingResponse",
+      "kind": "type",
+      "schema": {
+        "type": "string"
+      },
+      "description": ""
+    },
+    {
+      "id": "UserGetPlanResponse",
+      "name": "UserGetPlanResponse",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "object": {
+            "type": "string",
+            "description": ""
+          },
+          "plan": {
+            "type": "string",
+            "description": ""
+          },
+          "billingCycle": {
+            "type": "string",
+            "description": ""
+          },
+          "balance": {
+            "type": "string",
+            "description": ""
+          }
+        },
+        "required": [
+          "object",
+          "plan",
+          "billingCycle",
+          "balance"
+        ]
+      },
+      "description": ""
+    },
+    {
+      "id": "UserGetScopesResponse",
+      "name": "UserGetScopesResponse",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "object": {
+            "type": "string",
+            "description": ""
+          },
+          "data": {
+            "type": "string",
+            "description": ""
+          }
+        },
+        "required": [
+          "object",
+          "data"
+        ]
+      },
+      "description": ""
+    },
+    {
+      "id": "V0ClientConfig",
+      "name": "V0ClientConfig",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "apiKey": {
+            "type": "string",
+            "description": ""
+          },
+          "baseUrl": {
+            "type": "string",
+            "description": ""
+          }
+        }
+      },
+      "description": ""
+    }
+  ]
+}
