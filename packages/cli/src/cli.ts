@@ -212,6 +212,16 @@ program
           console.log(chalk.gray(`├── Total imports: ${graph.totalImports}`));
           console.log(chalk.gray(`└── Max depth reached: ${graph.maxDepth}`));
           
+          // Provide feedback on max depth setting
+          const specifiedDepth = parseInt(options.maxDepth, 10);
+          if (graph.actualMaxDepth !== undefined && graph.actualMaxDepth < specifiedDepth) {
+            // Only show message when we didn't use the full specified depth
+            console.log();
+            console.log(chalk.blue(`ℹ  Analyzed imports up to depth ${graph.actualMaxDepth} (max specified: ${specifiedDepth})`));
+            console.log(chalk.gray(`   No imports found beyond depth ${graph.actualMaxDepth}`));
+          }
+          // If actualMaxDepth equals specifiedDepth, we used the full depth - no message needed
+          
           // Show fetched files if showing summary
           if (showItems.includes('summary') && data.files) {
             console.log();
@@ -345,6 +355,12 @@ program
             console.log('\nSummary:');
             const exportCount = data.spec.exports?.length || 0;
             const typeCount = data.spec.types?.length || 0;
+            const filesAnalyzed = data.metadata.filesAnalyzed || 1;
+            
+            // Show file count if multiple files were analyzed
+            if (followItems.includes('imports') && filesAnalyzed > 1) {
+              console.log(`- ${filesAnalyzed} files analyzed`);
+            }
             
             if (exportCount > 0) {
               // Count exports by kind
@@ -353,7 +369,7 @@ program
               const variableExports = data.spec.exports.filter((e: any) => e.kind === 'variable').length;
               const otherExports = exportCount - functionExports - classExports - variableExports;
               
-              console.log(`- ${exportCount} export${exportCount > 1 ? 's' : ''} found`);
+              console.log(`- ${exportCount} export${exportCount > 1 ? 's' : ''} found${filesAnalyzed > 1 ? ' (from root file)' : ''}`);
               if (functionExports > 0) console.log(chalk.gray(`  - ${functionExports} function${functionExports > 1 ? 's' : ''}`));
               if (classExports > 0) console.log(chalk.gray(`  - ${classExports} class${classExports > 1 ? 'es' : ''}`));
               if (variableExports > 0) console.log(chalk.gray(`  - ${variableExports} variable${variableExports > 1 ? 's' : ''}`));
@@ -362,8 +378,8 @@ program
               console.log(chalk.gray('- No exports found'));
             }
             
-            console.log(`- ${typeCount} type${typeCount !== 1 ? 's' : ''} defined`);
-            console.log(chalk.gray(`- File analyzed in ${data.metadata.duration}ms`));
+            console.log(`- ${typeCount} type${typeCount !== 1 ? 's' : ''} collected${filesAnalyzed > 1 ? ` (from all ${filesAnalyzed} files)` : ''}`);
+            console.log(chalk.gray(`- Analysis completed in ${data.metadata.duration}ms`));
             
             // Show detailed summary if requested
             if (showItems.includes('summary') && (exportCount > 0 || typeCount > 0)) {
