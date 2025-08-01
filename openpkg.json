@@ -1,9 +1,11 @@
 {
   "openpkg": "1.0.0",
   "meta": {
-    "name": "analyzed-file",
+    "name": "unknown",
     "version": "1.0.0",
-    "description": "Single file analysis",
+    "description": "",
+    "license": "",
+    "repository": "",
     "ecosystem": "js/ts"
   },
   "exports": [
@@ -17,31 +19,795 @@
             {
               "name": "config",
               "required": false,
+              "description": "",
               "schema": {
-                "type": "string"
-              },
-              "description": ""
+                "$ref": "#/types/V0ClientConfig"
+              }
             }
           ],
           "returns": {
             "schema": {
-              "type": "string"
+              "$ref": "#/types/__object"
             },
             "description": ""
-          },
-          "description": ""
+          }
         }
       ],
-      "description": ""
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 765
+      }
+    },
+    {
+      "id": "ChatDetail",
+      "name": "ChatDetail",
+      "kind": "type",
+      "type": {
+        "$ref": "#/types/ChatDetail"
+      },
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 3
+      }
+    },
+    {
+      "id": "ChatSummary",
+      "name": "ChatSummary",
+      "kind": "type",
+      "type": {
+        "$ref": "#/types/ChatSummary"
+      },
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 66
+      }
+    },
+    {
+      "id": "DeploymentDetail",
+      "name": "DeploymentDetail",
+      "kind": "interface",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 86
+      }
+    },
+    {
+      "id": "DeploymentSummary",
+      "name": "DeploymentSummary",
+      "kind": "interface",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 97
+      }
+    },
+    {
+      "id": "FileDetail",
+      "name": "FileDetail",
+      "kind": "interface",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 108
+      }
+    },
+    {
+      "id": "FileSummary",
+      "name": "FileSummary",
+      "kind": "interface",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 114
+      }
+    },
+    {
+      "id": "HookDetail",
+      "name": "HookDetail",
+      "kind": "type",
+      "type": {
+        "$ref": "#/types/HookDetail"
+      },
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 119
+      }
+    },
+    {
+      "id": "HookEventDetail",
+      "name": "HookEventDetail",
+      "kind": "type",
+      "type": {
+        "$ref": "#/types/HookEventDetail"
+      },
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 139
+      }
+    },
+    {
+      "id": "HookSummary",
+      "name": "HookSummary",
+      "kind": "interface",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 156
+      }
+    },
+    {
+      "id": "MessageDetail",
+      "name": "MessageDetail",
+      "kind": "type",
+      "type": {
+        "$ref": "#/types/MessageDetail"
+      },
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 162
+      }
+    },
+    {
+      "id": "MessageSummary",
+      "name": "MessageSummary",
+      "kind": "type",
+      "type": {
+        "$ref": "#/types/MessageSummary"
+      },
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 180
+      }
+    },
+    {
+      "id": "ProjectDetail",
+      "name": "ProjectDetail",
+      "kind": "type",
+      "type": {
+        "$ref": "#/types/ProjectDetail"
+      },
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 205
+      }
+    },
+    {
+      "id": "ProjectSummary",
+      "name": "ProjectSummary",
+      "kind": "interface",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 235
+      }
+    },
+    {
+      "id": "ScopeSummary",
+      "name": "ScopeSummary",
+      "kind": "interface",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 246
+      }
+    },
+    {
+      "id": "SearchResultItem",
+      "name": "SearchResultItem",
+      "kind": "type",
+      "type": {
+        "$ref": "#/types/SearchResultItem"
+      },
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 252
+      }
+    },
+    {
+      "id": "UserDetail",
+      "name": "UserDetail",
+      "kind": "interface",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 260
+      }
+    },
+    {
+      "id": "VercelProjectDetail",
+      "name": "VercelProjectDetail",
+      "kind": "interface",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 268
+      }
+    },
+    {
+      "id": "VersionDetail",
+      "name": "VersionDetail",
+      "kind": "type",
+      "type": {
+        "$ref": "#/types/VersionDetail"
+      },
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 274
+      }
+    },
+    {
+      "id": "VersionSummary",
+      "name": "VersionSummary",
+      "kind": "type",
+      "type": {
+        "$ref": "#/types/VersionSummary"
+      },
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 286
+      }
+    },
+    {
+      "id": "ChatsCreateRequest",
+      "name": "ChatsCreateRequest",
+      "kind": "interface",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 293
+      }
+    },
+    {
+      "id": "ChatsCreateResponse",
+      "name": "ChatsCreateResponse",
+      "kind": "type",
+      "type": {
+        "$ref": "#/types/ChatDetail"
+      },
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 309
+      }
+    },
+    {
+      "id": "ChatsFindResponse",
+      "name": "ChatsFindResponse",
+      "kind": "interface",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 311
+      }
+    },
+    {
+      "id": "ChatsInitRequest",
+      "name": "ChatsInitRequest",
+      "kind": "type",
+      "type": {
+        "anyOf": [
+          {
+            "type": "{ name?: string; chatPrivacy?: \"public\" | \"private\" | \"team-edit\" | \"team\" | \"unlisted\"; projectId?: string; } & { type: \"files\"; files: ({ name: string; url: string; content?: never; } | { name: string; content: string; url?: never; })[]; repo?: never; registry?: never; zip?: never; }"
+          },
+          {
+            "type": "{ name?: string; chatPrivacy?: \"public\" | \"private\" | \"team-edit\" | \"team\" | \"unlisted\"; projectId?: string; } & { type: \"repo\"; repo: { url: string; branch?: string; }; files?: never; registry?: never; zip?: never; }"
+          },
+          {
+            "type": "{ name?: string; chatPrivacy?: \"public\" | \"private\" | \"team-edit\" | \"team\" | \"unlisted\"; projectId?: string; } & { type: \"registry\"; registry: { url: string; }; files?: never; repo?: never; zip?: never; }"
+          },
+          {
+            "type": "{ name?: string; chatPrivacy?: \"public\" | \"private\" | \"team-edit\" | \"team\" | \"unlisted\"; projectId?: string; } & { type: \"zip\"; zip: { url: string; }; files?: never; repo?: never; registry?: never; }"
+          }
+        ]
+      },
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 316
+      }
+    },
+    {
+      "id": "ChatsInitResponse",
+      "name": "ChatsInitResponse",
+      "kind": "type",
+      "type": {
+        "$ref": "#/types/ChatsInitResponse"
+      },
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 369
+      }
+    },
+    {
+      "id": "ChatsDeleteResponse",
+      "name": "ChatsDeleteResponse",
+      "kind": "interface",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 400
+      }
+    },
+    {
+      "id": "ChatsGetByIdResponse",
+      "name": "ChatsGetByIdResponse",
+      "kind": "type",
+      "type": {
+        "$ref": "#/types/ChatsGetByIdResponse"
+      },
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 406
+      }
+    },
+    {
+      "id": "ChatsUpdateRequest",
+      "name": "ChatsUpdateRequest",
+      "kind": "interface",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 437
+      }
+    },
+    {
+      "id": "ChatsUpdateResponse",
+      "name": "ChatsUpdateResponse",
+      "kind": "type",
+      "type": {
+        "$ref": "#/types/ChatsUpdateResponse"
+      },
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 442
+      }
+    },
+    {
+      "id": "ChatsFavoriteRequest",
+      "name": "ChatsFavoriteRequest",
+      "kind": "interface",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 473
+      }
+    },
+    {
+      "id": "ChatsFavoriteResponse",
+      "name": "ChatsFavoriteResponse",
+      "kind": "interface",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 477
+      }
+    },
+    {
+      "id": "ChatsForkRequest",
+      "name": "ChatsForkRequest",
+      "kind": "interface",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 483
+      }
+    },
+    {
+      "id": "ChatsForkResponse",
+      "name": "ChatsForkResponse",
+      "kind": "type",
+      "type": {
+        "$ref": "#/types/ChatsForkResponse"
+      },
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 487
+      }
+    },
+    {
+      "id": "ProjectsGetByChatIdResponse",
+      "name": "ProjectsGetByChatIdResponse",
+      "kind": "type",
+      "type": {
+        "$ref": "#/types/ProjectDetail"
+      },
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 518
+      }
+    },
+    {
+      "id": "ChatsSendMessageRequest",
+      "name": "ChatsSendMessageRequest",
+      "kind": "interface",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 520
+      }
+    },
+    {
+      "id": "ChatsSendMessageResponse",
+      "name": "ChatsSendMessageResponse",
+      "kind": "type",
+      "type": {
+        "$ref": "#/types/ChatsSendMessageResponse"
+      },
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 533
+      }
+    },
+    {
+      "id": "ChatsResumeResponse",
+      "name": "ChatsResumeResponse",
+      "kind": "type",
+      "type": {
+        "$ref": "#/types/MessageDetail"
+      },
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 570
+      }
+    },
+    {
+      "id": "DeploymentsFindResponse",
+      "name": "DeploymentsFindResponse",
+      "kind": "interface",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 572
+      }
+    },
+    {
+      "id": "DeploymentsCreateRequest",
+      "name": "DeploymentsCreateRequest",
+      "kind": "interface",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 577
+      }
+    },
+    {
+      "id": "DeploymentsCreateResponse",
+      "name": "DeploymentsCreateResponse",
+      "kind": "type",
+      "type": {
+        "$ref": "#/types/DeploymentDetail"
+      },
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 583
+      }
+    },
+    {
+      "id": "DeploymentsGetByIdResponse",
+      "name": "DeploymentsGetByIdResponse",
+      "kind": "type",
+      "type": {
+        "$ref": "#/types/DeploymentDetail"
+      },
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 585
+      }
+    },
+    {
+      "id": "DeploymentsDeleteResponse",
+      "name": "DeploymentsDeleteResponse",
+      "kind": "interface",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 587
+      }
+    },
+    {
+      "id": "DeploymentsFindLogsResponse",
+      "name": "DeploymentsFindLogsResponse",
+      "kind": "interface",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 593
+      }
+    },
+    {
+      "id": "DeploymentsFindErrorsResponse",
+      "name": "DeploymentsFindErrorsResponse",
+      "kind": "interface",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 599
+      }
+    },
+    {
+      "id": "HooksFindResponse",
+      "name": "HooksFindResponse",
+      "kind": "interface",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 606
+      }
+    },
+    {
+      "id": "HooksCreateRequest",
+      "name": "HooksCreateRequest",
+      "kind": "interface",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 611
+      }
+    },
+    {
+      "id": "HooksCreateResponse",
+      "name": "HooksCreateResponse",
+      "kind": "type",
+      "type": {
+        "$ref": "#/types/HookDetail"
+      },
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 629
+      }
+    },
+    {
+      "id": "HooksGetByIdResponse",
+      "name": "HooksGetByIdResponse",
+      "kind": "type",
+      "type": {
+        "$ref": "#/types/HookDetail"
+      },
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 631
+      }
+    },
+    {
+      "id": "HooksUpdateRequest",
+      "name": "HooksUpdateRequest",
+      "kind": "interface",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 633
+      }
+    },
+    {
+      "id": "HooksUpdateResponse",
+      "name": "HooksUpdateResponse",
+      "kind": "type",
+      "type": {
+        "$ref": "#/types/HookDetail"
+      },
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 649
+      }
+    },
+    {
+      "id": "HooksDeleteResponse",
+      "name": "HooksDeleteResponse",
+      "kind": "interface",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 651
+      }
+    },
+    {
+      "id": "IntegrationsVercelProjectsFindResponse",
+      "name": "IntegrationsVercelProjectsFindResponse",
+      "kind": "interface",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 657
+      }
+    },
+    {
+      "id": "IntegrationsVercelProjectsCreateRequest",
+      "name": "IntegrationsVercelProjectsCreateRequest",
+      "kind": "interface",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 662
+      }
+    },
+    {
+      "id": "IntegrationsVercelProjectsCreateResponse",
+      "name": "IntegrationsVercelProjectsCreateResponse",
+      "kind": "type",
+      "type": {
+        "$ref": "#/types/VercelProjectDetail"
+      },
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 667
+      }
+    },
+    {
+      "id": "ProjectsFindResponse",
+      "name": "ProjectsFindResponse",
+      "kind": "interface",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 669
+      }
+    },
+    {
+      "id": "ProjectsCreateRequest",
+      "name": "ProjectsCreateRequest",
+      "kind": "interface",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 674
+      }
+    },
+    {
+      "id": "ProjectsCreateResponse",
+      "name": "ProjectsCreateResponse",
+      "kind": "type",
+      "type": {
+        "$ref": "#/types/ProjectDetail"
+      },
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 685
+      }
+    },
+    {
+      "id": "ProjectsGetByIdResponse",
+      "name": "ProjectsGetByIdResponse",
+      "kind": "type",
+      "type": {
+        "$ref": "#/types/ProjectDetail"
+      },
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 687
+      }
+    },
+    {
+      "id": "ProjectsAssignRequest",
+      "name": "ProjectsAssignRequest",
+      "kind": "interface",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 689
+      }
+    },
+    {
+      "id": "ProjectsAssignResponse",
+      "name": "ProjectsAssignResponse",
+      "kind": "interface",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 693
+      }
+    },
+    {
+      "id": "RateLimitsFindResponse",
+      "name": "RateLimitsFindResponse",
+      "kind": "interface",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 699
+      }
+    },
+    {
+      "id": "UserGetResponse",
+      "name": "UserGetResponse",
+      "kind": "type",
+      "type": {
+        "$ref": "#/types/UserDetail"
+      },
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 705
+      }
+    },
+    {
+      "id": "UserGetBillingResponse",
+      "name": "UserGetBillingResponse",
+      "kind": "type",
+      "type": {
+        "anyOf": [
+          {
+            "type": "{ billingType: \"token\"; data: { plan: string; billingMode?: \"test\"; role: string; billingCycle: { start: number; end: number; }; balance: { remaining: number; total: number; }; onDemand: { balance: number; blocks?: { ...; }[]; }; }; }"
+          },
+          {
+            "type": "{ billingType: \"legacy\"; data: { remaining?: number; reset?: number; limit: number; }; }"
+          }
+        ]
+      },
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 707
+      }
+    },
+    {
+      "id": "UserGetPlanResponse",
+      "name": "UserGetPlanResponse",
+      "kind": "interface",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 742
+      }
+    },
+    {
+      "id": "UserGetScopesResponse",
+      "name": "UserGetScopesResponse",
+      "kind": "interface",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 755
+      }
+    },
+    {
+      "id": "V0ClientConfig",
+      "name": "V0ClientConfig",
+      "kind": "interface",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 760
+      }
     },
     {
       "id": "v0",
       "name": "v0",
       "kind": "variable",
-      "schema": {
-        "type": "string"
+      "type": {
+        "$ref": "#/types/__object"
       },
-      "description": ""
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 1111
+      }
     }
   ],
   "types": [
@@ -49,19 +815,23 @@
       "id": "ChatDetail",
       "name": "ChatDetail",
       "kind": "type",
-      "schema": {
-        "type": "string"
-      },
-      "description": ""
+      "type": "ChatDetail",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 3
+      }
     },
     {
       "id": "ChatSummary",
       "name": "ChatSummary",
       "kind": "type",
-      "schema": {
-        "type": "string"
-      },
-      "description": ""
+      "type": "ChatSummary",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 66
+      }
     },
     {
       "id": "DeploymentDetail",
@@ -71,36 +841,30 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "object": {
-            "type": "string",
-            "description": ""
+            "enum": [
+              "deployment"
+            ]
           },
           "inspectorUrl": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "chatId": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "projectId": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "versionId": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "apiUrl": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "webUrl": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           }
         },
         "required": [
@@ -114,7 +878,11 @@
           "webUrl"
         ]
       },
-      "description": ""
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 86
+      }
     },
     {
       "id": "DeploymentSummary",
@@ -124,36 +892,30 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "object": {
-            "type": "string",
-            "description": ""
+            "enum": [
+              "deployment"
+            ]
           },
           "inspectorUrl": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "chatId": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "projectId": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "versionId": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "apiUrl": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "webUrl": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           }
         },
         "required": [
@@ -167,7 +929,11 @@
           "webUrl"
         ]
       },
-      "description": ""
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 97
+      }
     },
     {
       "id": "FileDetail",
@@ -177,16 +943,15 @@
         "type": "object",
         "properties": {
           "object": {
-            "type": "string",
-            "description": ""
+            "enum": [
+              "file"
+            ]
           },
           "name": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "content": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           }
         },
         "required": [
@@ -195,7 +960,11 @@
           "content"
         ]
       },
-      "description": ""
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 108
+      }
     },
     {
       "id": "FileSummary",
@@ -205,12 +974,12 @@
         "type": "object",
         "properties": {
           "object": {
-            "type": "string",
-            "description": ""
+            "enum": [
+              "file"
+            ]
           },
           "name": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           }
         },
         "required": [
@@ -218,25 +987,33 @@
           "name"
         ]
       },
-      "description": ""
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 114
+      }
     },
     {
       "id": "HookDetail",
       "name": "HookDetail",
       "kind": "type",
-      "schema": {
-        "type": "string"
-      },
-      "description": ""
+      "type": "HookDetail",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 119
+      }
     },
     {
       "id": "HookEventDetail",
       "name": "HookEventDetail",
       "kind": "type",
-      "schema": {
-        "type": "string"
-      },
-      "description": ""
+      "type": "HookEventDetail",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 139
+      }
     },
     {
       "id": "HookSummary",
@@ -246,16 +1023,15 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "object": {
-            "type": "string",
-            "description": ""
+            "enum": [
+              "hook"
+            ]
           },
           "name": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           }
         },
         "required": [
@@ -264,34 +1040,44 @@
           "name"
         ]
       },
-      "description": ""
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 156
+      }
     },
     {
       "id": "MessageDetail",
       "name": "MessageDetail",
       "kind": "type",
-      "schema": {
-        "type": "string"
-      },
-      "description": ""
+      "type": "MessageDetail",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 162
+      }
     },
     {
       "id": "MessageSummary",
       "name": "MessageSummary",
       "kind": "type",
-      "schema": {
-        "type": "string"
-      },
-      "description": ""
+      "type": "MessageSummary",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 180
+      }
     },
     {
       "id": "ProjectDetail",
       "name": "ProjectDetail",
       "kind": "type",
-      "schema": {
-        "type": "string"
-      },
-      "description": ""
+      "type": "ProjectDetail",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 205
+      }
     },
     {
       "id": "ProjectSummary",
@@ -301,36 +1087,30 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "object": {
-            "type": "string",
-            "description": ""
+            "enum": [
+              "project"
+            ]
           },
           "name": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "vercelProjectId": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "createdAt": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "updatedAt": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "apiUrl": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "webUrl": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           }
         },
         "required": [
@@ -342,7 +1122,11 @@
           "webUrl"
         ]
       },
-      "description": ""
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 235
+      }
     },
     {
       "id": "ScopeSummary",
@@ -352,16 +1136,15 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "object": {
-            "type": "string",
-            "description": ""
+            "enum": [
+              "scope"
+            ]
           },
           "name": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           }
         },
         "required": [
@@ -369,16 +1152,22 @@
           "object"
         ]
       },
-      "description": ""
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 246
+      }
     },
     {
       "id": "SearchResultItem",
       "name": "SearchResultItem",
       "kind": "type",
-      "schema": {
-        "type": "string"
-      },
-      "description": ""
+      "type": "SearchResultItem",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 252
+      }
     },
     {
       "id": "UserDetail",
@@ -388,24 +1177,21 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "object": {
-            "type": "string",
-            "description": ""
+            "enum": [
+              "user"
+            ]
           },
           "name": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "email": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "avatar": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           }
         },
         "required": [
@@ -415,7 +1201,11 @@
           "avatar"
         ]
       },
-      "description": ""
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 260
+      }
     },
     {
       "id": "VercelProjectDetail",
@@ -425,16 +1215,15 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "object": {
-            "type": "string",
-            "description": ""
+            "enum": [
+              "vercel_project"
+            ]
           },
           "name": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           }
         },
         "required": [
@@ -443,25 +1232,33 @@
           "name"
         ]
       },
-      "description": ""
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 268
+      }
     },
     {
       "id": "VersionDetail",
       "name": "VersionDetail",
       "kind": "type",
-      "schema": {
-        "type": "string"
-      },
-      "description": ""
+      "type": "VersionDetail",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 274
+      }
     },
     {
       "id": "VersionSummary",
       "name": "VersionSummary",
       "kind": "type",
-      "schema": {
-        "type": "string"
-      },
-      "description": ""
+      "type": "VersionSummary",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 286
+      }
     },
     {
       "id": "ChatsCreateRequest",
@@ -471,48 +1268,84 @@
         "type": "object",
         "properties": {
           "message": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "attachments": {
-            "type": "string",
-            "description": ""
+            "type": "array"
           },
           "system": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "chatPrivacy": {
-            "type": "string",
-            "description": ""
+            "anyOf": [
+              {
+                "enum": [
+                  "public"
+                ]
+              },
+              {
+                "enum": [
+                  "private"
+                ]
+              },
+              {
+                "enum": [
+                  "team-edit"
+                ]
+              },
+              {
+                "enum": [
+                  "team"
+                ]
+              },
+              {
+                "enum": [
+                  "unlisted"
+                ]
+              }
+            ]
           },
           "projectId": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "modelConfiguration": {
-            "type": "string",
-            "description": ""
+            "type": "{ modelId: \"v0-1.5-sm\" | \"v0-1.5-md\" | \"v0-1.5-lg\"; imageGenerations?: boolean; thinking?: boolean; }"
           },
           "responseMode": {
-            "type": "string",
-            "description": ""
+            "anyOf": [
+              {
+                "enum": [
+                  "sync"
+                ]
+              },
+              {
+                "enum": [
+                  "async"
+                ]
+              }
+            ]
           }
         },
         "required": [
           "message"
         ]
       },
-      "description": ""
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 293
+      }
     },
     {
       "id": "ChatsCreateResponse",
       "name": "ChatsCreateResponse",
       "kind": "type",
-      "schema": {
-        "type": "string"
-      },
-      "description": ""
+      "type": "ChatDetail",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 309
+      }
     },
     {
       "id": "ChatsFindResponse",
@@ -522,12 +1355,12 @@
         "type": "object",
         "properties": {
           "object": {
-            "type": "string",
-            "description": ""
+            "enum": [
+              "list"
+            ]
           },
           "data": {
-            "type": "string",
-            "description": ""
+            "type": "array"
           }
         },
         "required": [
@@ -535,25 +1368,33 @@
           "data"
         ]
       },
-      "description": ""
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 311
+      }
     },
     {
       "id": "ChatsInitRequest",
       "name": "ChatsInitRequest",
       "kind": "type",
-      "schema": {
-        "type": "string"
-      },
-      "description": ""
+      "type": "ChatsInitRequest",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 316
+      }
     },
     {
       "id": "ChatsInitResponse",
       "name": "ChatsInitResponse",
       "kind": "type",
-      "schema": {
-        "type": "string"
-      },
-      "description": ""
+      "type": "ChatsInitResponse",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 369
+      }
     },
     {
       "id": "ChatsDeleteResponse",
@@ -563,16 +1404,15 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "object": {
-            "type": "string",
-            "description": ""
+            "enum": [
+              "chat"
+            ]
           },
           "deleted": {
-            "type": "string",
-            "description": ""
+            "$ref": "#/types/true"
           }
         },
         "required": [
@@ -581,16 +1421,22 @@
           "deleted"
         ]
       },
-      "description": ""
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 400
+      }
     },
     {
       "id": "ChatsGetByIdResponse",
       "name": "ChatsGetByIdResponse",
       "kind": "type",
-      "schema": {
-        "type": "string"
-      },
-      "description": ""
+      "type": "ChatsGetByIdResponse",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 406
+      }
     },
     {
       "id": "ChatsUpdateRequest",
@@ -600,25 +1446,55 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "privacy": {
-            "type": "string",
-            "description": ""
+            "anyOf": [
+              {
+                "enum": [
+                  "public"
+                ]
+              },
+              {
+                "enum": [
+                  "private"
+                ]
+              },
+              {
+                "enum": [
+                  "team-edit"
+                ]
+              },
+              {
+                "enum": [
+                  "team"
+                ]
+              },
+              {
+                "enum": [
+                  "unlisted"
+                ]
+              }
+            ]
           }
         }
       },
-      "description": ""
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 437
+      }
     },
     {
       "id": "ChatsUpdateResponse",
       "name": "ChatsUpdateResponse",
       "kind": "type",
-      "schema": {
-        "type": "string"
-      },
-      "description": ""
+      "type": "ChatsUpdateResponse",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 442
+      }
     },
     {
       "id": "ChatsFavoriteRequest",
@@ -628,15 +1504,18 @@
         "type": "object",
         "properties": {
           "isFavorite": {
-            "type": "string",
-            "description": ""
+            "type": "boolean"
           }
         },
         "required": [
           "isFavorite"
         ]
       },
-      "description": ""
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 473
+      }
     },
     {
       "id": "ChatsFavoriteResponse",
@@ -646,16 +1525,15 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "object": {
-            "type": "string",
-            "description": ""
+            "enum": [
+              "chat"
+            ]
           },
           "favorited": {
-            "type": "string",
-            "description": ""
+            "type": "boolean"
           }
         },
         "required": [
@@ -664,7 +1542,11 @@
           "favorited"
         ]
       },
-      "description": ""
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 477
+      }
     },
     {
       "id": "ChatsForkRequest",
@@ -674,30 +1556,37 @@
         "type": "object",
         "properties": {
           "versionId": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           }
         }
       },
-      "description": ""
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 483
+      }
     },
     {
       "id": "ChatsForkResponse",
       "name": "ChatsForkResponse",
       "kind": "type",
-      "schema": {
-        "type": "string"
-      },
-      "description": ""
+      "type": "ChatsForkResponse",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 487
+      }
     },
     {
       "id": "ProjectsGetByChatIdResponse",
       "name": "ProjectsGetByChatIdResponse",
       "kind": "type",
-      "schema": {
-        "type": "string"
-      },
-      "description": ""
+      "type": "ProjectDetail",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 518
+      }
     },
     {
       "id": "ChatsSendMessageRequest",
@@ -707,45 +1596,60 @@
         "type": "object",
         "properties": {
           "message": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "attachments": {
-            "type": "string",
-            "description": ""
+            "type": "array"
           },
           "modelConfiguration": {
-            "type": "string",
-            "description": ""
+            "type": "{ modelId: \"v0-1.5-sm\" | \"v0-1.5-md\" | \"v0-1.5-lg\"; imageGenerations?: boolean; thinking?: boolean; }"
           },
           "responseMode": {
-            "type": "string",
-            "description": ""
+            "anyOf": [
+              {
+                "enum": [
+                  "sync"
+                ]
+              },
+              {
+                "enum": [
+                  "async"
+                ]
+              }
+            ]
           }
         },
         "required": [
           "message"
         ]
       },
-      "description": ""
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 520
+      }
     },
     {
       "id": "ChatsSendMessageResponse",
       "name": "ChatsSendMessageResponse",
       "kind": "type",
-      "schema": {
-        "type": "string"
-      },
-      "description": ""
+      "type": "ChatsSendMessageResponse",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 533
+      }
     },
     {
       "id": "ChatsResumeResponse",
       "name": "ChatsResumeResponse",
       "kind": "type",
-      "schema": {
-        "type": "string"
-      },
-      "description": ""
+      "type": "MessageDetail",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 570
+      }
     },
     {
       "id": "DeploymentsFindResponse",
@@ -755,12 +1659,12 @@
         "type": "object",
         "properties": {
           "object": {
-            "type": "string",
-            "description": ""
+            "enum": [
+              "list"
+            ]
           },
           "data": {
-            "type": "string",
-            "description": ""
+            "type": "array"
           }
         },
         "required": [
@@ -768,7 +1672,11 @@
           "data"
         ]
       },
-      "description": ""
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 572
+      }
     },
     {
       "id": "DeploymentsCreateRequest",
@@ -778,16 +1686,13 @@
         "type": "object",
         "properties": {
           "projectId": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "chatId": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "versionId": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           }
         },
         "required": [
@@ -796,25 +1701,33 @@
           "versionId"
         ]
       },
-      "description": ""
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 577
+      }
     },
     {
       "id": "DeploymentsCreateResponse",
       "name": "DeploymentsCreateResponse",
       "kind": "type",
-      "schema": {
-        "type": "string"
-      },
-      "description": ""
+      "type": "DeploymentDetail",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 583
+      }
     },
     {
       "id": "DeploymentsGetByIdResponse",
       "name": "DeploymentsGetByIdResponse",
       "kind": "type",
-      "schema": {
-        "type": "string"
-      },
-      "description": ""
+      "type": "DeploymentDetail",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 585
+      }
     },
     {
       "id": "DeploymentsDeleteResponse",
@@ -824,16 +1737,15 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "object": {
-            "type": "string",
-            "description": ""
+            "enum": [
+              "deployment"
+            ]
           },
           "deleted": {
-            "type": "string",
-            "description": ""
+            "$ref": "#/types/true"
           }
         },
         "required": [
@@ -842,7 +1754,11 @@
           "deleted"
         ]
       },
-      "description": ""
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 587
+      }
     },
     {
       "id": "DeploymentsFindLogsResponse",
@@ -852,23 +1768,24 @@
         "type": "object",
         "properties": {
           "error": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "logs": {
-            "type": "string",
-            "description": ""
+            "type": "array"
           },
           "nextSince": {
-            "type": "string",
-            "description": ""
+            "type": "number"
           }
         },
         "required": [
           "logs"
         ]
       },
-      "description": ""
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 593
+      }
     },
     {
       "id": "DeploymentsFindErrorsResponse",
@@ -878,24 +1795,24 @@
         "type": "object",
         "properties": {
           "error": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "fullErrorText": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "errorType": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "formattedError": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           }
         }
       },
-      "description": ""
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 599
+      }
     },
     {
       "id": "HooksFindResponse",
@@ -905,12 +1822,12 @@
         "type": "object",
         "properties": {
           "object": {
-            "type": "string",
-            "description": ""
+            "enum": [
+              "list"
+            ]
           },
           "data": {
-            "type": "string",
-            "description": ""
+            "type": "array"
           }
         },
         "required": [
@@ -918,7 +1835,11 @@
           "data"
         ]
       },
-      "description": ""
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 606
+      }
     },
     {
       "id": "HooksCreateRequest",
@@ -928,24 +1849,19 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "events": {
-            "type": "string",
-            "description": ""
+            "type": "array"
           },
           "chatId": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "projectId": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "url": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           }
         },
         "required": [
@@ -954,25 +1870,33 @@
           "url"
         ]
       },
-      "description": ""
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 611
+      }
     },
     {
       "id": "HooksCreateResponse",
       "name": "HooksCreateResponse",
       "kind": "type",
-      "schema": {
-        "type": "string"
-      },
-      "description": ""
+      "type": "HookDetail",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 629
+      }
     },
     {
       "id": "HooksGetByIdResponse",
       "name": "HooksGetByIdResponse",
       "kind": "type",
-      "schema": {
-        "type": "string"
-      },
-      "description": ""
+      "type": "HookDetail",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 631
+      }
     },
     {
       "id": "HooksUpdateRequest",
@@ -982,29 +1906,32 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "events": {
-            "type": "string",
-            "description": ""
+            "type": "array"
           },
           "url": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           }
         }
       },
-      "description": ""
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 633
+      }
     },
     {
       "id": "HooksUpdateResponse",
       "name": "HooksUpdateResponse",
       "kind": "type",
-      "schema": {
-        "type": "string"
-      },
-      "description": ""
+      "type": "HookDetail",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 649
+      }
     },
     {
       "id": "HooksDeleteResponse",
@@ -1014,16 +1941,15 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "object": {
-            "type": "string",
-            "description": ""
+            "enum": [
+              "hook"
+            ]
           },
           "deleted": {
-            "type": "string",
-            "description": ""
+            "$ref": "#/types/true"
           }
         },
         "required": [
@@ -1032,7 +1958,11 @@
           "deleted"
         ]
       },
-      "description": ""
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 651
+      }
     },
     {
       "id": "IntegrationsVercelProjectsFindResponse",
@@ -1042,12 +1972,12 @@
         "type": "object",
         "properties": {
           "object": {
-            "type": "string",
-            "description": ""
+            "enum": [
+              "list"
+            ]
           },
           "data": {
-            "type": "string",
-            "description": ""
+            "type": "array"
           }
         },
         "required": [
@@ -1055,7 +1985,11 @@
           "data"
         ]
       },
-      "description": ""
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 657
+      }
     },
     {
       "id": "IntegrationsVercelProjectsCreateRequest",
@@ -1065,12 +1999,10 @@
         "type": "object",
         "properties": {
           "projectId": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "name": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           }
         },
         "required": [
@@ -1078,16 +2010,22 @@
           "name"
         ]
       },
-      "description": ""
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 662
+      }
     },
     {
       "id": "IntegrationsVercelProjectsCreateResponse",
       "name": "IntegrationsVercelProjectsCreateResponse",
       "kind": "type",
-      "schema": {
-        "type": "string"
-      },
-      "description": ""
+      "type": "VercelProjectDetail",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 667
+      }
     },
     {
       "id": "ProjectsFindResponse",
@@ -1097,12 +2035,12 @@
         "type": "object",
         "properties": {
           "object": {
-            "type": "string",
-            "description": ""
+            "enum": [
+              "list"
+            ]
           },
           "data": {
-            "type": "string",
-            "description": ""
+            "type": "array"
           }
         },
         "required": [
@@ -1110,7 +2048,11 @@
           "data"
         ]
       },
-      "description": ""
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 669
+      }
     },
     {
       "id": "ProjectsCreateRequest",
@@ -1120,49 +2062,52 @@
         "type": "object",
         "properties": {
           "name": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "description": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "icon": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "environmentVariables": {
-            "type": "string",
-            "description": ""
+            "type": "array"
           },
           "instructions": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           }
         },
         "required": [
           "name"
         ]
       },
-      "description": ""
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 674
+      }
     },
     {
       "id": "ProjectsCreateResponse",
       "name": "ProjectsCreateResponse",
       "kind": "type",
-      "schema": {
-        "type": "string"
-      },
-      "description": ""
+      "type": "ProjectDetail",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 685
+      }
     },
     {
       "id": "ProjectsGetByIdResponse",
       "name": "ProjectsGetByIdResponse",
       "kind": "type",
-      "schema": {
-        "type": "string"
-      },
-      "description": ""
+      "type": "ProjectDetail",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 687
+      }
     },
     {
       "id": "ProjectsAssignRequest",
@@ -1172,15 +2117,18 @@
         "type": "object",
         "properties": {
           "chatId": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           }
         },
         "required": [
           "chatId"
         ]
       },
-      "description": ""
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 689
+      }
     },
     {
       "id": "ProjectsAssignResponse",
@@ -1190,16 +2138,15 @@
         "type": "object",
         "properties": {
           "object": {
-            "type": "string",
-            "description": ""
+            "enum": [
+              "project"
+            ]
           },
           "id": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "assigned": {
-            "type": "string",
-            "description": ""
+            "$ref": "#/types/true"
           }
         },
         "required": [
@@ -1208,7 +2155,11 @@
           "assigned"
         ]
       },
-      "description": ""
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 693
+      }
     },
     {
       "id": "RateLimitsFindResponse",
@@ -1218,41 +2169,46 @@
         "type": "object",
         "properties": {
           "remaining": {
-            "type": "string",
-            "description": ""
+            "type": "number"
           },
           "reset": {
-            "type": "string",
-            "description": ""
+            "type": "number"
           },
           "limit": {
-            "type": "string",
-            "description": ""
+            "type": "number"
           }
         },
         "required": [
           "limit"
         ]
       },
-      "description": ""
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 699
+      }
     },
     {
       "id": "UserGetResponse",
       "name": "UserGetResponse",
       "kind": "type",
-      "schema": {
-        "type": "string"
-      },
-      "description": ""
+      "type": "UserDetail",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 705
+      }
     },
     {
       "id": "UserGetBillingResponse",
       "name": "UserGetBillingResponse",
       "kind": "type",
-      "schema": {
-        "type": "string"
-      },
-      "description": ""
+      "type": "UserGetBillingResponse",
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 707
+      }
     },
     {
       "id": "UserGetPlanResponse",
@@ -1262,20 +2218,18 @@
         "type": "object",
         "properties": {
           "object": {
-            "type": "string",
-            "description": ""
+            "enum": [
+              "plan"
+            ]
           },
           "plan": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "billingCycle": {
-            "type": "string",
-            "description": ""
+            "type": "{ start: number; end: number; }"
           },
           "balance": {
-            "type": "string",
-            "description": ""
+            "type": "{ remaining: number; total: number; }"
           }
         },
         "required": [
@@ -1285,7 +2239,11 @@
           "balance"
         ]
       },
-      "description": ""
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 742
+      }
     },
     {
       "id": "UserGetScopesResponse",
@@ -1295,12 +2253,12 @@
         "type": "object",
         "properties": {
           "object": {
-            "type": "string",
-            "description": ""
+            "enum": [
+              "list"
+            ]
           },
           "data": {
-            "type": "string",
-            "description": ""
+            "type": "array"
           }
         },
         "required": [
@@ -1308,7 +2266,11 @@
           "data"
         ]
       },
-      "description": ""
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 755
+      }
     },
     {
       "id": "V0ClientConfig",
@@ -1318,16 +2280,18 @@
         "type": "object",
         "properties": {
           "apiKey": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           },
           "baseUrl": {
-            "type": "string",
-            "description": ""
+            "type": "string"
           }
         }
       },
-      "description": ""
+      "description": "",
+      "source": {
+        "file": "https://github.com/vercel/v0-sdk/blob/01830de006e4538d206d109ce01bdd6b22ef421d/src/sdk/v0.ts",
+        "line": 760
+      }
     }
   ]
 }

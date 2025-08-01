@@ -1,0 +1,31 @@
+{
+  "name": "openpkg",
+  "version": "1.0.0",
+  "description": "OpenAPI-like specification generator for TypeScript packages",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "openpkg": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "bunup",
+    "dev": "bunup --watch",
+    "cli": "bun run src/cli.ts"
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@openpkg/sdk": "workspace:*",
+    "chalk": "^5.4.1",
+    "commander": "^14.0.0",
+    "ora": "^8.2.0",
+    "@inquirer/prompts": "^7.8.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/node": "^20.0.0",
+    "bunup": "latest"
+  }
+}

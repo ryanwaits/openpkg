@@ -1,48 +1,20 @@
 {
-  "name": "openpkg",
-  "version": "1.0.0",
-  "description": "OpenAPI-like specification generator for TypeScript packages",
+  "name": "openpkg-monorepo",
+  "private": true,
   "type": "module",
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    },
-    "./cli": {
-      "import": "./dist/cli.js",
-      "types": "./dist/cli.d.ts"
-    }
-  },
-  "bin": {
-    "openpkg": "./dist/cli.js"
-  },
-  "scripts": {
-    "build": "bunup",
-    "dev": "bunup --watch",
-    "cli": "bun run src/cli.ts",
-    "generate:examples": "cd examples && ./generate-all.sh",
-    "prepublishOnly": "bun run build"
-  },
-  "files": [
-    "dist"
+  "workspaces": [
+    "packages/*"
   ],
-  "dependencies": {
-    "chalk": "^5.4.1",
-    "commander": "^14.0.0",
-    "ora": "^8.2.0",
-    "@inquirer/prompts": "^7.8.0",
-    "typescript": "^5.0.0",
-    "zod": "^4.0.5"
+  "scripts": {
+    "build": "bun run build:sdk && bun run build:cli",
+    "build:sdk": "cd packages/sdk && bun run build",
+    "build:cli": "cd packages/cli && bun run build",
+    "dev": "bun run --parallel dev:sdk dev:cli",
+    "dev:sdk": "cd packages/sdk && bun run dev",
+    "dev:cli": "cd packages/cli && bun run dev"
   },
   "devDependencies": {
     "@types/bun": "latest",
-    "@types/node": "^20.0.0",
-    "bunup": "latest"
-  },
-  "peerDependencies": {
-    "typescript": "^5"
+    "@types/node": "^20.0.0"
   }
 }
