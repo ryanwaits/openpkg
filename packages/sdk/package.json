@@ -1,7 +1,16 @@
 {
-  "name": "@openpkg/sdk",
+  "name": "openpkg-sdk",
   "version": "0.1.0",
   "description": "TypeScript package specification SDK",
+  "keywords": ["typescript", "documentation", "sdk", "openpkg", "package-analysis"],
+  "homepage": "https://github.com/openpkg/openpkg#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/openpkg/openpkg.git",
+    "directory": "packages/sdk"
+  },
+  "license": "MIT",
+  "author": "Ryan Waits",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",

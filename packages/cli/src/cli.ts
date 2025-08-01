@@ -6,7 +6,7 @@ import * as path from 'path';
 import chalk from 'chalk';
 import ora from 'ora';
 import { confirm } from '@inquirer/prompts';
-import { OpenPkg } from '@openpkg/sdk';
+import { OpenPkg } from 'openpkg-sdk';
 import { findEntryPoint, findPackageInMonorepo } from './utils/package-utils';
 import { detectBuildStatus, shouldWarnAboutBuild, formatBuildWarning } from './utils/build-detection';
 

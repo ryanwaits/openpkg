@@ -1,7 +1,16 @@
 {
-  "name": "openpkg",
-  "version": "1.0.0",
+  "name": "openpkg-cli",
+  "version": "0.1.0",
   "description": "OpenAPI-like specification generator for TypeScript packages",
+  "keywords": ["typescript", "cli", "documentation", "openpkg", "package-analysis", "openapi"],
+  "homepage": "https://github.com/openpkg/openpkg#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/openpkg/openpkg.git",
+    "directory": "packages/cli"
+  },
+  "license": "MIT",
+  "author": "Ryan Waits",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -17,11 +26,11 @@
     "dist"
   ],
   "dependencies": {
-    "@openpkg/sdk": "workspace:*",
+    "@inquirer/prompts": "^7.8.0",
     "chalk": "^5.4.1",
     "commander": "^14.0.0",
-    "ora": "^8.2.0",
-    "@inquirer/prompts": "^7.8.0"
+    "openpkg-sdk": "^0.1.0",
+    "ora": "^8.2.0"
   },
   "devDependencies": {
     "@types/bun": "latest",
