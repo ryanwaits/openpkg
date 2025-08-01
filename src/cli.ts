@@ -101,6 +101,7 @@ program
 program
   .command('analyze <url>')
   .description('Analyze TypeScript code from a URL (Studio feature)')
+  .option('--imports', 'Show import analysis')
   .option('--debug', 'Show debug output')
   .action(async (url, options) => {
     try {
@@ -157,6 +158,103 @@ program
         
         spinner.succeed('Fetched successfully');
         
+        // Handle imports display
+        if (options.imports) {
+          // Check for parse errors first
+          if (data.parseErrors && data.parseErrors.length > 0) {
+            console.warn(chalk.yellow('\n⚠️  Parse errors detected:\n'));
+            data.parseErrors.forEach((error: any) => {
+              if (error.line && error.column) {
+                console.warn(chalk.yellow(`  Line ${error.line}, Column ${error.column}: ${error.message}`));
+              } else if (error.line) {
+                console.warn(chalk.yellow(`  Line ${error.line}: ${error.message}`));
+              } else {
+                console.warn(chalk.yellow(`  ${error.message}`));
+              }
+            });
+            console.log();
+          }
+          
+          // Display imports
+          if (data.imports && data.imports.length > 0) {
+            spinner.succeed(`Parsing TypeScript...`);
+            spinner.succeed(`Found ${data.imports.length} imports`);
+            console.log();
+            
+            // Group imports by type
+            const relativeImports = data.imports.filter((imp: any) => imp.type === 'relative');
+            const packageImports = data.imports.filter((imp: any) => imp.type === 'package');
+            const absoluteImports = data.imports.filter((imp: any) => imp.type === 'absolute');
+            
+            console.log(chalk.bold('Imports:'));
+            
+            // Display relative imports
+            if (relativeImports.length > 0) {
+              console.log(`├── ${chalk.cyan('Relative')} (${relativeImports.length})`);
+              relativeImports.forEach((imp: any, index: number) => {
+                const isLast = index === relativeImports.length - 1 && packageImports.length === 0 && absoluteImports.length === 0;
+                const prefix = isLast ? '    └──' : '│   ├──';
+                let importInfo = imp.path;
+                
+                if (imp.isTypeOnly) {
+                  importInfo += chalk.gray(' (type-only)');
+                }
+                
+                const importCount = (imp.importedNames?.length || 0) + 
+                                  (imp.defaultImport ? 1 : 0) + 
+                                  (imp.namespaceImport ? 1 : 0);
+                
+                if (importCount > 0) {
+                  importInfo += chalk.gray(` [${importCount} import${importCount > 1 ? 's' : ''}]`);
+                }
+                
+                console.log(`${prefix} ${importInfo}`);
+              });
+            }
+            
+            // Display package imports
+            if (packageImports.length > 0) {
+              const hasAbsolute = absoluteImports.length > 0;
+              console.log(`${hasAbsolute ? '├──' : '└──'} ${chalk.green('Package')} (${packageImports.length})`);
+              packageImports.forEach((imp: any, index: number) => {
+                const isLast = index === packageImports.length - 1 && !hasAbsolute;
+                const prefix = isLast ? '    └──' : hasAbsolute ? '│   ├──' : '    ├──';
+                let importInfo = imp.path;
+                
+                if (imp.defaultImport) {
+                  importInfo += chalk.gray(' [default import]');
+                } else if (imp.namespaceImport) {
+                  importInfo += chalk.gray(' [namespace import]');
+                } else if (imp.importedNames && imp.importedNames.length > 0) {
+                  importInfo += chalk.gray(` [${imp.importedNames.length} named imports]`);
+                }
+                
+                console.log(`${prefix} ${importInfo}`);
+              });
+            }
+            
+            // Display absolute imports (rare)
+            if (absoluteImports.length > 0) {
+              console.log(`└── ${chalk.yellow('Absolute')} (${absoluteImports.length})`);
+              absoluteImports.forEach((imp: any, index: number) => {
+                const isLast = index === absoluteImports.length - 1;
+                const prefix = isLast ? '    └──' : '    ├──';
+                console.log(`${prefix} ${imp.path}`);
+              });
+            }
+            
+            // Show summary message if there are parse errors
+            if (data.parseErrors && data.parseErrors.length > 0) {
+              console.log(chalk.gray('\nImports found before errors'));
+            }
+          } else {
+            console.log(chalk.gray('No imports found'));
+          }
+        } else {
+          // Display the content (default behavior)
+          console.log(data.content);
+        }
+        
         if (options.debug) {
           console.log(chalk.gray('\nDebug info:'));
           console.log(chalk.gray(`Files analyzed: ${data.metadata.filesAnalyzed}`));
@@ -164,9 +262,6 @@ program
           console.log(chalk.gray(`Cached: ${data.metadata.cached}`));
           console.log();
         }
-        
-        // Display the content
-        console.log(data.content);
         
       } catch (error) {
         spinner.fail('Failed to connect to OpenPkg Studio');
