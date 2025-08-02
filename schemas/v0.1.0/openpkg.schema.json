@@ -1,0 +1,290 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/ryanwaits/openpkg/main/schemas/v0.1.0/openpkg.schema.json",
+  "title": "OpenPkg Specification",
+  "description": "Schema for OpenPkg specification files",
+  "type": "object",
+  "required": ["openpkg", "meta", "exports"],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Reference to the OpenPkg schema version",
+      "pattern": "^https://raw\\.githubusercontent\\.com/ryanwaits/openpkg/main/schemas/v[0-9]+\\.[0-9]+\\.[0-9]+/openpkg\\.schema\\.json$"
+    },
+    "openpkg": {
+      "type": "string",
+      "description": "OpenPkg specification version",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "const": "0.1.0"
+    },
+    "meta": {
+      "type": "object",
+      "description": "Package metadata",
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Package name"
+        },
+        "version": {
+          "type": "string",
+          "description": "Package version"
+        },
+        "description": {
+          "type": "string",
+          "description": "Package description"
+        },
+        "license": {
+          "type": "string",
+          "description": "Package license"
+        },
+        "repository": {
+          "type": "string",
+          "description": "Repository URL"
+        },
+        "ecosystem": {
+          "type": "string",
+          "description": "Package ecosystem",
+          "enum": ["js/ts", "python", "rust", "go", "java"]
+        }
+      }
+    },
+    "exports": {
+      "type": "array",
+      "description": "List of exported items",
+      "items": {
+        "$ref": "#/$defs/export"
+      }
+    },
+    "types": {
+      "type": "array",
+      "description": "List of type definitions",
+      "items": {
+        "$ref": "#/$defs/typeDef"
+      }
+    }
+  },
+  "$defs": {
+    "export": {
+      "type": "object",
+      "required": ["id", "name", "kind"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the export"
+        },
+        "name": {
+          "type": "string",
+          "description": "Export name"
+        },
+        "kind": {
+          "type": "string",
+          "description": "Kind of export",
+          "enum": ["function", "class", "variable", "interface", "type", "enum"]
+        },
+        "description": {
+          "type": "string",
+          "description": "JSDoc/TSDoc description"
+        },
+        "signatures": {
+          "type": "array",
+          "description": "Function/method signatures",
+          "items": {
+            "$ref": "#/$defs/signature"
+          }
+        },
+        "properties": {
+          "type": "array",
+          "description": "Class/interface properties",
+          "items": {
+            "$ref": "#/$defs/property"
+          }
+        },
+        "source": {
+          "$ref": "#/$defs/sourceLocation"
+        }
+      }
+    },
+    "typeDef": {
+      "type": "object",
+      "required": ["id", "name", "kind"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the type"
+        },
+        "name": {
+          "type": "string",
+          "description": "Type name"
+        },
+        "kind": {
+          "type": "string",
+          "description": "Kind of type definition",
+          "enum": ["interface", "type", "enum", "class"]
+        },
+        "description": {
+          "type": "string",
+          "description": "JSDoc/TSDoc description"
+        },
+        "schema": {
+          "$ref": "#/$defs/schema"
+        },
+        "type": {
+          "type": "string",
+          "description": "Type expression for type aliases"
+        },
+        "properties": {
+          "type": "array",
+          "description": "Properties for interfaces/classes",
+          "items": {
+            "$ref": "#/$defs/property"
+          }
+        },
+        "source": {
+          "$ref": "#/$defs/sourceLocation"
+        }
+      }
+    },
+    "signature": {
+      "type": "object",
+      "properties": {
+        "parameters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/parameter"
+          }
+        },
+        "returns": {
+          "$ref": "#/$defs/returns"
+        }
+      }
+    },
+    "parameter": {
+      "type": "object",
+      "required": ["name", "required"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Parameter name"
+        },
+        "required": {
+          "type": "boolean",
+          "description": "Whether the parameter is required"
+        },
+        "description": {
+          "type": "string",
+          "description": "Parameter description"
+        },
+        "schema": {
+          "$ref": "#/$defs/schema"
+        }
+      }
+    },
+    "returns": {
+      "type": "object",
+      "properties": {
+        "schema": {
+          "$ref": "#/$defs/schema"
+        },
+        "description": {
+          "type": "string",
+          "description": "Return value description"
+        }
+      }
+    },
+    "property": {
+      "type": "object",
+      "required": ["name", "required"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Property name"
+        },
+        "required": {
+          "type": "boolean",
+          "description": "Whether the property is required"
+        },
+        "description": {
+          "type": "string",
+          "description": "Property description"
+        },
+        "schema": {
+          "$ref": "#/$defs/schema"
+        }
+      }
+    },
+    "schema": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "$ref": {
+              "type": "string",
+              "description": "Reference to another type",
+              "pattern": "^#/types/[a-zA-Z0-9_]+$"
+            }
+          },
+          "required": ["$ref"],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["string", "number", "boolean", "object", "array", "null", "any", "unknown", "void", "never"]
+            },
+            "properties": {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/$defs/schema"
+              }
+            },
+            "required": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "items": {
+              "$ref": "#/$defs/schema"
+            },
+            "oneOf": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/schema"
+              }
+            },
+            "anyOf": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/schema"
+              }
+            },
+            "allOf": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/schema"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "sourceLocation": {
+      "type": "object",
+      "required": ["file", "line"],
+      "properties": {
+        "file": {
+          "type": "string",
+          "description": "Source file path"
+        },
+        "line": {
+          "type": "integer",
+          "description": "Line number in source file",
+          "minimum": 1
+        }
+      }
+    }
+  }
+}

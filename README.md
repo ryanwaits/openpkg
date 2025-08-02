@@ -26,6 +26,8 @@ export function createUser(data: Partial<User>): User {
 ```json
 // Generated OpenPkg specification
 {
+  "$schema": "https://raw.githubusercontent.com/ryanwaits/openpkg/main/schemas/v0.1.0/openpkg.schema.json",
+  "openpkg": "0.1.0",
   "exports": [{
     "name": "createUser",
     "kind": "function",
@@ -100,6 +102,7 @@ const spec = await openpkg.analyzeFile('./src/index.ts');
 - 🔗 **Smart References** - Clean `$ref` links between types
 - 📚 **JSDoc Integration** - Preserves your documentation
 - ⚡ **Monorepo Support** - Works with workspace packages
+- ✅ **Schema Validation** - JSON Schema for spec validation and IDE support
 
 ## License
 

@@ -89,7 +89,8 @@ const enumMemberSchema = z.object({
 const memberSchema = z.union([classMemberSchema, enumMemberSchema]);
 
 export const openPkgSchema = z.object({
-  openpkg: z.literal("1.0.0"),
+  $schema: z.string().optional(),
+  openpkg: z.literal("0.1.0"),
   meta: z.object({
     name: z.string(),
     version: z.string(),

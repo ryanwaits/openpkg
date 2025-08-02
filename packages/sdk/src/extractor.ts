@@ -87,7 +87,8 @@ export async function extractPackageSpec(entryFile: string, packageDir?: string,
     : {};
   
   const spec: z.infer<typeof openPkgSchema> = {
-    openpkg: "1.0.0",
+    $schema: "https://raw.githubusercontent.com/ryanwaits/openpkg/main/schemas/v0.1.0/openpkg.schema.json",
+    openpkg: "0.1.0",
     meta: {
       name: packageJson.name || "unknown",
       version: packageJson.version || "1.0.0",

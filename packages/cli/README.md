@@ -176,7 +176,8 @@ The generated `openpkg.json` follows this structure:
 
 ```json
 {
-  "openpkg": "1.0.0",
+  "$schema": "https://raw.githubusercontent.com/ryanwaits/openpkg/main/schemas/v0.1.0/openpkg.schema.json",
+  "openpkg": "0.1.0",
   "meta": {
     "name": "package-name",
     "version": "1.0.0",
@@ -206,6 +207,18 @@ The generated `openpkg.json` follows this structure:
     }
   ]
 }
+```
+
+## Schema Validation
+
+OpenPkg specifications include a `$schema` property that:
+- Enables IDE validation and auto-completion
+- Documents the expected structure
+- Ensures compatibility with spec version
+
+The schema is versioned alongside the spec format (currently v0.1.0) and hosted at:
+```
+https://raw.githubusercontent.com/ryanwaits/openpkg/main/schemas/v0.1.0/openpkg.schema.json
 ```
 
 ## Tips & Best Practices
