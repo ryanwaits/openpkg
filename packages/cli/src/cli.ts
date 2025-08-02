@@ -15,7 +15,7 @@ const program = new Command();
 program
   .name('openpkg')
   .description('Generate OpenPkg specification for TypeScript packages')
-  .version('1.0.0');
+  .version('0.1.0');
 
 // Generate command
 program
