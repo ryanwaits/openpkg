@@ -3,17 +3,27 @@
 import { Command } from 'commander';
 import * as fs from 'fs';
 import * as path from 'path';
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
 import chalk from 'chalk';
 import ora from 'ora';
 import { OpenPkg } from 'openpkg-sdk';
 import { findEntryPoint, findPackageInMonorepo } from './utils/package-utils';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Read version from package.json
+const packageJson = JSON.parse(
+  readFileSync(path.join(__dirname, '../package.json'), 'utf-8')
+);
 
 const program = new Command();
 
 program
   .name('openpkg')
   .description('Generate OpenPkg specification for TypeScript packages')
-  .version('0.1.0');
+  .version(packageJson.version);
 
 // Generate command
 program
