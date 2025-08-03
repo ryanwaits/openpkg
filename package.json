@@ -11,9 +11,13 @@
     "build:cli": "cd packages/cli && bun run build",
     "dev": "bun run --parallel dev:sdk dev:cli",
     "dev:sdk": "cd packages/sdk && bun run dev",
-    "dev:cli": "cd packages/cli && bun run dev"
+    "dev:cli": "cd packages/cli && bun run dev",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write ."
   },
   "devDependencies": {
+    "@biomejs/biome": "2.1.2",
     "@types/bun": "latest",
     "@types/node": "^20.0.0"
   }
