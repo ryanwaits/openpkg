@@ -42,7 +42,7 @@ export class OpenPkg {
   async analyzeFile(filePath: string): Promise<OpenPkgSpec> {
     const content = await fs.readFile(filePath, 'utf-8');
     const dir = path.dirname(filePath);
-    const result = await extractPackageSpec(filePath, dir, undefined, this.options);
+    const result = await extractPackageSpec(filePath, dir, content, this.options);
     return result;
   }
 
