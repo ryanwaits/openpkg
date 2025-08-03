@@ -7,22 +7,12 @@ import type { openPkgSchema } from './types/openpkg';
 
 // Type aliases for better type safety
 type TypeDefinition = z.infer<typeof openPkgSchema>['types'][number];
-type ExportDefinition = z.infer<typeof openPkgSchema>['exports'][number];
 type SchemaDefinition = Record<string, unknown>;
 type TypeReference = SchemaDefinition | string;
-import {
-  formatTypeReference,
-  propertiesToSchema,
-  structureParameter,
-} from './utils/parameter-utils';
+
+import { formatTypeReference, structureParameter } from './utils/parameter-utils';
 import { getParameterDocumentation, parseJSDocComment } from './utils/tsdoc-utils';
-import {
-  collectReferencedTypes,
-  extractTypeReferences,
-  getDestructuredProperties,
-  isBuiltInType,
-  isDestructuredParameter,
-} from './utils/type-utils';
+import { collectReferencedTypes } from './utils/type-utils';
 
 export async function extractPackageSpec(
   entryFile: string,
@@ -127,7 +117,7 @@ export async function extractPackageSpec(
   const typeRefs = new Map<string, string>(); // typeName -> typeId
   const typeDefinitions = new Map<string, TypeDefinition>(); // typeName -> type definition (to avoid duplicates)
   const referencedTypes = new Set<string>(); // Track all types that are referenced
-  const typeCounter = 0;
+  const _typeCounter = 0;
 
   // Get exports
   const moduleSymbol = typeChecker.getSymbolAtLocation(sourceFile);
@@ -261,7 +251,7 @@ export async function extractPackageSpec(
           typeRefs.set(name, id);
         }
       } else if (ts.isVariableDeclaration(declaration)) {
-        const type = typeChecker.getTypeAtLocation(declaration);
+        const _type = typeChecker.getTypeAtLocation(declaration);
         spec.exports.push({
           id,
           name,

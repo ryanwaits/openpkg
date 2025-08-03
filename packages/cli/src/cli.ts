@@ -9,7 +9,7 @@ import { Command } from 'commander';
 import { OpenPkg, type openPkgSchema } from 'openpkg-sdk';
 import ora from 'ora';
 import type { z } from 'zod';
-import type { AnalyzeResponse, Export, Import, ParseError, Type } from './types';
+import type { AnalyzeResponse, Export, Type } from './types';
 import { findEntryPoint, findPackageInMonorepo } from './utils/package-utils';
 
 const __filename = fileURLToPath(import.meta.url);

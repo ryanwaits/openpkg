@@ -298,7 +298,7 @@ export function structureParameter(
     // Process each part of the intersection
     for (const subType of intersectionType.types) {
       const symbol = subType.getSymbol();
-      const typeString = typeChecker.typeToString(subType);
+      const _typeString = typeChecker.typeToString(subType);
 
       if (!symbol || symbol.getName().startsWith('__')) {
         // This is an object literal - extract its properties
@@ -332,7 +332,7 @@ export function structureParameter(
         }
       } else {
         // This is a named type in an intersection - we need to flatten its properties
-        const symbolName = symbol.getName();
+        const _symbolName = symbol.getName();
 
         // Get the properties from this type and add them to our properties array
         for (const prop of subType.getProperties()) {

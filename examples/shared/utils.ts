@@ -1,10 +1,8 @@
 // shared/utils.ts - File outside the main directory (for testing ../ imports)
-export class SharedUtil {
-  static getCurrentTimestamp(): string {
-    return new Date().toISOString();
-  }
+export function getCurrentTimestamp(): string {
+  return new Date().toISOString();
+}
 
-  static generateId(): string {
-    return Math.random().toString(36).substring(2, 15);
-  }
+export function generateId(): string {
+  return Math.random().toString(36).substring(2, 15);
 }

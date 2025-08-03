@@ -18,7 +18,7 @@ export interface ParsedJSDoc {
  */
 export function parseJSDocComment(
   symbol: ts.Symbol,
-  typeChecker: ts.TypeChecker,
+  _typeChecker: ts.TypeChecker,
   sourceFileOverride?: ts.SourceFile,
 ): ParsedJSDoc | null {
   const node = symbol.valueDeclaration || symbol.declarations?.[0];
@@ -168,7 +168,7 @@ export function extractDestructuredParams(
       destructuredParams.set(propertyName, param.description);
     } else if (param.name.includes('.') && paramName === '__0') {
       // Handle case where TSDoc uses "opts.property" but TS shows "__0"
-      const [prefix, propertyName] = param.name.split('.', 2);
+      const [_prefix, propertyName] = param.name.split('.', 2);
       if (propertyName) {
         destructuredParams.set(propertyName, param.description);
       }

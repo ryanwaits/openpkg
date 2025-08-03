@@ -1,9 +1,9 @@
 /**
  * Options for the useLocalStorage hook
  */
-export interface UseLocalStorageOptions {
-  serializer?: (value: any) => string;
-  deserializer?: (value: string) => any;
+export interface UseLocalStorageOptions<T = unknown> {
+  serializer?: (value: T) => string;
+  deserializer?: (value: string) => T;
 }
 
 /**
@@ -18,9 +18,9 @@ export type UseLocalStorageReturn<T> = [T, (value: T) => void, () => void];
  * @param options Serialization options
  */
 export function useLocalStorage<T>(
-  key: string,
+  _key: string,
   initialValue: T,
-  options?: UseLocalStorageOptions,
+  _options?: UseLocalStorageOptions<T>,
 ): UseLocalStorageReturn<T> {
   // Implementation would go here
   return [initialValue, () => {}, () => {}];
@@ -30,7 +30,7 @@ export function useLocalStorage<T>(
  * Options for the useFetch hook
  */
 export interface UseFetchOptions extends RequestInit {
-  dependencies?: any[];
+  dependencies?: unknown[];
   retryCount?: number;
   retryDelay?: number;
 }
@@ -50,7 +50,7 @@ export interface FetchState<T> {
  * @param url The URL to fetch
  * @param options Fetch options
  */
-export function useFetch<T = any>(url: string, options?: UseFetchOptions): FetchState<T> {
+export function useFetch<T = unknown>(_url: string, _options?: UseFetchOptions): FetchState<T> {
   // Implementation would go here
   return {
     data: null,
@@ -80,7 +80,7 @@ export function useWindowSize(): WindowSize {
  * Hook that returns previous value
  * @param value Current value
  */
-export function usePrevious<T>(value: T): T | undefined {
+export function usePrevious<T>(_value: T): T | undefined {
   // Implementation would go here
   return undefined;
 }
@@ -100,7 +100,7 @@ export interface DebounceOptions {
  * @param delay Debounce delay in ms
  * @param options Debounce options
  */
-export function useDebounce<T>(value: T, delay: number, options?: DebounceOptions): T {
+export function useDebounce<T>(value: T, _delay: number, _options?: DebounceOptions): T {
   // Implementation would go here
   return value;
 }

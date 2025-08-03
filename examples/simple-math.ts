@@ -25,8 +25,8 @@ export interface Rectangle {
  * Math constants
  */
 export enum MathConstants {
-  PI = 3.14159,
-  E = 2.71828,
+  PI = 3.141592653589793,
+  E = 2.718281828459045,
   GOLDEN_RATIO = 1.61803,
 }
 

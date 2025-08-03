@@ -31,7 +31,7 @@ export function isValidEmail(email: string): boolean {
  * @param maxLength - Maximum length (default: 100)
  * @returns Truncated text with ellipsis if needed
  */
-export function truncateText(text: string, maxLength: number = 100): string {
+export function truncateText(text: string, maxLength = 100): string {
   if (text.length <= maxLength) return text;
-  return text.slice(0, maxLength - 3) + '...';
+  return `${text.slice(0, maxLength - 3)}...`;
 }

@@ -20,7 +20,10 @@
   "scripts": {
     "build": "bunup",
     "dev": "bunup --watch",
-    "cli": "bun run src/cli.ts"
+    "cli": "bun run src/cli.ts",
+    "lint": "biome check src/",
+    "lint:fix": "biome check --write src/",
+    "format": "biome format --write src/"
   },
   "files": ["dist"],
   "dependencies": {

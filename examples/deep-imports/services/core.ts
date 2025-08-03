@@ -8,7 +8,7 @@ export class CoreService {
   private db: DatabaseService;
   private logger: Logger;
 
-  constructor(private config: AppConfig) {
+  constructor(config: AppConfig) {
     this.db = new DatabaseService(config.database);
     this.logger = new Logger('CoreService');
   }

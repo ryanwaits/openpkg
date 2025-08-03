@@ -3,6 +3,6 @@ export function roundToDecimals(num: number, decimals: number): number {
   return Math.round(num * 10 ** decimals) / 10 ** decimals;
 }
 
-export function isValidNumber(value: any): boolean {
-  return typeof value === 'number' && !isNaN(value);
+export function isValidNumber(value: unknown): boolean {
+  return typeof value === 'number' && !Number.isNaN(value);
 }
