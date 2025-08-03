@@ -6,5 +6,5 @@ export default defineConfig({
   clean: true,
   splitting: true,
   format: ['esm'],
-  external: ['typescript', 'zod']
+  external: ['typescript', 'zod'],
 });

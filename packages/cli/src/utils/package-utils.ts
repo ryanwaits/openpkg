@@ -1,5 +1,5 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 
 export interface PackageJson {
   name?: string;
@@ -8,16 +8,16 @@ export interface PackageJson {
   main?: string;
   types?: string;
   typings?: string;
-  exports?: any;
+  exports?: string | Record<string, unknown>;
   workspaces?: string[] | { packages: string[] };
 }
 
 /**
  * Find the entry point for a package by checking package.json fields
  */
-export async function findEntryPoint(packageDir: string, preferSource: boolean = false): Promise<string> {
+export async function findEntryPoint(packageDir: string, preferSource = false): Promise<string> {
   const packageJsonPath = path.join(packageDir, 'package.json');
-  
+
   if (!fs.existsSync(packageJsonPath)) {
     // No package.json, try common entry points
     return findDefaultEntryPoint(packageDir);
@@ -60,13 +60,13 @@ export async function findEntryPoint(packageDir: string, preferSource: boolean =
   if (packageJson.main) {
     // First try to find corresponding .d.ts file
     const mainBase = packageJson.main.replace(/\.(js|mjs|cjs)$/, '');
-    const dtsPath = path.join(packageDir, mainBase + '.d.ts');
+    const dtsPath = path.join(packageDir, `${mainBase}.d.ts`);
     if (fs.existsSync(dtsPath)) {
       return dtsPath;
     }
 
     // Try to find corresponding .ts source
-    const tsPath = path.join(packageDir, mainBase + '.ts');
+    const tsPath = path.join(packageDir, `${mainBase}.ts`);
     if (fs.existsSync(tsPath)) {
       return tsPath;
     }
@@ -88,7 +88,10 @@ export async function findEntryPoint(packageDir: string, preferSource: boolean =
 /**
  * Resolve exports field to find TypeScript entry
  */
-function resolveExportsField(exports: any, packageDir: string): string | null {
+function resolveExportsField(
+  exports: string | Record<string, unknown>,
+  packageDir: string,
+): string | null {
   if (typeof exports === 'string') {
     return findTypeScriptFile(path.join(packageDir, exports));
   }
@@ -97,7 +100,7 @@ function resolveExportsField(exports: any, packageDir: string): string | null {
     if (typeof exports['.'] === 'string') {
       return findTypeScriptFile(path.join(packageDir, exports['.']));
     }
-    
+
     // Check for types in conditional exports
     if (exports['.'].types) {
       const typesPath = path.join(packageDir, exports['.'].types);
@@ -166,36 +169,39 @@ async function findDefaultEntryPoint(packageDir: string): Promise<string> {
 /**
  * Find a package in a monorepo by name
  */
-export async function findPackageInMonorepo(rootDir: string, packageName: string): Promise<string | null> {
+export async function findPackageInMonorepo(
+  rootDir: string,
+  packageName: string,
+): Promise<string | null> {
   const rootPackageJsonPath = path.join(rootDir, 'package.json');
-  
+
   if (!fs.existsSync(rootPackageJsonPath)) {
     return null;
   }
 
   const rootPackageJson: PackageJson = JSON.parse(fs.readFileSync(rootPackageJsonPath, 'utf-8'));
-  
+
   // Get workspace patterns
-  const workspacePatterns = Array.isArray(rootPackageJson.workspaces) 
-    ? rootPackageJson.workspaces 
+  const workspacePatterns = Array.isArray(rootPackageJson.workspaces)
+    ? rootPackageJson.workspaces
     : rootPackageJson.workspaces?.packages || [];
 
   // Search through workspace directories
   for (const pattern of workspacePatterns) {
     const searchPath = path.join(rootDir, pattern.replace('/**', '').replace('/*', ''));
-    
+
     if (fs.existsSync(searchPath) && fs.statSync(searchPath).isDirectory()) {
       // Look for packages in this directory
       const entries = fs.readdirSync(searchPath, { withFileTypes: true });
-      
+
       for (const entry of entries) {
         if (entry.isDirectory()) {
           const packagePath = path.join(searchPath, entry.name);
           const packageJsonPath = path.join(packagePath, 'package.json');
-          
+
           if (fs.existsSync(packageJsonPath)) {
             const packageJson: PackageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
-            
+
             if (packageJson.name === packageName) {
               return packagePath;
             }
@@ -211,9 +217,9 @@ export async function findPackageInMonorepo(rootDir: string, packageName: string
 /**
  * Load TypeScript config from a package
  */
-export function loadTsConfig(packageDir: string): any {
+export function loadTsConfig(packageDir: string): Record<string, unknown> | null {
   const tsconfigPath = path.join(packageDir, 'tsconfig.json');
-  
+
   if (!fs.existsSync(tsconfigPath)) {
     return null;
   }

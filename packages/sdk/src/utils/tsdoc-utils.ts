@@ -17,16 +17,16 @@ export interface ParsedJSDoc {
  * Parse JSDoc/TSDoc comments to extract structured information
  */
 export function parseJSDocComment(
-  symbol: ts.Symbol, 
+  symbol: ts.Symbol,
   typeChecker: ts.TypeChecker,
-  sourceFileOverride?: ts.SourceFile
+  sourceFileOverride?: ts.SourceFile,
 ): ParsedJSDoc | null {
   const node = symbol.valueDeclaration || symbol.declarations?.[0];
   if (!node) return null;
 
   const sourceFile = sourceFileOverride || node.getSourceFile();
   const commentRanges = ts.getLeadingCommentRanges(sourceFile.text, node.pos);
-  
+
   if (!commentRanges || commentRanges.length === 0) {
     return null;
   }
@@ -34,7 +34,7 @@ export function parseJSDocComment(
   // Get the last comment (usually the JSDoc)
   const lastComment = commentRanges[commentRanges.length - 1];
   const commentText = sourceFile.text.substring(lastComment.pos, lastComment.end);
-  
+
   return parseJSDocText(commentText);
 }
 
@@ -44,10 +44,10 @@ export function parseJSDocComment(
 export function findNodeInSourceFile(
   sourceFile: ts.SourceFile,
   nodeName: string,
-  approximateLine: number
+  approximateLine: number,
 ): ts.Node | null {
   let closestNode: ts.Node | null = null;
-  let closestDistance = Infinity;
+  let closestDistance = Number.POSITIVE_INFINITY;
 
   function visit(node: ts.Node) {
     if (ts.isFunctionDeclaration(node) || ts.isFunctionExpression(node)) {
@@ -55,14 +55,14 @@ export function findNodeInSourceFile(
       if (name === nodeName) {
         const { line } = sourceFile.getLineAndCharacterOfPosition(node.getStart());
         const distance = Math.abs(line - approximateLine);
-        
+
         if (distance < closestDistance) {
           closestDistance = distance;
           closestNode = node;
         }
       }
     }
-    
+
     ts.forEachChild(node, visit);
   }
 
@@ -77,7 +77,7 @@ export function parseJSDocText(commentText: string): ParsedJSDoc {
   const result: ParsedJSDoc = {
     description: '',
     params: [],
-    examples: []
+    examples: [],
   };
 
   // Remove comment delimiters
@@ -92,13 +92,13 @@ export function parseJSDocText(commentText: string): ParsedJSDoc {
 
   for (const line of lines) {
     const tagMatch = line.match(/^@(\w+)(?:\s+(.*))?$/);
-    
+
     if (tagMatch) {
       // Process previous tag
       if (currentTag) {
         processTag(result, currentTag, currentContent.join('\n'));
       }
-      
+
       currentTag = tagMatch[1];
       currentContent = tagMatch[2] ? [tagMatch[2]] : [];
     } else if (currentTag) {
@@ -130,7 +130,7 @@ function processTag(result: ParsedJSDoc, tag: string, content: string) {
         result.params.push({
           name: name || '',
           description: description || '',
-          type: type
+          type: type,
         });
       }
       break;
@@ -154,14 +154,14 @@ function processTag(result: ParsedJSDoc, tag: string, content: string) {
  * @returns Map of property names to their descriptions
  */
 export function extractDestructuredParams(
-  parsedDoc: ParsedJSDoc, 
-  paramName: string
+  parsedDoc: ParsedJSDoc,
+  paramName: string,
 ): Map<string, string> {
   const destructuredParams = new Map<string, string>();
-  
+
   // Look for params that match the pattern: paramName.propertyName
-  const paramPrefix = paramName + '.';
-  
+  const paramPrefix = `${paramName}.`;
+
   for (const param of parsedDoc.params) {
     if (param.name.startsWith(paramPrefix)) {
       const propertyName = param.name.substring(paramPrefix.length);
@@ -174,7 +174,7 @@ export function extractDestructuredParams(
       }
     }
   }
-  
+
   return destructuredParams;
 }
 
@@ -184,13 +184,13 @@ export function extractDestructuredParams(
 export function getParameterDocumentation(
   param: ts.Symbol,
   paramDecl: ts.ParameterDeclaration,
-  typeChecker: ts.TypeChecker
+  typeChecker: ts.TypeChecker,
 ): {
   description: string;
   destructuredProperties?: Array<{ name: string; description: string }>;
 } {
-  const result: any = {
-    description: ''
+  const result: ParameterDocumentation = {
+    description: '',
   };
 
   // Get the function symbol to access its JSDoc
@@ -202,8 +202,10 @@ export function getParameterDocumentation(
       if (parsedDoc) {
         // Find the param description
         const paramName = param.getName();
-        const paramDoc = parsedDoc.params.find(p => p.name === paramName || p.name.split('.')[0] === paramName);
-        
+        const paramDoc = parsedDoc.params.find(
+          (p) => p.name === paramName || p.name.split('.')[0] === paramName,
+        );
+
         if (paramDoc) {
           result.description = paramDoc.description;
         }
@@ -211,10 +213,12 @@ export function getParameterDocumentation(
         // Check for destructured properties
         const destructuredProps = extractDestructuredParams(parsedDoc, paramName);
         if (destructuredProps.size > 0) {
-          result.destructuredProperties = Array.from(destructuredProps.entries()).map(([name, description]) => ({
-            name,
-            description
-          }));
+          result.destructuredProperties = Array.from(destructuredProps.entries()).map(
+            ([name, description]) => ({
+              name,
+              description,
+            }),
+          );
         }
       }
     }

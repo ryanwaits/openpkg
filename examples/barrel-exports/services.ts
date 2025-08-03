@@ -1,5 +1,5 @@
 // services.ts - More exports for barrel
-import { User, Post } from './models';
+import type { Post, User } from './models';
 
 export class UserService {
   getUser(id: string): User | null {

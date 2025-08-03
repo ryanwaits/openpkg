@@ -1,11 +1,9 @@
+interface Node {
+  value: string;
+  children: Node[];
+}
 
-      interface Node {
-        value: string;
-        children: Node[];
-      }
-      
-      export const tree: Node = {
-        value: "root",
-        children: []
-      };
-    
+export const tree: Node = {
+  value: 'root',
+  children: [],
+};

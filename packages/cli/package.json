@@ -22,9 +22,7 @@
     "dev": "bunup --watch",
     "cli": "bun run src/cli.ts"
   },
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "dependencies": {
     "@inquirer/prompts": "^7.8.0",
     "chalk": "^5.4.1",

@@ -1,5 +1,3 @@
-
-      export interface Test {
-        value: string;
-      }
-    
+export interface Test {
+  value: string;
+}

@@ -37,7 +37,7 @@ export enum MathConstants {
  * @returns The Euclidean distance
  */
 export function distance(a: Point, b: Point): number {
-  return Math.sqrt(Math.pow(b.x - a.x, 2) + Math.pow(b.y - a.y, 2));
+  return Math.sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2);
 }
 
 /**

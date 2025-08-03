@@ -14,7 +14,7 @@ export interface Post {
 
 export class UserModel {
   constructor(private user: User) {}
-  
+
   getFullName(): string {
     return this.user.username;
   }

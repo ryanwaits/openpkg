@@ -1,18 +1,18 @@
 // validators.ts - Named exports for selective re-export
-import { User, Post } from './models';
-import { ValidationResult } from './types';
+import type { Post, User } from './models';
+import type { ValidationResult } from './types';
 
 export function validateUser(user: User): ValidationResult {
   return {
     valid: !!user.email && !!user.username,
-    errors: []
+    errors: [],
   };
 }
 
 export function validatePost(post: Post): ValidationResult {
   return {
     valid: !!post.title && !!post.content,
-    errors: []
+    errors: [],
   };
 }
 

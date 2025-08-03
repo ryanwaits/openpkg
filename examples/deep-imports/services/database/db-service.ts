@@ -9,11 +9,11 @@ export interface DatabaseConfig {
 
 export class DatabaseService {
   private logger: Logger;
-  
+
   constructor(private config: DatabaseConfig) {
     this.logger = new Logger('DatabaseService');
   }
-  
+
   connect(): void {
     this.logger.info(`Connecting to ${this.config.host}:${this.config.port}`);
   }

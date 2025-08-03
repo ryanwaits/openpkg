@@ -1,5 +1,5 @@
 // config/app.config.ts - Configuration with nested types
-import { DatabaseConfig } from '../services/database/db-service';
+import type { DatabaseConfig } from '../services/database/db-service';
 
 export interface AppConfig {
   name: string;
@@ -13,6 +13,6 @@ export const CONFIG: AppConfig = {
   database: {
     host: 'localhost',
     port: 5432,
-    name: 'myapp_db'
-  }
+    name: 'myapp_db',
+  },
 };

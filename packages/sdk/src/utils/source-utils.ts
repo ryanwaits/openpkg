@@ -1,5 +1,6 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+import type * as ts from 'typescript';
 
 /**
  * Find the source .ts file for a .d.ts declaration file
@@ -10,7 +11,7 @@ export function findSourceFile(dtsPath: string, packageDir: string): string | nu
     { from: '/dist/', to: '/src/' },
     { from: '/lib/', to: '/src/' },
     { from: '/build/', to: '/src/' },
-    { from: '/types/', to: '/src/' }
+    { from: '/types/', to: '/src/' },
   ];
 
   // Try direct .ts replacement
@@ -22,10 +23,8 @@ export function findSourceFile(dtsPath: string, packageDir: string): string | nu
   // Try common directory mappings
   for (const mapping of mappings) {
     if (dtsPath.includes(mapping.from)) {
-      const srcPath = dtsPath
-        .replace(mapping.from, mapping.to)
-        .replace(/\.d\.ts$/, '.ts');
-      
+      const srcPath = dtsPath.replace(mapping.from, mapping.to).replace(/\.d\.ts$/, '.ts');
+
       if (fs.existsSync(srcPath)) {
         return srcPath;
       }
@@ -36,7 +35,7 @@ export function findSourceFile(dtsPath: string, packageDir: string): string | nu
   const relativePath = path.relative(packageDir, dtsPath);
   const possiblePaths = [
     path.join(packageDir, 'src', path.basename(dtsPath).replace(/\.d\.ts$/, '.ts')),
-    path.join(packageDir, 'src', relativePath.replace(/\.d\.ts$/, '.ts'))
+    path.join(packageDir, 'src', relativePath.replace(/\.d\.ts$/, '.ts')),
   ];
 
   for (const possiblePath of possiblePaths) {
@@ -51,7 +50,7 @@ export function findSourceFile(dtsPath: string, packageDir: string): string | nu
 /**
  * Get source file content for documentation parsing
  */
-export function getSourceFileForDocs(node: any, packageDir: string): string | null {
+export function getSourceFileForDocs(node: ts.Node, packageDir: string): string | null {
   const sourceFile = node.getSourceFile();
   const fileName = sourceFile.fileName;
 

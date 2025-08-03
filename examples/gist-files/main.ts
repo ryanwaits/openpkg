@@ -1,5 +1,5 @@
 // main.ts - Blog API Example
-import { User, Post } from './types';
+import type { Post, User } from './types';
 import { formatDate, generateId } from './utils';
 
 /**
@@ -11,7 +11,7 @@ export function createPost(author: User, content: string): Post {
     author,
     content,
     createdAt: formatDate(new Date()),
-    likes: 0
+    likes: 0,
   };
 }
 
@@ -19,5 +19,5 @@ export function createPost(author: User, content: string): Post {
  * Gets posts by user ID
  */
 export function getPostsByUser(posts: Post[], userId: string): Post[] {
-  return posts.filter(post => post.author.id === userId);
+  return posts.filter((post) => post.author.id === userId);
 }

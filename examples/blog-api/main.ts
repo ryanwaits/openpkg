@@ -1,4 +1,4 @@
-import { User, Post } from './types';
+import type { Post, User } from './types';
 import { formatDate, generateId } from './utils';
 
 /**
@@ -13,7 +13,7 @@ export function createPost(author: User, content: string): Post {
     author,
     content,
     createdAt: formatDate(new Date()),
-    likes: 0
+    likes: 0,
   };
 }
 
@@ -24,7 +24,7 @@ export function createPost(author: User, content: string): Post {
  * @returns Array of posts by the specified user
  */
 export function getPostsByUser(posts: Post[], userId: string): Post[] {
-  return posts.filter(post => post.author.id === userId);
+  return posts.filter((post) => post.author.id === userId);
 }
 
 /**
@@ -35,6 +35,6 @@ export function getPostsByUser(posts: Post[], userId: string): Post[] {
 export function likePost(post: Post): Post {
   return {
     ...post,
-    likes: post.likes + 1
+    likes: post.likes + 1,
   };
 }

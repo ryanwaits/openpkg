@@ -1,7 +1,7 @@
+import * as fs from 'node:fs/promises';
+import * as path from 'node:path';
 import { extractPackageSpec } from './extractor';
-import { OpenPkgSpec } from './types/openpkg';
-import * as fs from 'fs/promises';
-import * as path from 'path';
+import type { OpenPkgSpec } from './types/openpkg';
 
 export interface OpenPkgOptions {
   includePrivate?: boolean;
@@ -10,9 +10,19 @@ export interface OpenPkgOptions {
   resolveExternalTypes?: boolean;
 }
 
+export interface Diagnostic {
+  message: string;
+  severity: 'error' | 'warning' | 'info';
+  location?: {
+    file: string;
+    line?: number;
+    column?: number;
+  };
+}
+
 export interface AnalysisResult {
   spec: OpenPkgSpec;
-  diagnostics: any[]; // TODO: Add proper diagnostic types
+  diagnostics: Diagnostic[];
 }
 
 export class OpenPkg {
@@ -22,7 +32,7 @@ export class OpenPkg {
     this.options = {
       includePrivate: false,
       followImports: true,
-      ...options
+      ...options,
     };
   }
 
@@ -62,7 +72,7 @@ export class OpenPkg {
     const spec = await this.analyze(code, fileName);
     return {
       spec,
-      diagnostics: [] // TODO: Collect actual diagnostics
+      diagnostics: [], // TODO: Collect actual diagnostics
     };
   }
 }
@@ -76,6 +86,6 @@ export async function analyzeFile(filePath: string): Promise<OpenPkgSpec> {
   return new OpenPkg().analyzeFile(filePath);
 }
 
+export { extractPackageSpec } from './extractor';
 // Re-export types
 export * from './types/openpkg';
-export { extractPackageSpec } from './extractor';

@@ -1,9 +1,7 @@
+interface User {
+  id: string;
+  name: string;
+  email: string;
+}
 
-      interface User {
-        id: string;
-        name: string;
-        email: string;
-      }
-      
-      export type PartialUser = Partial<User>;
-    
+export type PartialUser = Partial<User>;

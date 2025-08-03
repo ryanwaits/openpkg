@@ -6,25 +6,44 @@ import * as ts from 'typescript';
  */
 export function extractTypeReferences(typeString: string): string[] {
   const references: string[] = [];
-  
+
   // Match type references (word characters followed by optional generics)
   const typeRefPattern = /\b([A-Z][a-zA-Z0-9]*(?:<[^>]+>)?)\b/g;
   const matches = typeString.matchAll(typeRefPattern);
-  
+
   for (const match of matches) {
     const typeName = match[1].split('<')[0]; // Remove generics
-    
+
     // Skip primitive types and built-ins
-    const builtIns = ['string', 'number', 'boolean', 'any', 'unknown', 'void', 
-                      'undefined', 'null', 'never', 'object', 'Promise', 'Array',
-                      'Map', 'Set', 'Date', 'RegExp', 'Error', 'Function',
-                      'Uint8Array', 'ArrayBufferLike', 'ArrayBuffer'];
-    
+    const builtIns = [
+      'string',
+      'number',
+      'boolean',
+      'any',
+      'unknown',
+      'void',
+      'undefined',
+      'null',
+      'never',
+      'object',
+      'Promise',
+      'Array',
+      'Map',
+      'Set',
+      'Date',
+      'RegExp',
+      'Error',
+      'Function',
+      'Uint8Array',
+      'ArrayBufferLike',
+      'ArrayBuffer',
+    ];
+
     if (!builtIns.includes(typeName) && !references.includes(typeName)) {
       references.push(typeName);
     }
   }
-  
+
   return references;
 }
 
@@ -40,7 +59,7 @@ export function isDestructuredParameter(param: ts.ParameterDeclaration): boolean
  */
 export function getDestructuredProperties(
   param: ts.ParameterDeclaration,
-  typeChecker: ts.TypeChecker
+  typeChecker: ts.TypeChecker,
 ): Array<{ name: string; type: string; optional: boolean }> {
   if (!param.name || !ts.isObjectBindingPattern(param.name)) {
     return [];
@@ -53,13 +72,13 @@ export function getDestructuredProperties(
     if (ts.isBindingElement(element) && element.name && ts.isIdentifier(element.name)) {
       const propName = element.name.text;
       const propSymbol = paramType.getProperty(propName);
-      
+
       if (propSymbol) {
         const propType = typeChecker.getTypeOfSymbolAtLocation(propSymbol, param);
         properties.push({
           name: propName,
           type: typeChecker.typeToString(propType),
-          optional: !!element.initializer
+          optional: !!element.initializer,
         });
       }
     }
@@ -75,7 +94,7 @@ export function collectReferencedTypes(
   type: ts.Type,
   typeChecker: ts.TypeChecker,
   referencedTypes: Set<string>,
-  visitedTypes: Set<ts.Type> = new Set()
+  visitedTypes: Set<ts.Type> = new Set(),
 ): void {
   // Avoid infinite recursion
   if (visitedTypes.has(type)) return;
@@ -85,7 +104,7 @@ export function collectReferencedTypes(
   const symbol = type.getSymbol();
   if (symbol) {
     const symbolName = symbol.getName();
-    
+
     // Skip anonymous types (starts with __) and built-ins
     if (!symbolName.startsWith('__') && !isBuiltInType(symbolName)) {
       referencedTypes.add(symbolName);
@@ -123,33 +142,69 @@ export function collectReferencedTypes(
 export function isBuiltInType(name: string): boolean {
   const builtIns = [
     // Primitive types
-    'string', 'number', 'boolean', 'bigint', 'symbol',
-    'undefined', 'null',
-    
+    'string',
+    'number',
+    'boolean',
+    'bigint',
+    'symbol',
+    'undefined',
+    'null',
+
     // Special types
-    'any', 'unknown', 'never', 'void', 'object',
-    
+    'any',
+    'unknown',
+    'never',
+    'void',
+    'object',
+
     // Built-in objects and constructors
-    'Array', 'Promise', 'Map', 'Set', 'WeakMap', 'WeakSet',
-    'Date', 'RegExp', 'Error', 'Function',
-    'Object', 'String', 'Number', 'Boolean', 'BigInt', 'Symbol',
-    
+    'Array',
+    'Promise',
+    'Map',
+    'Set',
+    'WeakMap',
+    'WeakSet',
+    'Date',
+    'RegExp',
+    'Error',
+    'Function',
+    'Object',
+    'String',
+    'Number',
+    'Boolean',
+    'BigInt',
+    'Symbol',
+
     // Typed arrays
-    'Uint8Array', 'Int8Array', 'Uint16Array', 'Int16Array',
-    'Uint32Array', 'Int32Array', 'Float32Array', 'Float64Array',
-    'BigInt64Array', 'BigUint64Array',
+    'Uint8Array',
+    'Int8Array',
+    'Uint16Array',
+    'Int16Array',
+    'Uint32Array',
+    'Int32Array',
+    'Float32Array',
+    'Float64Array',
+    'BigInt64Array',
+    'BigUint64Array',
     'Uint8ClampedArray',
-    
+
     // Array buffer related
-    'ArrayBuffer', 'ArrayBufferLike', 'DataView',
-    'Uint8ArrayConstructor', 'ArrayBufferConstructor',
-    
+    'ArrayBuffer',
+    'ArrayBufferLike',
+    'DataView',
+    'Uint8ArrayConstructor',
+    'ArrayBufferConstructor',
+
     // Other built-ins
-    'JSON', 'Math', 'Reflect', 'Proxy',
-    'Intl', 'globalThis',
-    
+    'JSON',
+    'Math',
+    'Reflect',
+    'Proxy',
+    'Intl',
+    'globalThis',
+
     // Special internal types
-    '__type' // Anonymous types
+    '__type', // Anonymous types
   ];
   return builtIns.includes(name);
 }

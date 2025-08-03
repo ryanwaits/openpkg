@@ -232,7 +232,18 @@
           "properties": {
             "type": {
               "type": "string",
-              "enum": ["string", "number", "boolean", "object", "array", "null", "any", "unknown", "void", "never"]
+              "enum": [
+                "string",
+                "number",
+                "boolean",
+                "object",
+                "array",
+                "null",
+                "any",
+                "unknown",
+                "void",
+                "never"
+              ]
             },
             "properties": {
               "type": "object",

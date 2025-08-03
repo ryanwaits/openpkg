@@ -50,10 +50,7 @@ export interface FetchState<T> {
  * @param url The URL to fetch
  * @param options Fetch options
  */
-export function useFetch<T = any>(
-  url: string,
-  options?: UseFetchOptions,
-): FetchState<T> {
+export function useFetch<T = any>(url: string, options?: UseFetchOptions): FetchState<T> {
   // Implementation would go here
   return {
     data: null,
@@ -103,11 +100,7 @@ export interface DebounceOptions {
  * @param delay Debounce delay in ms
  * @param options Debounce options
  */
-export function useDebounce<T>(
-  value: T,
-  delay: number,
-  options?: DebounceOptions,
-): T {
+export function useDebounce<T>(value: T, delay: number, options?: DebounceOptions): T {
   // Implementation would go here
   return value;
 }

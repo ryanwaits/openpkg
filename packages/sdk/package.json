@@ -29,9 +29,7 @@
     "build": "bunup",
     "dev": "bunup --watch"
   },
-  "files": [
-    "dist"
-  ],
+  "files": ["dist"],
   "dependencies": {
     "typescript": "^5.0.0",
     "zod": "^4.0.5"
