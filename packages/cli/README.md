@@ -24,7 +24,7 @@ pnpm add -g openpkg-cli
 
 ### `generate` - Generate OpenPkg Specification
 
-Generate an OpenPkg specification from local TypeScript files.
+Generate an OpenPkg specification from local TypeScript files. When node_modules is present, OpenPkg will automatically resolve and include external type definitions.
 
 ```bash
 # Basic usage (auto-detects entry point)
@@ -39,9 +39,6 @@ openpkg generate -o api-spec.json
 # Target specific package in monorepo
 openpkg generate --package @myorg/package-name
 
-# Skip build warnings
-openpkg generate --skip-build-check
-
 # Auto-confirm all prompts
 openpkg generate -y
 ```
@@ -52,7 +49,7 @@ openpkg generate -y
 - `-o, --output <file>` - Output file path (default: `openpkg.json`)
 - `-p, --package <name>` - Target package in monorepo
 - `--cwd <dir>` - Working directory (default: current directory)
-- `--skip-build-check` - Skip TypeScript build status warnings
+- `--no-external-types` - Skip external type resolution from node_modules
 - `-y, --yes` - Skip all prompts and use defaults
 
 #### Monorepo Support

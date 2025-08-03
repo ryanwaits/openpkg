@@ -7,6 +7,7 @@ export interface OpenPkgOptions {
   includePrivate?: boolean;
   followImports?: boolean;
   maxDepth?: number;
+  resolveExternalTypes?: boolean;
 }
 
 export interface AnalysisResult {
@@ -31,7 +32,7 @@ export class OpenPkg {
   async analyze(code: string, fileName = 'temp.ts'): Promise<OpenPkgSpec> {
     // Create a temporary file-like structure for the extractor
     const tempDir = path.dirname(fileName);
-    const result = await extractPackageSpec(fileName, tempDir, code);
+    const result = await extractPackageSpec(fileName, tempDir, code, this.options);
     return result;
   }
 
@@ -41,7 +42,7 @@ export class OpenPkg {
   async analyzeFile(filePath: string): Promise<OpenPkgSpec> {
     const content = await fs.readFile(filePath, 'utf-8');
     const dir = path.dirname(filePath);
-    const result = await extractPackageSpec(filePath, dir);
+    const result = await extractPackageSpec(filePath, dir, undefined, this.options);
     return result;
   }
 

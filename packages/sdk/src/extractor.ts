@@ -19,10 +19,28 @@ import {
   formatTypeReference,
   propertiesToSchema
 } from './utils/parameter-utils';
+import type { OpenPkgOptions } from './index';
 
-export async function extractPackageSpec(entryFile: string, packageDir?: string, content?: string): Promise<z.infer<typeof openPkgSchema>> {
+export async function extractPackageSpec(
+  entryFile: string, 
+  packageDir?: string, 
+  content?: string,
+  options?: OpenPkgOptions
+): Promise<z.infer<typeof openPkgSchema>> {
   // Use package directory or derive from entry file
   const baseDir = packageDir || path.dirname(entryFile);
+  
+  // Detect if node_modules exists
+  const nodeModulesPath = path.join(baseDir, 'node_modules');
+  const hasNodeModules = fs.existsSync(nodeModulesPath);
+  
+  // Determine if we should resolve external types
+  const resolveExternalTypes = options?.resolveExternalTypes ?? hasNodeModules;
+  
+  // Log node_modules detection status
+  if (hasNodeModules && resolveExternalTypes) {
+    console.log('node_modules detected, resolving external types');
+  }
   
   // Load project's tsconfig if available
   const configPath = ts.findConfigFile(baseDir, ts.sys.fileExists, 'tsconfig.json');
@@ -257,8 +275,10 @@ export async function extractPackageSpec(entryFile: string, packageDir?: string,
         
         for (const file of allSourceFiles) {
           // Skip node_modules and declaration files from other packages
-          if (file.fileName.includes('node_modules') || 
-              (file.fileName.endsWith('.d.ts') && !file.fileName.startsWith(baseDir))) {
+          // unless we're resolving external types
+          if (!resolveExternalTypes && 
+              (file.fileName.includes('node_modules') || 
+               (file.fileName.endsWith('.d.ts') && !file.fileName.startsWith(baseDir)))) {
             continue;
           }
           
