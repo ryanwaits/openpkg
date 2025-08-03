@@ -29,7 +29,7 @@
     "@inquirer/prompts": "^7.8.0",
     "chalk": "^5.4.1",
     "commander": "^14.0.0",
-    "openpkg-sdk": "^0.2.0",
+    "openpkg-sdk": "workspace:*",
     "ora": "^8.2.0"
   },
   "devDependencies": {
