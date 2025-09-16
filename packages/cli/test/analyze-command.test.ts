@@ -17,41 +17,41 @@ afterEach(() => {
 });
 
 describe('analyze command', () => {
-  it('writes spec output using remote analysis result', async () => {
+  it('analyzes a local file and writes spec when requested', async () => {
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'openpkg-cli-analyze-'));
     tmpDirs.push(tmpDir);
+
+    const entryPath = path.join(tmpDir, 'entry.ts');
+    fs.writeFileSync(entryPath, 'export const value = 1;');
 
     const program = new Command();
     program.exitOverride();
 
-    const specOutput = path.join(tmpDir, 'remote-spec.json');
+    const specOutput = path.join(tmpDir, 'spec.json');
+    const analyzedFiles: string[] = [];
 
     registerAnalyzeCommand(program, {
-      analyzeRemote: async () => ({
-        metadata: {
-          filesAnalyzed: 1,
-          duration: 5,
-          cached: false,
+      createOpenPkg: () => ({
+        analyzeFile: async (file: string) => {
+          analyzedFiles.push(file);
+          return {
+            $schema: 'schema',
+            openpkg: '0.1.0',
+            meta: { name: 'local', version: '1.0.0', description: '', license: '', repository: '', ecosystem: 'js/ts' },
+            exports: [],
+            types: [],
+          } as any;
         },
-        spec: {
-          $schema: 'schema',
-          openpkg: '0.1.0',
-          meta: { name: 'remote', version: '1.0.0', description: '', license: '', repository: '', ecosystem: 'js/ts' },
-          exports: [],
-          types: [],
-        },
-      } as any),
+      }),
       spinner: () =>
         ({
           start() {
             return this;
           },
           succeed() {},
-          warn() {},
           fail() {},
-        } as unknown as { start: () => unknown; succeed: () => void; warn: () => void; fail: () => void }),
+        } as unknown as { start: () => unknown; succeed: () => void; fail: () => void }),
       log: () => {},
-      warn: () => {},
       error: () => {},
     });
 
@@ -59,13 +59,16 @@ describe('analyze command', () => {
       'node',
       'openpkg',
       'analyze',
-      'https://example.com/file.ts',
+      'entry.ts',
+      '--cwd',
+      tmpDir,
       '--output',
       specOutput,
       '--show',
       'spec',
     ]);
 
+    expect(analyzedFiles).toEqual([path.resolve(tmpDir, 'entry.ts')]);
     expect(fs.existsSync(specOutput)).toBe(true);
     const contents = JSON.parse(fs.readFileSync(specOutput, 'utf-8'));
     expect(contents.openpkg).toBe('0.1.0');

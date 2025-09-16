@@ -66,12 +66,7 @@ export function createProgram({
         return inMemorySource;
       }
 
-      return originalGetSourceFile(
-        fileName,
-        languageVersion,
-        onError,
-        shouldCreateNewSourceFile,
-      );
+      return originalGetSourceFile(fileName, languageVersion, onError, shouldCreateNewSourceFile);
     };
   }
 

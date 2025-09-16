@@ -1,14 +1,16 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import chalk from 'chalk';
-import { Command } from 'commander';
+import type { Command } from 'commander';
 import { OpenPkg, type openPkgSchema } from 'openpkg-sdk';
 import ora from 'ora';
 import type { z } from 'zod';
 import { findEntryPoint, findPackageInMonorepo } from '../utils/package-utils';
 
 export interface GenerateCommandDependencies {
-  createOpenPkg?: (options: ConstructorParameters<typeof OpenPkg>[0]) => Pick<OpenPkg, 'analyzeFile'>;
+  createOpenPkg?: (
+    options: ConstructorParameters<typeof OpenPkg>[0],
+  ) => Pick<OpenPkg, 'analyzeFile'>;
   writeFileSync?: typeof fs.writeFileSync;
   spinner?: (text: string) => ora.Ora;
   log?: typeof console.log;
@@ -85,7 +87,10 @@ export function registerGenerateCommand(
         log(chalk.gray(`  ${spec.exports.length} exports`));
         log(chalk.gray(`  ${spec.types?.length || 0} types`));
       } catch (commandError) {
-        error(chalk.red('Error:'), commandError instanceof Error ? commandError.message : commandError);
+        error(
+          chalk.red('Error:'),
+          commandError instanceof Error ? commandError.message : commandError,
+        );
         process.exit(1);
       }
     });

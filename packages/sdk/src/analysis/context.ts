@@ -1,8 +1,8 @@
 import * as path from 'node:path';
-import * as ts from 'typescript';
-import { createProgram } from './program';
+import type * as ts from 'typescript';
 import type { NormalizedOpenPkgOptions, OpenPkgOptions } from '../options';
 import { normalizeOpenPkgOptions } from '../options';
+import { createProgram } from './program';
 
 export interface AnalysisContext {
   entryFile: string;

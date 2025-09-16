@@ -1,9 +1,12 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
+import * as ts from 'typescript';
+import type { AnalysisMetadataInternal } from './analysis/run-analysis';
+import { runAnalysis } from './analysis/run-analysis';
 import { extractPackageSpec } from './extractor';
-import type { OpenPkgSpec } from './types/openpkg';
 import type { NormalizedOpenPkgOptions, OpenPkgOptions } from './options';
 import { normalizeOpenPkgOptions } from './options';
+import type { OpenPkgSpec } from './types/openpkg';
 
 export interface Diagnostic {
   message: string;
@@ -18,6 +21,15 @@ export interface Diagnostic {
 export interface AnalysisResult {
   spec: OpenPkgSpec;
   diagnostics: Diagnostic[];
+  metadata: AnalysisMetadata;
+}
+
+export interface AnalysisMetadata {
+  baseDir: string;
+  configPath?: string;
+  packageJsonPath?: string;
+  hasNodeModules: boolean;
+  resolveExternalTypes: boolean;
 }
 
 export class OpenPkg {
@@ -28,14 +40,16 @@ export class OpenPkg {
   }
 
   async analyze(code: string, fileName = 'temp.ts'): Promise<OpenPkgSpec> {
-    const tempDir = path.dirname(fileName);
-    return extractPackageSpec(fileName, tempDir, code, this.options);
+    const resolvedFileName = path.resolve(fileName);
+    const tempDir = path.dirname(resolvedFileName);
+    return extractPackageSpec(resolvedFileName, tempDir, code, this.options);
   }
 
   async analyzeFile(filePath: string): Promise<OpenPkgSpec> {
-    const content = await fs.readFile(filePath, 'utf-8');
-    const dir = path.dirname(filePath);
-    return extractPackageSpec(filePath, dir, content, this.options);
+    const resolvedPath = path.resolve(filePath);
+    const content = await fs.readFile(resolvedPath, 'utf-8');
+    const dir = path.dirname(resolvedPath);
+    return extractPackageSpec(resolvedPath, dir, content, this.options);
   }
 
   async analyzeProject(entryPath: string): Promise<OpenPkgSpec> {
@@ -43,10 +57,81 @@ export class OpenPkg {
   }
 
   async analyzeWithDiagnostics(code: string, fileName?: string): Promise<AnalysisResult> {
-    const spec = await this.analyze(code, fileName);
+    const resolvedFileName = path.resolve(fileName ?? 'temp.ts');
+    const analysis = runAnalysis({
+      entryFile: resolvedFileName,
+      packageDir: path.dirname(resolvedFileName),
+      content: code,
+      options: this.options,
+    });
+
     return {
-      spec,
-      diagnostics: [],
+      spec: analysis.spec,
+      diagnostics: analysis.diagnostics.map((diagnostic) => this.normalizeDiagnostic(diagnostic)),
+      metadata: this.normalizeMetadata(analysis.metadata),
+    };
+  }
+
+  async analyzeFileWithDiagnostics(filePath: string): Promise<AnalysisResult> {
+    const resolvedPath = path.resolve(filePath);
+    const content = await fs.readFile(resolvedPath, 'utf-8');
+    const analysis = runAnalysis({
+      entryFile: resolvedPath,
+      packageDir: path.dirname(resolvedPath),
+      content,
+      options: this.options,
+    });
+
+    return {
+      spec: analysis.spec,
+      diagnostics: analysis.diagnostics.map((diagnostic) => this.normalizeDiagnostic(diagnostic)),
+      metadata: this.normalizeMetadata(analysis.metadata),
+    };
+  }
+
+  private normalizeDiagnostic(tsDiagnostic: ts.Diagnostic): Diagnostic {
+    const message = ts.flattenDiagnosticMessageText(tsDiagnostic.messageText, '\n');
+
+    let location: Diagnostic['location'];
+    if (tsDiagnostic.file && typeof tsDiagnostic.start === 'number') {
+      const { line, character } = tsDiagnostic.file.getLineAndCharacterOfPosition(
+        tsDiagnostic.start,
+      );
+      location = {
+        file: tsDiagnostic.file.fileName,
+        line: line + 1,
+        column: character + 1,
+      };
+    }
+
+    const severity = this.mapSeverity(tsDiagnostic.category);
+
+    return {
+      message,
+      severity,
+      location,
+    };
+  }
+
+  private mapSeverity(category: ts.DiagnosticCategory): Diagnostic['severity'] {
+    switch (category) {
+      case ts.DiagnosticCategory.Message:
+      case ts.DiagnosticCategory.Suggestion:
+        return 'info';
+      case ts.DiagnosticCategory.Warning:
+        return 'warning';
+      default:
+        return 'error';
+    }
+  }
+
+  private normalizeMetadata(metadata: AnalysisMetadataInternal): AnalysisMetadata {
+    return {
+      baseDir: metadata.baseDir,
+      configPath: metadata.configPath,
+      packageJsonPath: metadata.packageJsonPath,
+      hasNodeModules: metadata.hasNodeModules,
+      resolveExternalTypes: metadata.resolveExternalTypes,
     };
   }
 }

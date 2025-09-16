@@ -2,6 +2,52 @@ import * as ts from 'typescript';
 import type { ParameterDocumentation, ParsedJSDoc } from './tsdoc-utils';
 import { isBuiltInType } from './type-utils';
 
+const BUILTIN_TYPE_SCHEMAS: Record<string, Record<string, unknown>> = {
+  Date: { type: 'string', format: 'date-time' },
+  RegExp: { type: 'object', description: 'RegExp' },
+  Error: { type: 'object' },
+  Promise: { type: 'object' },
+  Map: { type: 'object' },
+  Set: { type: 'object' },
+  WeakMap: { type: 'object' },
+  WeakSet: { type: 'object' },
+  Function: { type: 'object' },
+  ArrayBuffer: { type: 'string', format: 'binary' },
+  ArrayBufferLike: { type: 'string', format: 'binary' },
+  DataView: { type: 'string', format: 'binary' },
+  Uint8Array: { type: 'string', format: 'byte' },
+  Uint16Array: { type: 'string', format: 'byte' },
+  Uint32Array: { type: 'string', format: 'byte' },
+  Int8Array: { type: 'string', format: 'byte' },
+  Int16Array: { type: 'string', format: 'byte' },
+  Int32Array: { type: 'string', format: 'byte' },
+  Float32Array: { type: 'string', format: 'byte' },
+  Float64Array: { type: 'string', format: 'byte' },
+  BigInt64Array: { type: 'string', format: 'byte' },
+  BigUint64Array: { type: 'string', format: 'byte' },
+};
+
+function isPureRefSchema(value: Record<string, unknown>): value is { $ref: string } {
+  return Object.keys(value).length === 1 && '$ref' in value;
+}
+
+function withDescription(
+  schema: Record<string, unknown>,
+  description: string,
+): Record<string, unknown> {
+  if (isPureRefSchema(schema)) {
+    return {
+      allOf: [schema],
+      description,
+    };
+  }
+
+  return {
+    ...schema,
+    description,
+  };
+}
+
 export interface StructuredProperty {
   name: string;
   type:
@@ -47,8 +93,8 @@ export function propertiesToSchema(
       propSchema = { type: 'any' };
     }
 
-    if (prop.description) {
-      propSchema.description = prop.description;
+    if (prop.description && typeof propSchema === 'object') {
+      propSchema = withDescription(propSchema, prop.description);
     }
 
     schema.properties[prop.name] = propSchema;
@@ -63,10 +109,229 @@ export function propertiesToSchema(
   }
 
   if (description) {
-    schema.description = description;
+    return withDescription(schema, description);
   }
 
   return schema;
+}
+
+function buildSchemaFromTypeNode(
+  node: ts.TypeNode,
+  typeChecker: ts.TypeChecker,
+  typeRefs: Map<string, string>,
+  referencedTypes: Set<string> | undefined,
+  functionDoc: ParsedJSDoc | null,
+  parentParamName: string,
+): Record<string, unknown> {
+  if (ts.isParenthesizedTypeNode(node)) {
+    return buildSchemaFromTypeNode(
+      node.type,
+      typeChecker,
+      typeRefs,
+      referencedTypes,
+      functionDoc,
+      parentParamName,
+    );
+  }
+
+  if (ts.isIntersectionTypeNode(node)) {
+    const schemas = node.types.map((type) =>
+      buildSchemaFromTypeNode(
+        type,
+        typeChecker,
+        typeRefs,
+        referencedTypes,
+        functionDoc,
+        parentParamName,
+      ),
+    );
+    return { allOf: schemas };
+  }
+
+  if (ts.isUnionTypeNode(node)) {
+    const schemas = node.types.map((type) =>
+      buildSchemaFromTypeNode(
+        type,
+        typeChecker,
+        typeRefs,
+        referencedTypes,
+        functionDoc,
+        parentParamName,
+      ),
+    );
+    return { anyOf: schemas };
+  }
+
+  if (ts.isArrayTypeNode(node)) {
+    return {
+      type: 'array',
+      items: buildSchemaFromTypeNode(
+        node.elementType,
+        typeChecker,
+        typeRefs,
+        referencedTypes,
+        functionDoc,
+        parentParamName,
+      ),
+    };
+  }
+
+  if (ts.isTypeLiteralNode(node)) {
+    const properties: Record<string, unknown> = {};
+    const required: string[] = [];
+
+    for (const member of node.members) {
+      if (!ts.isPropertySignature(member) || !member.name) {
+        continue;
+      }
+
+      const propName = member.name.getText();
+      let schema: Record<string, unknown> | string = 'any';
+
+      if (member.type) {
+        const memberType = typeChecker.getTypeFromTypeNode(member.type);
+        const formatted = formatTypeReference(memberType, typeChecker, typeRefs, referencedTypes);
+
+        if (typeof formatted === 'string') {
+          if (formatted === 'any') {
+            schema = buildSchemaFromTypeNode(
+              member.type,
+              typeChecker,
+              typeRefs,
+              referencedTypes,
+              functionDoc,
+              parentParamName,
+            );
+          } else {
+            schema = { type: formatted };
+          }
+        } else {
+          schema = formatted;
+        }
+      } else {
+        schema = { type: 'any' };
+      }
+
+      const description = getDocDescriptionForProperty(functionDoc, parentParamName, propName);
+      if (typeof schema === 'object' && description) {
+        schema = withDescription(schema as Record<string, unknown>, description);
+      }
+
+      properties[propName] = schema;
+
+      if (!member.questionToken) {
+        required.push(propName);
+      }
+    }
+
+    const schema: Record<string, unknown> = {
+      type: 'object',
+      properties,
+    };
+
+    if (required.length > 0) {
+      schema.required = required;
+    }
+
+    return schema;
+  }
+
+  if (ts.isTypeReferenceNode(node)) {
+    const typeName = node.typeName.getText();
+    if (typeName === 'Array') {
+      return { type: 'array' };
+    }
+
+    const builtInSchema = BUILTIN_TYPE_SCHEMAS[typeName];
+    if (builtInSchema) {
+      return { ...builtInSchema };
+    }
+
+    if (isBuiltInType(typeName)) {
+      return { type: 'object' };
+    }
+
+    if (!typeRefs.has(typeName)) {
+      typeRefs.set(typeName, typeName);
+    }
+    referencedTypes?.add(typeName);
+    return { $ref: `#/types/${typeName}` };
+  }
+
+  if (ts.isLiteralTypeNode(node)) {
+    if (ts.isStringLiteral(node.literal)) {
+      return { enum: [node.literal.text] };
+    }
+    if (ts.isNumericLiteral(node.literal)) {
+      return { enum: [Number(node.literal.text)] };
+    }
+  }
+
+  // Fallback: return textual representation
+  return { type: node.getText() };
+}
+
+function getDocDescriptionForProperty(
+  functionDoc: ParsedJSDoc | null,
+  parentParamName: string,
+  propName: string,
+): string | undefined {
+  if (!functionDoc) {
+    return undefined;
+  }
+
+  let match = functionDoc.params.find((p) => p.name === `${parentParamName}.${propName}`);
+  if (!match) {
+    match = functionDoc.params.find((p) => p.name.endsWith(`.${propName}`));
+  }
+  return match?.description;
+}
+
+function schemaIsAny(schema: string | Record<string, unknown>): boolean {
+  if (typeof schema === 'string') {
+    return schema === 'any';
+  }
+
+  if ('type' in schema && schema.type === 'any' && Object.keys(schema).length === 1) {
+    return true;
+  }
+
+  return false;
+}
+
+function schemasAreEqual(
+  left: string | Record<string, unknown>,
+  right: string | Record<string, unknown>,
+): boolean {
+  if (typeof left !== typeof right) {
+    return false;
+  }
+
+  if (typeof left === 'string' && typeof right === 'string') {
+    return left === right;
+  }
+
+  if (left == null || right == null) {
+    return left === right;
+  }
+
+  const normalize = (value: unknown): unknown => {
+    if (Array.isArray(value)) {
+      return value.map((item) => normalize(item));
+    }
+
+    if (value && typeof value === 'object') {
+      const sortedEntries = Object.entries(value)
+        .map(([key, val]) => [key, normalize(val)] as const)
+        .sort(([keyA], [keyB]) => keyA.localeCompare(keyB));
+
+      return Object.fromEntries(sortedEntries);
+    }
+
+    return value;
+  };
+
+  return JSON.stringify(normalize(left)) === JSON.stringify(normalize(right));
 }
 
 /**
@@ -171,18 +436,23 @@ export function formatTypeReference(
       return { $ref: `#/types/${symbolName}` };
     }
 
+    // For built-in complex types
+    if (symbolName === 'Array') {
+      return { type: 'array' };
+    }
+    const builtInSchema = BUILTIN_TYPE_SCHEMAS[symbolName];
+    if (builtInSchema) {
+      return { ...builtInSchema };
+    }
+
     // Add to referenced types for potential collection
     if (referencedTypes && !isBuiltInType(symbolName)) {
       referencedTypes.add(symbolName);
       return { $ref: `#/types/${symbolName}` };
     }
 
-    // For built-in complex types
-    if (symbolName === 'Array') {
-      return { type: 'array' };
-    }
-    if (symbolName === 'Promise' || symbolName === 'Uint8Array') {
-      return { type: symbolName };
+    if (isBuiltInType(symbolName)) {
+      return { type: 'object' };
     }
 
     // For types not in our package, still use $ref
@@ -294,7 +564,7 @@ export function structureParameter(
     }
 
     const actualName =
-      paramName === '__0' && functionDoc ? getActualParamName(functionDoc) : paramName;
+      paramName === '__0' ? (functionDoc ? getActualParamName(functionDoc) : 'options') : paramName;
     return {
       name: actualName,
       required: !typeChecker.isOptionalParameter(paramDecl),
@@ -340,8 +610,9 @@ export function structureParameter(
 
     // If all union members are object literals, structure with oneOf
     if (objectOptions.length > 0 && !hasNonObjectTypes) {
+      const readableName = paramName === '__0' ? 'options' : paramName;
       return {
-        name: paramName,
+        name: readableName,
         required: !typeChecker.isOptionalParameter(paramDecl),
         description: paramDoc?.description || '',
         schema: {
@@ -368,11 +639,37 @@ export function structureParameter(
       });
     }
 
+    const readableName = paramName === '__0' ? 'options' : paramName;
     return {
-      name: paramName,
+      name: readableName,
       required: !typeChecker.isOptionalParameter(paramDecl),
       description: paramDoc?.description || '',
       schema: propertiesToSchema(properties),
+    };
+  }
+
+  // Fallback for remote analysis when type checker returns `any` but the parameter has a declared TypeNode.
+  if (
+    paramType.flags & ts.TypeFlags.Any &&
+    paramDecl.type &&
+    paramDecl.name &&
+    ts.isObjectBindingPattern(paramDecl.name)
+  ) {
+    const actualName = paramName === '__0' ? 'options' : paramName;
+    const schema = buildSchemaFromTypeNode(
+      paramDecl.type,
+      typeChecker,
+      typeRefs,
+      referencedTypes,
+      functionDoc,
+      param.getName(),
+    );
+
+    return {
+      name: actualName,
+      required: !typeChecker.isOptionalParameter(paramDecl),
+      description: paramDoc?.description || '',
+      schema,
     };
   }
 
@@ -405,8 +702,28 @@ export function structureParameter(
     schema = typeRef;
   }
 
+  if (paramDecl.type) {
+    const astSchema = buildSchemaFromTypeNode(
+      paramDecl.type,
+      typeChecker,
+      typeRefs,
+      referencedTypes,
+      functionDoc,
+      param.getName(),
+    );
+
+    if (schemaIsAny(schema)) {
+      schema = astSchema;
+    } else if (Object.keys(astSchema).length > 0 && !schemasAreEqual(schema, astSchema)) {
+      schema = {
+        allOf: [schema, astSchema],
+      };
+    }
+  }
+
+  const readableName = paramName === '__0' ? 'options' : paramName;
   return {
-    name: paramName,
+    name: readableName,
     required: !typeChecker.isOptionalParameter(paramDecl),
     description: paramDoc?.description || '',
     schema,

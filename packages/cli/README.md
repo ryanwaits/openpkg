@@ -4,8 +4,6 @@
 
 Command-line interface for generating OpenPkg specifications from TypeScript packages.
 
-> ℹ️  The CLI now ships with the full remote analyzer. `openpkg analyze` only requires outbound network access to GitHub—no separate Studio service is necessary.
-
 ## Installation
 
 ```bash
@@ -66,65 +64,26 @@ openpkg generate --package @myorg/utils
 # Works with npm, yarn, pnpm, and bun workspaces
 ```
 
-### `analyze` - Analyze from URL
+### `analyze` - Analyze a local file
 
-Analyze TypeScript files directly from GitHub without cloning the repository. The CLI reuses the same remote analysis pipeline that powers the SDK, so no external service is required.
+Inspect a TypeScript entry point, print a summary, and optionally persist the spec.
 
 ```bash
-# Basic analysis
-openpkg analyze https://github.com/tanstack/query/blob/main/packages/query-core/src/query.ts
-
-# Show import analysis
-openpkg analyze <url> --show=imports
-
-# Follow and analyze imports recursively
-openpkg analyze <url> --follow=imports
-
-# Limit import depth
-openpkg analyze <url> --follow=imports --max-depth=3
-
-# Multiple display options
-openpkg analyze <url> --show=spec,imports,summary --follow=imports
-
-# Debug mode
-openpkg analyze <url> --show=debug
+openpkg analyze src/index.ts --show=summary
+openpkg analyze src/index.ts --show=spec,summary --output openpkg.json
 ```
 
 #### Options
 
-- `--show=<items>` - What to display (comma-separated):
-  - `spec` - Generate OpenPkg specification (default)
-  - `imports` - Show detailed import analysis
-  - `summary` - Show exports/types breakdown
-  - `debug` - Display debug information
-
-- `--follow=<items>` - What to follow (comma-separated):
-  - `imports` - Recursively analyze relative imports
-
-- `--max-depth <n>` - Maximum depth for import resolution (default: 5)
-- `-o, --output <file>` - Save specification to file (default: `openpkg.json`)
-
-#### Import Analysis Features
-
-When using `--show=imports`, you'll see:
-- Categorized imports (relative, package, absolute)
-- Type-only imports marked
-- Import counts and details
-- Circular dependency detection
-
-When using `--follow=imports`, the tool will:
-- Recursively fetch and analyze imported files
-- Build complete type definitions across files
-- Show dependency graph statistics
-- Handle circular dependencies gracefully
-- Reuse previously fetched files via an in-memory cache for faster repeated runs
+- `--show=<items>` – Comma-separated list of values to display (`summary`, `spec`). Default: `summary`.
+- `-o, --output <file>` – Save the generated spec to a file.
+- `--cwd <dir>` – Working directory used to resolve the entry path (defaults to current directory).
 
 ## Examples
 
 ### Basic Package Analysis
 
 ```bash
-# Simple package
 cd my-typescript-package
 openpkg generate
 
@@ -134,45 +93,9 @@ openpkg generate
 ### Monorepo Package
 
 ```bash
-# In monorepo root with packages:
-# - packages/utils
-# - packages/cli  
-# - packages/sdk
-
 openpkg generate --package @myorg/utils
 # Analyzes packages/utils specifically
 ```
-
-### GitHub URL Analysis
-
-```bash
-# Analyze a single file
-openpkg analyze https://github.com/microsoft/typescript/blob/main/src/compiler/types.ts
-
-# Practical real-world examples
-openpkg analyze https://github.com/vercel/ai/blob/main/packages/ai/src/generate-text/generate-text.ts --show=spec,summary
-openpkg analyze https://github.com/hirosystems/stacks.js/blob/main/packages/transactions/src/fetch.ts --show=spec --follow=imports
-
-# Analyze with imports
-openpkg analyze https://github.com/remix-run/react-router/blob/main/packages/router/index.ts \
-  --follow=imports \
-  --show=spec,imports,summary
-
-# Debug import resolution
-openpkg analyze https://github.com/vercel/next.js/blob/canary/packages/next/server.ts \
-  --follow=imports \
-  --max-depth=2 \
-  --show=debug
-```
-
-### Complex Import Scenarios
-
-Check out the [examples directory](../../examples/README.md) for handling:
-- Circular dependencies
-- Barrel exports (re-exports)
-- Deep import chains
-- Mixed import styles
-- Type-only imports
 
 ## Output Format
 

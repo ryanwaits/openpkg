@@ -277,8 +277,29 @@
               "items": {
                 "$ref": "#/$defs/schema"
               }
+            },
+            "enum": {
+              "type": "array",
+              "items": {
+                "type": ["string", "number", "null"]
+              }
+            },
+            "description": {
+              "type": "string"
             }
-          }
+          },
+          "not": {
+            "required": ["$ref"]
+          },
+          "anyOf": [
+            { "required": ["type"] },
+            { "required": ["properties"] },
+            { "required": ["items"] },
+            { "required": ["oneOf"] },
+            { "required": ["anyOf"] },
+            { "required": ["allOf"] },
+            { "required": ["enum"] }
+          ]
         }
       ]
     },
