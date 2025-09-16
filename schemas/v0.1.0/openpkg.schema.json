@@ -1,5 +1,5 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://raw.githubusercontent.com/ryanwaits/openpkg/main/schemas/v0.1.0/openpkg.schema.json",
   "title": "OpenPkg Specification",
   "description": "Schema for OpenPkg specification files",
@@ -53,18 +53,18 @@
       "type": "array",
       "description": "List of exported items",
       "items": {
-        "$ref": "#/$defs/export"
+        "$ref": "#/definitions/export"
       }
     },
     "types": {
       "type": "array",
       "description": "List of type definitions",
       "items": {
-        "$ref": "#/$defs/typeDef"
+        "$ref": "#/definitions/typeDef"
       }
     }
   },
-  "$defs": {
+  "definitions": {
     "export": {
       "type": "object",
       "required": ["id", "name", "kind"],
@@ -90,18 +90,18 @@
           "type": "array",
           "description": "Function/method signatures",
           "items": {
-            "$ref": "#/$defs/signature"
+            "$ref": "#/definitions/signature"
           }
         },
         "properties": {
           "type": "array",
           "description": "Class/interface properties",
           "items": {
-            "$ref": "#/$defs/property"
+            "$ref": "#/definitions/property"
           }
         },
         "source": {
-          "$ref": "#/$defs/sourceLocation"
+          "$ref": "#/definitions/sourceLocation"
         }
       }
     },
@@ -127,7 +127,7 @@
           "description": "JSDoc/TSDoc description"
         },
         "schema": {
-          "$ref": "#/$defs/schema"
+          "$ref": "#/definitions/schema"
         },
         "type": {
           "type": "string",
@@ -137,11 +137,11 @@
           "type": "array",
           "description": "Properties for interfaces/classes",
           "items": {
-            "$ref": "#/$defs/property"
+            "$ref": "#/definitions/property"
           }
         },
         "source": {
-          "$ref": "#/$defs/sourceLocation"
+          "$ref": "#/definitions/sourceLocation"
         }
       }
     },
@@ -151,11 +151,11 @@
         "parameters": {
           "type": "array",
           "items": {
-            "$ref": "#/$defs/parameter"
+            "$ref": "#/definitions/parameter"
           }
         },
         "returns": {
-          "$ref": "#/$defs/returns"
+          "$ref": "#/definitions/returns"
         }
       }
     },
@@ -176,7 +176,7 @@
           "description": "Parameter description"
         },
         "schema": {
-          "$ref": "#/$defs/schema"
+          "$ref": "#/definitions/schema"
         }
       }
     },
@@ -184,7 +184,7 @@
       "type": "object",
       "properties": {
         "schema": {
-          "$ref": "#/$defs/schema"
+          "$ref": "#/definitions/schema"
         },
         "description": {
           "type": "string",
@@ -209,7 +209,7 @@
           "description": "Property description"
         },
         "schema": {
-          "$ref": "#/$defs/schema"
+          "$ref": "#/definitions/schema"
         }
       }
     },
@@ -248,7 +248,7 @@
             "properties": {
               "type": "object",
               "additionalProperties": {
-                "$ref": "#/$defs/schema"
+                "$ref": "#/definitions/schema"
               }
             },
             "required": {
@@ -258,24 +258,24 @@
               }
             },
             "items": {
-              "$ref": "#/$defs/schema"
+              "$ref": "#/definitions/schema"
             },
             "oneOf": {
               "type": "array",
               "items": {
-                "$ref": "#/$defs/schema"
+                "$ref": "#/definitions/schema"
               }
             },
             "anyOf": {
               "type": "array",
               "items": {
-                "$ref": "#/$defs/schema"
+                "$ref": "#/definitions/schema"
               }
             },
             "allOf": {
               "type": "array",
               "items": {
-                "$ref": "#/$defs/schema"
+                "$ref": "#/definitions/schema"
               }
             },
             "enum": {
