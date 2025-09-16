@@ -69,61 +69,6 @@ export function propertiesToSchema(
   return schema;
 }
 
-export interface TypeDefinition {
-  properties?: Array<{
-    name: string;
-    type: string | Record<string, unknown>;
-    optional?: boolean;
-    description?: string;
-  }>;
-}
-
-/**
- * Parse intersection types (A & B & C) into separate properties
- */
-export function parseIntersectionType(
-  type: ts.Type,
-  typeChecker: ts.TypeChecker,
-  typeRefs: Map<string, string>,
-): StructuredProperty[] {
-  const properties: StructuredProperty[] = [];
-
-  if (!type.isIntersection()) {
-    return properties;
-  }
-
-  const intersectionType = type as ts.IntersectionType;
-
-  for (const subType of intersectionType.types) {
-    const symbol = subType.getSymbol();
-
-    if (symbol) {
-      const typeName = symbol.getName();
-
-      // Handle anonymous types (object literals)
-      if (typeName.startsWith('__') && subType.getProperties().length > 0) {
-        // This is an object literal, extract its properties
-        for (const prop of subType.getProperties()) {
-          const propType = typeChecker.getTypeOfSymbolAtLocation(prop, prop.valueDeclaration!);
-          properties.push({
-            name: prop.getName(),
-            type: formatTypeReference(propType, typeChecker, typeRefs, referencedTypes),
-            optional: !!(prop.flags & ts.SymbolFlags.Optional),
-          });
-        }
-      } else if (typeRefs.has(typeName)) {
-        // This is a named type, add as unnamed property with reference
-        properties.push({
-          name: '',
-          type: { $ref: `#/types/${typeName}` },
-        });
-      }
-    }
-  }
-
-  return properties;
-}
-
 /**
  * Format a type as either a string or a reference object
  * Following OpenAPI standards: use $ref for all named types

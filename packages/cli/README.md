@@ -4,6 +4,8 @@
 
 Command-line interface for generating OpenPkg specifications from TypeScript packages.
 
+> ℹ️  The CLI now ships with the full remote analyzer. `openpkg analyze` only requires outbound network access to GitHub—no separate Studio service is necessary.
+
 ## Installation
 
 ```bash
@@ -64,9 +66,9 @@ openpkg generate --package @myorg/utils
 # Works with npm, yarn, pnpm, and bun workspaces
 ```
 
-### `analyze` - Analyze from URL (Studio Feature)
+### `analyze` - Analyze from URL
 
-Analyze TypeScript files directly from GitHub URLs using OpenPkg Studio.
+Analyze TypeScript files directly from GitHub without cloning the repository. The CLI reuses the same remote analysis pipeline that powers the SDK, so no external service is required.
 
 ```bash
 # Basic analysis
@@ -115,6 +117,7 @@ When using `--follow=imports`, the tool will:
 - Build complete type definitions across files
 - Show dependency graph statistics
 - Handle circular dependencies gracefully
+- Reuse previously fetched files via an in-memory cache for faster repeated runs
 
 ## Examples
 
@@ -145,6 +148,10 @@ openpkg generate --package @myorg/utils
 ```bash
 # Analyze a single file
 openpkg analyze https://github.com/microsoft/typescript/blob/main/src/compiler/types.ts
+
+# Practical real-world examples
+openpkg analyze https://github.com/vercel/ai/blob/main/packages/ai/src/generate-text/generate-text.ts --show=spec,summary
+openpkg analyze https://github.com/hirosystems/stacks.js/blob/main/packages/transactions/src/fetch.ts --show=spec --follow=imports
 
 # Analyze with imports
 openpkg analyze https://github.com/remix-run/react-router/blob/main/packages/router/index.ts \
@@ -241,10 +248,10 @@ https://raw.githubusercontent.com/ryanwaits/openpkg/main/schemas/v0.1.0/openpkg.
 - Ensure your code uses `export` statements
 - Check that TypeScript can compile your code
 
-### "Studio connection failed"
-- The `analyze` command requires OpenPkg Studio running locally
-- Check that http://localhost:3000 is accessible
-- Some features may require authentication
+### "Network error occurred"
+- Ensure you are connected to the internet and GitHub is reachable
+- Re-run with `--show=debug` to view detailed fetch/log output
+- GitHub rate limiting may apply for extremely frequent requests
 
 ## Development
 

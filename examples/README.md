@@ -2,6 +2,16 @@
 
 This directory contains various TypeScript examples to test OpenPkg's analysis capabilities, particularly the import resolution features.
 
+### Running locally
+
+```bash
+# from repo root
+bun run build:cli
+node packages/cli/dist/cli.js generate simple-math.ts --cwd examples --output simple-math.json
+```
+
+Each scenario below lists the CLI command needed to analyze it locally (no GitHub fetch required).
+
 ## Examples for Phase 1.4 (Import Resolution)
 
 ### 1. blog-api/
@@ -11,7 +21,8 @@ This directory contains various TypeScript examples to test OpenPkg's analysis c
 - Clean, no circular dependencies
 
 ```bash
-openpkg analyze https://github.com/[user]/openpkg/blob/main/examples/blog-api/main.ts --follow=imports
+# from repo root after building the CLI
+node packages/cli/dist/cli.js generate blog-api/main.ts --cwd examples --output blog-api.json
 ```
 
 ### 2. circular-deps/
@@ -21,7 +32,7 @@ openpkg analyze https://github.com/[user]/openpkg/blob/main/examples/blog-api/ma
 - Tests cycle detection and prevention
 
 ```bash
-openpkg analyze https://github.com/[user]/openpkg/blob/main/examples/circular-deps/a.ts --follow=imports
+node packages/cli/dist/cli.js generate circular-deps/a.ts --cwd examples --output circular.json
 ```
 
 **Expected Output Comparison:**
@@ -50,7 +61,7 @@ With `--follow=imports`:
 - Max depth limiting
 
 ```bash
-openpkg analyze https://github.com/[user]/openpkg/blob/main/examples/deep-imports/index.ts --follow=imports --max-depth=3
+node packages/cli/dist/cli.js generate deep-imports/index.ts --cwd examples --output deep-imports.json
 ```
 
 **Expected Output Comparison:**
@@ -84,7 +95,7 @@ With `--follow=imports --max-depth=3`:
 - Tests if analyzer follows re-exports correctly
 
 ```bash
-openpkg analyze https://github.com/[user]/openpkg/blob/main/examples/barrel-exports/index.ts --follow=imports
+node packages/cli/dist/cli.js generate barrel-exports/index.ts --cwd examples --output barrel.json
 ```
 
 **Expected Output Comparison:**
@@ -124,7 +135,7 @@ With `--follow=imports` (✅ fully working):
 - Different import syntaxes in one file
 
 ```bash
-openpkg analyze https://github.com/[user]/openpkg/blob/main/examples/mixed-imports/calculator.ts --follow=imports
+node packages/cli/dist/cli.js generate mixed-imports/calculator.ts --cwd examples --output mixed-imports.json
 ```
 
 **Expected Output Comparison:**
@@ -189,17 +200,17 @@ Run all examples to verify import resolution:
 
 ```bash
 # Basic test
-openpkg analyze https://github.com/[user]/openpkg/blob/main/examples/blog-api/main.ts --follow=imports
+node packages/cli/dist/cli.js generate blog-api/main.ts --cwd examples --output blog-api.json
 
 # Circular dependency test
-openpkg analyze https://github.com/[user]/openpkg/blob/main/examples/circular-deps/a.ts --follow=imports
+node packages/cli/dist/cli.js generate circular-deps/a.ts --cwd examples --output circular.json
 
 # Deep nesting with max depth
-openpkg analyze https://github.com/[user]/openpkg/blob/main/examples/deep-imports/index.ts --follow=imports --max-depth=2
+node packages/cli/dist/cli.js generate deep-imports/index.ts --cwd examples --output deep.json
 
 # Barrel exports
-openpkg analyze https://github.com/[user]/openpkg/blob/main/examples/barrel-exports/index.ts --follow=imports
+node packages/cli/dist/cli.js generate barrel-exports/index.ts --cwd examples --output barrel.json
 
 # Mixed imports
-openpkg analyze https://github.com/[user]/openpkg/blob/main/examples/mixed-imports/calculator.ts --follow=imports
+node packages/cli/dist/cli.js generate mixed-imports/calculator.ts --cwd examples --output mixed.json
 ```

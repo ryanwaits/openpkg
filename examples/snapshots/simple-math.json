@@ -1,0 +1,316 @@
+{
+  "$schema": "https://raw.githubusercontent.com/ryanwaits/openpkg/main/schemas/v0.1.0/openpkg.schema.json",
+  "openpkg": "0.1.0",
+  "meta": {
+    "name": "unknown",
+    "version": "1.0.0",
+    "description": "",
+    "license": "",
+    "repository": "",
+    "ecosystem": "js/ts"
+  },
+  "exports": [
+    {
+      "id": "distance",
+      "name": "distance",
+      "kind": "function",
+      "signatures": [
+        {
+          "parameters": [
+            {
+              "name": "a",
+              "required": true,
+              "description": " First point",
+              "schema": {
+                "$ref": "#/types/Point"
+              }
+            },
+            {
+              "name": "b",
+              "required": true,
+              "description": " Second point",
+              "schema": {
+                "$ref": "#/types/Point"
+              }
+            }
+          ],
+          "returns": {
+            "schema": {
+              "type": "number"
+            },
+            "description": "The Euclidean distance"
+          }
+        }
+      ],
+      "description": "Calculates the distance between two points",
+      "source": {
+        "file": "/Users/ryanwaits/Code/projects/openpkg/examples/simple-math.ts",
+        "line": 39
+      }
+    },
+    {
+      "id": "area",
+      "name": "area",
+      "kind": "function",
+      "signatures": [
+        {
+          "parameters": [
+            {
+              "name": "rect",
+              "required": true,
+              "description": " The rectangle",
+              "schema": {
+                "$ref": "#/types/Rectangle"
+              }
+            }
+          ],
+          "returns": {
+            "schema": {
+              "type": "number"
+            },
+            "description": "The area"
+          }
+        }
+      ],
+      "description": "Calculates the area of a rectangle",
+      "source": {
+        "file": "/Users/ryanwaits/Code/projects/openpkg/examples/simple-math.ts",
+        "line": 48
+      }
+    },
+    {
+      "id": "Point",
+      "name": "Point",
+      "kind": "interface",
+      "description": "Represents a 2D point in space",
+      "source": {
+        "file": "/Users/ryanwaits/Code/projects/openpkg/examples/simple-math.ts",
+        "line": 4
+      }
+    },
+    {
+      "id": "Point3D",
+      "name": "Point3D",
+      "kind": "interface",
+      "description": "Represents a 3D point in space",
+      "source": {
+        "file": "/Users/ryanwaits/Code/projects/openpkg/examples/simple-math.ts",
+        "line": 12
+      }
+    },
+    {
+      "id": "Rectangle",
+      "name": "Rectangle",
+      "kind": "interface",
+      "description": "Represents a rectangle",
+      "source": {
+        "file": "/Users/ryanwaits/Code/projects/openpkg/examples/simple-math.ts",
+        "line": 19
+      }
+    },
+    {
+      "id": "MathConstants",
+      "name": "MathConstants",
+      "kind": "enum",
+      "description": "Math constants",
+      "source": {
+        "file": "/Users/ryanwaits/Code/projects/openpkg/examples/simple-math.ts",
+        "line": 27
+      }
+    },
+    {
+      "id": "Vector",
+      "name": "Vector",
+      "kind": "class",
+      "description": "Vector operations utility class",
+      "source": {
+        "file": "/Users/ryanwaits/Code/projects/openpkg/examples/simple-math.ts",
+        "line": 57
+      }
+    },
+    {
+      "id": "Coordinate",
+      "name": "Coordinate",
+      "kind": "type",
+      "type": {
+        "$ref": "#/types/Coordinate"
+      },
+      "description": "Type alias for a coordinate tuple",
+      "source": {
+        "file": "/Users/ryanwaits/Code/projects/openpkg/examples/simple-math.ts",
+        "line": 89
+      }
+    },
+    {
+      "id": "Matrix2D",
+      "name": "Matrix2D",
+      "kind": "type",
+      "type": {
+        "$ref": "#/types/Matrix2D"
+      },
+      "description": "Type alias for a transformation matrix",
+      "source": {
+        "file": "/Users/ryanwaits/Code/projects/openpkg/examples/simple-math.ts",
+        "line": 94
+      }
+    },
+    {
+      "id": "ORIGIN",
+      "name": "ORIGIN",
+      "kind": "variable",
+      "type": {
+        "$ref": "#/types/Point"
+      },
+      "description": "The origin point",
+      "source": {
+        "file": "/Users/ryanwaits/Code/projects/openpkg/examples/simple-math.ts",
+        "line": 99
+      }
+    },
+    {
+      "id": "IDENTITY_MATRIX",
+      "name": "IDENTITY_MATRIX",
+      "kind": "variable",
+      "type": {
+        "$ref": "#/types/Matrix2D"
+      },
+      "description": "Identity matrix",
+      "source": {
+        "file": "/Users/ryanwaits/Code/projects/openpkg/examples/simple-math.ts",
+        "line": 104
+      }
+    }
+  ],
+  "types": [
+    {
+      "id": "Point",
+      "name": "Point",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "number"
+          },
+          "y": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "x",
+          "y"
+        ]
+      },
+      "description": "Represents a 2D point in space",
+      "source": {
+        "file": "/Users/ryanwaits/Code/projects/openpkg/examples/simple-math.ts",
+        "line": 4
+      }
+    },
+    {
+      "id": "Point3D",
+      "name": "Point3D",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "z": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "z"
+        ]
+      },
+      "description": "Represents a 3D point in space",
+      "source": {
+        "file": "/Users/ryanwaits/Code/projects/openpkg/examples/simple-math.ts",
+        "line": 12
+      }
+    },
+    {
+      "id": "Rectangle",
+      "name": "Rectangle",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "topLeft": {
+            "$ref": "#/types/Point"
+          },
+          "bottomRight": {
+            "$ref": "#/types/Point"
+          }
+        },
+        "required": [
+          "topLeft",
+          "bottomRight"
+        ]
+      },
+      "description": "Represents a rectangle",
+      "source": {
+        "file": "/Users/ryanwaits/Code/projects/openpkg/examples/simple-math.ts",
+        "line": 19
+      }
+    },
+    {
+      "id": "MathConstants",
+      "name": "MathConstants",
+      "kind": "enum",
+      "members": [
+        {
+          "name": "PI",
+          "value": "3.141592653589793",
+          "description": ""
+        },
+        {
+          "name": "E",
+          "value": "2.718281828459045",
+          "description": ""
+        },
+        {
+          "name": "GOLDEN_RATIO",
+          "value": "1.61803",
+          "description": ""
+        }
+      ],
+      "description": "Math constants",
+      "source": {
+        "file": "/Users/ryanwaits/Code/projects/openpkg/examples/simple-math.ts",
+        "line": 27
+      }
+    },
+    {
+      "id": "Vector",
+      "name": "Vector",
+      "kind": "class",
+      "description": "Vector operations utility class",
+      "source": {
+        "file": "/Users/ryanwaits/Code/projects/openpkg/examples/simple-math.ts",
+        "line": 57
+      }
+    },
+    {
+      "id": "Coordinate",
+      "name": "Coordinate",
+      "kind": "type",
+      "type": "Coordinate",
+      "description": "Type alias for a coordinate tuple",
+      "source": {
+        "file": "/Users/ryanwaits/Code/projects/openpkg/examples/simple-math.ts",
+        "line": 89
+      }
+    },
+    {
+      "id": "Matrix2D",
+      "name": "Matrix2D",
+      "kind": "type",
+      "type": "Matrix2D",
+      "description": "Type alias for a transformation matrix",
+      "source": {
+        "file": "/Users/ryanwaits/Code/projects/openpkg/examples/simple-math.ts",
+        "line": 94
+      }
+    }
+  ]
+}

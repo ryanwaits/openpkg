@@ -89,6 +89,27 @@ const openpkg = new OpenPkg();
 const spec = await openpkg.analyzeFile('./src/index.ts');
 ```
 
+### Remote Analysis
+
+Need to inspect a file without cloning the repo? Both the CLI and SDK can pull TypeScript sources straight from GitHub.
+
+```bash
+# CLI
+openpkg analyze https://github.com/vercel/ai/blob/main/packages/ai/src/generate-text/generate-text.ts --show=spec,summary
+openpkg analyze https://github.com/hirosystems/stacks.js/blob/main/packages/transactions/src/fetch.ts --show=spec --follow=imports
+```
+
+```typescript
+import { analyzeRemote } from 'openpkg-sdk';
+
+const result = await analyzeRemote({
+  source: 'https://github.com/vercel/ai/blob/main/packages/ai/src/generate-text/generate-text.ts',
+  followImports: true,
+});
+
+console.log(result.spec?.exports.length); // remote exports discovered
+```
+
 ## Documentation
 
 - 📖 [CLI Documentation](./packages/cli/README.md) - Full CLI usage guide with all commands and options
@@ -102,6 +123,8 @@ const spec = await openpkg.analyzeFile('./src/index.ts');
 - 🔗 **Smart References** - Clean `$ref` links between types
 - 📚 **JSDoc Integration** - Preserves your documentation
 - ⚡ **Monorepo Support** - Works with workspace packages
+- 🌐 **Remote Analysis** - Fetch and analyze GitHub files (with optional import following)
+- 📦 **Built-in Caching** - Reuse previously fetched remote files to stay fast
 - ✅ **Schema Validation** - JSON Schema for spec validation and IDE support
 
 ## License

@@ -40,6 +40,25 @@ import { writeFileSync } from 'fs';
 writeFileSync('openpkg.json', JSON.stringify(spec, null, 2));
 ```
 
+### Remote Analysis
+
+Use the remote analyzer when you need to inspect a GitHub file (optionally following its relative imports) without checking out the repository.
+
+```typescript
+import { analyzeRemote } from 'openpkg-sdk';
+
+const result = await analyzeRemote({
+  source: 'https://github.com/octocat/cool-lib/blob/main/src/index.ts',
+  followImports: true,
+  maxDepth: 4,
+});
+
+console.log(result.spec?.exports.length);
+console.log(result.metadata.dependencyGraph);
+```
+
+The helper handles fetching, caching, import resolution, and spec merging for you. It returns the same structure that the CLI prints, including parsed imports, optional parse errors, dependency graph statistics, and the assembled `OpenPkgSpec`.
+
 ## API Reference
 
 ### `OpenPkg`
@@ -64,6 +83,36 @@ const spec = await openpkg.analyzeFile('./src/index.ts');
 **Throws:**
 - Error if file doesn't exist
 - Error if TypeScript parsing fails
+
+### `analyzeRemote(options: RemoteAnalysisRequestOptions): Promise<RemoteAnalysisResponse>`
+
+Analyze TypeScript sources hosted on GitHub. Supports following relative imports, merging exported types, and returns metadata about the dependency graph.
+
+```typescript
+import { analyzeRemote } from 'openpkg-sdk';
+
+const response = await analyzeRemote({
+  source: 'https://github.com/octocat/cool-lib/blob/main/src/index.ts',
+  followImports: true,
+  maxDepth: 3,
+});
+
+console.log(response.spec?.meta.name);
+console.log(response.imports.length);
+```
+
+**Options:**
+- `source` *(required)* – GitHub `blob` URL or raw TypeScript code when `type: 'code'`
+- `type` – `'url' | 'code'` (auto-detected when omitted)
+- `followImports` – When true, recursively resolves relative imports
+- `maxDepth` – Cap the depth of recursive import resolution (default `5`)
+- `includePrivate` / `openPkgOptions` – Pass through to the underlying `OpenPkg` instance
+
+**Returns:**
+- `spec` – Generated `OpenPkgSpec` when analysis succeeds
+- `imports` – Parsed import metadata (useful for visualization)
+- `metadata` – Runtime metrics and dependency graph statistics
+- `files` – Map of fetched files when import following is enabled
 
 ### Type Definitions
 
@@ -293,12 +342,38 @@ async function analyzeMultiple(pattern: string) {
 const spec = await analyzeMultiple('src/**/*.ts');
 ```
 
+### Customizing Remote Analysis (Caching & Fetchers)
+
+All remote helpers accept dependency overrides so you can plug in a custom cache or GitHub fetcher (for authenticated requests, retries, or persistence).
+
+```typescript
+import { analyzeRemote, InMemoryRemoteCache } from 'openpkg-sdk';
+
+const cache = new InMemoryRemoteCache(60_000); // 60 second TTL
+
+const response = await analyzeRemote(
+  { source: 'https://github.com/octocat/cool-lib/blob/main/src/index.ts' },
+  {
+    cache,
+    fetchContent: async (url) => {
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${process.env.GH_TOKEN}` },
+      });
+      if (!res.ok) throw new Error(`GitHub returned ${res.status}`);
+      return res.text();
+    },
+  },
+);
+
+console.log(response.metadata.duration);
+console.log(cache.has('file:https://github.com/octocat/cool-lib/blob/main/src/index.ts'));
+```
+
 ## Limitations
 
-- Only analyzes TypeScript source files (`.ts`, `.tsx`)
-- Requires TypeScript to be installed in your project
-- Does not follow imports across files (use CLI with `--follow=imports` for this)
-- Cannot analyze from URLs (use CLI `analyze` command for this)
+- `OpenPkg` analyzes TypeScript source files (`.ts`, `.tsx`).
+- `analyzeRemote` currently targets public GitHub `blob` URLs. Private repos require providing your own fetcher implementation via dependencies.
+- Local analysis does not follow imports across files; use `analyzeRemote` or the CLI for multi-file remote analysis.
 
 ## Development
 
