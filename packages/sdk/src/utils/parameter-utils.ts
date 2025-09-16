@@ -344,6 +344,18 @@ export function formatTypeReference(
   typeRefs: Map<string, string>,
   referencedTypes?: Set<string>,
 ): string | Record<string, unknown> {
+  const aliasSymbol = type.aliasSymbol;
+  if (aliasSymbol) {
+    const aliasName = aliasSymbol.getName();
+    if (typeRefs.has(aliasName)) {
+      return { $ref: `#/types/${aliasName}` };
+    }
+    if (referencedTypes && !isBuiltInType(aliasName)) {
+      referencedTypes.add(aliasName);
+      return { $ref: `#/types/${aliasName}` };
+    }
+  }
+
   const typeString = typeChecker.typeToString(type);
 
   // Check if this is a primitive type

@@ -49,7 +49,10 @@ function getFunctionSignatures(
     {
       parameters: signature.getParameters().map((param) => {
         const paramDecl = param.valueDeclaration as ts.ParameterDeclaration;
-        const paramType = typeChecker.getTypeAtLocation(paramDecl);
+        const paramType =
+          paramDecl.type != null
+            ? typeChecker.getTypeFromTypeNode(paramDecl.type)
+            : typeChecker.getTypeAtLocation(paramDecl);
 
         collectReferencedTypes(paramType, typeChecker, referencedTypes);
 
