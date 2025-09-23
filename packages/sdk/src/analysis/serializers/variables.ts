@@ -1,7 +1,8 @@
 import * as ts from 'typescript';
 import type { ExportDefinition, TypeReference } from '../spec-types';
 import { getJSDocComment, getSourceLocation } from '../ast-utils';
-import type { SerializerContext } from './functions';
+import { serializeCallSignatures, type SerializerContext } from './functions';
+import { parseJSDocComment } from '../../utils/tsdoc-utils';
 import { formatTypeReference } from '../../utils/parameter-utils';
 import { collectReferencedTypes } from '../../utils/type-utils';
 
@@ -11,6 +12,22 @@ export function serializeVariable(
   context: SerializerContext,
 ): ExportDefinition {
   const { checker, typeRegistry } = context;
+  const variableType = checker.getTypeAtLocation(declaration.name ?? declaration);
+  const callSignatures = variableType.getCallSignatures();
+
+  if (callSignatures.length > 0) {
+    const parsedDoc = parseJSDocComment(symbol, checker);
+    return {
+      id: symbol.getName(),
+      name: symbol.getName(),
+      kind: 'function',
+      signatures: serializeCallSignatures(callSignatures, symbol, context, parsedDoc),
+      description: getJSDocComment(symbol, checker),
+      source: getSourceLocation(declaration.initializer ?? declaration),
+      examples: parsedDoc?.examples,
+    };
+  }
+
   const typeRefs = typeRegistry.getTypeRefs();
   const referencedTypes = typeRegistry.getReferencedTypes();
 

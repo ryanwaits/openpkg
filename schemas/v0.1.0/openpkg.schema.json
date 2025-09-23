@@ -86,6 +86,13 @@
           "type": "string",
           "description": "JSDoc/TSDoc description"
         },
+        "examples": {
+          "type": "array",
+          "description": "Usage examples from documentation",
+          "items": {
+            "type": "string"
+          }
+        },
         "signatures": {
           "type": "array",
           "description": "Function/method signatures",
@@ -156,6 +163,10 @@
         },
         "returns": {
           "$ref": "#/$defs/returns"
+        },
+        "description": {
+          "type": "string",
+          "description": "Signature-level description"
         }
       }
     },

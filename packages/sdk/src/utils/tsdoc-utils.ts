@@ -141,7 +141,10 @@ function processTag(result: ParsedJSDoc, tag: string, content: string) {
       break;
     }
     case 'example': {
-      result.examples?.push(content);
+      const example = content.trim();
+      if (example) {
+        result.examples?.push(example);
+      }
       break;
     }
   }
