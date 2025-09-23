@@ -1,4 +1,5 @@
 import * as fs from 'node:fs/promises';
+import * as fsSync from 'node:fs';
 import * as path from 'node:path';
 import * as ts from 'typescript';
 import type { AnalysisMetadataInternal } from './analysis/run-analysis';
@@ -48,8 +49,8 @@ export class OpenPkg {
   async analyzeFile(filePath: string): Promise<OpenPkgSpec> {
     const resolvedPath = path.resolve(filePath);
     const content = await fs.readFile(resolvedPath, 'utf-8');
-    const dir = path.dirname(resolvedPath);
-    return extractPackageSpec(resolvedPath, dir, content, this.options);
+    const packageDir = resolvePackageDir(resolvedPath);
+    return extractPackageSpec(resolvedPath, packageDir, content, this.options);
   }
 
   async analyzeProject(entryPath: string): Promise<OpenPkgSpec> {
@@ -58,9 +59,10 @@ export class OpenPkg {
 
   async analyzeWithDiagnostics(code: string, fileName?: string): Promise<AnalysisResult> {
     const resolvedFileName = path.resolve(fileName ?? 'temp.ts');
+    const packageDir = resolvePackageDir(resolvedFileName);
     const analysis = runAnalysis({
       entryFile: resolvedFileName,
-      packageDir: path.dirname(resolvedFileName),
+      packageDir,
       content: code,
       options: this.options,
     });
@@ -75,9 +77,10 @@ export class OpenPkg {
   async analyzeFileWithDiagnostics(filePath: string): Promise<AnalysisResult> {
     const resolvedPath = path.resolve(filePath);
     const content = await fs.readFile(resolvedPath, 'utf-8');
+    const packageDir = resolvePackageDir(resolvedPath);
     const analysis = runAnalysis({
       entryFile: resolvedPath,
-      packageDir: path.dirname(resolvedPath),
+      packageDir,
       content,
       options: this.options,
     });
@@ -142,4 +145,23 @@ export async function analyze(code: string): Promise<OpenPkgSpec> {
 
 export async function analyzeFile(filePath: string): Promise<OpenPkgSpec> {
   return new OpenPkg().analyzeFile(filePath);
+}
+
+function resolvePackageDir(entryFile: string): string {
+  const fallbackDir = path.dirname(entryFile);
+  let currentDir = fallbackDir;
+
+  while (true) {
+    const candidate = path.join(currentDir, 'package.json');
+    if (fsSync.existsSync(candidate)) {
+      return currentDir;
+    }
+
+    const parentDir = path.dirname(currentDir);
+    if (parentDir === currentDir) {
+      return fallbackDir;
+    }
+
+    currentDir = parentDir;
+  }
 }

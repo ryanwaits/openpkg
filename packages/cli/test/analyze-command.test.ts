@@ -32,14 +32,31 @@ describe('analyze command', () => {
 
     registerAnalyzeCommand(program, {
       createOpenPkg: () => ({
-        analyzeFile: async (file: string) => {
+        analyzeFileWithDiagnostics: async (file: string) => {
           analyzedFiles.push(file);
           return {
-            $schema: 'schema',
-            openpkg: '0.1.0',
-            meta: { name: 'local', version: '1.0.0', description: '', license: '', repository: '', ecosystem: 'js/ts' },
-            exports: [],
-            types: [],
+            spec: {
+              $schema: 'schema',
+              openpkg: '0.1.0',
+              meta: {
+                name: 'local',
+                version: '1.0.0',
+                description: '',
+                license: '',
+                repository: '',
+                ecosystem: 'js/ts',
+              },
+              exports: [],
+              types: [],
+            },
+            diagnostics: [],
+            metadata: {
+              baseDir: path.dirname(file),
+              configPath: undefined,
+              packageJsonPath: undefined,
+              hasNodeModules: true,
+              resolveExternalTypes: true,
+            },
           } as any;
         },
       }),
