@@ -28,14 +28,36 @@ export function serializeTypeAlias(
     source: getSourceLocation(declaration),
   };
 
+  const aliasType = checker.getTypeAtLocation(declaration.type);
+  const aliasName = symbol.getName();
+
+  // Temporarily remove the alias from the registry so we expand its structure
+  const existingRef = typeRefs.get(aliasName);
+  if (existingRef) {
+    typeRefs.delete(aliasName);
+  }
+
+  const aliasSchema = formatTypeReference(aliasType, checker, typeRefs, undefined);
+
+  if (existingRef) {
+    typeRefs.set(aliasName, existingRef);
+  }
+
   const typeDefinition: TypeDefinition = {
     id: symbol.getName(),
     name: symbol.getName(),
     kind: 'type',
-    type: checker.typeToString(checker.getTypeAtLocation(declaration)),
     description: getJSDocComment(symbol, checker),
     source: getSourceLocation(declaration),
   };
+
+  if (typeof aliasSchema === 'string') {
+    typeDefinition.type = aliasSchema;
+  } else if (aliasSchema && Object.keys(aliasSchema).length > 0) {
+    typeDefinition.schema = aliasSchema;
+  } else {
+    typeDefinition.type = declaration.type.getText();
+  }
 
   return {
     exportEntry,

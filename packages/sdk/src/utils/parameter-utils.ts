@@ -27,6 +27,14 @@ const BUILTIN_TYPE_SCHEMAS: Record<string, Record<string, unknown>> = {
   BigUint64Array: { type: 'string', format: 'byte' },
 };
 
+function isObjectLiteralType(type: ts.Type): type is ts.ObjectType {
+  if (!(type.getFlags() & ts.TypeFlags.Object)) {
+    return false;
+  }
+  const objectFlags = (type as ts.ObjectType).objectFlags;
+  return (objectFlags & ts.ObjectFlags.ObjectLiteral) !== 0;
+}
+
 function isPureRefSchema(value: Record<string, unknown>): value is { $ref: string } {
   return Object.keys(value).length === 1 && '$ref' in value;
 }
@@ -267,6 +275,37 @@ function buildSchemaFromTypeNode(
     }
   }
 
+  if (ts.isIntersectionTypeNode(node)) {
+    const schemas = node.types.map((typeNode) =>
+      buildSchemaFromTypeNode(
+        typeNode,
+        typeChecker,
+        typeRefs,
+        referencedTypes,
+        functionDoc,
+        parentParamName,
+      ),
+    );
+
+    if (schemas.some((schema) => '$ref' in schema && Object.keys(schema).length === 1)) {
+      const refs = schemas.filter((schema) => '$ref' in schema && Object.keys(schema).length === 1);
+      const nonRefs = schemas.filter((schema) => !('$ref' in schema && Object.keys(schema).length === 1));
+
+      if (refs.length === schemas.length) {
+        return refs[0];
+      }
+
+      if (nonRefs.length > 0) {
+        const merged = nonRefs.reduce((acc, schema) => ({ ...acc, ...schema }), {});
+        return merged;
+      }
+    }
+
+    return {
+      allOf: schemas,
+    };
+  }
+
   // Fallback: return textual representation
   return { type: node.getText() };
 }
@@ -399,6 +438,33 @@ export function formatTypeReference(
     };
   }
 
+  if (type.isIntersection()) {
+    const intersectionType = type as ts.IntersectionType;
+    const parts = intersectionType.types.map((t) =>
+      formatTypeReference(t, typeChecker, typeRefs, referencedTypes),
+    );
+
+    const normalized = parts.flatMap((part) => {
+      if (typeof part === 'string') {
+        return [{ type: part }];
+      }
+
+      if (part && typeof part === 'object' && 'allOf' in part) {
+        return Array.isArray(part.allOf) ? part.allOf : [part];
+      }
+
+      return [part];
+    });
+
+    if (normalized.length === 1) {
+      return normalized[0];
+    }
+
+    return {
+      allOf: normalized,
+    };
+  }
+
   // Check if this is a known type
   const symbol = type.getSymbol();
   if (symbol) {
@@ -527,7 +593,9 @@ export function structureParameter(
       const symbol = subType.getSymbol();
       const _typeString = typeChecker.typeToString(subType);
 
-      if (!symbol || symbol.getName().startsWith('__')) {
+      const isAnonymousObject = isObjectLiteralType(subType) || symbol?.getName().startsWith('__');
+
+      if (isAnonymousObject) {
         // This is an object literal - extract its properties
         for (const prop of subType.getProperties()) {
           const propType = typeChecker.getTypeOfSymbolAtLocation(prop, prop.valueDeclaration!);
@@ -562,15 +630,17 @@ export function structureParameter(
         const _symbolName = symbol.getName();
 
         // Get the properties from this type and add them to our properties array
-        for (const prop of subType.getProperties()) {
-          const propType = typeChecker.getTypeOfSymbolAtLocation(prop, prop.valueDeclaration!);
+        if (!isBuiltInType(_symbolName)) {
+          for (const prop of subType.getProperties()) {
+            const propType = typeChecker.getTypeOfSymbolAtLocation(prop, prop.valueDeclaration!);
 
-          properties.push({
-            name: prop.getName(),
-            type: formatTypeReference(propType, typeChecker, typeRefs, referencedTypes),
-            description: '',
-            optional: !!(prop.flags & ts.SymbolFlags.Optional),
-          });
+            properties.push({
+              name: prop.getName(),
+              type: formatTypeReference(propType, typeChecker, typeRefs, referencedTypes),
+              description: '',
+              optional: !!(prop.flags & ts.SymbolFlags.Optional),
+            });
+          }
         }
       }
     }
@@ -596,7 +666,7 @@ export function structureParameter(
       const symbol = subType.getSymbol();
 
       // Check if this is an object literal
-      if (!symbol || symbol.getName().startsWith('__')) {
+      if (isObjectLiteralType(subType) || symbol?.getName().startsWith('__')) {
         const properties: StructuredProperty[] = [];
 
         // Extract properties from the object literal
@@ -636,7 +706,10 @@ export function structureParameter(
 
   // Check if this is an inline object type
   const symbol = paramType.getSymbol();
-  if (symbol?.getName().startsWith('__') && paramType.getProperties().length > 0) {
+  if (
+    (symbol?.getName().startsWith('__') || isObjectLiteralType(paramType)) &&
+    paramType.getProperties().length > 0
+  ) {
     // This is an inline object literal
     const properties: StructuredProperty[] = [];
 
@@ -726,7 +799,12 @@ export function structureParameter(
 
     if (schemaIsAny(schema)) {
       schema = astSchema;
-    } else if (Object.keys(astSchema).length > 0 && !schemasAreEqual(schema, astSchema)) {
+    } else if (
+      !('type' in schema && schema.type === 'any') &&
+      !(typeof schema === 'object' && isPureRefSchema(schema as Record<string, unknown>)) &&
+      Object.keys(astSchema).length > 0 &&
+      !schemasAreEqual(schema, astSchema)
+    ) {
       schema = {
         allOf: [schema, astSchema],
       };
