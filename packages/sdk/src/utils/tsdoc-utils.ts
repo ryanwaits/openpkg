@@ -6,11 +6,17 @@ export interface ParsedParam {
   type?: string;
 }
 
+export interface ParsedTag {
+  name: string;
+  text: string;
+}
+
 export interface ParsedJSDoc {
   description: string;
   params: ParsedParam[];
   returns?: string;
   examples?: string[];
+  tags?: ParsedTag[];
 }
 
 /**
@@ -74,6 +80,7 @@ export function findNodeInSourceFile(
  * Parse JSDoc text to extract structured information
  */
 export function parseJSDocText(commentText: string): ParsedJSDoc {
+  const tags: ParsedTag[] = [];
   const result: ParsedJSDoc = {
     description: '',
     params: [],
@@ -86,50 +93,64 @@ export function parseJSDocText(commentText: string): ParsedJSDoc {
     .replace(/\s*\*\/$/, '')
     .replace(/^\s*\* ?/gm, '');
 
-  const lines = cleanedText.split('\n');
+  const lines = cleanedText.split(/\n/);
   let currentTag = '';
   let currentContent: string[] = [];
+
+  const pushDescription = (line: string) => {
+    const processed = replaceInlineLinks(line, tags).trimEnd();
+    if (processed.trim()) {
+      result.description = result.description
+        ? `${result.description}\n${processed}`
+        : processed;
+    }
+  };
 
   for (const line of lines) {
     const tagMatch = line.match(/^@(\w+)(?:\s+(.*))?$/);
 
     if (tagMatch) {
-      // Process previous tag
       if (currentTag) {
-        processTag(result, currentTag, currentContent.join('\n'));
+        processTag(result, tags, currentTag, currentContent.join(String.fromCharCode(10)));
       }
 
       currentTag = tagMatch[1];
       currentContent = tagMatch[2] ? [tagMatch[2]] : [];
     } else if (currentTag) {
-      // Continue collecting content for current tag
       currentContent.push(line);
     } else {
-      // Description lines before any tags
       if (line.trim()) {
-        result.description += (result.description ? '\n' : '') + line;
+        pushDescription(line);
       }
     }
   }
 
-  // Process last tag
   if (currentTag) {
-    processTag(result, currentTag, currentContent.join('\n'));
+    processTag(result, tags, currentTag, currentContent.join(String.fromCharCode(10)));
+  }
+
+  if (result.examples && result.examples.length === 0) {
+    delete result.examples;
+  }
+
+  if (tags.length > 0) {
+    result.tags = tags;
   }
 
   return result;
 }
 
-function processTag(result: ParsedJSDoc, tag: string, content: string) {
+function processTag(result: ParsedJSDoc, tags: ParsedTag[], tag: string, content: string) {
   switch (tag) {
     case 'param':
     case 'parameter': {
       const paramMatch = content.match(/^(?:\{([^}]+)\}\s+)?(\S+)(?:\s+-\s+)?(.*)$/);
       if (paramMatch) {
         const [, type, name, description] = paramMatch;
+        const processedDescription = replaceInlineLinks(description || '', tags);
         result.params.push({
           name: name || '',
-          description: description || '',
+          description: processedDescription || '',
           type: type,
         });
       }
@@ -137,17 +158,83 @@ function processTag(result: ParsedJSDoc, tag: string, content: string) {
     }
     case 'returns':
     case 'return': {
-      result.returns = content;
+      result.returns = replaceInlineLinks(content, tags);
       break;
     }
     case 'example': {
-      const example = content.trim();
+      const example = replaceInlineLinks(content.trim(), tags).trim();
       if (example) {
-        result.examples?.push(example);
+        (result.examples ||= []).push(example);
       }
       break;
     }
+    case 'see': {
+      const parts = content.split(',').map((part) => part.trim()).filter(Boolean);
+      for (const part of parts) {
+        const linkTargets = extractLinkTargets(part);
+        if (linkTargets.length > 0) {
+          for (const target of linkTargets) {
+            tags.push({ name: 'link', text: target });
+            tags.push({ name: 'see', text: target });
+          }
+        } else {
+          tags.push({ name: 'see', text: part });
+        }
+      }
+      break;
+    }
+    case 'link': {
+      const { target } = parseLinkBody(content.trim());
+      if (target) {
+        tags.push({ name: 'link', text: target });
+      }
+      break;
+    }
+    default: {
+      replaceInlineLinks(content, tags);
+    }
   }
+}
+
+function replaceInlineLinks(text: string, tags: ParsedTag[], tagName: 'link' | 'see' = 'link'): string {
+  return text.replace(/\{@link\s+([^}]+)\}/g, (_match, body) => {
+    const { target, label } = parseLinkBody(body);
+    if (target) {
+      tags.push({ name: tagName, text: target });
+    }
+    return label || target || '';
+  });
+}
+
+function extractLinkTargets(text: string): string[] {
+  const targets: string[] = [];
+  text.replace(/\{@link\s+([^}]+)\}/g, (_match, body) => {
+    const { target } = parseLinkBody(body);
+    if (target) {
+      targets.push(target);
+    }
+    return '';
+  });
+  return targets;
+}
+
+function parseLinkBody(raw: string): { target: string; label?: string } {
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    return { target: '' };
+  }
+
+  const pipeIndex = trimmed.indexOf('|');
+  if (pipeIndex >= 0) {
+    const target = trimmed.slice(0, pipeIndex).trim();
+    const label = trimmed.slice(pipeIndex + 1).trim();
+    return { target, label };
+  }
+
+  const parts = trimmed.split(/\s+/);
+  const target = parts.shift() ?? '';
+  const label = parts.join(' ').trim();
+  return { target, label: label || undefined };
 }
 
 /**
@@ -228,4 +315,9 @@ export function getParameterDocumentation(
   }
 
   return result;
+}
+
+interface ParameterDocumentation {
+  description: string;
+  destructuredProperties?: Array<{ name: string; description: string }>;
 }

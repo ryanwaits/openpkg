@@ -94,6 +94,7 @@ export function serializeFunctionExport(
   const signature = checker.getSignatureFromDeclaration(declaration);
   const funcSymbol = checker.getSymbolAtLocation(declaration.name || declaration);
   const parsedDoc = parseJSDocComment(symbol, checker);
+  const description = parsedDoc?.description ?? getJSDocComment(symbol, checker);
 
   return {
     id: symbol.getName(),
@@ -102,8 +103,9 @@ export function serializeFunctionExport(
     signatures: signature
       ? serializeCallSignatures([signature], funcSymbol ?? symbol, context, parsedDoc)
       : [],
-    description: getJSDocComment(symbol, checker),
+    description,
     source: getSourceLocation(declaration),
     examples: parsedDoc?.examples,
+    tags: parsedDoc?.tags,
   };
 }

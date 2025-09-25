@@ -2,6 +2,7 @@ import * as ts from 'typescript';
 import type { ExportDefinition, TypeDefinition } from '../spec-types';
 import { getJSDocComment, getSourceLocation } from '../ast-utils';
 import type { SerializerContext } from './functions';
+import { parseJSDocComment } from '../../utils/tsdoc-utils';
 
 export interface EnumSerializationResult {
   exportEntry: ExportDefinition;
@@ -13,12 +14,16 @@ export function serializeEnum(
   symbol: ts.Symbol,
   context: SerializerContext,
 ): EnumSerializationResult {
+  const parsedDoc = parseJSDocComment(symbol, context.checker);
+  const description = parsedDoc?.description ?? getJSDocComment(symbol, context.checker);
+
   const exportEntry: ExportDefinition = {
     id: symbol.getName(),
     name: symbol.getName(),
     kind: 'enum',
-    description: getJSDocComment(symbol, context.checker),
+    description,
     source: getSourceLocation(declaration),
+    tags: parsedDoc?.tags,
   };
 
   const typeDefinition: TypeDefinition = {
@@ -26,8 +31,9 @@ export function serializeEnum(
     name: symbol.getName(),
     kind: 'enum',
     members: getEnumMembers(declaration),
-    description: getJSDocComment(symbol, context.checker),
+    description,
     source: getSourceLocation(declaration),
+    tags: parsedDoc?.tags,
   };
 
   return {

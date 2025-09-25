@@ -24,23 +24,27 @@ export function serializeClass(
   const referencedTypes = typeRegistry.getReferencedTypes();
 
   const members = serializeClassMembers(declaration, checker, typeRefs, referencedTypes);
+  const parsedDoc = parseJSDocComment(symbol, context.checker);
+  const description = parsedDoc?.description ?? getJSDocComment(symbol, context.checker);
 
   const exportEntry: ExportDefinition = {
     id: symbol.getName(),
     name: symbol.getName(),
     kind: 'class',
-    description: getJSDocComment(symbol, context.checker),
+    description,
     source: getSourceLocation(declaration),
     members: members.length > 0 ? members : undefined,
+    tags: parsedDoc?.tags,
   };
 
   const typeDefinition: TypeDefinition = {
     id: symbol.getName(),
     name: symbol.getName(),
     kind: 'class',
-    description: getJSDocComment(symbol, context.checker),
+    description,
     source: getSourceLocation(declaration),
     members: members.length > 0 ? members : undefined,
+    tags: parsedDoc?.tags,
   };
 
   return {

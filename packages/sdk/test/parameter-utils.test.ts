@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import * as ts from 'typescript';
-import { formatTypeReference } from '../src/utils/parameter-utils';
+import { formatTypeReference, structureParameter } from '../src/utils/parameter-utils';
 import { createTestCompiler, getDeclaration } from './test-helpers';
 
 describe('formatTypeReference', () => {
@@ -62,5 +62,33 @@ describe('formatTypeReference', () => {
     const result = formatTypeReference(type, checker, new Map());
 
     expect(result).toEqual({ enum: ['ready'] });
+  });
+});
+
+
+describe('structureParameter', () => {
+  it('uses object for destructured parameters derived from type aliases', () => {
+    const { checker, sourceFile } = createTestCompiler(`\n      type ApiKeyMiddlewareOpts = { apiKey: string };\n      function middleware({ apiKey }: ApiKeyMiddlewareOpts) {}\n    `);
+    const fn = getDeclaration(
+      sourceFile,
+      (node): node is ts.FunctionDeclaration => ts.isFunctionDeclaration(node) && node.name?.text === 'middleware',
+    );
+    const signature = checker.getSignatureFromDeclaration(fn)!;
+    const paramSymbol = signature.getParameters()[0];
+    const paramDecl = fn.parameters[0];
+    const paramType = checker.getTypeAtLocation(paramDecl);
+
+    const structured = structureParameter(
+      paramSymbol,
+      paramDecl,
+      paramType,
+      checker,
+      new Map(),
+      null,
+      undefined,
+      new Set(),
+    );
+
+    expect(structured.name).toBe('object');
   });
 });

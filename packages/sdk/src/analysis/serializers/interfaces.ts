@@ -4,6 +4,7 @@ import { getJSDocComment, getSourceLocation } from '../ast-utils';
 import type { SerializerContext } from './functions';
 import { formatTypeReference } from '../../utils/parameter-utils';
 import { collectReferencedTypes } from '../../utils/type-utils';
+import { parseJSDocComment } from '../../utils/tsdoc-utils';
 
 export interface InterfaceSerializationResult {
   exportEntry: ExportDefinition;
@@ -15,12 +16,16 @@ export function serializeInterface(
   symbol: ts.Symbol,
   context: SerializerContext,
 ): InterfaceSerializationResult {
+  const parsedDoc = parseJSDocComment(symbol, context.checker);
+  const description = parsedDoc?.description ?? getJSDocComment(symbol, context.checker);
+
   const exportEntry: ExportDefinition = {
     id: symbol.getName(),
     name: symbol.getName(),
     kind: 'interface',
-    description: getJSDocComment(symbol, context.checker),
+    description,
     source: getSourceLocation(declaration),
+    tags: parsedDoc?.tags,
   };
 
   const schema = interfaceToSchema(
@@ -35,8 +40,9 @@ export function serializeInterface(
     name: symbol.getName(),
     kind: 'interface',
     schema,
-    description: getJSDocComment(symbol, context.checker),
+    description,
     source: getSourceLocation(declaration),
+    tags: parsedDoc?.tags,
   };
 
   return {

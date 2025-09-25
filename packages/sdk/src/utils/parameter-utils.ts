@@ -582,6 +582,12 @@ export function structureParameter(
   referencedTypes?: Set<string>,
 ): Record<string, unknown> {
   const paramName = param.getName();
+  const fallbackName =
+    paramName === '__0' ||
+    ts.isObjectBindingPattern(paramDecl.name) ||
+    ts.isArrayBindingPattern(paramDecl.name)
+      ? 'object'
+      : paramName;
 
   // Check if this is an intersection type with an object literal
   if (paramType.isIntersection()) {
@@ -645,8 +651,7 @@ export function structureParameter(
       }
     }
 
-    const actualName =
-      paramName === '__0' ? (functionDoc ? getActualParamName(functionDoc) : 'options') : paramName;
+    const actualName = fallbackName;
     return {
       name: actualName,
       required: !typeChecker.isOptionalParameter(paramDecl),
@@ -692,7 +697,7 @@ export function structureParameter(
 
     // If all union members are object literals, structure with oneOf
     if (objectOptions.length > 0 && !hasNonObjectTypes) {
-      const readableName = paramName === '__0' ? 'options' : paramName;
+      const readableName = fallbackName;
       return {
         name: readableName,
         required: !typeChecker.isOptionalParameter(paramDecl),
@@ -724,7 +729,7 @@ export function structureParameter(
       });
     }
 
-    const readableName = paramName === '__0' ? 'options' : paramName;
+    const readableName = fallbackName;
     return {
       name: readableName,
       required: !typeChecker.isOptionalParameter(paramDecl),
@@ -740,7 +745,7 @@ export function structureParameter(
     paramDecl.name &&
     ts.isObjectBindingPattern(paramDecl.name)
   ) {
-    const actualName = paramName === '__0' ? 'options' : paramName;
+    const actualName = fallbackName;
     const schema = buildSchemaFromTypeNode(
       paramDecl.type,
       typeChecker,
@@ -811,7 +816,7 @@ export function structureParameter(
     }
   }
 
-  const readableName = paramName === '__0' ? 'options' : paramName;
+  const readableName = fallbackName;
   return {
     name: readableName,
     required: !typeChecker.isOptionalParameter(paramDecl),
@@ -820,14 +825,3 @@ export function structureParameter(
   };
 }
 
-/**
- * Get the actual parameter name from TSDoc when TypeScript shows __0
- */
-function getActualParamName(functionDoc: ParsedJSDoc): string {
-  // Find the first param that has destructured properties
-  const docParam = functionDoc.params.find((p) => p.name.includes('.'));
-  if (docParam) {
-    return docParam.name.split('.')[0];
-  }
-  return '__0';
-}

@@ -14,17 +14,19 @@ export function serializeVariable(
   const { checker, typeRegistry } = context;
   const variableType = checker.getTypeAtLocation(declaration.name ?? declaration);
   const callSignatures = variableType.getCallSignatures();
+  const parsedDoc = parseJSDocComment(symbol, checker);
+  const description = parsedDoc?.description ?? getJSDocComment(symbol, checker);
 
   if (callSignatures.length > 0) {
-    const parsedDoc = parseJSDocComment(symbol, checker);
     return {
       id: symbol.getName(),
       name: symbol.getName(),
       kind: 'function',
       signatures: serializeCallSignatures(callSignatures, symbol, context, parsedDoc),
-      description: getJSDocComment(symbol, checker),
+      description,
       source: getSourceLocation(declaration.initializer ?? declaration),
       examples: parsedDoc?.examples,
+      tags: parsedDoc?.tags,
     };
   }
 
@@ -36,8 +38,9 @@ export function serializeVariable(
     name: symbol.getName(),
     kind: 'variable',
     type: typeToRef(declaration, checker, typeRefs, referencedTypes),
-    description: getJSDocComment(symbol, checker),
+    description,
     source: getSourceLocation(declaration),
+    tags: parsedDoc?.tags,
   };
 }
 

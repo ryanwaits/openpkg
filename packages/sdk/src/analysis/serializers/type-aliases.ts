@@ -4,6 +4,7 @@ import { getJSDocComment, getSourceLocation } from '../ast-utils';
 import type { SerializerContext } from './functions';
 import { formatTypeReference } from '../../utils/parameter-utils';
 import { collectReferencedTypes } from '../../utils/type-utils';
+import { parseJSDocComment } from '../../utils/tsdoc-utils';
 
 export interface TypeAliasSerializationResult {
   exportEntry: ExportDefinition;
@@ -18,14 +19,17 @@ export function serializeTypeAlias(
   const { checker, typeRegistry } = context;
   const typeRefs = typeRegistry.getTypeRefs();
   const referencedTypes = typeRegistry.getReferencedTypes();
+  const parsedDoc = parseJSDocComment(symbol, checker);
+  const description = parsedDoc?.description ?? getJSDocComment(symbol, checker);
 
   const exportEntry: ExportDefinition = {
     id: symbol.getName(),
     name: symbol.getName(),
     kind: 'type',
     type: typeToRef(declaration.type, checker, typeRefs, referencedTypes),
-    description: getJSDocComment(symbol, checker),
+    description,
     source: getSourceLocation(declaration),
+    tags: parsedDoc?.tags,
   };
 
   const aliasType = checker.getTypeAtLocation(declaration.type);
@@ -47,8 +51,9 @@ export function serializeTypeAlias(
     id: symbol.getName(),
     name: symbol.getName(),
     kind: 'type',
-    description: getJSDocComment(symbol, checker),
+    description,
     source: getSourceLocation(declaration),
+    tags: parsedDoc?.tags,
   };
 
   if (typeof aliasSchema === 'string') {
