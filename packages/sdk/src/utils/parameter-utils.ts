@@ -382,190 +382,212 @@ export function formatTypeReference(
   typeChecker: ts.TypeChecker,
   typeRefs: Map<string, string>,
   referencedTypes?: Set<string>,
+  visitedAliases?: Set<string>,
 ): string | Record<string, unknown> {
+  const visited = visitedAliases ?? new Set<string>();
+
   const aliasSymbol = type.aliasSymbol;
+  let aliasName: string | undefined;
+  let aliasAdded = false;
+
   if (aliasSymbol) {
-    const aliasName = aliasSymbol.getName();
+    aliasName = aliasSymbol.getName();
+
+    if (visited.has(aliasName)) {
+      return { $ref: `#/types/${aliasName}` };
+    }
+
     if (typeRefs.has(aliasName)) {
       return { $ref: `#/types/${aliasName}` };
     }
+
     if (referencedTypes && !isBuiltInType(aliasName)) {
       referencedTypes.add(aliasName);
       return { $ref: `#/types/${aliasName}` };
     }
+
+    visited.add(aliasName);
+    aliasAdded = true;
   }
 
-  const typeString = typeChecker.typeToString(type);
+  try {
+    const typeString = typeChecker.typeToString(type);
 
-  // Check if this is a primitive type
-  const primitives = [
-    'string',
-    'number',
-    'boolean',
-    'bigint',
-    'symbol',
-    'any',
-    'unknown',
-    'void',
-    'undefined',
-    'null',
-    'never',
-  ];
-  if (primitives.includes(typeString)) {
-    // Convert to OpenAPI schema format
-    if (typeString === 'bigint') {
-      return { type: 'string', format: 'bigint' };
-    }
-    if (typeString === 'undefined' || typeString === 'null') {
-      return { type: 'null' };
-    }
-    if (typeString === 'void' || typeString === 'never') {
-      return { type: 'null' }; // Best approximation
-    }
-    return { type: typeString };
-  }
-
-  // Handle union types (e.g., "A | B | undefined")
-  if (type.isUnion()) {
-    const unionType = type as ts.UnionType;
-    const parts = unionType.types.map((t) =>
-      formatTypeReference(t, typeChecker, typeRefs, referencedTypes),
-    );
-
-    // Return as an anyOf array (OpenAPI style)
-    return {
-      anyOf: parts,
-    };
-  }
-
-  if (type.isIntersection()) {
-    const intersectionType = type as ts.IntersectionType;
-    const parts = intersectionType.types.map((t) =>
-      formatTypeReference(t, typeChecker, typeRefs, referencedTypes),
-    );
-
-    const normalized = parts.flatMap((part) => {
-      if (typeof part === 'string') {
-        return [{ type: part }];
+    // Check if this is a primitive type
+    const primitives = [
+      'string',
+      'number',
+      'boolean',
+      'bigint',
+      'symbol',
+      'any',
+      'unknown',
+      'void',
+      'undefined',
+      'null',
+      'never',
+    ];
+    if (primitives.includes(typeString)) {
+      // Convert to OpenAPI schema format
+      if (typeString === 'bigint') {
+        return { type: 'string', format: 'bigint' };
       }
-
-      if (part && typeof part === 'object' && 'allOf' in part) {
-        return Array.isArray(part.allOf) ? part.allOf : [part];
+      if (typeString === 'undefined' || typeString === 'null') {
+        return { type: 'null' };
       }
-
-      return [part];
-    });
-
-    if (normalized.length === 1) {
-      return normalized[0];
+      if (typeString === 'void' || typeString === 'never') {
+        return { type: 'null' }; // Best approximation
+      }
+      return { type: typeString };
     }
 
-    return {
-      allOf: normalized,
-    };
-  }
+    // Handle union types (e.g., "A | B | undefined")
+    if (type.isUnion()) {
+      const unionType = type as ts.UnionType;
+      const parts = unionType.types.map((t) =>
+        formatTypeReference(t, typeChecker, typeRefs, referencedTypes, visited),
+      );
 
-  // Check if this is a known type
-  const symbol = type.getSymbol();
-  if (symbol) {
-    const symbolName = symbol.getName();
+      // Return as an anyOf array (OpenAPI style)
+      return {
+        anyOf: parts,
+      };
+    }
 
-    // Handle anonymous types (TypeScript uses __type, __object, etc. for anonymous types)
-    if (symbolName.startsWith('__')) {
-      // Try to expand anonymous types inline
-      if (type.getFlags() & ts.TypeFlags.Object) {
-        const properties = type.getProperties();
-        if (properties.length > 0) {
-          // Build inline object schema
-          const objSchema: Record<string, unknown> = {
-            type: 'object',
-            properties: {},
-          };
-          const required: string[] = [];
+    if (type.isIntersection()) {
+      const intersectionType = type as ts.IntersectionType;
+      const parts = intersectionType.types.map((t) =>
+        formatTypeReference(t, typeChecker, typeRefs, referencedTypes, visited),
+      );
 
-          for (const prop of properties) {
-            const propType = typeChecker.getTypeOfSymbolAtLocation(prop, prop.valueDeclaration!);
-            const propName = prop.getName();
-
-            objSchema.properties[propName] = formatTypeReference(
-              propType,
-              typeChecker,
-              typeRefs,
-              referencedTypes,
-            );
-
-            if (!(prop.flags & ts.SymbolFlags.Optional)) {
-              required.push(propName);
-            }
-          }
-
-          if (required.length > 0) {
-            objSchema.required = required;
-          }
-
-          return objSchema;
+      const normalized = parts.flatMap((part) => {
+        if (typeof part === 'string') {
+          return [{ type: part }];
         }
+
+        if (part && typeof part === 'object' && 'allOf' in part) {
+          return Array.isArray(part.allOf) ? part.allOf : [part];
+        }
+
+        return [part];
+      });
+
+      if (normalized.length === 1) {
+        return normalized[0];
       }
-      // If we can't expand it, return a generic object
-      return { type: 'object' };
+
+      return {
+        allOf: normalized,
+      };
     }
-    // Check if this type is in our current package's types
-    if (typeRefs.has(symbolName)) {
+
+    // Check if this is a known type
+    const symbol = type.getSymbol();
+    if (symbol) {
+      const symbolName = symbol.getName();
+
+      // Handle anonymous types (TypeScript uses __type, __object, etc. for anonymous types)
+      if (symbolName.startsWith('__')) {
+        // Try to expand anonymous types inline
+        if (type.getFlags() & ts.TypeFlags.Object) {
+          const properties = type.getProperties();
+          if (properties.length > 0) {
+            // Build inline object schema
+            const objSchema: Record<string, unknown> = {
+              type: 'object',
+              properties: {},
+            };
+            const required: string[] = [];
+
+            for (const prop of properties) {
+              const propType = typeChecker.getTypeOfSymbolAtLocation(prop, prop.valueDeclaration!);
+              const propName = prop.getName();
+
+              objSchema.properties[propName] = formatTypeReference(
+                propType,
+                typeChecker,
+                typeRefs,
+                referencedTypes,
+                visited,
+              );
+
+              if (!(prop.flags & ts.SymbolFlags.Optional)) {
+                required.push(propName);
+              }
+            }
+
+            if (required.length > 0) {
+              objSchema.required = required;
+            }
+
+            return objSchema;
+          }
+        }
+        // If we can't expand it, return a generic object
+        return { type: 'object' };
+      }
+      // Check if this type is in our current package's types
+      if (typeRefs.has(symbolName)) {
+        return { $ref: `#/types/${symbolName}` };
+      }
+
+      // For built-in complex types
+      if (symbolName === 'Array') {
+        return { type: 'array' };
+      }
+      const builtInSchema = BUILTIN_TYPE_SCHEMAS[symbolName];
+      if (builtInSchema) {
+        return { ...builtInSchema };
+      }
+
+      // Add to referenced types for potential collection
+      if (referencedTypes && !isBuiltInType(symbolName)) {
+        referencedTypes.add(symbolName);
+        return { $ref: `#/types/${symbolName}` };
+      }
+
+      if (isBuiltInType(symbolName)) {
+        return { type: 'object' };
+      }
+
+      // For types not in our package, still use $ref
       return { $ref: `#/types/${symbolName}` };
     }
 
-    // For built-in complex types
-    if (symbolName === 'Array') {
-      return { type: 'array' };
-    }
-    const builtInSchema = BUILTIN_TYPE_SCHEMAS[symbolName];
-    if (builtInSchema) {
-      return { ...builtInSchema };
-    }
-
-    // Add to referenced types for potential collection
-    if (referencedTypes && !isBuiltInType(symbolName)) {
-      referencedTypes.add(symbolName);
-      return { $ref: `#/types/${symbolName}` };
-    }
-
-    if (isBuiltInType(symbolName)) {
-      return { type: 'object' };
-    }
-
-    // For types not in our package, still use $ref
-    return { $ref: `#/types/${symbolName}` };
-  }
-
-  // Handle literal types (e.g., "mainnet")
-  if (type.isLiteral()) {
-    // TypeScript returns string literals with quotes, so we need to parse them
-    if (typeString.startsWith('"') && typeString.endsWith('"')) {
-      const literalValue = typeString.slice(1, -1); // Remove surrounding quotes
-      return { enum: [literalValue] };
-    }
-    // Number literal
-    return { enum: [Number(typeString)] };
-  }
-
-  // For complex types without symbols, parse the string to find references
-  // This handles cases like "ClientOpts | undefined"
-  const typePattern = /^(\w+)(\s*\|\s*undefined)?$/;
-  const match = typeString.match(typePattern);
-  if (match) {
-    const [, typeName, hasUndefined] = match;
-    if (typeRefs.has(typeName) || !isBuiltInType(typeName)) {
-      if (hasUndefined) {
-        return {
-          anyOf: [{ $ref: `#/types/${typeName}` }, { type: 'null' }],
-        };
+    // Handle literal types (e.g., "mainnet")
+    if (type.isLiteral()) {
+      // TypeScript returns string literals with quotes, so we need to parse them
+      if (typeString.startsWith('"') && typeString.endsWith('"')) {
+        const literalValue = typeString.slice(1, -1); // Remove surrounding quotes
+        return { enum: [literalValue] };
       }
-      return { $ref: `#/types/${typeName}` };
+      // Number literal
+      return { enum: [Number(typeString)] };
+    }
+
+    // For complex types without symbols, parse the string to find references
+    // This handles cases like "ClientOpts | undefined"
+    const typePattern = /^(\w+)(\s*\|\s*undefined)?$/;
+    const match = typeString.match(typePattern);
+    if (match) {
+      const [, typeName, hasUndefined] = match;
+      if (typeRefs.has(typeName) || !isBuiltInType(typeName)) {
+        if (hasUndefined) {
+          return {
+            anyOf: [{ $ref: `#/types/${typeName}` }, { type: 'null' }],
+          };
+        }
+        return { $ref: `#/types/${typeName}` };
+      }
+    }
+
+    // Default: return as complex type string
+    return { type: typeString };
+  } finally {
+    if (aliasAdded && aliasName) {
+      visited.delete(aliasName);
     }
   }
-
-  // Default: return as complex type string
-  return { type: typeString };
 }
 
 /**
@@ -824,4 +846,3 @@ export function structureParameter(
     schema,
   };
 }
-

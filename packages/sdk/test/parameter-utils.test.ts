@@ -63,6 +63,42 @@ describe('formatTypeReference', () => {
 
     expect(result).toEqual({ enum: ['ready'] });
   });
+
+  it('returns $ref when expanding self-referential aliases', () => {
+    const { checker, sourceFile } = createTestCompiler(`
+      type Recursive = {
+        value: string;
+        next?: Recursive;
+      };
+    `);
+
+    const recursiveAlias = getDeclaration(
+      sourceFile,
+      (node): node is ts.TypeAliasDeclaration =>
+        ts.isTypeAliasDeclaration(node) && node.name.text === 'Recursive',
+    );
+
+    const recursiveType = checker.getTypeFromTypeNode(recursiveAlias.type);
+
+    const schema = formatTypeReference(recursiveType, checker, new Map());
+
+    expect(schema).toMatchObject({
+      type: 'object',
+      properties: {
+        value: { type: 'string' },
+      },
+      required: ['value'],
+    });
+
+    if (typeof schema === 'object' && schema !== null && 'properties' in schema) {
+      const properties = (schema as { properties: Record<string, unknown> }).properties;
+
+      expect(properties).toHaveProperty('next');
+      expect(properties.next).toEqual({
+        anyOf: [{ type: 'null' }, { $ref: '#/types/Recursive' }],
+      });
+    }
+  });
 });
 
 
