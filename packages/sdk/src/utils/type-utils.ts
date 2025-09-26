@@ -156,7 +156,9 @@ export function collectReferencedTypesFromNode(
     if (!isBuiltInType(name)) {
       referencedTypes.add(name);
     }
-    node.typeArguments?.forEach((arg) => collectReferencedTypesFromNode(arg, typeChecker, referencedTypes));
+    node.typeArguments?.forEach((arg) =>
+      collectReferencedTypesFromNode(arg, typeChecker, referencedTypes),
+    );
     return;
   }
 
@@ -167,12 +169,16 @@ export function collectReferencedTypesFromNode(
     if (!isBuiltInType(name)) {
       referencedTypes.add(name);
     }
-    node.typeArguments?.forEach((arg) => collectReferencedTypesFromNode(arg, typeChecker, referencedTypes));
+    node.typeArguments?.forEach((arg) =>
+      collectReferencedTypesFromNode(arg, typeChecker, referencedTypes),
+    );
     return;
   }
 
   if (ts.isUnionTypeNode(node) || ts.isIntersectionTypeNode(node)) {
-    node.types.forEach((typeNode) => collectReferencedTypesFromNode(typeNode, typeChecker, referencedTypes));
+    node.types.forEach((typeNode) =>
+      collectReferencedTypesFromNode(typeNode, typeChecker, referencedTypes),
+    );
     return;
   }
 
@@ -193,7 +199,8 @@ export function collectReferencedTypesFromNode(
       }
       if (ts.isMethodSignature(member)) {
         member.typeParameters?.forEach((param) => {
-          param.constraint && collectReferencedTypesFromNode(param.constraint, typeChecker, referencedTypes);
+          param.constraint &&
+            collectReferencedTypesFromNode(param.constraint, typeChecker, referencedTypes);
         });
         member.parameters.forEach((param) => {
           if (param.type) {

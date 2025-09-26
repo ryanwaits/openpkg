@@ -196,10 +196,7 @@
             "type": "number"
           }
         },
-        "required": [
-          "x",
-          "y"
-        ]
+        "required": ["x", "y"]
       },
       "description": "Represents a 2D point in space",
       "source": {
@@ -218,9 +215,7 @@
             "type": "number"
           }
         },
-        "required": [
-          "z"
-        ]
+        "required": ["z"]
       },
       "description": "Represents a 3D point in space",
       "source": {
@@ -242,10 +237,7 @@
             "$ref": "#/types/Point"
           }
         },
-        "required": [
-          "topLeft",
-          "bottomRight"
-        ]
+        "required": ["topLeft", "bottomRight"]
       },
       "description": "Represents a rectangle",
       "source": {

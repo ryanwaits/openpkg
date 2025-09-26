@@ -4,8 +4,8 @@ import { readFileSync } from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Command } from 'commander';
-import { registerGenerateCommand } from './commands/generate';
 import { registerAnalyzeCommand } from './commands/analyze';
+import { registerGenerateCommand } from './commands/generate';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

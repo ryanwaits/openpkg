@@ -1,13 +1,10 @@
 import * as ts from 'typescript';
-import type { ExportDefinition, TypeDefinition } from '../spec-types';
-import { getJSDocComment, getSourceLocation } from '../ast-utils';
-import type { SerializerContext } from './functions';
-import {
-  formatTypeReference,
-  structureParameter,
-} from '../../utils/parameter-utils';
-import { collectReferencedTypes } from '../../utils/type-utils';
+import { formatTypeReference, structureParameter } from '../../utils/parameter-utils';
 import { getParameterDocumentation, parseJSDocComment } from '../../utils/tsdoc-utils';
+import { collectReferencedTypes } from '../../utils/type-utils';
+import { getJSDocComment, getSourceLocation } from '../ast-utils';
+import type { ExportDefinition, TypeDefinition } from '../spec-types';
+import type { SerializerContext } from './functions';
 
 export interface ClassSerializationResult {
   exportEntry: ExportDefinition;
@@ -81,7 +78,8 @@ function serializeClassMembers(
       const schema = formatTypeReference(memberType, checker, typeRefs, referencedTypes);
 
       const flags: Record<string, boolean> = {};
-      const isOptionalSymbol = memberSymbol != null && (memberSymbol.flags & ts.SymbolFlags.Optional) !== 0;
+      const isOptionalSymbol =
+        memberSymbol != null && (memberSymbol.flags & ts.SymbolFlags.Optional) !== 0;
       if (member.questionToken || isOptionalSymbol) {
         flags.optional = true;
       }
@@ -141,16 +139,7 @@ function serializeClassMembers(
       const signature = checker.getSignatureFromDeclaration(member);
 
       const signatures = signature
-        ? [
-            serializeSignature(
-              signature,
-              checker,
-              typeRefs,
-              referencedTypes,
-              ctorDoc,
-              ctorSymbol,
-            ),
-          ]
+        ? [serializeSignature(signature, checker, typeRefs, referencedTypes, ctorDoc, ctorSymbol)]
         : undefined;
 
       members.push({
@@ -235,11 +224,9 @@ function serializeSignature(
   };
 }
 
-function getMemberVisibility(modifiers?: ts.NodeArray<ts.ModifierLike>):
-  | 'public'
-  | 'private'
-  | 'protected'
-  | undefined {
+function getMemberVisibility(
+  modifiers?: ts.NodeArray<ts.ModifierLike>,
+): 'public' | 'private' | 'protected' | undefined {
   if (!modifiers) return undefined;
   if (modifiers.some((mod) => mod.kind === ts.SyntaxKind.PrivateKeyword)) {
     return 'private';

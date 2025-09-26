@@ -1,6 +1,6 @@
-export type { Diagnostic, AnalysisResult } from './openpkg';
-export { OpenPkg, analyze, analyzeFile } from './openpkg';
-export type { OpenPkgSpec } from './types/openpkg';
 export { extractPackageSpec } from './extractor';
-export * from './types/openpkg';
+export type { AnalysisResult, Diagnostic } from './openpkg';
+export { analyze, analyzeFile, OpenPkg } from './openpkg';
 export type { OpenPkgOptions } from './options';
+export type { OpenPkgSpec } from './types/openpkg';
+export * from './types/openpkg';

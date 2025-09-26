@@ -100,9 +100,7 @@ export function parseJSDocText(commentText: string): ParsedJSDoc {
   const pushDescription = (line: string) => {
     const processed = replaceInlineLinks(line, tags).trimEnd();
     if (processed.trim()) {
-      result.description = result.description
-        ? `${result.description}\n${processed}`
-        : processed;
+      result.description = result.description ? `${result.description}\n${processed}` : processed;
     }
   };
 
@@ -172,7 +170,10 @@ function processTag(result: ParsedJSDoc, tags: ParsedTag[], tag: string, content
       break;
     }
     case 'see': {
-      const parts = content.split(',').map((part) => part.trim()).filter(Boolean);
+      const parts = content
+        .split(',')
+        .map((part) => part.trim())
+        .filter(Boolean);
       for (const part of parts) {
         const linkTargets = extractLinkTargets(part);
         if (linkTargets.length > 0) {
@@ -199,7 +200,11 @@ function processTag(result: ParsedJSDoc, tags: ParsedTag[], tag: string, content
   }
 }
 
-function replaceInlineLinks(text: string, tags: ParsedTag[], tagName: 'link' | 'see' = 'link'): string {
+function replaceInlineLinks(
+  text: string,
+  tags: ParsedTag[],
+  tagName: 'link' | 'see' = 'link',
+): string {
   return text.replace(/\{@link\s+([^}]+)\}/g, (_match, body) => {
     const { target, label } = parseLinkBody(body);
     if (target) {

@@ -1,5 +1,5 @@
-import * as fs from 'node:fs/promises';
 import * as fsSync from 'node:fs';
+import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as ts from 'typescript';
 import type { AnalysisMetadataInternal } from './analysis/run-analysis';

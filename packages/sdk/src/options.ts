@@ -15,9 +15,7 @@ const DEFAULT_OPTIONS: Pick<NormalizedOpenPkgOptions, 'includePrivate' | 'follow
   followImports: true,
 };
 
-export function normalizeOpenPkgOptions(
-  options: OpenPkgOptions = {},
-): NormalizedOpenPkgOptions {
+export function normalizeOpenPkgOptions(options: OpenPkgOptions = {}): NormalizedOpenPkgOptions {
   return {
     ...DEFAULT_OPTIONS,
     ...options,

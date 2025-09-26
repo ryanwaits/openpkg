@@ -2,14 +2,14 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as ts from 'typescript';
 import type { AnalysisContext } from './context';
-import { TypeRegistry } from './type-registry';
-import type { OpenPkgSpec, TypeDefinition } from './spec-types';
-import { serializeFunctionExport, type SerializerContext } from './serializers/functions';
 import { serializeClass } from './serializers/classes';
+import { serializeEnum } from './serializers/enums';
+import { type SerializerContext, serializeFunctionExport } from './serializers/functions';
 import { serializeInterface } from './serializers/interfaces';
 import { serializeTypeAlias } from './serializers/type-aliases';
-import { serializeEnum } from './serializers/enums';
 import { serializeVariable } from './serializers/variables';
+import type { OpenPkgSpec, TypeDefinition } from './spec-types';
+import { TypeRegistry } from './type-registry';
 
 export function buildOpenPkgSpec(
   context: AnalysisContext,
@@ -177,11 +177,7 @@ export function buildOpenPkgSpec(
             spec.types?.push(typeDefinition);
           }
         } else if (ts.isEnumDeclaration(declaration)) {
-          const { typeDefinition } = serializeEnum(
-            declaration,
-            targetSymbol,
-            serializerContext,
-          );
+          const { typeDefinition } = serializeEnum(declaration, targetSymbol, serializerContext);
           if (typeDefinition && typeRegistry.registerTypeDefinition(typeDefinition)) {
             spec.types?.push(typeDefinition);
           }
@@ -197,7 +193,10 @@ export function buildOpenPkgSpec(
  * Follows export aliases back to the declaration that carries the type
  * information we need to serialize.
  */
-function resolveExportTarget(symbol: ts.Symbol, checker: ts.TypeChecker): {
+function resolveExportTarget(
+  symbol: ts.Symbol,
+  checker: ts.TypeChecker,
+): {
   declaration?: ts.Declaration;
   targetSymbol: ts.Symbol;
 } {
@@ -227,10 +226,7 @@ function resolveExportTarget(symbol: ts.Symbol, checker: ts.TypeChecker): {
  * entry so it reflects the public export name without losing the captured
  * metadata.
  */
-function withExportName<T extends { id: string; name: string }>(
-  entry: T,
-  exportName: string,
-): T {
+function withExportName<T extends { id: string; name: string }>(entry: T, exportName: string): T {
   if (entry.name === exportName) {
     return entry;
   }

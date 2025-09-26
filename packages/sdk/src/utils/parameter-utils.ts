@@ -295,7 +295,9 @@ function buildSchemaFromTypeNode(
 
     if (schemas.some((schema) => '$ref' in schema && Object.keys(schema).length === 1)) {
       const refs = schemas.filter((schema) => '$ref' in schema && Object.keys(schema).length === 1);
-      const nonRefs = schemas.filter((schema) => !('$ref' in schema && Object.keys(schema).length === 1));
+      const nonRefs = schemas.filter(
+        (schema) => !('$ref' in schema && Object.keys(schema).length === 1),
+      );
 
       if (refs.length === schemas.length) {
         return refs[0];
