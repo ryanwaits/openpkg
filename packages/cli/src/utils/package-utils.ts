@@ -96,24 +96,32 @@ function resolveExportsField(
     return findTypeScriptFile(path.join(packageDir, exports));
   }
 
-  if (exports['.']) {
-    if (typeof exports['.'] === 'string') {
-      return findTypeScriptFile(path.join(packageDir, exports['.']));
+  if (typeof exports === 'object' && exports !== null && '.' in exports) {
+    const dotExport = (exports as Record<string, unknown>)['.'];
+
+    if (typeof dotExport === 'string') {
+      return findTypeScriptFile(path.join(packageDir, dotExport));
     }
 
-    // Check for types in conditional exports
-    if (exports['.'].types) {
-      const typesPath = path.join(packageDir, exports['.'].types);
-      if (fs.existsSync(typesPath)) {
-        return typesPath;
+    if (dotExport && typeof dotExport === 'object') {
+      const dotRecord = dotExport as Record<string, unknown>;
+
+      // Check for types in conditional exports
+      const typesEntry = dotRecord.types;
+      if (typeof typesEntry === 'string') {
+        const typesPath = path.join(packageDir, typesEntry);
+        if (fs.existsSync(typesPath)) {
+          return typesPath;
+        }
       }
-    }
 
-    // Check other conditions
-    for (const condition of ['import', 'require', 'default']) {
-      if (exports['.'][condition]) {
-        const result = findTypeScriptFile(path.join(packageDir, exports['.'][condition]));
-        if (result) return result;
+      // Check other conditions
+      for (const condition of ['import', 'require', 'default']) {
+        const target = dotRecord[condition];
+        if (typeof target === 'string') {
+          const result = findTypeScriptFile(path.join(packageDir, target));
+          if (result) return result;
+        }
       }
     }
   }

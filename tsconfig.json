@@ -9,5 +9,5 @@
     "declaration": true,
     "isolatedDeclarations": true
   },
-  "include": ["src/**/*.ts"]
+  "include": ["packages/**/src/**/*.ts"]
 }

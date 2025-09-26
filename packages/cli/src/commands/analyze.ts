@@ -3,14 +3,23 @@ import * as path from 'node:path';
 import chalk from 'chalk';
 import type { Command } from 'commander';
 import { OpenPkg, type OpenPkgSpec } from 'openpkg-sdk';
-import ora from 'ora';
+import ora, { type Ora } from 'ora';
 import { collectGuardrailInsights } from '../utils/guardrails';
 
 export interface AnalyzeCommandDependencies {
   createOpenPkg?: (options?: unknown) => Pick<OpenPkg, 'analyzeFileWithDiagnostics'>;
-  spinner?: (text: string) => ora.Ora;
+  spinner?: (text: string) => Ora;
   log?: typeof console.log;
   error?: typeof console.error;
+}
+
+type SpecSummary = {
+  exports?: unknown[];
+  types?: unknown[];
+};
+
+function getArrayLength(value: unknown): number {
+  return Array.isArray(value) ? value.length : 0;
 }
 
 const defaultDependencies: Required<AnalyzeCommandDependencies> = {
@@ -82,8 +91,9 @@ export function registerAnalyzeCommand(
         if (showItems.includes('summary')) {
           log('');
           log(chalk.bold('Summary'));
-          log(`• Exports: ${spec.exports.length}`);
-          log(`• Types: ${spec.types?.length ?? 0}`);
+          const summary = spec as SpecSummary;
+          log(`• Exports: ${getArrayLength(summary.exports)}`);
+          log(`• Types: ${getArrayLength(summary.types)}`);
         }
 
         if (showItems.includes('spec')) {

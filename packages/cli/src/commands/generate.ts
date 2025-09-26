@@ -2,9 +2,8 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import chalk from 'chalk';
 import type { Command } from 'commander';
-import { OpenPkg, type openPkgSchema } from 'openpkg-sdk';
-import ora from 'ora';
-import type { z } from 'zod';
+import { OpenPkg } from 'openpkg-sdk';
+import ora, { type Ora } from 'ora';
 import { findEntryPoint, findPackageInMonorepo } from '../utils/package-utils';
 
 export interface GenerateCommandDependencies {
@@ -12,7 +11,7 @@ export interface GenerateCommandDependencies {
     options: ConstructorParameters<typeof OpenPkg>[0],
   ) => Pick<OpenPkg, 'analyzeFile'>;
   writeFileSync?: typeof fs.writeFileSync;
-  spinner?: (text: string) => ora.Ora;
+  spinner?: (text: string) => Ora;
   log?: typeof console.log;
   error?: typeof console.error;
 }
@@ -24,6 +23,17 @@ const defaultDependencies: Required<GenerateCommandDependencies> = {
   log: console.log,
   error: console.error,
 };
+
+type GeneratedSpec = Awaited<ReturnType<OpenPkg['analyzeFile']>>;
+
+type SpecSummary = {
+  exports?: unknown[];
+  types?: unknown[];
+};
+
+function getArrayLength(value: unknown): number {
+  return Array.isArray(value) ? value.length : 0;
+}
 
 export function registerGenerateCommand(
   program: Command,
@@ -68,7 +78,7 @@ export function registerGenerateCommand(
         const spinnerInstance = spinner('Generating OpenPkg spec...');
         spinnerInstance.start();
 
-        let spec: z.infer<typeof openPkgSchema> | undefined;
+        let spec: GeneratedSpec | undefined;
         try {
           const openpkg = createOpenPkg({
             resolveExternalTypes,
@@ -80,12 +90,17 @@ export function registerGenerateCommand(
           throw generationError;
         }
 
+        if (!spec) {
+          throw new Error('Failed to produce an OpenPkg spec.');
+        }
+
         const outputPath = path.resolve(targetDir, options.output);
         writeFileSync(outputPath, JSON.stringify(spec, null, 2));
 
         log(chalk.green(`✓ Generated ${path.relative(process.cwd(), outputPath)}`));
-        log(chalk.gray(`  ${spec.exports.length} exports`));
-        log(chalk.gray(`  ${spec.types?.length || 0} types`));
+        const summary = spec as SpecSummary;
+        log(chalk.gray(`  ${getArrayLength(summary.exports)} exports`));
+        log(chalk.gray(`  ${getArrayLength(summary.types)} types`));
       } catch (commandError) {
         error(
           chalk.red('Error:'),
