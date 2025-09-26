@@ -4,7 +4,7 @@ import type { ExportDefinition, TypeReference } from '../spec-types';
 import { getJSDocComment, getSourceLocation } from '../ast-utils';
 import { formatTypeReference, structureParameter } from '../../utils/parameter-utils';
 import { getParameterDocumentation, parseJSDocComment, type ParsedJSDoc } from '../../utils/tsdoc-utils';
-import { collectReferencedTypes } from '../../utils/type-utils';
+import { collectReferencedTypes, collectReferencedTypesFromNode } from '../../utils/type-utils';
 
 export interface SerializerContext {
   checker: ts.TypeChecker;
@@ -32,7 +32,9 @@ export function serializeCallSignatures(
 
   return signatures.map((signature) => {
     const parameters = signature.getParameters().map((param) => {
-      const paramDecl = param.valueDeclaration as ts.ParameterDeclaration | undefined;
+      const paramDecl = (param.declarations?.find(ts.isParameter)) as
+        | ts.ParameterDeclaration
+        | undefined;
       const paramType = paramDecl
         ? paramDecl.type != null
           ? checker.getTypeFromTypeNode(paramDecl.type)
@@ -43,6 +45,12 @@ export function serializeCallSignatures(
           );
 
       collectReferencedTypes(paramType, checker, referencedTypes);
+      if (paramDecl?.type) {
+        // The declared node can contain additional named intersections/unions
+        // that the checker type flattens away; walk it to discover every alias
+        // so we can surface them in the spec.
+        collectReferencedTypesFromNode(paramDecl.type, checker, referencedTypes);
+      }
 
       if (paramDecl && ts.isParameter(paramDecl)) {
         const paramDoc = getParameterDocumentation(param, paramDecl, checker);

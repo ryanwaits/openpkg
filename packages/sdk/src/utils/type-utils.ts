@@ -139,6 +139,103 @@ export function collectReferencedTypes(
   }
 }
 
+/**
+ * Recursively walk a type syntax node to record every named alias it touches.
+ * This complements `collectReferencedTypes`, which operates on checker types
+ * and may omit aliases that get flattened during type resolution.
+ */
+export function collectReferencedTypesFromNode(
+  node: ts.TypeNode,
+  typeChecker: ts.TypeChecker,
+  referencedTypes: Set<string>,
+): void {
+  if (ts.isTypeReferenceNode(node)) {
+    const typeNameText = node.typeName.getText();
+    const symbol = typeChecker.getSymbolAtLocation(node.typeName);
+    const name = symbol?.getName() ?? typeNameText;
+    if (!isBuiltInType(name)) {
+      referencedTypes.add(name);
+    }
+    node.typeArguments?.forEach((arg) => collectReferencedTypesFromNode(arg, typeChecker, referencedTypes));
+    return;
+  }
+
+  if (ts.isExpressionWithTypeArguments(node)) {
+    const expressionText = node.expression.getText();
+    const symbol = typeChecker.getSymbolAtLocation(node.expression);
+    const name = symbol?.getName() ?? expressionText;
+    if (!isBuiltInType(name)) {
+      referencedTypes.add(name);
+    }
+    node.typeArguments?.forEach((arg) => collectReferencedTypesFromNode(arg, typeChecker, referencedTypes));
+    return;
+  }
+
+  if (ts.isUnionTypeNode(node) || ts.isIntersectionTypeNode(node)) {
+    node.types.forEach((typeNode) => collectReferencedTypesFromNode(typeNode, typeChecker, referencedTypes));
+    return;
+  }
+
+  if (ts.isArrayTypeNode(node)) {
+    collectReferencedTypesFromNode(node.elementType, typeChecker, referencedTypes);
+    return;
+  }
+
+  if (ts.isParenthesizedTypeNode(node)) {
+    collectReferencedTypesFromNode(node.type, typeChecker, referencedTypes);
+    return;
+  }
+
+  if (ts.isTypeLiteralNode(node)) {
+    node.members.forEach((member) => {
+      if (ts.isPropertySignature(member) && member.type) {
+        collectReferencedTypesFromNode(member.type, typeChecker, referencedTypes);
+      }
+      if (ts.isMethodSignature(member)) {
+        member.typeParameters?.forEach((param) => {
+          param.constraint && collectReferencedTypesFromNode(param.constraint, typeChecker, referencedTypes);
+        });
+        member.parameters.forEach((param) => {
+          if (param.type) {
+            collectReferencedTypesFromNode(param.type, typeChecker, referencedTypes);
+          }
+        });
+        if (member.type) {
+          collectReferencedTypesFromNode(member.type, typeChecker, referencedTypes);
+        }
+      }
+      if (ts.isCallSignatureDeclaration(member) && member.type) {
+        collectReferencedTypesFromNode(member.type, typeChecker, referencedTypes);
+      }
+      if (ts.isIndexSignatureDeclaration(member) && member.type) {
+        collectReferencedTypesFromNode(member.type, typeChecker, referencedTypes);
+      }
+    });
+    return;
+  }
+
+  if (ts.isTypeOperatorNode(node)) {
+    collectReferencedTypesFromNode(node.type, typeChecker, referencedTypes);
+    return;
+  }
+
+  if (ts.isIndexedAccessTypeNode(node)) {
+    collectReferencedTypesFromNode(node.objectType, typeChecker, referencedTypes);
+    collectReferencedTypesFromNode(node.indexType, typeChecker, referencedTypes);
+    return;
+  }
+
+  if (ts.isLiteralTypeNode(node)) {
+    return;
+  }
+
+  node.forEachChild((child) => {
+    if (ts.isTypeNode(child)) {
+      collectReferencedTypesFromNode(child, typeChecker, referencedTypes);
+    }
+  });
+}
+
 export function isBuiltInType(name: string): boolean {
   const builtIns = [
     // Primitive types
