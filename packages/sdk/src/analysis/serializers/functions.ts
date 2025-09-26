@@ -1,10 +1,14 @@
 import * as ts from 'typescript';
-import { TypeRegistry } from '../type-registry';
-import type { ExportDefinition, TypeReference } from '../spec-types';
-import { getJSDocComment, getSourceLocation } from '../ast-utils';
 import { formatTypeReference, structureParameter } from '../../utils/parameter-utils';
-import { getParameterDocumentation, parseJSDocComment, type ParsedJSDoc } from '../../utils/tsdoc-utils';
+import {
+  getParameterDocumentation,
+  type ParsedJSDoc,
+  parseJSDocComment,
+} from '../../utils/tsdoc-utils';
 import { collectReferencedTypes, collectReferencedTypesFromNode } from '../../utils/type-utils';
+import { getJSDocComment, getSourceLocation } from '../ast-utils';
+import type { ExportDefinition, TypeReference } from '../spec-types';
+import type { TypeRegistry } from '../type-registry';
 
 export interface SerializerContext {
   checker: ts.TypeChecker;
@@ -32,7 +36,7 @@ export function serializeCallSignatures(
 
   return signatures.map((signature) => {
     const parameters = signature.getParameters().map((param) => {
-      const paramDecl = (param.declarations?.find(ts.isParameter)) as
+      const paramDecl = param.declarations?.find(ts.isParameter) as
         | ts.ParameterDeclaration
         | undefined;
       const paramType = paramDecl
@@ -41,7 +45,10 @@ export function serializeCallSignatures(
           : checker.getTypeAtLocation(paramDecl)
         : checker.getTypeOfSymbolAtLocation(
             param,
-            symbol?.declarations?.[0] ?? signature.declaration ?? param.declarations?.[0] ?? param.valueDeclaration!,
+            symbol?.declarations?.[0] ??
+              signature.declaration ??
+              param.declarations?.[0] ??
+              param.valueDeclaration!,
           );
 
       collectReferencedTypes(paramType, checker, referencedTypes);
@@ -98,7 +105,7 @@ export function serializeFunctionExport(
   symbol: ts.Symbol,
   context: SerializerContext,
 ): ExportDefinition {
-  const { checker, typeRegistry } = context;
+  const { checker } = context;
   const signature = checker.getSignatureFromDeclaration(declaration);
   const funcSymbol = checker.getSymbolAtLocation(declaration.name || declaration);
   const parsedDoc = parseJSDocComment(symbol, checker);

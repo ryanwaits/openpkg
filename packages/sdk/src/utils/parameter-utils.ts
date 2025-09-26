@@ -2,6 +2,14 @@ import * as ts from 'typescript';
 import type { ParameterDocumentation, ParsedJSDoc } from './tsdoc-utils';
 import { isBuiltInType } from './type-utils';
 
+export interface StructuredParameter {
+  name: string;
+  schema: ReturnType<typeof formatTypeReference>;
+  in?: 'query';
+  required?: boolean;
+  description?: string;
+}
+
 const BUILTIN_TYPE_SCHEMAS: Record<string, Record<string, unknown>> = {
   Date: { type: 'string', format: 'date-time' },
   RegExp: { type: 'object', description: 'RegExp' },
@@ -58,13 +66,7 @@ function withDescription(
 
 export interface StructuredProperty {
   name: string;
-  type:
-    | string
-    | { $ref: string }
-    | { type: string }
-    | { anyOf: unknown[] }
-    | { oneOf: unknown[] }
-    | { enum: unknown[] };
+  type: ReturnType<typeof formatTypeReference>;
   description?: string;
   optional?: boolean;
 }
@@ -74,7 +76,11 @@ export function propertiesToSchema(
   properties: StructuredProperty[],
   description?: string,
 ): Record<string, unknown> {
-  const schema: Record<string, unknown> = {
+  const schema: {
+    type: 'object';
+    properties: Record<string, unknown>;
+    required?: string[];
+  } = {
     type: 'object',
     properties: {},
   };
@@ -137,7 +143,7 @@ function buildSchemaFromTypeNode(
       typeChecker,
       typeRefs,
       referencedTypes,
-      functionDoc,
+      functionDoc ?? null,
       parentParamName,
     );
   }
@@ -493,7 +499,11 @@ export function formatTypeReference(
           const properties = type.getProperties();
           if (properties.length > 0) {
             // Build inline object schema
-            const objSchema: Record<string, unknown> = {
+            const objSchema: {
+              type: 'object';
+              properties: Record<string, unknown>;
+              required?: string[];
+            } = {
               type: 'object',
               properties: {},
             };
@@ -602,7 +612,7 @@ export function structureParameter(
   functionDoc?: ParsedJSDoc | null,
   paramDoc?: ParameterDocumentation,
   referencedTypes?: Set<string>,
-): Record<string, unknown> {
+): StructuredParameter {
   const paramName = param.getName();
   const fallbackName =
     paramName === '__0' ||
@@ -653,7 +663,7 @@ export function structureParameter(
             optional: !!(prop.flags & ts.SymbolFlags.Optional),
           });
         }
-      } else {
+      } else if (symbol) {
         // This is a named type in an intersection - we need to flatten its properties
         const _symbolName = symbol.getName();
 
@@ -773,7 +783,7 @@ export function structureParameter(
       typeChecker,
       typeRefs,
       referencedTypes,
-      functionDoc,
+      functionDoc ?? null,
       param.getName(),
     );
 
@@ -820,7 +830,7 @@ export function structureParameter(
       typeChecker,
       typeRefs,
       referencedTypes,
-      functionDoc,
+      functionDoc ?? null,
       param.getName(),
     );
 

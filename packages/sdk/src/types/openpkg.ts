@@ -127,6 +127,7 @@ export const openPkgSchema = z.object({
         )
         .optional(),
       members: z.array(memberSchema).optional(),
+      type: z.union([z.string(), schemaSchema]).optional(),
       schema: schemaSchema.optional(), // For variables/constants
       description: z.string().optional(),
       examples: z.array(z.string()).optional(),
@@ -157,16 +158,9 @@ export const openPkgSchema = z.object({
         description: z.string().optional(),
         // Schema defines the shape of the type
         schema: schemaSchema.optional(),
-        // For enums - members with values
-        members: z
-          .array(
-            z.object({
-              name: z.string(),
-              value: z.union([z.string(), z.number()]).optional(),
-              description: z.string().optional(),
-            }),
-          )
-          .optional(),
+        type: z.union([z.string(), schemaSchema]).optional(),
+        // Members (class, enum, etc.)
+        members: z.array(memberSchema).optional(),
         source: z
           .object({
             file: z.string().optional(),

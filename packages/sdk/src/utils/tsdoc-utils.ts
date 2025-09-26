@@ -164,7 +164,10 @@ function processTag(result: ParsedJSDoc, tags: ParsedTag[], tag: string, content
     case 'example': {
       const example = replaceInlineLinks(content.trim(), tags).trim();
       if (example) {
-        (result.examples ||= []).push(example);
+        if (!result.examples) {
+          result.examples = [];
+        }
+        result.examples.push(example);
       }
       break;
     }
@@ -317,7 +320,7 @@ export function getParameterDocumentation(
   return result;
 }
 
-interface ParameterDocumentation {
+export interface ParameterDocumentation {
   description: string;
   destructuredProperties?: Array<{ name: string; description: string }>;
 }

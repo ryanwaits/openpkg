@@ -1,7 +1,8 @@
 import type { z } from 'zod';
 import type { openPkgSchema } from '../types/openpkg';
 
-export type RegisteredType = z.infer<typeof openPkgSchema>['types'][number];
+type TypesArray = NonNullable<z.infer<typeof openPkgSchema>['types']>;
+export type RegisteredType = TypesArray[number];
 
 export class TypeRegistry {
   private readonly typeRefs = new Map<string, string>();

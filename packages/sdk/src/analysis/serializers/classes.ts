@@ -81,7 +81,8 @@ function serializeClassMembers(
       const schema = formatTypeReference(memberType, checker, typeRefs, referencedTypes);
 
       const flags: Record<string, boolean> = {};
-      if (member.questionToken || memberSymbol?.flags & ts.SymbolFlags.Optional) {
+      const isOptionalSymbol = memberSymbol != null && (memberSymbol.flags & ts.SymbolFlags.Optional) !== 0;
+      if (member.questionToken || isOptionalSymbol) {
         flags.optional = true;
       }
       if (member.modifiers?.some((mod) => mod.kind === ts.SyntaxKind.ReadonlyKeyword)) {

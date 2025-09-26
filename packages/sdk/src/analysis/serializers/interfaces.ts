@@ -57,7 +57,11 @@ function interfaceToSchema(
   typeRefs: Map<string, string>,
   referencedTypes: Set<string>,
 ): Record<string, unknown> {
-  const schema: Record<string, unknown> = {
+  const schema: {
+    type: 'object';
+    properties: Record<string, unknown>;
+    required?: string[];
+  } = {
     type: 'object',
     properties: {},
   };

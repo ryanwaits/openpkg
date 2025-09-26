@@ -1,10 +1,10 @@
-import * as ts from 'typescript';
-import type { ExportDefinition, TypeReference } from '../spec-types';
-import { getJSDocComment, getSourceLocation } from '../ast-utils';
-import { serializeCallSignatures, type SerializerContext } from './functions';
-import { parseJSDocComment } from '../../utils/tsdoc-utils';
+import type * as ts from 'typescript';
 import { formatTypeReference } from '../../utils/parameter-utils';
+import { parseJSDocComment } from '../../utils/tsdoc-utils';
 import { collectReferencedTypes } from '../../utils/type-utils';
+import { getJSDocComment, getSourceLocation } from '../ast-utils';
+import type { ExportDefinition, TypeReference } from '../spec-types';
+import { type SerializerContext, serializeCallSignatures } from './functions';
 
 export function serializeVariable(
   declaration: ts.VariableDeclaration,
