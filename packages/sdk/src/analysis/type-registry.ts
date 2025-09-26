@@ -44,6 +44,21 @@ export class TypeRegistry {
   }
 
   isKnownType(name: string): boolean {
-    return this.typeRefs.has(name) || this.typeDefinitions.has(name);
+    if (this.typeDefinitions.has(name)) {
+      return true;
+    }
+
+    const ref = this.typeRefs.get(name);
+    if (ref === undefined) {
+      return false;
+    }
+
+    if (ref !== name) {
+      // Re-exported aliases map to the original type id; treat it as known only
+      // when we've already serialized the canonical definition.
+      return this.typeDefinitions.has(ref);
+    }
+
+    return false;
   }
 }

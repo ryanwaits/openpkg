@@ -52,10 +52,10 @@ export function buildOpenPkgSpec(
   const exportedSymbols = typeChecker.getExportsOfModule(moduleSymbol);
 
   for (const symbol of exportedSymbols) {
-    const declaration = symbol.valueDeclaration || symbol.declarations?.[0];
+    const { declaration, targetSymbol } = resolveExportTarget(symbol, typeChecker);
     if (!declaration) continue;
 
-    const name = symbol.getName();
+    const exportName = symbol.getName();
 
     if (
       ts.isClassDeclaration(declaration) ||
@@ -63,60 +63,62 @@ export function buildOpenPkgSpec(
       ts.isTypeAliasDeclaration(declaration) ||
       ts.isEnumDeclaration(declaration)
     ) {
-      typeRegistry.registerExportedType(name);
+      typeRegistry.registerExportedType(exportName, targetSymbol.getName());
     }
   }
 
   for (const symbol of exportedSymbols) {
-    const declaration = symbol.valueDeclaration || symbol.declarations?.[0];
+    const { declaration, targetSymbol } = resolveExportTarget(symbol, typeChecker);
     if (!declaration) continue;
 
-    const name = symbol.getName();
+    const exportName = symbol.getName();
 
     if (ts.isFunctionDeclaration(declaration)) {
-      spec.exports.push(serializeFunctionExport(declaration, symbol, serializerContext));
+      const exportEntry = serializeFunctionExport(declaration, targetSymbol, serializerContext);
+      spec.exports.push(withExportName(exportEntry, exportName));
     } else if (ts.isClassDeclaration(declaration)) {
       const { exportEntry, typeDefinition } = serializeClass(
         declaration,
-        symbol,
+        targetSymbol,
         serializerContext,
       );
-      spec.exports.push(exportEntry);
+      spec.exports.push(withExportName(exportEntry, exportName));
       if (typeDefinition && typeRegistry.registerTypeDefinition(typeDefinition)) {
         spec.types?.push(typeDefinition);
       }
     } else if (ts.isInterfaceDeclaration(declaration)) {
       const { exportEntry, typeDefinition } = serializeInterface(
         declaration,
-        symbol,
+        targetSymbol,
         serializerContext,
       );
-      spec.exports.push(exportEntry);
+      spec.exports.push(withExportName(exportEntry, exportName));
       if (typeDefinition && typeRegistry.registerTypeDefinition(typeDefinition)) {
         spec.types?.push(typeDefinition);
       }
     } else if (ts.isTypeAliasDeclaration(declaration)) {
       const { exportEntry, typeDefinition } = serializeTypeAlias(
         declaration,
-        symbol,
+        targetSymbol,
         serializerContext,
       );
-      spec.exports.push(exportEntry);
+      spec.exports.push(withExportName(exportEntry, exportName));
       if (typeDefinition && typeRegistry.registerTypeDefinition(typeDefinition)) {
         spec.types?.push(typeDefinition);
       }
     } else if (ts.isEnumDeclaration(declaration)) {
       const { exportEntry, typeDefinition } = serializeEnum(
         declaration,
-        symbol,
+        targetSymbol,
         serializerContext,
       );
-      spec.exports.push(exportEntry);
+      spec.exports.push(withExportName(exportEntry, exportName));
       if (typeDefinition && typeRegistry.registerTypeDefinition(typeDefinition)) {
         spec.types?.push(typeDefinition);
       }
     } else if (ts.isVariableDeclaration(declaration)) {
-      spec.exports.push(serializeVariable(declaration, symbol, serializerContext));
+      const exportEntry = serializeVariable(declaration, targetSymbol, serializerContext);
+      spec.exports.push(withExportName(exportEntry, exportName));
     }
   }
 
@@ -148,13 +150,18 @@ export function buildOpenPkgSpec(
           continue;
         }
 
-        const declaration = exportSymbol.valueDeclaration || exportSymbol.declarations?.[0];
+        const { declaration, targetSymbol } = resolveExportTarget(exportSymbol, typeChecker);
         if (!declaration) continue;
 
-        if (ts.isInterfaceDeclaration(declaration)) {
+        if (ts.isClassDeclaration(declaration)) {
+          const { typeDefinition } = serializeClass(declaration, targetSymbol, serializerContext);
+          if (typeDefinition && typeRegistry.registerTypeDefinition(typeDefinition)) {
+            spec.types?.push(typeDefinition);
+          }
+        } else if (ts.isInterfaceDeclaration(declaration)) {
           const { typeDefinition } = serializeInterface(
             declaration,
-            exportSymbol,
+            targetSymbol,
             serializerContext,
           );
           if (typeDefinition && typeRegistry.registerTypeDefinition(typeDefinition)) {
@@ -163,7 +170,16 @@ export function buildOpenPkgSpec(
         } else if (ts.isTypeAliasDeclaration(declaration)) {
           const { typeDefinition } = serializeTypeAlias(
             declaration,
-            exportSymbol,
+            targetSymbol,
+            serializerContext,
+          );
+          if (typeDefinition && typeRegistry.registerTypeDefinition(typeDefinition)) {
+            spec.types?.push(typeDefinition);
+          }
+        } else if (ts.isEnumDeclaration(declaration)) {
+          const { typeDefinition } = serializeEnum(
+            declaration,
+            targetSymbol,
             serializerContext,
           );
           if (typeDefinition && typeRegistry.registerTypeDefinition(typeDefinition)) {
@@ -175,4 +191,53 @@ export function buildOpenPkgSpec(
   }
 
   return spec;
+}
+
+/**
+ * Follows export aliases back to the declaration that carries the type
+ * information we need to serialize.
+ */
+function resolveExportTarget(symbol: ts.Symbol, checker: ts.TypeChecker): {
+  declaration?: ts.Declaration;
+  targetSymbol: ts.Symbol;
+} {
+  let targetSymbol = symbol;
+
+  if (symbol.flags & ts.SymbolFlags.Alias) {
+    const aliasTarget = checker.getImmediateAliasedSymbol(symbol);
+    if (aliasTarget) {
+      targetSymbol = aliasTarget;
+    }
+  }
+
+  const declarations = targetSymbol.declarations ?? [];
+  const declaration =
+    targetSymbol.valueDeclaration ||
+    declarations.find((decl) => decl.kind !== ts.SyntaxKind.ExportSpecifier) ||
+    declarations[0];
+
+  return {
+    declaration,
+    targetSymbol,
+  };
+}
+
+/**
+ * When a symbol is re-exported under a different name, rewrite the serialized
+ * entry so it reflects the public export name without losing the captured
+ * metadata.
+ */
+function withExportName<T extends { id: string; name: string }>(
+  entry: T,
+  exportName: string,
+): T {
+  if (entry.name === exportName) {
+    return entry;
+  }
+
+  return {
+    ...entry,
+    id: exportName,
+    name: exportName,
+  };
 }
