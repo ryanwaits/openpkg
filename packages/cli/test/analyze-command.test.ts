@@ -30,10 +30,13 @@ describe('analyze command', () => {
     const specOutput = path.join(tmpDir, 'spec.json');
     const analyzedFiles: string[] = [];
 
+    let capturedOptions: unknown = undefined;
+
     registerAnalyzeCommand(program, {
       createOpenPkg: () => ({
-        analyzeFileWithDiagnostics: async (file: string) => {
+        analyzeFileWithDiagnostics: async (file: string, options?: unknown) => {
           analyzedFiles.push(file);
+          capturedOptions = options;
           return {
             spec: {
               $schema: 'schema',
@@ -89,5 +92,75 @@ describe('analyze command', () => {
     expect(fs.existsSync(specOutput)).toBe(true);
     const contents = JSON.parse(fs.readFileSync(specOutput, 'utf-8'));
     expect(contents.openpkg).toBe('0.1.0');
+    expect(capturedOptions).toBeUndefined();
+  });
+
+  it('passes include filters from CLI flags', async () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'openpkg-cli-analyze-filter-'));
+    tmpDirs.push(tmpDir);
+
+    const entryPath = path.join(tmpDir, 'entry.ts');
+    fs.writeFileSync(entryPath, 'export const value = 1;');
+
+    const program = new Command();
+    program.exitOverride();
+
+    let capturedFilters: unknown = undefined;
+
+    registerAnalyzeCommand(program, {
+      createOpenPkg: () => ({
+        analyzeFileWithDiagnostics: async (_file: string, options?: { filters?: unknown }) => {
+          capturedFilters = options?.filters;
+          return {
+            spec: {
+              openpkg: '0.1.0',
+              meta: {
+                name: 'local',
+                version: '1.0.0',
+                description: '',
+                license: '',
+                repository: '',
+                ecosystem: 'js/ts',
+              },
+              exports: [],
+              types: [],
+            },
+            diagnostics: [],
+            metadata: {
+              baseDir: tmpDir,
+              configPath: undefined,
+              packageJsonPath: undefined,
+              hasNodeModules: true,
+              resolveExternalTypes: true,
+            },
+          };
+        },
+      }),
+      spinner: () =>
+        ({
+          start() {
+            return this;
+          },
+          succeed() {},
+          fail() {},
+        } as unknown as { start: () => unknown; succeed: () => void; fail: () => void }),
+      log: () => {},
+      error: () => {},
+    });
+
+    await program.parseAsync([
+      'node',
+      'openpkg',
+      'analyze',
+      'entry.ts',
+      '--cwd',
+      tmpDir,
+      '--include',
+      'alpha',
+      '--exclude',
+      'beta',
+    ]);
+
+    expect(capturedFilters).toEqual({ include: ['alpha'], exclude: ['beta'] });
   });
 });

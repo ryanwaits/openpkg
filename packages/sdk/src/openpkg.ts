@@ -5,6 +5,8 @@ import * as ts from 'typescript';
 import type { AnalysisMetadataInternal } from './analysis/run-analysis';
 import { runAnalysis } from './analysis/run-analysis';
 import { extractPackageSpec } from './extractor';
+import { applyFilters } from './filtering/apply-filters';
+import type { FilterOptions } from './filtering/types';
 import type { NormalizedOpenPkgOptions, OpenPkgOptions } from './options';
 import { normalizeOpenPkgOptions } from './options';
 import type { OpenPkgSpec } from './types/openpkg';
@@ -33,6 +35,10 @@ export interface AnalysisMetadata {
   resolveExternalTypes: boolean;
 }
 
+export interface AnalyzeOptions {
+  filters?: FilterOptions;
+}
+
 export class OpenPkg {
   private readonly options: NormalizedOpenPkgOptions;
 
@@ -40,24 +46,37 @@ export class OpenPkg {
     this.options = normalizeOpenPkgOptions(options);
   }
 
-  async analyze(code: string, fileName = 'temp.ts'): Promise<OpenPkgSpec> {
+  async analyze(
+    code: string,
+    fileName = 'temp.ts',
+    analyzeOptions: AnalyzeOptions = {},
+  ): Promise<OpenPkgSpec> {
     const resolvedFileName = path.resolve(fileName);
     const tempDir = path.dirname(resolvedFileName);
-    return extractPackageSpec(resolvedFileName, tempDir, code, this.options);
+    const spec = await extractPackageSpec(resolvedFileName, tempDir, code, this.options);
+    return this.applySpecFilters(spec, analyzeOptions.filters).spec;
   }
 
-  async analyzeFile(filePath: string): Promise<OpenPkgSpec> {
+  async analyzeFile(filePath: string, analyzeOptions: AnalyzeOptions = {}): Promise<OpenPkgSpec> {
     const resolvedPath = path.resolve(filePath);
     const content = await fs.readFile(resolvedPath, 'utf-8');
     const packageDir = resolvePackageDir(resolvedPath);
-    return extractPackageSpec(resolvedPath, packageDir, content, this.options);
+    const spec = await extractPackageSpec(resolvedPath, packageDir, content, this.options);
+    return this.applySpecFilters(spec, analyzeOptions.filters).spec;
   }
 
-  async analyzeProject(entryPath: string): Promise<OpenPkgSpec> {
-    return this.analyzeFile(entryPath);
+  async analyzeProject(
+    entryPath: string,
+    analyzeOptions: AnalyzeOptions = {},
+  ): Promise<OpenPkgSpec> {
+    return this.analyzeFile(entryPath, analyzeOptions);
   }
 
-  async analyzeWithDiagnostics(code: string, fileName?: string): Promise<AnalysisResult> {
+  async analyzeWithDiagnostics(
+    code: string,
+    fileName?: string,
+    analyzeOptions: AnalyzeOptions = {},
+  ): Promise<AnalysisResult> {
     const resolvedFileName = path.resolve(fileName ?? 'temp.ts');
     const packageDir = resolvePackageDir(resolvedFileName);
     const analysis = runAnalysis({
@@ -67,14 +86,22 @@ export class OpenPkg {
       options: this.options,
     });
 
+    const filterOutcome = this.applySpecFilters(analysis.spec, analyzeOptions.filters);
+
     return {
-      spec: analysis.spec,
-      diagnostics: analysis.diagnostics.map((diagnostic) => this.normalizeDiagnostic(diagnostic)),
+      spec: filterOutcome.spec,
+      diagnostics: [
+        ...analysis.diagnostics.map((diagnostic) => this.normalizeDiagnostic(diagnostic)),
+        ...filterOutcome.diagnostics,
+      ],
       metadata: this.normalizeMetadata(analysis.metadata),
     };
   }
 
-  async analyzeFileWithDiagnostics(filePath: string): Promise<AnalysisResult> {
+  async analyzeFileWithDiagnostics(
+    filePath: string,
+    analyzeOptions: AnalyzeOptions = {},
+  ): Promise<AnalysisResult> {
     const resolvedPath = path.resolve(filePath);
     const content = await fs.readFile(resolvedPath, 'utf-8');
     const packageDir = resolvePackageDir(resolvedPath);
@@ -85,9 +112,14 @@ export class OpenPkg {
       options: this.options,
     });
 
+    const filterOutcome = this.applySpecFilters(analysis.spec, analyzeOptions.filters);
+
     return {
-      spec: analysis.spec,
-      diagnostics: analysis.diagnostics.map((diagnostic) => this.normalizeDiagnostic(diagnostic)),
+      spec: filterOutcome.spec,
+      diagnostics: [
+        ...analysis.diagnostics.map((diagnostic) => this.normalizeDiagnostic(diagnostic)),
+        ...filterOutcome.diagnostics,
+      ],
       metadata: this.normalizeMetadata(analysis.metadata),
     };
   }
@@ -137,14 +169,35 @@ export class OpenPkg {
       resolveExternalTypes: metadata.resolveExternalTypes,
     };
   }
+
+  private applySpecFilters(
+    spec: OpenPkgSpec,
+    filters?: FilterOptions,
+  ): { spec: OpenPkgSpec; diagnostics: Diagnostic[] } {
+    if (!filters || (!filters.include?.length && !filters.exclude?.length)) {
+      return { spec, diagnostics: [] };
+    }
+
+    const result = applyFilters(spec, filters);
+    return {
+      spec: result.spec,
+      diagnostics: result.diagnostics.map((diagnostic) => ({
+        message: diagnostic.message,
+        severity: diagnostic.severity,
+      })),
+    };
+  }
 }
 
-export async function analyze(code: string): Promise<OpenPkgSpec> {
-  return new OpenPkg().analyze(code);
+export async function analyze(code: string, options: AnalyzeOptions = {}): Promise<OpenPkgSpec> {
+  return new OpenPkg().analyze(code, 'temp.ts', options);
 }
 
-export async function analyzeFile(filePath: string): Promise<OpenPkgSpec> {
-  return new OpenPkg().analyzeFile(filePath);
+export async function analyzeFile(
+  filePath: string,
+  options: AnalyzeOptions = {},
+): Promise<OpenPkgSpec> {
+  return new OpenPkg().analyzeFile(filePath, options);
 }
 
 function resolvePackageDir(entryFile: string): string {

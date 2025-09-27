@@ -39,6 +39,9 @@ openpkg generate -o api-spec.json
 # Target specific package in monorepo
 openpkg generate --package @myorg/package-name
 
+# Only keep selected exports
+openpkg generate src/index.ts --include=createUser,deleteUser
+
 # Auto-confirm all prompts
 openpkg generate -y
 ```
@@ -50,6 +53,8 @@ openpkg generate -y
 - `-p, --package <name>` - Target package in monorepo
 - `--cwd <dir>` - Working directory (default: current directory)
 - `--no-external-types` - Skip external type resolution from node_modules
+- `--include <ids>` - Comma-separated (or repeated) export identifiers to keep
+- `--exclude <ids>` - Comma-separated (or repeated) export identifiers to drop
 - `-y, --yes` - Skip all prompts and use defaults
 
 #### Monorepo Support
@@ -71,6 +76,7 @@ Inspect a TypeScript entry point, print a summary, and optionally persist the sp
 ```bash
 openpkg analyze src/index.ts --show=summary
 openpkg analyze src/index.ts --show=spec,summary --output openpkg.json
+openpkg analyze src/index.ts --include=createUser --exclude=internalHelper
 ```
 
 #### Options
@@ -78,6 +84,23 @@ openpkg analyze src/index.ts --show=spec,summary --output openpkg.json
 - `--show=<items>` – Comma-separated list of values to display (`summary`, `spec`). Default: `summary`.
 - `-o, --output <file>` – Save the generated spec to a file.
 - `--cwd <dir>` – Working directory used to resolve the entry path (defaults to current directory).
+- `--include <ids>` – Filter exports by identifier before printing or saving.
+- `--exclude <ids>` – Remove export identifiers from the generated spec.
+
+### Configuration File
+
+Create an `openpkg.config.ts` (or `.js` / `.mjs`) file to persist defaults:
+
+```ts
+import { defineConfig } from 'openpkg-cli/config';
+
+export default defineConfig({
+  include: ['createUser', 'deleteUser'],
+  exclude: ['internalHelper'],
+});
+```
+
+Place the file in your project root (or any ancestor directory). CLI flags take precedence over configuration values.
 
 ## Examples
 
@@ -158,7 +181,7 @@ https://raw.githubusercontent.com/ryanwaits/openpkg/main/schemas/v0.1.0/openpkg.
 
 4. **JSDoc Comments**: Add JSDoc comments to your exports for richer documentation in the spec
 
-5. **Import Resolution**: Use `--follow=imports` for complete type analysis across multiple files
+5. **Filter Gradually**: Start with broad includes, then refine with excludes to keep dependency chains intact
 
 ## Troubleshooting
 

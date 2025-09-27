@@ -4,6 +4,12 @@ import chalk from 'chalk';
 import type { Command } from 'commander';
 import { OpenPkg, type OpenPkgSpec } from 'openpkg-sdk';
 import ora, { type Ora } from 'ora';
+import { type LoadedOpenPkgConfig, loadOpenPkgConfig } from '../config';
+import {
+  type FilterOptions as CliFilterOptions,
+  mergeFilterOptions,
+  parseListFlag,
+} from '../utils/filter-options';
 import { collectGuardrailInsights } from '../utils/guardrails';
 
 export interface AnalyzeCommandDependencies {
@@ -44,6 +50,8 @@ export function registerAnalyzeCommand(
     .option('-o, --output <file>', 'Write the generated OpenPkg spec to a file')
     .option('--cwd <dir>', 'Working directory', process.cwd())
     .option('--show <items>', 'Items to display: spec,summary (comma-separated)', 'summary')
+    .option('--include <ids>', 'Filter exports by identifier (comma-separated or repeated)')
+    .option('--exclude <ids>', 'Exclude exports by identifier (comma-separated or repeated)')
     .action(async (entry, options) => {
       try {
         const cwd = options.cwd as string;
@@ -67,6 +75,31 @@ export function registerAnalyzeCommand(
           return;
         }
 
+        const cliFilters: CliFilterOptions = {
+          include: parseListFlag(options.include),
+          exclude: parseListFlag(options.exclude),
+        };
+
+        let config: LoadedOpenPkgConfig | null = null;
+        try {
+          config = await loadOpenPkgConfig(cwd);
+          if (config?.filePath) {
+            log(chalk.gray(`Loaded configuration from ${path.relative(cwd, config.filePath)}`));
+          }
+        } catch (configError) {
+          error(
+            chalk.red('Failed to load OpenPkg config:'),
+            configError instanceof Error ? configError.message : configError,
+          );
+          process.exitCode = 1;
+          return;
+        }
+
+        const resolvedFilters = mergeFilterOptions(config, cliFilters);
+        for (const message of resolvedFilters.messages) {
+          log(chalk.gray(`• ${message}`));
+        }
+
         const spinnerInstance = spinner('Analyzing...');
         spinnerInstance.start();
 
@@ -74,7 +107,16 @@ export function registerAnalyzeCommand(
         let analysisResult: Awaited<ReturnType<OpenPkg['analyzeFileWithDiagnostics']>> | undefined;
         try {
           const openpkg = createOpenPkg();
-          analysisResult = await openpkg.analyzeFileWithDiagnostics(entryPath);
+          if (resolvedFilters.include || resolvedFilters.exclude) {
+            analysisResult = await openpkg.analyzeFileWithDiagnostics(entryPath, {
+              filters: {
+                include: resolvedFilters.include,
+                exclude: resolvedFilters.exclude,
+              },
+            });
+          } else {
+            analysisResult = await openpkg.analyzeFileWithDiagnostics(entryPath);
+          }
           spec = analysisResult.spec;
           spinnerInstance.succeed('Analysis complete');
         } catch (analysisError) {

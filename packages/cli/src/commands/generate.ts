@@ -4,12 +4,18 @@ import chalk from 'chalk';
 import type { Command } from 'commander';
 import { OpenPkg } from 'openpkg-sdk';
 import ora, { type Ora } from 'ora';
+import { type LoadedOpenPkgConfig, loadOpenPkgConfig } from '../config';
+import {
+  type FilterOptions as CliFilterOptions,
+  mergeFilterOptions,
+  parseListFlag,
+} from '../utils/filter-options';
 import { findEntryPoint, findPackageInMonorepo } from '../utils/package-utils';
 
 export interface GenerateCommandDependencies {
   createOpenPkg?: (
     options: ConstructorParameters<typeof OpenPkg>[0],
-  ) => Pick<OpenPkg, 'analyzeFile'>;
+  ) => Pick<OpenPkg, 'analyzeFileWithDiagnostics'>;
   writeFileSync?: typeof fs.writeFileSync;
   spinner?: (text: string) => Ora;
   log?: typeof console.log;
@@ -24,7 +30,7 @@ const defaultDependencies: Required<GenerateCommandDependencies> = {
   error: console.error,
 };
 
-type GeneratedSpec = Awaited<ReturnType<OpenPkg['analyzeFile']>>;
+type GeneratedSpec = Awaited<ReturnType<OpenPkg['analyzeFileWithDiagnostics']>>;
 
 type SpecSummary = {
   exports?: unknown[];
@@ -51,6 +57,8 @@ export function registerGenerateCommand(
     .option('-p, --package <name>', 'Target package name (for monorepos)')
     .option('--cwd <dir>', 'Working directory', process.cwd())
     .option('--no-external-types', 'Skip external type resolution from node_modules')
+    .option('--include <ids>', 'Filter exports by identifier (comma-separated or repeated)')
+    .option('--exclude <ids>', 'Exclude exports by identifier (comma-separated or repeated)')
     .option('-y, --yes', 'Skip all prompts and use defaults')
     .action(async (entry, options) => {
       try {
@@ -75,32 +83,82 @@ export function registerGenerateCommand(
 
         const resolveExternalTypes = options.externalTypes !== false;
 
+        const cliFilters: CliFilterOptions = {
+          include: parseListFlag(options.include),
+          exclude: parseListFlag(options.exclude),
+        };
+
+        let config: LoadedOpenPkgConfig | null = null;
+        try {
+          config = await loadOpenPkgConfig(targetDir);
+          if (config?.filePath) {
+            log(
+              chalk.gray(`Loaded configuration from ${path.relative(targetDir, config.filePath)}`),
+            );
+          }
+        } catch (configError) {
+          error(
+            chalk.red('Failed to load OpenPkg config:'),
+            configError instanceof Error ? configError.message : configError,
+          );
+          process.exit(1);
+        }
+
+        const resolvedFilters = mergeFilterOptions(config, cliFilters);
+        for (const message of resolvedFilters.messages) {
+          log(chalk.gray(`• ${message}`));
+        }
+
         const spinnerInstance = spinner('Generating OpenPkg spec...');
         spinnerInstance.start();
 
-        let spec: GeneratedSpec | undefined;
+        let result: GeneratedSpec | undefined;
         try {
           const openpkg = createOpenPkg({
             resolveExternalTypes,
           });
-          spec = await openpkg.analyzeFile(entryFile);
+          const analyzeOptions =
+            resolvedFilters.include || resolvedFilters.exclude
+              ? {
+                  filters: {
+                    include: resolvedFilters.include,
+                    exclude: resolvedFilters.exclude,
+                  },
+                }
+              : {};
+
+          result = await openpkg.analyzeFileWithDiagnostics(entryFile, analyzeOptions);
           spinnerInstance.succeed('Generated OpenPkg spec');
         } catch (generationError) {
           spinnerInstance.fail('Failed to generate spec');
           throw generationError;
         }
 
-        if (!spec) {
+        if (!result) {
           throw new Error('Failed to produce an OpenPkg spec.');
         }
 
         const outputPath = path.resolve(targetDir, options.output);
-        writeFileSync(outputPath, JSON.stringify(spec, null, 2));
+        writeFileSync(outputPath, JSON.stringify(result.spec, null, 2));
 
         log(chalk.green(`✓ Generated ${path.relative(process.cwd(), outputPath)}`));
-        const summary = spec as SpecSummary;
+        const summary = result.spec as SpecSummary;
         log(chalk.gray(`  ${getArrayLength(summary.exports)} exports`));
         log(chalk.gray(`  ${getArrayLength(summary.types)} types`));
+
+        if (result.diagnostics.length > 0) {
+          log('');
+          log(chalk.bold('Diagnostics'));
+          for (const diagnostic of result.diagnostics) {
+            const prefix =
+              diagnostic.severity === 'error'
+                ? chalk.red('✖')
+                : diagnostic.severity === 'warning'
+                  ? chalk.yellow('⚠')
+                  : chalk.cyan('ℹ');
+            log(`${prefix} ${diagnostic.message}`);
+          }
+        }
       } catch (commandError) {
         error(
           chalk.red('Error:'),

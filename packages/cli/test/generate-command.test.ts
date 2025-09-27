@@ -30,11 +30,38 @@ describe('generate command', () => {
     const program = new Command();
     program.exitOverride();
 
+    let capturedOptions: unknown = undefined;
+
+    const specStub = {
+      openpkg: '0.1.0',
+      meta: {
+        name: 'fixture',
+        version: '1.0.0',
+        description: '',
+        license: '',
+        repository: '',
+        ecosystem: 'js/ts',
+      },
+      exports: [],
+      types: [],
+    };
+
     registerGenerateCommand(program, {
       createOpenPkg: () => ({
-        analyzeFile: async (file: string) => {
+        analyzeFileWithDiagnostics: async (file: string, options?: unknown) => {
           analyzedFiles.push(file);
-          return { exports: [], types: [] } as any;
+          capturedOptions = options;
+          return {
+            spec: specStub,
+            diagnostics: [],
+            metadata: {
+              baseDir: path.dirname(file),
+              configPath: undefined,
+              packageJsonPath: undefined,
+              hasNodeModules: true,
+              resolveExternalTypes: true,
+            },
+          } as any;
         },
       }),
       writeFileSync: (file, data) => {
@@ -66,5 +93,80 @@ describe('generate command', () => {
 
     expect(analyzedFiles).toEqual([path.join(tmpDir, 'src', 'index.ts')]);
     expect(fs.existsSync(outputPath)).toBe(true);
+    expect(capturedOptions).toEqual({});
+  });
+
+  it('merges include/exclude filters from config and CLI flags', async () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'openpkg-cli-generate-filter-'));
+    tmpDirs.push(tmpDir);
+
+    fs.mkdirSync(path.join(tmpDir, 'src'), { recursive: true });
+    fs.writeFileSync(path.join(tmpDir, 'src', 'index.ts'), "export const value = 1 as const;\n");
+    fs.writeFileSync(path.join(tmpDir, 'package.json'), JSON.stringify({ name: 'fixture' }));
+    fs.writeFileSync(
+      path.join(tmpDir, 'openpkg.config.mjs'),
+      'export default { include: ["alpha", "beta"], exclude: ["gamma"] };\n',
+    );
+
+    const program = new Command();
+    program.exitOverride();
+
+    let capturedFilters: unknown = undefined;
+
+    registerGenerateCommand(program, {
+      createOpenPkg: () => ({
+        analyzeFileWithDiagnostics: async (_file: string, options?: { filters?: unknown }) => {
+          capturedFilters = options?.filters;
+          return {
+            spec: {
+              openpkg: '0.1.0',
+              meta: {
+                name: 'fixture',
+                version: '1.0.0',
+                description: '',
+                license: '',
+                repository: '',
+                ecosystem: 'js/ts',
+              },
+              exports: [],
+              types: [],
+            },
+            diagnostics: [],
+            metadata: {
+              baseDir: tmpDir,
+              configPath: undefined,
+              packageJsonPath: undefined,
+              hasNodeModules: true,
+              resolveExternalTypes: true,
+            },
+          };
+        },
+      }),
+      writeFileSync: () => {},
+      spinner: () =>
+        ({
+          start() {
+            return this;
+          },
+          succeed() {},
+          fail() {},
+        } as unknown as { start: () => unknown; succeed: () => void; fail: () => void }),
+      log: () => {},
+      error: () => {},
+    });
+
+    await program.parseAsync([
+      'node',
+      'openpkg',
+      'generate',
+      '--cwd',
+      tmpDir,
+      '--include',
+      'alpha',
+      '--exclude',
+      'delta',
+    ]);
+
+    expect(capturedFilters).toEqual({ include: ['alpha'], exclude: ['gamma', 'delta'] });
   });
 });

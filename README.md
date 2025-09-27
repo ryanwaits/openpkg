@@ -72,6 +72,9 @@ openpkg generate
 
 # Generate from specific file
 openpkg generate src/index.ts
+
+# Keep only specific exports
+openpkg generate src/index.ts --include=createUser,deleteUser
 ```
 
 ### SDK Installation
@@ -86,7 +89,9 @@ npm install openpkg-sdk
 import { OpenPkg } from 'openpkg-sdk';
 
 const openpkg = new OpenPkg();
-const spec = await openpkg.analyzeFile('./src/index.ts');
+const spec = await openpkg.analyzeFile('./src/index.ts', {
+  filters: { include: ['createUser'] },
+});
 ```
 
 ### Analyze a local file
@@ -94,6 +99,9 @@ const spec = await openpkg.analyzeFile('./src/index.ts');
 ```bash
 # Analyze a single TypeScript entry point
 openpkg analyze src/index.ts --show=summary
+
+# Restrict output to specific exports
+openpkg analyze src/index.ts --include=createUser --show=spec
 ```
 
 ## Documentation
@@ -109,7 +117,24 @@ openpkg analyze src/index.ts --show=summary
 - 🔗 **Smart References** - Clean `$ref` links between types
 - 📚 **JSDoc Integration** - Preserves your documentation
 - ⚡ **Monorepo Support** - Works with workspace packages
+- 🎚️ **Filter Controls** - Include or exclude exports via config files or CLI flags
 - ✅ **Schema Validation** - JSON Schema for spec validation and IDE support
+
+## Configuration
+
+Add an `openpkg.config.(ts|js|mjs)` file to save defaults:
+
+```ts
+// openpkg.config.ts
+import { defineConfig } from 'openpkg-cli/config';
+
+export default defineConfig({
+  include: ['createUser', 'deleteUser'],
+  exclude: ['internalHelper'],
+});
+```
+
+CLI flags override config values, and OpenPkg automatically pulls in referenced types for the exports you keep.
 
 ## License
 
