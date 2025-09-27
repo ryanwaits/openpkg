@@ -91,7 +91,7 @@ const enumMemberSchema = z.object({
 
 const memberSchema = z.union([classMemberSchema, enumMemberSchema]);
 
-export const openPkgSchema = z.object({
+export const openPkgSchema: z.ZodTypeAny = z.object({
   $schema: z.string().optional(),
   openpkg: z.literal('0.1.0'),
   meta: z.object({

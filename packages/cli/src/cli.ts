@@ -4,8 +4,8 @@ import { readFileSync } from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Command } from 'commander';
-import { registerAnalyzeCommand } from './commands/analyze';
 import { registerGenerateCommand } from './commands/generate';
+import { registerInitCommand } from './commands/init';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,7 +20,7 @@ program
   .version(packageJson.version);
 
 registerGenerateCommand(program);
-registerAnalyzeCommand(program);
+registerInitCommand(program);
 
 program.command('*', { hidden: true }).action(() => {
   program.outputHelp();

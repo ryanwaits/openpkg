@@ -2,7 +2,9 @@
   "name": "openpkg-monorepo",
   "private": true,
   "type": "module",
-  "workspaces": ["packages/*"],
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
     "build": "bun run build:sdk && bun run build:cli",
     "build:sdk": "cd packages/sdk && bun run build",

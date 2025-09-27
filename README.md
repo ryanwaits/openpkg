@@ -75,6 +75,9 @@ openpkg generate src/index.ts
 
 # Keep only specific exports
 openpkg generate src/index.ts --include=createUser,deleteUser
+
+# Scaffold a config file
+openpkg init
 ```
 
 ### SDK Installation
@@ -94,14 +97,14 @@ const spec = await openpkg.analyzeFile('./src/index.ts', {
 });
 ```
 
-### Analyze a local file
+### Generate a spec from the CLI
 
 ```bash
-# Analyze a single TypeScript entry point
-openpkg analyze src/index.ts --show=summary
+# Generate and save openpkg.json for a single entry point
+openpkg generate src/index.ts
 
 # Restrict output to specific exports
-openpkg analyze src/index.ts --include=createUser --show=spec
+openpkg generate src/index.ts --include=createUser --output openpkg.json
 ```
 
 ## Documentation

@@ -3,7 +3,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { type NormalizedOpenPkgConfig, normalizeConfig, openPkgConfigSchema } from './schema';
 
-const CONFIG_FILE_NAMES = [
+export const OPENPKG_CONFIG_FILENAMES = [
   'openpkg.config.ts',
   'openpkg.config.mts',
   'openpkg.config.cts',
@@ -26,7 +26,7 @@ const findConfigFile = async (cwd: string): Promise<string | null> => {
   const { root } = path.parse(current);
 
   while (true) {
-    for (const candidate of CONFIG_FILE_NAMES) {
+    for (const candidate of OPENPKG_CONFIG_FILENAMES) {
       const candidatePath = path.join(current, candidate);
       if (await fileExists(candidatePath)) {
         return candidatePath;
@@ -89,6 +89,6 @@ export const loadOpenPkgConfigInternal = async (
   };
 };
 
-export const loadOpenPkgConfig = loadOpenPkgConfigInternal;
+export { loadOpenPkgConfigInternal as loadOpenPkgConfig };
 
 export type { NormalizedOpenPkgConfig };
