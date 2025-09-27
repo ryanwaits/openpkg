@@ -1,4 +1,4 @@
-import * as ts from 'typescript';
+import { ts } from '../ts-module';
 import type { ParameterDocumentation, ParsedJSDoc } from './tsdoc-utils';
 import { isBuiltInType } from './type-utils';
 

@@ -1,4 +1,4 @@
-import * as ts from 'typescript';
+import { ts } from '../ts-module';
 
 /**
  * Extract all type references from a type string

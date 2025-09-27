@@ -1,7 +1,7 @@
 import * as fsSync from 'node:fs';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
-import * as ts from 'typescript';
+import { ts } from './ts-module';
 import type { AnalysisMetadataInternal } from './analysis/run-analysis';
 import { runAnalysis } from './analysis/run-analysis';
 import { extractPackageSpec } from './extractor';

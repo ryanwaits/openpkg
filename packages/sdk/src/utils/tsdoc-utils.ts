@@ -1,4 +1,4 @@
-import * as ts from 'typescript';
+import { ts } from '../ts-module';
 
 export interface ParsedParam {
   name: string;

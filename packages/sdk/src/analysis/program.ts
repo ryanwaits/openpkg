@@ -1,5 +1,5 @@
 import * as path from 'node:path';
-import * as ts from 'typescript';
+import { ts } from '../ts-module';
 
 const DEFAULT_COMPILER_OPTIONS: ts.CompilerOptions = {
   target: ts.ScriptTarget.Latest,

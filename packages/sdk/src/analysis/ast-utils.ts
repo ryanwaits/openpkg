@@ -1,4 +1,4 @@
-import * as ts from 'typescript';
+import { ts } from '../ts-module';
 
 export function getJSDocComment(symbol: ts.Symbol, typeChecker: ts.TypeChecker): string {
   const comments = symbol.getDocumentationComment(typeChecker);

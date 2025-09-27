@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import * as ts from 'typescript';
+import { ts } from '../ts-module';
 import type { z } from 'zod';
 import type { openPkgSchema } from '../types/openpkg';
 import type { AnalysisContextInput } from './context';

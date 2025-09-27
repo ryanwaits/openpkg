@@ -1,4 +1,4 @@
-import * as ts from 'typescript';
+import { ts } from '../../ts-module';
 import { formatTypeReference, structureParameter } from '../../utils/parameter-utils';
 import {
   getParameterDocumentation,
