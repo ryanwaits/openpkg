@@ -1,6 +1,6 @@
 {
   "name": "openpkg-sdk",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "description": "TypeScript package specification SDK",
   "keywords": ["typescript", "documentation", "sdk", "openpkg", "package-analysis"],
   "homepage": "https://github.com/openpkg/openpkg#readme",
