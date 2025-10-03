@@ -55,4 +55,4 @@ if (!result.ok) {
 
 ## License
 
-MIT © Ryan Waits
+MIT License — see [LICENSE](./LICENSE).
