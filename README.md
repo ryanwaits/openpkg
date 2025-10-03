@@ -1,143 +1,56 @@
 # OpenPkg
 
 [![npm version](https://img.shields.io/npm/v/@openpkg-ts%2Fcli.svg)](https://www.npmjs.com/package/@openpkg-ts/cli)
+> **Alpha Notice:** OpenPkg is in early alpha. APIs may change without notice; avoid production deployments until a stabilizing release is announced.
 [![npm version](https://img.shields.io/npm/v/@openpkg-ts%2Fsdk.svg)](https://www.npmjs.com/package/@openpkg-ts/sdk)
+[![npm version](https://img.shields.io/npm/v/@openpkg-ts%2Fspec.svg)](https://www.npmjs.com/package/@openpkg-ts/spec)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Generate structured JSON specifications for TypeScript packages, similar to how OpenAPI documents REST APIs.
+OpenPkg turns TypeScript source code into a machine-readable JSON specification that mirrors the ergonomics of OpenAPI. Use it to power docs, SDKs, diff tooling, or any workflow that needs structured insight into package exports.
 
-## What is OpenPkg?
+## Packages
+- `@openpkg-ts/spec`: canonical JSON Schema, TypeScript types, validation, normalization, diff helpers.
+- `@openpkg-ts/sdk`: programmatic API for analyzing TypeScript projects and producing specs.
+- `@openpkg-ts/cli`: one-command generator for authoring `openpkg.json` files from the terminal.
 
-OpenPkg extracts your TypeScript package's complete type structure into a standardized, machine-readable format:
-
-```typescript
-// Your TypeScript code
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-}
-
-export function createUser(data: Partial<User>): User {
-  // ...
-}
-```
-
-```json
-// Generated OpenPkg specification
-{
-  "$schema": "https://unpkg.com/@openpkg-ts/spec/schemas/v0.1.0/openpkg.schema.json",
-  "openpkg": "0.1.0",
-  "exports": [{
-    "name": "createUser",
-    "kind": "function",
-    "signatures": [{
-      "parameters": [{
-        "name": "data",
-        "schema": { "$ref": "#/types/User" }
-      }],
-      "returns": {
-        "schema": { "$ref": "#/types/User" }
-      }
-    }]
-  }],
-  "types": [{
-    "name": "User",
-    "kind": "interface",
-    "schema": {
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "name": { "type": "string" },
-        "email": { "type": "string" }
-      }
-    }
-  }]
-}
-```
-
-## Quick Start
-
-### CLI Installation
-
+## Install
 ```bash
+# CLI (global)
 npm install -g @openpkg-ts/cli
-```
 
-### Basic Usage
-
-```bash
-# Generate spec for your package
-openpkg generate
-
-# Generate from specific file
-openpkg generate src/index.ts
-
-# Keep only specific exports
-openpkg generate src/index.ts --include=createUser,deleteUser
-
-# Scaffold a config file
-openpkg init
-```
-
-### SDK Installation
-
-```bash
+# SDK (app local)
 npm install @openpkg-ts/sdk
+
+# Spec helpers (optional utility usage)
+npm install @openpkg-ts/spec
 ```
 
-### SDK Usage
-
-```typescript
+## Quick Examples
+```bash
+openpkg generate --output openpkg.json
+```
+```ts
 import { OpenPkg } from '@openpkg-ts/sdk';
 
 const openpkg = new OpenPkg();
-const spec = await openpkg.analyzeFile('./src/index.ts', {
-  filters: { include: ['createUser'] },
-});
+const { spec } = await openpkg.analyzeFileWithDiagnostics('src/index.ts');
+console.log(`${spec.exports.length} exports`, spec.meta.name);
 ```
-
-### Generate a spec from the CLI
-
-```bash
-# Generate and save openpkg.json for a single entry point
-openpkg generate src/index.ts
-
-# Restrict output to specific exports
-openpkg generate src/index.ts --include=createUser --output openpkg.json
-```
-
-## Documentation
-
-- 📖 [CLI Documentation](./packages/cli/README.md) - Full CLI usage guide with all commands and options
-- 📦 [SDK Documentation](./packages/sdk/README.md) - SDK API reference and examples
-- 🧪 [Examples](./examples/README.md) - Sample TypeScript projects demonstrating various features
-
-## Key Features
-
-- 🎯 **Structured Output** - JSON specifications following OpenAPI patterns
-- 📦 **Complete Type Extraction** - All exports, types, interfaces, and classes
-- 🔗 **Smart References** - Clean `$ref` links between types
-- 📚 **JSDoc Integration** - Preserves your documentation
-- ⚡ **Monorepo Support** - Works with workspace packages
-- 🎚️ **Filter Controls** - Include or exclude exports via config files or CLI flags
-- ✅ **Schema Validation** - JSON Schema for spec validation and IDE support
-
-## Configuration
-
-Add an `openpkg.config.(ts|js|mjs)` file to save defaults:
-
 ```ts
-// openpkg.config.ts
-import { defineConfig } from '@openpkg-ts/cli/config';
+import { normalize, validateSpec } from '@openpkg-ts/spec';
 
-export default defineConfig({
-  include: ['createUser', 'deleteUser'],
-  exclude: ['internalHelper'],
-});
+const normalized = normalize(spec);
+const result = validateSpec(normalized);
+if (!result.ok) {
+  throw new Error(result.errors.map((e) => `${e.instancePath || '/'} ${e.message}`).join('
+'));
+}
 ```
-
-CLI flags override config values, and OpenPkg automatically pulls in referenced types for the exports you keep.
+## Documentation
+- [CLI guide](./packages/cli/README.md)
+- [SDK reference](./packages/sdk/README.md)
+- [Spec utilities](./packages/spec/README.md)
+- [Examples](./examples/README.md)
 
 ## License
 

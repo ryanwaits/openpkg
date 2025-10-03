@@ -1,127 +1,42 @@
-# OpenPkg SDK
+# @openpkg-ts/sdk
 
-[![npm version](https://img.shields.io/npm/v/@openpkg-ts%2Fsdk.svg)](https://www.npmjs.com/package/@openpkg-ts/sdk)
+Programmatic API for extracting OpenPkg specs from TypeScript projects.
 
-TypeScript SDK for generating and post-processing OpenPkg specs directly from your tooling.
-
-## Installation
-
+## Install
 ```bash
-# npm
 npm install @openpkg-ts/sdk
-
-# bun
-bun add @openpkg-ts/sdk
-
-# yarn
-yarn add @openpkg-ts/sdk
-
-# pnpm
-pnpm add @openpkg-ts/sdk
 ```
 
-## Quick Start
-
+## Minimal Usage
 ```ts
 import { OpenPkg } from '@openpkg-ts/sdk';
 
-const openpkg = new OpenPkg({
-  resolveExternalTypes: true,
-});
+const openpkg = new OpenPkg();
+const { spec, diagnostics } = await openpkg.analyzeFileWithDiagnostics('src/index.ts');
 
-const spec = await openpkg.analyzeFile('./src/index.ts', {
-  filters: {
-    include: ['createUser', 'deleteUser'],
-  },
-});
-
-console.log(`exports: ${spec.exports.length}`);
-console.log(`types: ${spec.types?.length ?? 0}`);
+console.log(`${spec.exports.length} exports`);
+console.log('diagnostics', diagnostics.length);
 ```
 
-`OpenPkg` automatically resolves local sources, merges in declaration files, and keeps type references intact. Use `filters.include` / `filters.exclude` to narrow the surface area that lands in the final spec.
+## Helper Functions
+- `analyze(code)` – analyze an in-memory string
+- `analyzeFile(path)` – analyze a single entry point
+- `analyzeWithDiagnostics` / `analyzeFileWithDiagnostics` – include TypeScript diagnostics
+- `extractPackageSpec` – lower-level hook used by the CLI
 
-## Filtering Exports
-
+## Filters
 ```ts
-import { analyzeFile } from '@openpkg-ts/sdk';
-
-const spec = await analyzeFile('./src/index.ts', {
+const { spec } = await openpkg.analyzeFileWithDiagnostics('src/index.ts', {
   filters: {
-    include: ['publicFunction'],
+    include: ['publicApi'],
     exclude: ['internalHelper'],
   },
 });
 ```
 
-Filtering trims both the `exports` array and orphaned items under `types`. The SDK will surface informational diagnostics whenever an identifier cannot be located or when filtering drops transitive types you may still need.
+## See Also
+- [Spec helpers](../spec/README.md)
+- [CLI generator](../cli/README.md)
+- [Examples](../../examples/README.md)
 
-## Diagnostics
-
-Use the `analyzeFileWithDiagnostics` or `analyzeWithDiagnostics` helpers when you need visibility into parsing or filtering issues.
-
-```ts
-import { OpenPkg } from '@openpkg-ts/sdk';
-
-const openpkg = new OpenPkg();
-const { spec, diagnostics } = await openpkg.analyzeFileWithDiagnostics('./src/index.ts');
-
-diagnostics.forEach((diagnostic) => {
-  const location = diagnostic.location?.file
-    ? `${diagnostic.location.file}:${diagnostic.location.line ?? '?'}:${diagnostic.location.column ?? '?'}`
-    : '(unknown)';
-  console.log(`[${diagnostic.severity}] ${location} ${diagnostic.message}`);
-});
-```
-
-Diagnostics normalize TypeScript compiler messages into `error`, `warning`, and `info` severity levels so you can decide how to surface them in your own tools.
-
-## Programmatic Workflows
-
-### Analyze in-memory code
-
-```ts
-import { analyze } from '@openpkg-ts/sdk';
-
-const spec = await analyze(
-  `export const sum = (a: number, b: number) => a + b;`,
-  { filters: { include: ['sum'] } },
-);
-```
-
-### Batch project analysis
-
-```ts
-import { OpenPkg } from '@openpkg-ts/sdk';
-import { glob } from 'glob';
-
-const openpkg = new OpenPkg();
-const files = await glob('packages/**/src/index.ts');
-const specs = await Promise.all(files.map((file) => openpkg.analyzeFile(file)));
-```
-
-## API Surface
-
-- `new OpenPkg(options?)`
-  - `analyze(code, fileName?, options?)`
-  - `analyzeFile(filePath, options?)`
-  - `analyzeWithDiagnostics(code, fileName?, options?)`
-  - `analyzeFileWithDiagnostics(filePath, options?)`
-- `analyze(code, options?)` – convenience wrapper
-- `analyzeFile(filePath, options?)` – convenience wrapper
-- `extractPackageSpec(entry, packageDir, source, options)` – lower-level extractor
-- Types: `OpenPkgSpec`, `FilterOptions`, `AnalyzeOptions`, `AnalysisResult`, `Diagnostic`
-
-## Development
-
-```bash
-git clone https://github.com/ryanwaits/openpkg.git
-cd openpkg
-bun install
-bun run build:sdk
-bun test
-```
-
-## License
-
-MIT
+MIT License
