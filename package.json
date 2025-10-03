@@ -16,10 +16,14 @@
     "lint:fix": "biome check --write packages/*/src/ examples/",
     "format": "biome format --write packages/*/src/ examples/",
     "build:spec": "cd packages/spec && bun run build",
-    "dev:spec": "cd packages/spec && bun run dev"
+    "dev:spec": "cd packages/spec && bun run dev",
+    "changeset": "changeset",
+    "version": "changeset version && bun install",
+    "release": "changeset publish"
   },
   "devDependencies": {
     "@biomejs/biome": "2.1.2",
+    "@changesets/cli": "^2.29.7",
     "@types/bun": "latest",
     "@types/node": "^20.0.0"
   }
