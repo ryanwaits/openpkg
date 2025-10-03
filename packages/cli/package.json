@@ -58,5 +58,8 @@
     "@types/bun": "latest",
     "@types/node": "^20.0.0",
     "bunup": "latest"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
