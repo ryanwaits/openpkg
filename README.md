@@ -1,7 +1,7 @@
 # OpenPkg
 
-[![npm version](https://img.shields.io/npm/v/openpkg-cli.svg)](https://www.npmjs.com/package/openpkg-cli)
-[![npm version](https://img.shields.io/npm/v/openpkg-sdk.svg)](https://www.npmjs.com/package/openpkg-sdk)
+[![npm version](https://img.shields.io/npm/v/@openpkg-ts%2Fcli.svg)](https://www.npmjs.com/package/@openpkg-ts/cli)
+[![npm version](https://img.shields.io/npm/v/@openpkg-ts%2Fsdk.svg)](https://www.npmjs.com/package/@openpkg-ts/sdk)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Generate structured JSON specifications for TypeScript packages, similar to how OpenAPI documents REST APIs.
@@ -26,7 +26,7 @@ export function createUser(data: Partial<User>): User {
 ```json
 // Generated OpenPkg specification
 {
-  "$schema": "https://raw.githubusercontent.com/ryanwaits/openpkg/main/schemas/v0.1.0/openpkg.schema.json",
+  "$schema": "https://unpkg.com/@openpkg-ts/spec/schemas/v0.1.0/openpkg.schema.json",
   "openpkg": "0.1.0",
   "exports": [{
     "name": "createUser",
@@ -61,7 +61,7 @@ export function createUser(data: Partial<User>): User {
 ### CLI Installation
 
 ```bash
-npm install -g openpkg-cli
+npm install -g @openpkg-ts/cli
 ```
 
 ### Basic Usage
@@ -83,13 +83,13 @@ openpkg init
 ### SDK Installation
 
 ```bash
-npm install openpkg-sdk
+npm install @openpkg-ts/sdk
 ```
 
 ### SDK Usage
 
 ```typescript
-import { OpenPkg } from 'openpkg-sdk';
+import { OpenPkg } from '@openpkg-ts/sdk';
 
 const openpkg = new OpenPkg();
 const spec = await openpkg.analyzeFile('./src/index.ts', {
@@ -129,7 +129,7 @@ Add an `openpkg.config.(ts|js|mjs)` file to save defaults:
 
 ```ts
 // openpkg.config.ts
-import { defineConfig } from 'openpkg-cli/config';
+import { defineConfig } from '@openpkg-ts/cli/config';
 
 export default defineConfig({
   include: ['createUser', 'deleteUser'],

@@ -18,7 +18,7 @@ afterEach(() => {
 
 describe('generate command', () => {
   it('uses auto-detected entry point and writes spec to output', async () => {
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'openpkg-cli-generate-'));
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'openpkg-ts-cli-generate-'));
     tmpDirs.push(tmpDir);
 
     fs.mkdirSync(path.join(tmpDir, 'src'), { recursive: true });
@@ -97,7 +97,7 @@ describe('generate command', () => {
   });
 
   it('merges include/exclude filters from config and CLI flags', async () => {
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'openpkg-cli-generate-filter-'));
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'openpkg-ts-cli-generate-filter-'));
     tmpDirs.push(tmpDir);
 
     fs.mkdirSync(path.join(tmpDir, 'src'), { recursive: true });

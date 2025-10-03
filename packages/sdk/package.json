@@ -1,8 +1,14 @@
 {
-  "name": "openpkg-sdk",
-  "version": "0.4.12",
+  "name": "@openpkg-ts/sdk",
+  "version": "0.1.0",
   "description": "TypeScript package specification SDK",
-  "keywords": ["typescript", "documentation", "sdk", "openpkg", "package-analysis"],
+  "keywords": [
+    "typescript",
+    "documentation",
+    "sdk",
+    "openpkg",
+    "package-analysis"
+  ],
   "homepage": "https://github.com/openpkg/openpkg#readme",
   "repository": {
     "type": "git",
@@ -32,8 +38,11 @@
     "lint:fix": "biome check --write src/",
     "format": "biome format --write src/"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "dependencies": {
+    "@openpkg-ts/spec": "^0.1.0",
     "typescript": "^5.0.0",
     "zod": "^4.0.5"
   },

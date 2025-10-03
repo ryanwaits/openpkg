@@ -6,5 +6,5 @@ export default defineConfig({
   clean: true,
   splitting: true,
   format: ['esm'],
-  external: ['openpkg-sdk', 'commander', 'chalk', 'ora', '@inquirer/prompts'],
+  external: ['@openpkg-ts/sdk', '@openpkg-ts/spec', 'commander', 'chalk', 'ora', '@inquirer/prompts'],
 });

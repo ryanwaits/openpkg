@@ -1,6 +1,6 @@
 # OpenPkg CLI
 
-[![npm version](https://img.shields.io/npm/v/openpkg-cli.svg)](https://www.npmjs.com/package/openpkg-cli)
+[![npm version](https://img.shields.io/npm/v/@openpkg-ts%2Fcli.svg)](https://www.npmjs.com/package/@openpkg-ts/cli)
 
 Command-line interface for producing OpenPkg specs from TypeScript projects.
 
@@ -8,16 +8,16 @@ Command-line interface for producing OpenPkg specs from TypeScript projects.
 
 ```bash
 # npm
-npm install -g openpkg-cli
+npm install -g @openpkg-ts/cli
 
 # bun
-bun add -g openpkg-cli
+bun add -g @openpkg-ts/cli
 
 # yarn
-yarn global add openpkg-cli
+yarn global add @openpkg-ts/cli
 
 # pnpm
-pnpm add -g openpkg-cli
+pnpm add -g @openpkg-ts/cli
 ```
 
 ## Quick Start
@@ -87,7 +87,7 @@ Create an `openpkg.config.ts`, `.js`, or `.mjs` file anywhere above your working
 
 ```ts
 // openpkg.config.mjs
-import { defineConfig } from 'openpkg-cli/config';
+import { defineConfig } from '@openpkg-ts/cli/config';
 
 export default defineConfig({
   include: ['createUser', 'deleteUser'],

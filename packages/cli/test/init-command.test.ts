@@ -19,7 +19,7 @@ afterEach(() => {
 
 describe('init command', () => {
   it('creates openpkg.config.mjs by default', async () => {
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'openpkg-cli-init-default-'));
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'openpkg-ts-cli-init-default-'));
     tmpDirs.push(tmpDir);
 
     const program = new Command();
@@ -33,7 +33,7 @@ describe('init command', () => {
     const contents = fs.readFileSync(configPath, 'utf8');
     expect(contents).toBe(
       [
-        "import { defineConfig } from 'openpkg-cli/config';",
+        "import { defineConfig } from '@openpkg-ts/cli/config';",
         '',
         'export default defineConfig({',
         '  include: [],',
@@ -45,7 +45,7 @@ describe('init command', () => {
   });
 
   it('creates openpkg.config.js when package type is module', async () => {
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'openpkg-cli-init-module-'));
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'openpkg-ts-cli-init-module-'));
     tmpDirs.push(tmpDir);
 
     fs.writeFileSync(path.join(tmpDir, 'package.json'), JSON.stringify({ name: 'fixture', type: 'module' }));
@@ -60,7 +60,7 @@ describe('init command', () => {
   });
 
   it('fails when a config file already exists in the tree', async () => {
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'openpkg-cli-init-existing-'));
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'openpkg-ts-cli-init-existing-'));
     tmpDirs.push(tmpDir);
 
     fs.writeFileSync(path.join(tmpDir, 'openpkg.config.mjs'), 'export default {};\n');

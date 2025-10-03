@@ -1,14 +1,13 @@
-import type { z } from 'zod';
 import { runAnalysis } from './analysis/run-analysis';
 import type { OpenPkgOptions } from './options';
-import type { openPkgSchema } from './types/openpkg';
+import type { OpenPkgSpec } from './types/openpkg';
 
 export async function extractPackageSpec(
   entryFile: string,
   packageDir?: string,
   content?: string,
   options?: OpenPkgOptions,
-): Promise<z.infer<typeof openPkgSchema>> {
+): Promise<OpenPkgSpec> {
   const result = runAnalysis({
     entryFile,
     packageDir,

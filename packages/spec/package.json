@@ -1,62 +1,50 @@
 {
-  "name": "@openpkg-ts/cli",
+  "name": "@openpkg-ts/spec",
   "version": "0.1.0",
-  "description": "OpenAPI-like specification generator for TypeScript packages",
+  "description": "Shared schema, validation, and diff utilities for OpenPkg specs",
   "keywords": [
-    "typescript",
-    "cli",
-    "documentation",
     "openpkg",
-    "package-analysis",
-    "openapi"
+    "json-schema",
+    "validation",
+    "typescript",
+    "spec"
   ],
   "homepage": "https://github.com/openpkg/openpkg#readme",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/openpkg/openpkg.git",
-    "directory": "packages/cli"
+    "directory": "packages/spec"
   },
   "license": "MIT",
   "author": "Ryan Waits",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "bin": {
-    "openpkg": "./dist/cli.js"
-  },
   "exports": {
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
-    },
-    "./config": {
-      "import": "./dist/config/index.js",
-      "types": "./dist/config/index.d.ts"
     }
   },
+  "files": [
+    "dist",
+    "schemas"
+  ],
   "scripts": {
     "build": "bunup",
     "dev": "bunup --watch",
-    "cli": "bun run src/cli.ts",
     "lint": "biome check src/",
     "lint:fix": "biome check --write src/",
     "format": "biome format --write src/"
   },
-  "files": [
-    "dist"
-  ],
   "dependencies": {
-    "@inquirer/prompts": "^7.8.0",
-    "@openpkg-ts/sdk": "^0.1.0",
-    "@openpkg-ts/spec": "^0.1.0",
-    "chalk": "^5.4.1",
-    "commander": "^14.0.0",
-    "ora": "^8.2.0",
-    "zod": "^4.0.5"
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1"
   },
   "devDependencies": {
     "@types/bun": "latest",
     "@types/node": "^20.0.0",
-    "bunup": "latest"
+    "bunup": "latest",
+    "typescript": "^5.0.0"
   }
 }

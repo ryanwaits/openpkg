@@ -169,7 +169,7 @@ const resolveFormat = (format: ConfigFormat, packageType: PackageType): 'mjs' | 
 const buildTemplate = (format: 'mjs' | 'js' | 'cjs'): string => {
   if (format === 'cjs') {
     return [
-      "const { defineConfig } = require('openpkg-cli/config');",
+      "const { defineConfig } = require('@openpkg-ts/cli/config');",
       '',
       'module.exports = defineConfig({',
       '  include: [],',
@@ -180,7 +180,7 @@ const buildTemplate = (format: 'mjs' | 'js' | 'cjs'): string => {
   }
 
   return [
-    "import { defineConfig } from 'openpkg-cli/config';",
+    "import { defineConfig } from '@openpkg-ts/cli/config';",
     '',
     'export default defineConfig({',
     '  include: [],',

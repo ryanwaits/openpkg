@@ -1,7 +1,6 @@
-import type { z } from 'zod';
-import type { openPkgSchema } from '../types/openpkg';
+import type { OpenPkgSpec } from '../types/openpkg';
 
-type TypesArray = NonNullable<z.infer<typeof openPkgSchema>['types']>;
+type TypesArray = NonNullable<OpenPkgSpec['types']>;
 export type RegisteredType = TypesArray[number];
 
 export class TypeRegistry {

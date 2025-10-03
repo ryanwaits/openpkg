@@ -1,5 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { SCHEMA_URL } from '@openpkg-ts/spec';
 import { ts } from '../ts-module';
 import type { AnalysisContext } from './context';
 import { serializeClass } from './serializers/classes';
@@ -23,8 +24,7 @@ export function buildOpenPkgSpec(
     : {};
 
   const spec: OpenPkgSpec = {
-    $schema:
-      'https://raw.githubusercontent.com/ryanwaits/openpkg/main/schemas/v0.1.0/openpkg.schema.json',
+    $schema: SCHEMA_URL,
     openpkg: '0.1.0',
     meta: {
       name: packageJson.name || 'unknown',

@@ -2,7 +2,8 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import chalk from 'chalk';
 import type { Command } from 'commander';
-import { OpenPkg } from 'openpkg-sdk';
+import { OpenPkg } from '@openpkg-ts/sdk';
+import { normalize, validateSpec, type OpenPkg as OpenPkgSpec } from '@openpkg-ts/spec';
 import ora, { type Ora } from 'ora';
 import { type LoadedOpenPkgConfig, loadOpenPkgConfig } from '../config';
 import {
@@ -31,11 +32,6 @@ const defaultDependencies: Required<GenerateCommandDependencies> = {
 };
 
 type GeneratedSpec = Awaited<ReturnType<OpenPkg['analyzeFileWithDiagnostics']>>;
-
-type SpecSummary = {
-  exports?: unknown[];
-  types?: unknown[];
-};
 
 function getArrayLength(value: unknown): number {
   return Array.isArray(value) ? value.length : 0;
@@ -139,12 +135,22 @@ export function registerGenerateCommand(
         }
 
         const outputPath = path.resolve(targetDir, options.output);
-        writeFileSync(outputPath, JSON.stringify(result.spec, null, 2));
+        const normalized = normalize(result.spec as OpenPkgSpec);
+        const validation = validateSpec(normalized);
+
+        if (!validation.ok) {
+          spinnerInstance.fail('Spec failed schema validation');
+          for (const err of validation.errors) {
+            error(chalk.red(`schema: ${err.instancePath || '/'} ${err.message}`));
+          }
+          process.exit(1);
+        }
+
+        writeFileSync(outputPath, JSON.stringify(normalized, null, 2));
 
         log(chalk.green(`✓ Generated ${path.relative(process.cwd(), outputPath)}`));
-        const summary = result.spec as SpecSummary;
-        log(chalk.gray(`  ${getArrayLength(summary.exports)} exports`));
-        log(chalk.gray(`  ${getArrayLength(summary.types)} types`));
+        log(chalk.gray(`  ${getArrayLength(normalized.exports)} exports`));
+        log(chalk.gray(`  ${getArrayLength(normalized.types)} types`));
 
         if (result.diagnostics.length > 0) {
           log('');

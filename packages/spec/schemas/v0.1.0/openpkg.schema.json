@@ -1,15 +1,19 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/ryanwaits/openpkg/main/schemas/v0.1.0/openpkg.schema.json",
+  "$id": "https://unpkg.com/@openpkg-ts/spec/schemas/v0.1.0/openpkg.schema.json",
   "title": "OpenPkg Specification",
   "description": "Schema for OpenPkg specification files",
   "type": "object",
-  "required": ["openpkg", "meta", "exports"],
+  "required": [
+    "openpkg",
+    "meta",
+    "exports"
+  ],
   "properties": {
     "$schema": {
       "type": "string",
       "description": "Reference to the OpenPkg schema version",
-      "pattern": "^https://raw\\.githubusercontent\\.com/ryanwaits/openpkg/main/schemas/v[0-9]+\\.[0-9]+\\.[0-9]+/openpkg\\.schema\\.json$"
+      "pattern": "^(https://raw\\.githubusercontent\\.com/ryanwaits/openpkg/main/schemas/v[0-9]+\\.[0-9]+\\.[0-9]+/openpkg\\.schema\\.json|https://unpkg\\.com/@openpkg-ts/spec/schemas/v[0-9]+\\.[0-9]+\\.[0-9]+/openpkg\\.schema\\.json)$"
     },
     "openpkg": {
       "type": "string",
@@ -20,7 +24,9 @@
     "meta": {
       "type": "object",
       "description": "Package metadata",
-      "required": ["name"],
+      "required": [
+        "name"
+      ],
       "properties": {
         "name": {
           "type": "string",
@@ -45,7 +51,13 @@
         "ecosystem": {
           "type": "string",
           "description": "Package ecosystem",
-          "enum": ["js/ts", "python", "rust", "go", "java"]
+          "enum": [
+            "js/ts",
+            "python",
+            "rust",
+            "go",
+            "java"
+          ]
         }
       }
     },
@@ -67,7 +79,11 @@
   "$defs": {
     "export": {
       "type": "object",
-      "required": ["id", "name", "kind"],
+      "required": [
+        "id",
+        "name",
+        "kind"
+      ],
       "properties": {
         "id": {
           "type": "string",
@@ -80,7 +96,14 @@
         "kind": {
           "type": "string",
           "description": "Kind of export",
-          "enum": ["function", "class", "variable", "interface", "type", "enum"]
+          "enum": [
+            "function",
+            "class",
+            "variable",
+            "interface",
+            "type",
+            "enum"
+          ]
         },
         "description": {
           "type": "string",
@@ -114,7 +137,11 @@
     },
     "typeDef": {
       "type": "object",
-      "required": ["id", "name", "kind"],
+      "required": [
+        "id",
+        "name",
+        "kind"
+      ],
       "properties": {
         "id": {
           "type": "string",
@@ -127,7 +154,12 @@
         "kind": {
           "type": "string",
           "description": "Kind of type definition",
-          "enum": ["interface", "type", "enum", "class"]
+          "enum": [
+            "interface",
+            "type",
+            "enum",
+            "class"
+          ]
         },
         "description": {
           "type": "string",
@@ -172,7 +204,10 @@
     },
     "parameter": {
       "type": "object",
-      "required": ["name", "required"],
+      "required": [
+        "name",
+        "required"
+      ],
       "properties": {
         "name": {
           "type": "string",
@@ -205,7 +240,10 @@
     },
     "property": {
       "type": "object",
-      "required": ["name", "required"],
+      "required": [
+        "name",
+        "required"
+      ],
       "properties": {
         "name": {
           "type": "string",
@@ -225,98 +263,41 @@
       }
     },
     "schema": {
-      "oneOf": [
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
         {
           "type": "object",
           "properties": {
             "$ref": {
               "type": "string",
               "description": "Reference to another type",
-              "pattern": "^#/types/[a-zA-Z0-9_]+$"
+              "pattern": "^#/types/[A-Za-z0-9_.-]+$"
             }
           },
-          "required": ["$ref"],
+          "required": [
+            "$ref"
+          ],
           "additionalProperties": false
         },
         {
           "type": "object",
-          "properties": {
-            "type": {
-              "type": "string",
-              "enum": [
-                "string",
-                "number",
-                "boolean",
-                "object",
-                "array",
-                "null",
-                "any",
-                "unknown",
-                "void",
-                "never"
-              ]
-            },
-            "properties": {
-              "type": "object",
-              "additionalProperties": {
-                "$ref": "#/$defs/schema"
-              }
-            },
-            "required": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            },
-            "items": {
-              "$ref": "#/$defs/schema"
-            },
-            "oneOf": {
-              "type": "array",
-              "items": {
-                "$ref": "#/$defs/schema"
-              }
-            },
-            "anyOf": {
-              "type": "array",
-              "items": {
-                "$ref": "#/$defs/schema"
-              }
-            },
-            "allOf": {
-              "type": "array",
-              "items": {
-                "$ref": "#/$defs/schema"
-              }
-            },
-            "enum": {
-              "type": "array",
-              "items": {
-                "type": ["string", "number", "null"]
-              }
-            },
-            "description": {
-              "type": "string"
-            }
-          },
           "not": {
-            "required": ["$ref"]
+            "required": [
+              "$ref"
+            ]
           },
-          "anyOf": [
-            { "required": ["type"] },
-            { "required": ["properties"] },
-            { "required": ["items"] },
-            { "required": ["oneOf"] },
-            { "required": ["anyOf"] },
-            { "required": ["allOf"] },
-            { "required": ["enum"] }
-          ]
+          "additionalProperties": true
         }
       ]
     },
     "sourceLocation": {
       "type": "object",
-      "required": ["file", "line"],
+      "required": [
+        "file",
+        "line"
+      ],
       "properties": {
         "file": {
           "type": "string",

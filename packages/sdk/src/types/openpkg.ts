@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { OpenPkg } from '@openpkg-ts/spec';
 
 // OpenAPI-style schema definition
 // biome-ignore lint/suspicious/noExplicitAny: Required for recursive Zod schema type
@@ -186,4 +187,4 @@ export const openPkgSchema: z.ZodTypeAny = z.object({
   extensions: z.record(z.string(), z.unknown()).optional(),
 });
 
-export type OpenPkgSpec = z.infer<typeof openPkgSchema>;
+export type OpenPkgSpec = OpenPkg;

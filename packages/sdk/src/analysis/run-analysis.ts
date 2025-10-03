@@ -1,8 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { ts } from '../ts-module';
-import type { z } from 'zod';
-import type { openPkgSchema } from '../types/openpkg';
+import type { OpenPkgSpec } from '../types/openpkg';
 import type { AnalysisContextInput } from './context';
 import { createAnalysisContext } from './context';
 import { buildOpenPkgSpec } from './spec-builder';
@@ -16,7 +15,7 @@ export interface AnalysisMetadataInternal {
 }
 
 export interface RunAnalysisResult {
-  spec: z.infer<typeof openPkgSchema>;
+  spec: OpenPkgSpec;
   metadata: AnalysisMetadataInternal;
   diagnostics: readonly ts.Diagnostic[];
 }

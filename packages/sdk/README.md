@@ -1,6 +1,6 @@
 # OpenPkg SDK
 
-[![npm version](https://img.shields.io/npm/v/openpkg-sdk.svg)](https://www.npmjs.com/package/openpkg-sdk)
+[![npm version](https://img.shields.io/npm/v/@openpkg-ts%2Fsdk.svg)](https://www.npmjs.com/package/@openpkg-ts/sdk)
 
 TypeScript SDK for generating and post-processing OpenPkg specs directly from your tooling.
 
@@ -8,22 +8,22 @@ TypeScript SDK for generating and post-processing OpenPkg specs directly from yo
 
 ```bash
 # npm
-npm install openpkg-sdk
+npm install @openpkg-ts/sdk
 
 # bun
-bun add openpkg-sdk
+bun add @openpkg-ts/sdk
 
 # yarn
-yarn add openpkg-sdk
+yarn add @openpkg-ts/sdk
 
 # pnpm
-pnpm add openpkg-sdk
+pnpm add @openpkg-ts/sdk
 ```
 
 ## Quick Start
 
 ```ts
-import { OpenPkg } from 'openpkg-sdk';
+import { OpenPkg } from '@openpkg-ts/sdk';
 
 const openpkg = new OpenPkg({
   resolveExternalTypes: true,
@@ -44,7 +44,7 @@ console.log(`types: ${spec.types?.length ?? 0}`);
 ## Filtering Exports
 
 ```ts
-import { analyzeFile } from 'openpkg-sdk';
+import { analyzeFile } from '@openpkg-ts/sdk';
 
 const spec = await analyzeFile('./src/index.ts', {
   filters: {
@@ -61,7 +61,7 @@ Filtering trims both the `exports` array and orphaned items under `types`. The S
 Use the `analyzeFileWithDiagnostics` or `analyzeWithDiagnostics` helpers when you need visibility into parsing or filtering issues.
 
 ```ts
-import { OpenPkg } from 'openpkg-sdk';
+import { OpenPkg } from '@openpkg-ts/sdk';
 
 const openpkg = new OpenPkg();
 const { spec, diagnostics } = await openpkg.analyzeFileWithDiagnostics('./src/index.ts');
@@ -81,7 +81,7 @@ Diagnostics normalize TypeScript compiler messages into `error`, `warning`, and 
 ### Analyze in-memory code
 
 ```ts
-import { analyze } from 'openpkg-sdk';
+import { analyze } from '@openpkg-ts/sdk';
 
 const spec = await analyze(
   `export const sum = (a: number, b: number) => a + b;`,
@@ -92,7 +92,7 @@ const spec = await analyze(
 ### Batch project analysis
 
 ```ts
-import { OpenPkg } from 'openpkg-sdk';
+import { OpenPkg } from '@openpkg-ts/sdk';
 import { glob } from 'glob';
 
 const openpkg = new OpenPkg();
