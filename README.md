@@ -1,7 +1,5 @@
 # OpenPkg
 
-> **Alpha Notice:** OpenPkg is in early alpha. APIs may change without notice; avoid production deployments until a stabilizing release is announced.
-
 [![npm version](https://img.shields.io/npm/v/@openpkg-ts%2Fcli.svg)](https://www.npmjs.com/package/@openpkg-ts/cli)
 [![npm version](https://img.shields.io/npm/v/@openpkg-ts%2Fsdk.svg)](https://www.npmjs.com/package/@openpkg-ts/sdk)
 [![npm version](https://img.shields.io/npm/v/@openpkg-ts%2Fspec.svg)](https://www.npmjs.com/package/@openpkg-ts/spec)
