@@ -239,10 +239,6 @@
           "type": "boolean",
           "description": "Whether the parameter is required"
         },
-        "description": {
-          "type": "string",
-          "description": "Parameter description"
-        },
         "schema": {
           "$ref": "#/$defs/schema"
         }

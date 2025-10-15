@@ -18,7 +18,6 @@ export type SpecExtension = Record<string, unknown>;
 export type SpecSignatureParameter = {
   name: string;
   required?: boolean;
-  description?: string;
   schema: SpecSchema;
 };
 

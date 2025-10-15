@@ -53,7 +53,6 @@ const parameterSchema = z.object({
   name: z.string(),
   in: z.literal('query').optional(), // We could extend this later
   required: z.boolean().optional(),
-  description: z.string().optional(),
   schema: schemaSchema,
 });
 

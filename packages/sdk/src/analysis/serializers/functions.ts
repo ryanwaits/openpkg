@@ -24,7 +24,6 @@ export function serializeCallSignatures(
 ): Array<{
   parameters: ReturnType<typeof structureParameter>[];
   returns: { schema: TypeReference; description: string };
-  description?: string;
 }> {
   if (signatures.length === 0) {
     return [];

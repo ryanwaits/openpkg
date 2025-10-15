@@ -9,7 +9,6 @@ export interface StructuredParameter {
   schema: ReturnType<typeof formatTypeReference>;
   in?: 'query';
   required?: boolean;
-  description?: string;
 }
 
 const BUILTIN_TYPE_SCHEMAS: Record<string, Record<string, unknown>> = {
@@ -623,12 +622,26 @@ export function structureParameter(
   referencedTypes?: Set<string>,
 ): StructuredParameter {
   const paramName = param.getName();
-  const fallbackName =
+  const isDestructured =
     paramName === '__0' ||
     ts.isObjectBindingPattern(paramDecl.name) ||
-    ts.isArrayBindingPattern(paramDecl.name)
-      ? 'object'
-      : paramName;
+    ts.isArrayBindingPattern(paramDecl.name);
+
+  let inferredAlias: string | undefined;
+  if (isDestructured && functionDoc && Array.isArray(functionDoc.params)) {
+    const prefixes = functionDoc.params
+      .map((p) => p?.name)
+      .filter((n): n is string => typeof n === 'string' && n.includes('.'))
+      .map((n) => n.split('.', 2)[0])
+      .filter(Boolean);
+    if (prefixes.length > 0) {
+      const counts = new Map<string, number>();
+      for (const px of prefixes) counts.set(px, (counts.get(px) ?? 0) + 1);
+      inferredAlias = Array.from(counts.entries()).sort((a, b) => b[1] - a[1])[0]?.[0];
+    }
+  }
+
+  const fallbackName = isDestructured ? inferredAlias ?? 'options' : paramName;
 
   // Check if this is an intersection type with an object literal
   if (paramType.isIntersection()) {
@@ -693,12 +706,12 @@ export function structureParameter(
     }
 
     const actualName = fallbackName;
-    return {
+    const out: StructuredParameter = {
       name: actualName,
       required: !typeChecker.isOptionalParameter(paramDecl),
-      description: paramDoc?.description || '',
       schema: propertiesToSchema(properties),
     };
+    return out;
   }
 
   // Check if this is a union type with object literals
@@ -739,14 +752,14 @@ export function structureParameter(
     // If all union members are object literals, structure with oneOf
     if (objectOptions.length > 0 && !hasNonObjectTypes) {
       const readableName = fallbackName;
-      return {
+      const out: StructuredParameter = {
         name: readableName,
         required: !typeChecker.isOptionalParameter(paramDecl),
-        description: paramDoc?.description || '',
         schema: {
           oneOf: objectOptions.map((opt) => propertiesToSchema(opt.properties)),
         },
       };
+      return out;
     }
   }
 
@@ -771,12 +784,12 @@ export function structureParameter(
     }
 
     const readableName = fallbackName;
-    return {
+    const out: StructuredParameter = {
       name: readableName,
       required: !typeChecker.isOptionalParameter(paramDecl),
-      description: paramDoc?.description || '',
       schema: propertiesToSchema(properties),
     };
+    return out;
   }
 
   // Fallback for remote analysis when type checker returns `any` but the parameter has a declared TypeNode.
@@ -796,12 +809,12 @@ export function structureParameter(
       param.getName(),
     );
 
-    return {
+    const out: StructuredParameter = {
       name: actualName,
       required: !typeChecker.isOptionalParameter(paramDecl),
-      description: paramDoc?.description || '',
       schema,
     };
+    return out;
   }
 
   // Handle regular parameters
@@ -858,10 +871,10 @@ export function structureParameter(
   }
 
   const readableName = fallbackName;
-  return {
+  const out: StructuredParameter = {
     name: readableName,
     required: !typeChecker.isOptionalParameter(paramDecl),
-    description: paramDoc?.description || '',
     schema,
   };
+  return out;
 }
