@@ -54,7 +54,7 @@ function buildTypeLookup(types: SpecType[] | undefined): TypeLookup {
 }
 
 function readTypeRef(value: SpecLike): string | null {
-  const ref = value['$ref'];
+  const ref = (value as { $ref?: unknown }).$ref;
   if (typeof ref !== 'string') {
     return null;
   }

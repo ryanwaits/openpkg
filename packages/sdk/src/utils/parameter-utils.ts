@@ -1,4 +1,6 @@
+import type * as TS from 'typescript';
 import { ts } from '../ts-module';
+
 import type { ParameterDocumentation, ParsedJSDoc } from './tsdoc-utils';
 import { isBuiltInType } from './type-utils';
 
@@ -35,7 +37,7 @@ const BUILTIN_TYPE_SCHEMAS: Record<string, Record<string, unknown>> = {
   BigUint64Array: { type: 'string', format: 'byte' },
 };
 
-function isObjectLiteralType(type: ts.Type): type is ts.ObjectType {
+function isObjectLiteralType(type: TS.Type): type is TS.ObjectType {
   if (!(type.getFlags() & ts.TypeFlags.Object)) {
     return false;
   }
@@ -130,8 +132,8 @@ export function propertiesToSchema(
 }
 
 function buildSchemaFromTypeNode(
-  node: ts.TypeNode,
-  typeChecker: ts.TypeChecker,
+  node: TS.TypeNode,
+  typeChecker: TS.TypeChecker,
   typeRefs: Map<string, string>,
   referencedTypes: Set<string> | undefined,
   functionDoc: ParsedJSDoc | null,
@@ -304,7 +306,12 @@ function buildSchemaFromTypeNode(
       }
 
       if (nonRefs.length > 0) {
-        const merged = nonRefs.reduce((acc, schema) => ({ ...acc, ...schema }), {});
+        const merged: Record<string, unknown> = {};
+        for (const obj of nonRefs as Array<Record<string, unknown>>) {
+          for (const [k, v] of Object.entries(obj)) {
+            merged[k] = v;
+          }
+        }
         return merged;
       }
     }
@@ -386,8 +393,8 @@ function schemasAreEqual(
  * Following OpenAPI standards: use $ref for all named types
  */
 export function formatTypeReference(
-  type: ts.Type,
-  typeChecker: ts.TypeChecker,
+  type: TS.Type,
+  typeChecker: TS.TypeChecker,
   typeRefs: Map<string, string>,
   referencedTypes?: Set<string>,
   visitedAliases?: Set<string>,
@@ -451,7 +458,7 @@ export function formatTypeReference(
 
     // Handle union types (e.g., "A | B | undefined")
     if (type.isUnion()) {
-      const unionType = type as ts.UnionType;
+      const unionType = type as TS.UnionType;
       const parts = unionType.types.map((t) =>
         formatTypeReference(t, typeChecker, typeRefs, referencedTypes, visited),
       );
@@ -463,7 +470,7 @@ export function formatTypeReference(
     }
 
     if (type.isIntersection()) {
-      const intersectionType = type as ts.IntersectionType;
+      const intersectionType = type as TS.IntersectionType;
       const parts = intersectionType.types.map((t) =>
         formatTypeReference(t, typeChecker, typeRefs, referencedTypes, visited),
       );
@@ -607,9 +614,9 @@ export function formatTypeReference(
  */
 export function structureParameter(
   param: ts.Symbol,
-  paramDecl: ts.ParameterDeclaration,
-  paramType: ts.Type,
-  typeChecker: ts.TypeChecker,
+  paramDecl: TS.ParameterDeclaration,
+  paramType: TS.Type,
+  typeChecker: TS.TypeChecker,
   typeRefs: Map<string, string>,
   functionDoc?: ParsedJSDoc | null,
   paramDoc?: ParameterDocumentation,
@@ -626,7 +633,7 @@ export function structureParameter(
   // Check if this is an intersection type with an object literal
   if (paramType.isIntersection()) {
     const properties: StructuredProperty[] = [];
-    const intersectionType = paramType as ts.IntersectionType;
+    const intersectionType = paramType as TS.IntersectionType;
 
     // Process each part of the intersection
     for (const subType of intersectionType.types) {
@@ -696,7 +703,7 @@ export function structureParameter(
 
   // Check if this is a union type with object literals
   if (paramType.isUnion()) {
-    const unionType = paramType as ts.UnionType;
+    const unionType = paramType as TS.UnionType;
     const objectOptions: Array<{ properties: StructuredProperty[] }> = [];
     let hasNonObjectTypes = false;
 

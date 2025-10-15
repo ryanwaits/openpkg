@@ -1,7 +1,9 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { SCHEMA_URL } from '@openpkg-ts/spec';
+import type * as TS from 'typescript';
 import { ts } from '../ts-module';
+
 import type { AnalysisContext } from './context';
 import { serializeClass } from './serializers/classes';
 import { serializeEnum } from './serializers/enums';
@@ -9,7 +11,7 @@ import { type SerializerContext, serializeFunctionExport } from './serializers/f
 import { serializeInterface } from './serializers/interfaces';
 import { serializeTypeAlias } from './serializers/type-aliases';
 import { serializeVariable } from './serializers/variables';
-import type { OpenPkgSpec, TypeDefinition } from './spec-types';
+import type { OpenPkgSpec } from './spec-types';
 import { TypeRegistry } from './type-registry';
 
 export function buildOpenPkgSpec(
@@ -194,11 +196,11 @@ export function buildOpenPkgSpec(
  * information we need to serialize.
  */
 function resolveExportTarget(
-  symbol: ts.Symbol,
-  checker: ts.TypeChecker,
+  symbol: TS.Symbol,
+  checker: TS.TypeChecker,
 ): {
-  declaration?: ts.Declaration;
-  targetSymbol: ts.Symbol;
+  declaration?: TS.Declaration;
+  targetSymbol: TS.Symbol;
 } {
   let targetSymbol = symbol;
 

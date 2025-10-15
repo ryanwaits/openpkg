@@ -25,7 +25,9 @@ export interface Rectangle {
  * Math constants
  */
 export enum MathConstants {
+  // biome-ignore lint/suspicious/noApproximativeNumericConstant: demo constants
   PI = 3.141592653589793,
+  // biome-ignore lint/suspicious/noApproximativeNumericConstant: demo constants
   E = 2.718281828459045,
   GOLDEN_RATIO = 1.61803,
 }

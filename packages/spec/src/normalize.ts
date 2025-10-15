@@ -13,9 +13,7 @@ export function normalize(spec: OpenPkg): OpenPkg {
     ...normalized.meta,
   };
 
-  normalized.exports = Array.isArray(normalized.exports)
-    ? [...normalized.exports]
-    : [];
+  normalized.exports = Array.isArray(normalized.exports) ? [...normalized.exports] : [];
   normalized.exports.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
   normalized.exports = normalized.exports.map((item) => normalizeExport(item));
 
@@ -23,8 +21,7 @@ export function normalize(spec: OpenPkg): OpenPkg {
   types.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
   normalized.types = types.map((item) => normalizeType(item));
 
-  normalized.examples = normalized.examples ?? [];
-  normalized.extensions = normalized.extensions ?? {};
+  // Do not force-add root examples/extensions; keep output minimal
 
   return normalized;
 }

@@ -1,5 +1,5 @@
 {
-  "name": "openpkg-monorepo",
+  "name": "openpkg",
   "private": true,
   "type": "module",
   "workspaces": [

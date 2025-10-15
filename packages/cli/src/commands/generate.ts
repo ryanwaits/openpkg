@@ -1,9 +1,9 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { OpenPkg } from '@openpkg-ts/sdk';
+import { normalize, type OpenPkg as OpenPkgSpec, validateSpec } from '@openpkg-ts/spec';
 import chalk from 'chalk';
 import type { Command } from 'commander';
-import { OpenPkg } from '@openpkg-ts/sdk';
-import { normalize, validateSpec, type OpenPkg as OpenPkgSpec } from '@openpkg-ts/spec';
 import ora, { type Ora } from 'ora';
 import { type LoadedOpenPkgConfig, loadOpenPkgConfig } from '../config';
 import {

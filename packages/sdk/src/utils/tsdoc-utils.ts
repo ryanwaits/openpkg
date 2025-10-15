@@ -1,3 +1,4 @@
+import type * as TS from 'typescript';
 import { ts } from '../ts-module';
 
 export interface ParsedParam {
@@ -23,9 +24,9 @@ export interface ParsedJSDoc {
  * Parse JSDoc/TSDoc comments to extract structured information
  */
 export function parseJSDocComment(
-  symbol: ts.Symbol,
-  _typeChecker: ts.TypeChecker,
-  sourceFileOverride?: ts.SourceFile,
+  symbol: TS.Symbol,
+  _typeChecker: TS.TypeChecker,
+  sourceFileOverride?: TS.SourceFile,
 ): ParsedJSDoc | null {
   const node = symbol.valueDeclaration || symbol.declarations?.[0];
   if (!node) return null;
@@ -48,14 +49,14 @@ export function parseJSDocComment(
  * Find a function/method node in a source file by name and approximate position
  */
 export function findNodeInSourceFile(
-  sourceFile: ts.SourceFile,
+  sourceFile: TS.SourceFile,
   nodeName: string,
   approximateLine: number,
-): ts.Node | null {
-  let closestNode: ts.Node | null = null;
+): TS.Node | null {
+  let closestNode: TS.Node | null = null;
   let closestDistance = Number.POSITIVE_INFINITY;
 
-  function visit(node: ts.Node) {
+  function visit(node: TS.Node) {
     if (ts.isFunctionDeclaration(node) || ts.isFunctionExpression(node)) {
       const name = node.name?.getText();
       if (name === nodeName) {
@@ -280,9 +281,9 @@ export function extractDestructuredParams(
  * Get structured parameter documentation including destructured properties
  */
 export function getParameterDocumentation(
-  param: ts.Symbol,
-  paramDecl: ts.ParameterDeclaration,
-  typeChecker: ts.TypeChecker,
+  param: TS.Symbol,
+  paramDecl: TS.ParameterDeclaration,
+  typeChecker: TS.TypeChecker,
 ): {
   description: string;
   destructuredProperties?: Array<{ name: string; description: string }>;

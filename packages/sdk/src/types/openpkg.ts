@@ -1,5 +1,5 @@
-import { z } from 'zod';
 import type { OpenPkg } from '@openpkg-ts/spec';
+import { z } from 'zod';
 
 // OpenAPI-style schema definition
 // biome-ignore lint/suspicious/noExplicitAny: Required for recursive Zod schema type

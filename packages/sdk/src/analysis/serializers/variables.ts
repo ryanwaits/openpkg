@@ -1,4 +1,4 @@
-import type * as ts from 'typescript';
+import type * as TS from 'typescript';
 import { formatTypeReference } from '../../utils/parameter-utils';
 import { parseJSDocComment } from '../../utils/tsdoc-utils';
 import { collectReferencedTypes } from '../../utils/type-utils';
@@ -7,8 +7,8 @@ import type { ExportDefinition, TypeReference } from '../spec-types';
 import { type SerializerContext, serializeCallSignatures } from './functions';
 
 export function serializeVariable(
-  declaration: ts.VariableDeclaration,
-  symbol: ts.Symbol,
+  declaration: TS.VariableDeclaration,
+  symbol: TS.Symbol,
   context: SerializerContext,
 ): ExportDefinition {
   const { checker, typeRegistry } = context;
@@ -45,8 +45,8 @@ export function serializeVariable(
 }
 
 function typeToRef(
-  node: ts.Node,
-  typeChecker: ts.TypeChecker,
+  node: TS.Node,
+  typeChecker: TS.TypeChecker,
   typeRefs: Map<string, string>,
   referencedTypes: Set<string>,
 ): TypeReference {

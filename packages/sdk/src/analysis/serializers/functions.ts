@@ -1,3 +1,4 @@
+import type * as TS from 'typescript';
 import { ts } from '../../ts-module';
 import { formatTypeReference, structureParameter } from '../../utils/parameter-utils';
 import {
@@ -11,13 +12,13 @@ import type { ExportDefinition, TypeReference } from '../spec-types';
 import type { TypeRegistry } from '../type-registry';
 
 export interface SerializerContext {
-  checker: ts.TypeChecker;
+  checker: TS.TypeChecker;
   typeRegistry: TypeRegistry;
 }
 
 export function serializeCallSignatures(
-  signatures: readonly ts.Signature[],
-  symbol: ts.Symbol | undefined,
+  signatures: readonly TS.Signature[],
+  symbol: TS.Symbol | undefined,
   context: SerializerContext,
   parsedDoc?: ParsedJSDoc | null,
 ): Array<{
@@ -37,7 +38,7 @@ export function serializeCallSignatures(
   return signatures.map((signature) => {
     const parameters = signature.getParameters().map((param) => {
       const paramDecl = param.declarations?.find(ts.isParameter) as
-        | ts.ParameterDeclaration
+        | TS.ParameterDeclaration
         | undefined;
       const paramType = paramDecl
         ? paramDecl.type != null
@@ -101,8 +102,8 @@ export function serializeCallSignatures(
 }
 
 export function serializeFunctionExport(
-  declaration: ts.FunctionDeclaration,
-  symbol: ts.Symbol,
+  declaration: TS.FunctionDeclaration,
+  symbol: TS.Symbol,
   context: SerializerContext,
 ): ExportDefinition {
   const { checker } = context;

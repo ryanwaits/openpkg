@@ -1,4 +1,4 @@
-import type * as ts from 'typescript';
+import type * as TS from 'typescript';
 import { parseJSDocComment } from '../../utils/tsdoc-utils';
 import { getJSDocComment, getSourceLocation } from '../ast-utils';
 import type { ExportDefinition, TypeDefinition } from '../spec-types';
@@ -10,8 +10,8 @@ export interface EnumSerializationResult {
 }
 
 export function serializeEnum(
-  declaration: ts.EnumDeclaration,
-  symbol: ts.Symbol,
+  declaration: TS.EnumDeclaration,
+  symbol: TS.Symbol,
   context: SerializerContext,
 ): EnumSerializationResult {
   const parsedDoc = parseJSDocComment(symbol, context.checker);
@@ -42,7 +42,7 @@ export function serializeEnum(
   };
 }
 
-function getEnumMembers(enumDecl: ts.EnumDeclaration): Array<{
+function getEnumMembers(enumDecl: TS.EnumDeclaration): Array<{
   id: string;
   name: string;
   value?: string;

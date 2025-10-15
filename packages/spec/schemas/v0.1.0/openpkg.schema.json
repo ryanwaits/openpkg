@@ -50,14 +50,7 @@
         },
         "ecosystem": {
           "type": "string",
-          "description": "Package ecosystem",
-          "enum": [
-            "js/ts",
-            "python",
-            "rust",
-            "go",
-            "java"
-          ]
+          "description": "Package ecosystem"
         }
       }
     },
@@ -123,11 +116,29 @@
             "$ref": "#/$defs/signature"
           }
         },
-        "properties": {
+        "type": {
+          "description": "Type reference or inline schema for variables",
+          "oneOf": [
+            { "type": "string" },
+            { "$ref": "#/$defs/schema" }
+          ]
+        },
+        "members": {
           "type": "array",
-          "description": "Class/interface properties",
+          "description": "Class/interface/enum members",
+          "items": { "type": "object" }
+        },
+        "tags": {
+          "type": "array",
+          "description": "JSDoc/TSDoc tags",
           "items": {
-            "$ref": "#/$defs/property"
+            "type": "object",
+            "required": ["name", "text"],
+            "properties": {
+              "name": { "type": "string" },
+              "text": { "type": "string" }
+            },
+            "additionalProperties": false
           }
         },
         "source": {
@@ -172,11 +183,22 @@
           "type": "string",
           "description": "Type expression for type aliases"
         },
-        "properties": {
+        "members": {
           "type": "array",
-          "description": "Properties for interfaces/classes",
+          "description": "Members for classes/interfaces/enums",
+          "items": { "type": "object" }
+        },
+        "tags": {
+          "type": "array",
+          "description": "JSDoc/TSDoc tags",
           "items": {
-            "$ref": "#/$defs/property"
+            "type": "object",
+            "required": ["name", "text"],
+            "properties": {
+              "name": { "type": "string" },
+              "text": { "type": "string" }
+            },
+            "additionalProperties": false
           }
         },
         "source": {
@@ -235,30 +257,6 @@
         "description": {
           "type": "string",
           "description": "Return value description"
-        }
-      }
-    },
-    "property": {
-      "type": "object",
-      "required": [
-        "name",
-        "required"
-      ],
-      "properties": {
-        "name": {
-          "type": "string",
-          "description": "Property name"
-        },
-        "required": {
-          "type": "boolean",
-          "description": "Whether the property is required"
-        },
-        "description": {
-          "type": "string",
-          "description": "Property description"
-        },
-        "schema": {
-          "$ref": "#/$defs/schema"
         }
       }
     },

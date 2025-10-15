@@ -1,4 +1,4 @@
-import type { OpenPkg, SpecExport, SpecType } from './types';
+import type { OpenPkg } from './types';
 
 export type SpecDiff = {
   breaking: string[];
@@ -86,8 +86,9 @@ function removeDocFields(value: unknown): unknown {
     return value;
   }
 
-  const entries = Object.entries(value as Record<string, unknown>)
-    .filter(([key]) => !DOC_KEYS.has(key));
+  const entries = Object.entries(value as Record<string, unknown>).filter(
+    ([key]) => !DOC_KEYS.has(key),
+  );
 
   const cleaned: Record<string, unknown> = {};
   for (const [key, val] of entries) {
@@ -108,8 +109,9 @@ function sortKeys(value: unknown): unknown {
     return value;
   }
 
-  const entries = Object.entries(value as Record<string, unknown>)
-    .sort(([a], [b]) => a.localeCompare(b));
+  const entries = Object.entries(value as Record<string, unknown>).sort(([a], [b]) =>
+    a.localeCompare(b),
+  );
   const result: Record<string, unknown> = {};
   for (const [key, val] of entries) {
     result[key] = sortKeys(val);

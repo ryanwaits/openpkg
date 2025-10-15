@@ -1,3 +1,4 @@
+import type * as TS from 'typescript';
 import { ts } from '../../ts-module';
 import { formatTypeReference, structureParameter } from '../../utils/parameter-utils';
 import { getParameterDocumentation, parseJSDocComment } from '../../utils/tsdoc-utils';
@@ -12,8 +13,8 @@ export interface ClassSerializationResult {
 }
 
 export function serializeClass(
-  declaration: ts.ClassDeclaration,
-  symbol: ts.Symbol,
+  declaration: TS.ClassDeclaration,
+  symbol: TS.Symbol,
   context: SerializerContext,
 ): ClassSerializationResult {
   const { checker, typeRegistry } = context;
@@ -51,8 +52,8 @@ export function serializeClass(
 }
 
 function serializeClassMembers(
-  declaration: ts.ClassDeclaration,
-  checker: ts.TypeChecker,
+  declaration: TS.ClassDeclaration,
+  checker: TS.TypeChecker,
   typeRefs: Map<string, string>,
   referencedTypes: Set<string>,
 ): Array<NonNullable<TypeDefinition['members']>[number]> {

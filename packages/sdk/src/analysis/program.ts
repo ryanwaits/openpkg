@@ -1,11 +1,11 @@
 import * as path from 'node:path';
+import type * as TS from 'typescript';
 import { ts } from '../ts-module';
 
-const DEFAULT_COMPILER_OPTIONS: ts.CompilerOptions = {
+const DEFAULT_COMPILER_OPTIONS: TS.CompilerOptions = {
   target: ts.ScriptTarget.Latest,
   module: ts.ModuleKind.CommonJS,
   lib: ['lib.es2021.d.ts'],
-  allowJs: true,
   declaration: true,
   moduleResolution: ts.ModuleResolutionKind.NodeJs,
 };
@@ -17,10 +17,10 @@ export interface ProgramBuilderInput {
 }
 
 export interface ProgramBuildResult {
-  program: ts.Program;
-  compilerHost: ts.CompilerHost;
-  compilerOptions: ts.CompilerOptions;
-  sourceFile?: ts.SourceFile;
+  program: TS.Program;
+  compilerHost: TS.CompilerHost;
+  compilerOptions: TS.CompilerOptions;
+  sourceFile?: TS.SourceFile;
   configPath?: string;
 }
 
@@ -30,7 +30,7 @@ export function createProgram({
   content,
 }: ProgramBuilderInput): ProgramBuildResult {
   const configPath = ts.findConfigFile(baseDir, ts.sys.fileExists, 'tsconfig.json');
-  let compilerOptions: ts.CompilerOptions = { ...DEFAULT_COMPILER_OPTIONS };
+  let compilerOptions: TS.CompilerOptions = { ...DEFAULT_COMPILER_OPTIONS };
 
   if (configPath) {
     const configFile = ts.readConfigFile(configPath, ts.sys.readFile);
@@ -42,8 +42,15 @@ export function createProgram({
     compilerOptions = { ...compilerOptions, ...parsedConfig.options };
   }
 
+  // Ensure compatibility with repo tsconfig (isolatedDeclarations)
+  // Avoid TS5053: Option 'allowJs' cannot be specified with 'isolatedDeclarations'
+  const allowJsVal = (compilerOptions as Record<string, unknown>).allowJs;
+  if (typeof allowJsVal === 'boolean' && allowJsVal) {
+    compilerOptions = { ...compilerOptions, allowJs: false, checkJs: false };
+  }
+
   const compilerHost = ts.createCompilerHost(compilerOptions, true);
-  let inMemorySource: ts.SourceFile | undefined;
+  let inMemorySource: TS.SourceFile | undefined;
 
   if (content !== undefined) {
     inMemorySource = ts.createSourceFile(

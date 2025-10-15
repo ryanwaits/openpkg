@@ -1,3 +1,4 @@
+import type * as TS from 'typescript';
 import { ts } from '../../ts-module';
 import { formatTypeReference } from '../../utils/parameter-utils';
 import { parseJSDocComment } from '../../utils/tsdoc-utils';
@@ -12,8 +13,8 @@ export interface InterfaceSerializationResult {
 }
 
 export function serializeInterface(
-  declaration: ts.InterfaceDeclaration,
-  symbol: ts.Symbol,
+  declaration: TS.InterfaceDeclaration,
+  symbol: TS.Symbol,
   context: SerializerContext,
 ): InterfaceSerializationResult {
   const parsedDoc = parseJSDocComment(symbol, context.checker);
@@ -52,8 +53,8 @@ export function serializeInterface(
 }
 
 function interfaceToSchema(
-  iface: ts.InterfaceDeclaration,
-  typeChecker: ts.TypeChecker,
+  iface: TS.InterfaceDeclaration,
+  typeChecker: TS.TypeChecker,
   typeRefs: Map<string, string>,
   referencedTypes: Set<string>,
 ): Record<string, unknown> {

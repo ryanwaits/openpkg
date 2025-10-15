@@ -1,4 +1,4 @@
-import type * as ts from 'typescript';
+import type * as TS from 'typescript';
 import { formatTypeReference } from '../../utils/parameter-utils';
 import { parseJSDocComment } from '../../utils/tsdoc-utils';
 import { collectReferencedTypes } from '../../utils/type-utils';
@@ -12,8 +12,8 @@ export interface TypeAliasSerializationResult {
 }
 
 export function serializeTypeAlias(
-  declaration: ts.TypeAliasDeclaration,
-  symbol: ts.Symbol,
+  declaration: TS.TypeAliasDeclaration,
+  symbol: TS.Symbol,
   context: SerializerContext,
 ): TypeAliasSerializationResult {
   const { checker, typeRegistry } = context;
@@ -71,8 +71,8 @@ export function serializeTypeAlias(
 }
 
 function typeToRef(
-  node: ts.TypeNode,
-  typeChecker: ts.TypeChecker,
+  node: TS.TypeNode,
+  typeChecker: TS.TypeChecker,
   typeRefs: Map<string, string>,
   referencedTypes: Set<string>,
 ): TypeReference {

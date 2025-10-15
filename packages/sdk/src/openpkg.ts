@@ -1,7 +1,7 @@
 import * as fsSync from 'node:fs';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
-import { ts } from './ts-module';
+import type * as TS from 'typescript';
 import type { AnalysisMetadataInternal } from './analysis/run-analysis';
 import { runAnalysis } from './analysis/run-analysis';
 import { extractPackageSpec } from './extractor';
@@ -9,6 +9,7 @@ import { applyFilters } from './filtering/apply-filters';
 import type { FilterOptions } from './filtering/types';
 import type { NormalizedOpenPkgOptions, OpenPkgOptions } from './options';
 import { normalizeOpenPkgOptions } from './options';
+import { ts } from './ts-module';
 import type { OpenPkgSpec } from './types/openpkg';
 
 export interface Diagnostic {
@@ -124,7 +125,7 @@ export class OpenPkg {
     };
   }
 
-  private normalizeDiagnostic(tsDiagnostic: ts.Diagnostic): Diagnostic {
+  private normalizeDiagnostic(tsDiagnostic: TS.Diagnostic): Diagnostic {
     const message = ts.flattenDiagnosticMessageText(tsDiagnostic.messageText, '\n');
 
     let location: Diagnostic['location'];
@@ -148,7 +149,7 @@ export class OpenPkg {
     };
   }
 
-  private mapSeverity(category: ts.DiagnosticCategory): Diagnostic['severity'] {
+  private mapSeverity(category: TS.DiagnosticCategory): Diagnostic['severity'] {
     switch (category) {
       case ts.DiagnosticCategory.Message:
       case ts.DiagnosticCategory.Suggestion:

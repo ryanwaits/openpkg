@@ -1,6 +1,8 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import type * as TS from 'typescript';
 import { ts } from '../ts-module';
+
 import type { OpenPkgSpec } from '../types/openpkg';
 import type { AnalysisContextInput } from './context';
 import { createAnalysisContext } from './context';
@@ -17,7 +19,7 @@ export interface AnalysisMetadataInternal {
 export interface RunAnalysisResult {
   spec: OpenPkgSpec;
   metadata: AnalysisMetadataInternal;
-  diagnostics: readonly ts.Diagnostic[];
+  diagnostics: readonly TS.Diagnostic[];
 }
 
 function findNearestPackageJson(startDir: string): string | undefined {
@@ -68,7 +70,12 @@ export function runAnalysis(input: AnalysisContextInput): RunAnalysisResult {
   const resolveExternalTypes =
     options.resolveExternalTypes !== undefined ? options.resolveExternalTypes : hasNodeModules;
 
-  const diagnostics = ts.getPreEmitDiagnostics(context.program);
+  // Filter benign TS5053 (allowJs with isolatedDeclarations/declaration)
+  const diagnostics = ts.getPreEmitDiagnostics(context.program).filter((d) => {
+    if (d.code === 5053) return false;
+    const msg = ts.flattenDiagnosticMessageText(d.messageText, '\n');
+    return !/allowJs/i.test(msg);
+  });
 
   const spec = buildOpenPkgSpec(context, resolveExternalTypes);
 
