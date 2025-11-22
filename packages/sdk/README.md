@@ -37,6 +37,6 @@ const { spec } = await openpkg.analyzeFileWithDiagnostics('src/index.ts', {
 ## See Also
 - [Spec helpers](../spec/README.md)
 - [CLI generator](../cli/README.md)
-- [Examples](../../examples/README.md)
+- [Fixtures](../../tests/fixtures/README.md)
 
 MIT License

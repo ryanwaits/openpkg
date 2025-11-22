@@ -17,6 +17,9 @@ openpkg generate src/index.ts --output openpkg.json
 
 # Scaffold a config to pin defaults
 openpkg init
+
+# Fail CI if docs coverage dips below 90%
+openpkg check --min-coverage 90 --require-examples
 ```
 
 ## Flags at a Glance
@@ -42,6 +45,6 @@ CLI flags always win over config values.
 ## More
 Full command reference and troubleshooting tips live in the repository:
 - [Usage docs](../../packages/cli/src) (source)
-- [Examples](../../examples/README.md)
+- [Fixtures](../../tests/fixtures/README.md)
 
 MIT License

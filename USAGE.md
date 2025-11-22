@@ -35,16 +35,13 @@ bun run src/cli.ts src/main.ts
 bun run src/cli.ts -o api-spec.json src/index.ts
 ```
 
-### Generate Examples
-We include several example TypeScript packages:
+### Generate Fixtures
+We keep lightweight fixture packages under `tests/fixtures` for manual testing:
 
 ```bash
-# Generate specs for all examples
-bun run generate:examples
-
-# Or generate individually
-cd examples/simple-math
-bun ../../src/cli.ts index.ts -o openpkg.json
+# Generate a spec for the simple math fixture
+cd tests/fixtures/simple-math
+bun ../../../packages/cli/dist/cli.js index.ts -o openpkg.json
 ```
 
 ## Understanding the Output
@@ -103,26 +100,28 @@ Every export includes source location for easy navigation:
 The OpenPkg specification is designed to be consumed by tools:
 
 ```typescript
-import { openPkgSchema } from './src/types/openpkg';
+import type { OpenPkg } from '@openpkg-ts/spec';
+import { assertSpec } from '@openpkg-ts/spec';
 import spec from './openpkg.json';
 
 // Validate the spec
-const validated = openPkgSchema.parse(spec);
+assertSpec(spec);
+const typed = spec as OpenPkg;
 
 // Access exports
-validated.exports.forEach(exp => {
+typed.exports.forEach((exp) => {
   console.log(`${exp.kind}: ${exp.name}`);
 });
 
 // Access types
-validated.types?.forEach(type => {
+typed.types?.forEach((type) => {
   console.log(`Type ${type.name}: ${type.kind}`);
 });
 
 // Resolve a $ref
-function resolveRef(ref: { $ref: string }, spec: any) {
+function resolveRef(ref: { $ref: string }, candidate: OpenPkg) {
   const [, , typeName] = ref.$ref.split('/');
-  return spec.types.find((t: any) => t.id === typeName);
+  return candidate.types?.find((t) => t.id === typeName);
 }
 ```
 

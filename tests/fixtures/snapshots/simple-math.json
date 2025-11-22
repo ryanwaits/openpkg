@@ -1,6 +1,6 @@
 {
-  "$schema": "https://raw.githubusercontent.com/ryanwaits/openpkg/main/schemas/v0.1.0/openpkg.schema.json",
-  "openpkg": "0.1.0",
+  "$schema": "https://raw.githubusercontent.com/ryanwaits/openpkg/main/schemas/v0.2.0/openpkg.schema.json",
+  "openpkg": "0.2.0",
   "meta": {
     "name": "unknown",
     "version": "1.0.0",

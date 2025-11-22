@@ -49,7 +49,7 @@ if (!result.ok) {
 - [CLI guide](./packages/cli/README.md)
 - [SDK reference](./packages/sdk/README.md)
 - [Spec utilities](./packages/spec/README.md)
-- [Examples](./examples/README.md)
+- [Fixtures](./tests/fixtures/README.md)
 
 ## License
 
