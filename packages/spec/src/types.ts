@@ -15,9 +15,25 @@ export type SpecExample = Record<string, unknown>;
 
 export type SpecExtension = Record<string, unknown>;
 
+export type SpecDocSignal = 'description' | 'params' | 'returns' | 'examples';
+
+export type SpecDocDrift = {
+  type: 'param-mismatch';
+  target?: string;
+  issue: string;
+  suggestion?: string;
+};
+
+export type SpecDocsMetadata = {
+  coverageScore?: number;
+  missing?: SpecDocSignal[];
+  drift?: SpecDocDrift[];
+};
+
 export type SpecSignatureParameter = {
   name: string;
   required?: boolean;
+  description?: string;
   schema: SpecSchema;
 };
 
@@ -50,6 +66,10 @@ export type SpecTypeKind = 'class' | 'interface' | 'type' | 'enum';
 export type SpecExport = {
   id: string;
   name: string;
+  slug?: string;
+  displayName?: string;
+  category?: string;
+  importPath?: string;
   kind: SpecExportKind;
   signatures?: SpecSignature[];
   members?: SpecMember[];
@@ -57,6 +77,7 @@ export type SpecExport = {
   schema?: SpecSchema;
   description?: string;
   examples?: string[];
+  docs?: SpecDocsMetadata;
   source?: SpecSource;
   flags?: Record<string, unknown>;
   tags?: SpecTag[];
@@ -65,6 +86,10 @@ export type SpecExport = {
 export type SpecType = {
   id: string;
   name: string;
+  slug?: string;
+  displayName?: string;
+  category?: string;
+  importPath?: string;
   kind: SpecTypeKind;
   description?: string;
   schema?: SpecSchema;
@@ -86,10 +111,11 @@ export type OpenPkgMeta = {
 
 export type OpenPkg = {
   $schema?: string;
-  openpkg: '0.1.0';
+  openpkg: '0.2.0';
   meta: OpenPkgMeta;
   exports: SpecExport[];
   types?: SpecType[];
   examples?: SpecExample[];
+  docs?: SpecDocsMetadata;
   extensions?: SpecExtension;
 };
