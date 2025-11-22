@@ -6,6 +6,7 @@ import { collectReferencedTypes } from '../../utils/type-utils';
 import { getJSDocComment, getSourceLocation } from '../ast-utils';
 import type { ExportDefinition, TypeDefinition } from '../spec-types';
 import type { SerializerContext } from './functions';
+import { extractPresentationMetadata } from './presentation';
 
 export interface ClassSerializationResult {
   exportEntry: ExportDefinition;
@@ -24,10 +25,12 @@ export function serializeClass(
   const members = serializeClassMembers(declaration, checker, typeRefs, referencedTypes);
   const parsedDoc = parseJSDocComment(symbol, context.checker);
   const description = parsedDoc?.description ?? getJSDocComment(symbol, context.checker);
+  const metadata = extractPresentationMetadata(parsedDoc);
 
   const exportEntry: ExportDefinition = {
     id: symbol.getName(),
     name: symbol.getName(),
+    ...metadata,
     kind: 'class',
     description,
     source: getSourceLocation(declaration),
@@ -38,6 +41,7 @@ export function serializeClass(
   const typeDefinition: TypeDefinition = {
     id: symbol.getName(),
     name: symbol.getName(),
+    ...metadata,
     kind: 'class',
     description,
     source: getSourceLocation(declaration),

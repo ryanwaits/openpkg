@@ -10,6 +10,7 @@ import { collectReferencedTypes, collectReferencedTypesFromNode } from '../../ut
 import { getJSDocComment, getSourceLocation } from '../ast-utils';
 import type { ExportDefinition, TypeReference } from '../spec-types';
 import type { TypeRegistry } from '../type-registry';
+import { extractPresentationMetadata } from './presentation';
 
 export interface SerializerContext {
   checker: TS.TypeChecker;
@@ -110,10 +111,12 @@ export function serializeFunctionExport(
   const funcSymbol = checker.getSymbolAtLocation(declaration.name || declaration);
   const parsedDoc = parseJSDocComment(symbol, checker);
   const description = parsedDoc?.description ?? getJSDocComment(symbol, checker);
+  const metadata = extractPresentationMetadata(parsedDoc);
 
   return {
     id: symbol.getName(),
     name: symbol.getName(),
+    ...metadata,
     kind: 'function',
     signatures: signature
       ? serializeCallSignatures([signature], funcSymbol ?? symbol, context, parsedDoc)

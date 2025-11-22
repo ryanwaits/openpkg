@@ -5,6 +5,7 @@ import { collectReferencedTypes } from '../../utils/type-utils';
 import { getJSDocComment, getSourceLocation } from '../ast-utils';
 import type { ExportDefinition, TypeReference } from '../spec-types';
 import { type SerializerContext, serializeCallSignatures } from './functions';
+import { extractPresentationMetadata } from './presentation';
 
 export function serializeVariable(
   declaration: TS.VariableDeclaration,
@@ -16,11 +17,13 @@ export function serializeVariable(
   const callSignatures = variableType.getCallSignatures();
   const parsedDoc = parseJSDocComment(symbol, checker);
   const description = parsedDoc?.description ?? getJSDocComment(symbol, checker);
+  const metadata = extractPresentationMetadata(parsedDoc);
 
   if (callSignatures.length > 0) {
     return {
       id: symbol.getName(),
       name: symbol.getName(),
+      ...metadata,
       kind: 'function',
       signatures: serializeCallSignatures(callSignatures, symbol, context, parsedDoc),
       description,
@@ -36,6 +39,7 @@ export function serializeVariable(
   return {
     id: symbol.getName(),
     name: symbol.getName(),
+    ...metadata,
     kind: 'variable',
     type: typeToRef(declaration, checker, typeRefs, referencedTypes),
     description,

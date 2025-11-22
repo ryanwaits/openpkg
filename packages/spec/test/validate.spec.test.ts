@@ -4,8 +4,8 @@ import { normalize, validateSpec, type OpenPkg } from '../src/index';
 describe('validateSpec', () => {
   it('accepts specs with inline object schemas and unpkg $schema url', () => {
     const spec: OpenPkg = {
-      $schema: 'https://unpkg.com/@openpkg-ts/spec/schemas/v0.1.0/openpkg.schema.json',
-      openpkg: '0.1.0',
+      $schema: 'https://unpkg.com/@openpkg-ts/spec/schemas/v0.2.0/openpkg.schema.json',
+      openpkg: '0.2.0',
       meta: {
         name: 'fixture',
         ecosystem: 'js/ts',

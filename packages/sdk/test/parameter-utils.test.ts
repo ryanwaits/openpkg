@@ -125,6 +125,6 @@ describe('structureParameter', () => {
       new Set(),
     );
 
-    expect(structured.name).toBe('object');
+    expect(structured.name).toBe('options');
   });
 });

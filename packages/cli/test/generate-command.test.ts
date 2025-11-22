@@ -33,7 +33,7 @@ describe('generate command', () => {
     let capturedOptions: unknown = undefined;
 
     const specStub = {
-      openpkg: '0.1.0',
+      openpkg: '0.2.0',
       meta: {
         name: 'fixture',
         version: '1.0.0',
@@ -119,7 +119,7 @@ describe('generate command', () => {
           capturedFilters = options?.filters;
           return {
             spec: {
-              openpkg: '0.1.0',
+              openpkg: '0.2.0',
               meta: {
                 name: 'fixture',
                 version: '1.0.0',

@@ -4,13 +4,13 @@ import * as path from 'node:path';
 import type * as TS from 'typescript';
 import type { AnalysisMetadataInternal } from './analysis/run-analysis';
 import { runAnalysis } from './analysis/run-analysis';
+import type { OpenPkgSpec } from './analysis/spec-types';
 import { extractPackageSpec } from './extractor';
 import { applyFilters } from './filtering/apply-filters';
 import type { FilterOptions } from './filtering/types';
 import type { NormalizedOpenPkgOptions, OpenPkgOptions } from './options';
 import { normalizeOpenPkgOptions } from './options';
 import { ts } from './ts-module';
-import type { OpenPkgSpec } from './types/openpkg';
 
 export interface Diagnostic {
   message: string;

@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'bun:test';
 import { applyFilters } from '../src/filtering/apply-filters';
-import type { OpenPkgSpec } from '../src/types/openpkg';
+import type { OpenPkgSpec } from '../src/analysis/spec-types';
 
 const createSpec = (): OpenPkgSpec => ({
-  openpkg: '0.1.0',
+  openpkg: '0.2.0',
   meta: {
     name: 'fixture',
     version: '1.0.0',
@@ -104,5 +104,60 @@ describe('applyFilters', () => {
     expect(
       result.diagnostics.some((diag) => diag.message.includes('Excluded types are still referenced')),
     ).toBe(true);
+  });
+
+  describe('docs coverage', () => {
+    const createSpecWithDocs = (): OpenPkgSpec => ({
+      openpkg: '0.2.0',
+      meta: {
+        name: 'fixture',
+        version: '1.0.0',
+        description: '',
+        license: '',
+        repository: '',
+        ecosystem: 'js/ts',
+      },
+      exports: [
+        {
+          id: 'doc100',
+          name: 'doc100',
+          kind: 'function',
+          description: 'Has description',
+          signatures: [
+            {
+              parameters: [],
+              returns: { description: 'Returns something', schema: { type: 'void' } },
+            },
+          ],
+          examples: ['example'],
+          docs: { coverageScore: 100 },
+        },
+        {
+          id: 'doc50',
+          name: 'doc50',
+          kind: 'function',
+          signatures: [],
+          docs: { coverageScore: 50 },
+        },
+      ],
+      types: [],
+      docs: { coverageScore: 999 },
+    });
+
+    it('recomputes docs coverage when filtering exports', () => {
+      const spec = createSpecWithDocs();
+      const result = applyFilters(spec, { include: ['doc100'] });
+
+      expect(result.spec.exports?.map((entry) => entry.id)).toEqual(['doc100']);
+      expect(result.spec.docs?.coverageScore).toBe(100);
+    });
+
+    it('recomputes docs coverage when filtering to partially documented export', () => {
+      const spec = createSpecWithDocs();
+      const result = applyFilters(spec, { include: ['doc50'] });
+
+      expect(result.spec.exports?.map((entry) => entry.id)).toEqual(['doc50']);
+      expect(result.spec.docs?.coverageScore).toBe(50);
+    });
   });
 });

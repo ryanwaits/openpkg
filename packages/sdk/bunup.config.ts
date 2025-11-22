@@ -6,5 +6,5 @@ export default defineConfig({
   clean: true,
   splitting: true,
   format: ['esm'],
-  external: ['@openpkg-ts/spec', 'typescript', 'zod'],
+  external: ['@openpkg-ts/spec', 'typescript'],
 });

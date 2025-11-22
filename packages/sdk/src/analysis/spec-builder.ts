@@ -5,6 +5,7 @@ import type * as TS from 'typescript';
 import { ts } from '../ts-module';
 
 import type { AnalysisContext } from './context';
+import { computeDocsCoverage } from './docs-coverage';
 import { serializeClass } from './serializers/classes';
 import { serializeEnum } from './serializers/enums';
 import { type SerializerContext, serializeFunctionExport } from './serializers/functions';
@@ -27,7 +28,7 @@ export function buildOpenPkgSpec(
 
   const spec: OpenPkgSpec = {
     $schema: SCHEMA_URL,
-    openpkg: '0.1.0',
+    openpkg: '0.2.0',
     meta: {
       name: packageJson.name || 'unknown',
       version: packageJson.version || '1.0.0',
@@ -77,50 +78,42 @@ export function buildOpenPkgSpec(
 
     if (ts.isFunctionDeclaration(declaration)) {
       const exportEntry = serializeFunctionExport(declaration, targetSymbol, serializerContext);
-      spec.exports.push(withExportName(exportEntry, exportName));
+      addExport(spec, exportEntry, exportName, baseDir);
     } else if (ts.isClassDeclaration(declaration)) {
       const { exportEntry, typeDefinition } = serializeClass(
         declaration,
         targetSymbol,
         serializerContext,
       );
-      spec.exports.push(withExportName(exportEntry, exportName));
-      if (typeDefinition && typeRegistry.registerTypeDefinition(typeDefinition)) {
-        spec.types?.push(typeDefinition);
-      }
+      addExport(spec, exportEntry, exportName, baseDir);
+      addTypeDefinition(spec, typeRegistry, typeDefinition, baseDir);
     } else if (ts.isInterfaceDeclaration(declaration)) {
       const { exportEntry, typeDefinition } = serializeInterface(
         declaration,
         targetSymbol,
         serializerContext,
       );
-      spec.exports.push(withExportName(exportEntry, exportName));
-      if (typeDefinition && typeRegistry.registerTypeDefinition(typeDefinition)) {
-        spec.types?.push(typeDefinition);
-      }
+      addExport(spec, exportEntry, exportName, baseDir);
+      addTypeDefinition(spec, typeRegistry, typeDefinition, baseDir);
     } else if (ts.isTypeAliasDeclaration(declaration)) {
       const { exportEntry, typeDefinition } = serializeTypeAlias(
         declaration,
         targetSymbol,
         serializerContext,
       );
-      spec.exports.push(withExportName(exportEntry, exportName));
-      if (typeDefinition && typeRegistry.registerTypeDefinition(typeDefinition)) {
-        spec.types?.push(typeDefinition);
-      }
+      addExport(spec, exportEntry, exportName, baseDir);
+      addTypeDefinition(spec, typeRegistry, typeDefinition, baseDir);
     } else if (ts.isEnumDeclaration(declaration)) {
       const { exportEntry, typeDefinition } = serializeEnum(
         declaration,
         targetSymbol,
         serializerContext,
       );
-      spec.exports.push(withExportName(exportEntry, exportName));
-      if (typeDefinition && typeRegistry.registerTypeDefinition(typeDefinition)) {
-        spec.types?.push(typeDefinition);
-      }
+      addExport(spec, exportEntry, exportName, baseDir);
+      addTypeDefinition(spec, typeRegistry, typeDefinition, baseDir);
     } else if (ts.isVariableDeclaration(declaration)) {
       const exportEntry = serializeVariable(declaration, targetSymbol, serializerContext);
-      spec.exports.push(withExportName(exportEntry, exportName));
+      addExport(spec, exportEntry, exportName, baseDir);
     }
   }
 
@@ -157,38 +150,120 @@ export function buildOpenPkgSpec(
 
         if (ts.isClassDeclaration(declaration)) {
           const { typeDefinition } = serializeClass(declaration, targetSymbol, serializerContext);
-          if (typeDefinition && typeRegistry.registerTypeDefinition(typeDefinition)) {
-            spec.types?.push(typeDefinition);
-          }
+          addTypeDefinition(spec, typeRegistry, typeDefinition, baseDir);
         } else if (ts.isInterfaceDeclaration(declaration)) {
           const { typeDefinition } = serializeInterface(
             declaration,
             targetSymbol,
             serializerContext,
           );
-          if (typeDefinition && typeRegistry.registerTypeDefinition(typeDefinition)) {
-            spec.types?.push(typeDefinition);
-          }
+          addTypeDefinition(spec, typeRegistry, typeDefinition, baseDir);
         } else if (ts.isTypeAliasDeclaration(declaration)) {
           const { typeDefinition } = serializeTypeAlias(
             declaration,
             targetSymbol,
             serializerContext,
           );
-          if (typeDefinition && typeRegistry.registerTypeDefinition(typeDefinition)) {
-            spec.types?.push(typeDefinition);
-          }
+          addTypeDefinition(spec, typeRegistry, typeDefinition, baseDir);
         } else if (ts.isEnumDeclaration(declaration)) {
           const { typeDefinition } = serializeEnum(declaration, targetSymbol, serializerContext);
-          if (typeDefinition && typeRegistry.registerTypeDefinition(typeDefinition)) {
-            spec.types?.push(typeDefinition);
-          }
+          addTypeDefinition(spec, typeRegistry, typeDefinition, baseDir);
         }
       }
     }
   }
 
+  const coverage = computeDocsCoverage(spec);
+  spec.docs = coverage.spec;
+  spec.exports.forEach((entry) => {
+    const exportCoverage = coverage.exports.get(entry.id);
+    if (exportCoverage) {
+      entry.docs = exportCoverage;
+    }
+  });
+
   return spec;
+}
+
+function addExport(
+  spec: OpenPkgSpec,
+  entry: OpenPkgSpec['exports'][number],
+  exportName: string,
+  baseDir: string,
+): void {
+  const named = withExportName(entry, exportName);
+  spec.exports.push(applyPresentationDefaults(named, baseDir));
+}
+
+function addTypeDefinition(
+  spec: OpenPkgSpec,
+  typeRegistry: TypeRegistry,
+  definition: NonNullable<OpenPkgSpec['types']>[number] | undefined,
+  baseDir: string,
+): void {
+  if (!definition) {
+    return;
+  }
+
+  const enriched = applyPresentationDefaults(definition, baseDir);
+  if (typeRegistry.registerTypeDefinition(enriched)) {
+    spec.types?.push(enriched);
+  }
+}
+
+function applyPresentationDefaults<
+  T extends {
+    name: string;
+    kind?: string;
+    slug?: string;
+    displayName?: string;
+    category?: string;
+    importPath?: string;
+    source?: { file?: string };
+  },
+>(entry: T, baseDir: string): T {
+  const slug = entry.slug ?? createSlug(entry.name);
+  const displayName = entry.displayName ?? entry.name;
+  const category = entry.category ?? entry.kind;
+  const importPath = entry.importPath ?? deriveImportPath(entry.source?.file, baseDir);
+
+  return {
+    ...entry,
+    ...(slug ? { slug } : {}),
+    ...(displayName ? { displayName } : {}),
+    ...(category ? { category } : {}),
+    ...(importPath ? { importPath } : {}),
+  };
+}
+
+function createSlug(name: string): string {
+  const normalized = name
+    .replace(/([a-z\d])([A-Z])/g, '$1-$2')
+    .replace(/[\s_]+/g, '-')
+    .replace(/[^a-zA-Z0-9-]/g, '-')
+    .replace(/--+/g, '-')
+    .toLowerCase();
+  return normalized || name.toLowerCase();
+}
+
+function deriveImportPath(sourceFile: string | undefined, baseDir: string): string | undefined {
+  if (!sourceFile) {
+    return undefined;
+  }
+
+  const relative = path.relative(baseDir, sourceFile);
+  if (!relative || relative.startsWith('..')) {
+    return undefined;
+  }
+
+  const normalized = relative.replace(/\\/g, '/');
+  const withoutExt = normalized.replace(/\.[^.]+$/, '');
+  if (!withoutExt) {
+    return undefined;
+  }
+
+  const prefixed = withoutExt.startsWith('.') ? withoutExt : `./${withoutExt}`;
+  return prefixed.replace(/\/\/+/, '/');
 }
 
 /**

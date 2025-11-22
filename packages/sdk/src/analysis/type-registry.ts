@@ -1,4 +1,4 @@
-import type { OpenPkgSpec } from '../types/openpkg';
+import type { OpenPkgSpec } from './spec-types';
 
 type TypesArray = NonNullable<OpenPkgSpec['types']>;
 export type RegisteredType = TypesArray[number];

@@ -1,19 +1,11 @@
-import type { OpenPkgSpec } from '../types/openpkg';
+import { computeDocsCoverage } from '../analysis/docs-coverage';
+import type { OpenPkgSpec } from '../analysis/spec-types';
 import type { FilterDiagnostic, FilterOptions, FilterResult } from './types';
 
 const TYPE_REF_PREFIX = '#/types/';
 
-interface ExportEntry {
-  id: string;
-  name: string;
-  [key: string]: unknown;
-}
-
-interface TypeEntry {
-  id: string;
-  name: string;
-  [key: string]: unknown;
-}
+// Use the actual spec types instead of loose interfaces
+type SpecExport = OpenPkgSpec['exports'][number];
 
 const toLowerKey = (value: string): string => value.trim().toLowerCase();
 
@@ -106,9 +98,9 @@ export const applyFilters = (
   const exportsList = spec.exports ?? [];
   const typesList = spec.types ?? [];
 
-  const keptExports: ExportEntry[] = [];
+  const keptExports: SpecExport[] = [];
 
-  for (const entry of exportsList as ExportEntry[]) {
+  for (const entry of exportsList) {
     const includeMatch = includeLookup.size === 0 ? undefined : matches(entry, includeLookup);
     const excludeMatch = matches(entry, excludeLookup);
 
@@ -124,12 +116,12 @@ export const applyFilters = (
     }
   }
 
-  const typeMap = new Map(typesList.map((typeEntry) => [typeEntry.id, typeEntry as TypeEntry]));
+  const typeMap = new Map(typesList.map((typeEntry) => [typeEntry.id, typeEntry]));
 
   const requestedTypeIds = new Set<string>();
   const excludedTypeIds = new Set<string>();
 
-  for (const typeEntry of typesList as TypeEntry[]) {
+  for (const typeEntry of typesList) {
     const includeMatch = includeLookup.size === 0 ? undefined : matches(typeEntry, includeLookup);
     if (includeMatch) {
       includeMatches.add(includeMatch);
@@ -216,16 +208,22 @@ export const applyFilters = (
     diagnostics.push({
       message: `Include filters with no matches: ${labels.join(', ')}`,
       severity: 'warning',
+      target: 'type',
     });
   }
 
   const filteredTypes = typesList.filter((typeEntry) => finalTypeIds.has(typeEntry.id));
 
-  const filteredSpec: OpenPkgSpec = {
+  const baseSpec: OpenPkgSpec = {
     ...spec,
     exports: keptExports,
     types: filteredTypes.length > 0 ? filteredTypes : spec.types ? [] : undefined,
   };
+
+  // Fix: Recompute docs coverage if present, as filtering exports changes the aggregate score
+  const filteredSpec: OpenPkgSpec = spec.docs
+    ? { ...baseSpec, docs: computeDocsCoverage(baseSpec).spec }
+    : baseSpec;
 
   const changed =
     keptExports.length !== exportsList.length || filteredTypes.length !== typesList.length;

@@ -1,6 +1,6 @@
 import { runAnalysis } from './analysis/run-analysis';
+import type { OpenPkgSpec } from './analysis/spec-types';
 import type { OpenPkgOptions } from './options';
-import type { OpenPkgSpec } from './types/openpkg';
 
 export async function extractPackageSpec(
   entryFile: string,

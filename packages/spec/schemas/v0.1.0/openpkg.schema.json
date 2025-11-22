@@ -86,6 +86,22 @@
           "type": "string",
           "description": "Export name"
         },
+        "slug": {
+          "type": "string",
+          "description": "Stable slug for linking"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "UI-friendly label"
+        },
+        "category": {
+          "type": "string",
+          "description": "Grouping hint for navigation"
+        },
+        "importPath": {
+          "type": "string",
+          "description": "Recommended import path"
+        },
         "kind": {
           "type": "string",
           "description": "Kind of export",
@@ -161,6 +177,22 @@
         "name": {
           "type": "string",
           "description": "Type name"
+        },
+        "slug": {
+          "type": "string",
+          "description": "Stable slug for linking"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "UI-friendly label"
+        },
+        "category": {
+          "type": "string",
+          "description": "Grouping hint for navigation"
+        },
+        "importPath": {
+          "type": "string",
+          "description": "Recommended import path"
         },
         "kind": {
           "type": "string",

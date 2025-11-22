@@ -1,6 +1,6 @@
 import Ajv from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
-import schema from '../schemas/v0.1.0/openpkg.schema.json';
+import schema from '../schemas/v0.2.0/openpkg.schema.json';
 
 import type { OpenPkg } from './types';
 

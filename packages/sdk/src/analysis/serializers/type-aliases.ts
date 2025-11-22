@@ -5,6 +5,7 @@ import { collectReferencedTypes } from '../../utils/type-utils';
 import { getJSDocComment, getSourceLocation } from '../ast-utils';
 import type { ExportDefinition, TypeDefinition, TypeReference } from '../spec-types';
 import type { SerializerContext } from './functions';
+import { extractPresentationMetadata } from './presentation';
 
 export interface TypeAliasSerializationResult {
   exportEntry: ExportDefinition;
@@ -21,10 +22,12 @@ export function serializeTypeAlias(
   const referencedTypes = typeRegistry.getReferencedTypes();
   const parsedDoc = parseJSDocComment(symbol, checker);
   const description = parsedDoc?.description ?? getJSDocComment(symbol, checker);
+  const metadata = extractPresentationMetadata(parsedDoc);
 
   const exportEntry: ExportDefinition = {
     id: symbol.getName(),
     name: symbol.getName(),
+    ...metadata,
     kind: 'type',
     type: typeToRef(declaration.type, checker, typeRefs, referencedTypes),
     description,
@@ -50,6 +53,7 @@ export function serializeTypeAlias(
   const typeDefinition: TypeDefinition = {
     id: symbol.getName(),
     name: symbol.getName(),
+    ...metadata,
     kind: 'type',
     description,
     source: getSourceLocation(declaration),

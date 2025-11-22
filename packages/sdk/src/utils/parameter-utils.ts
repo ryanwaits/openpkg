@@ -7,6 +7,7 @@ import { isBuiltInType } from './type-utils';
 export interface StructuredParameter {
   name: string;
   schema: ReturnType<typeof formatTypeReference>;
+  description?: string;
   in?: 'query';
   required?: boolean;
 }
@@ -641,7 +642,8 @@ export function structureParameter(
     }
   }
 
-  const fallbackName = isDestructured ? inferredAlias ?? 'options' : paramName;
+  const fallbackName = isDestructured ? (inferredAlias ?? 'options') : paramName;
+  const docDescription = paramDoc?.description?.trim();
 
   // Check if this is an intersection type with an object literal
   if (paramType.isIntersection()) {
@@ -711,6 +713,9 @@ export function structureParameter(
       required: !typeChecker.isOptionalParameter(paramDecl),
       schema: propertiesToSchema(properties),
     };
+    if (docDescription) {
+      out.description = docDescription;
+    }
     return out;
   }
 
@@ -759,6 +764,9 @@ export function structureParameter(
           oneOf: objectOptions.map((opt) => propertiesToSchema(opt.properties)),
         },
       };
+      if (docDescription) {
+        out.description = docDescription;
+      }
       return out;
     }
   }
@@ -789,6 +797,9 @@ export function structureParameter(
       required: !typeChecker.isOptionalParameter(paramDecl),
       schema: propertiesToSchema(properties),
     };
+    if (docDescription) {
+      out.description = docDescription;
+    }
     return out;
   }
 
@@ -814,6 +825,9 @@ export function structureParameter(
       required: !typeChecker.isOptionalParameter(paramDecl),
       schema,
     };
+    if (docDescription) {
+      out.description = docDescription;
+    }
     return out;
   }
 
@@ -876,5 +890,8 @@ export function structureParameter(
     required: !typeChecker.isOptionalParameter(paramDecl),
     schema,
   };
+  if (docDescription) {
+    out.description = docDescription;
+  }
   return out;
 }

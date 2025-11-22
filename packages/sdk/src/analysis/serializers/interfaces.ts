@@ -6,6 +6,7 @@ import { collectReferencedTypes } from '../../utils/type-utils';
 import { getJSDocComment, getSourceLocation } from '../ast-utils';
 import type { ExportDefinition, TypeDefinition } from '../spec-types';
 import type { SerializerContext } from './functions';
+import { extractPresentationMetadata } from './presentation';
 
 export interface InterfaceSerializationResult {
   exportEntry: ExportDefinition;
@@ -19,10 +20,12 @@ export function serializeInterface(
 ): InterfaceSerializationResult {
   const parsedDoc = parseJSDocComment(symbol, context.checker);
   const description = parsedDoc?.description ?? getJSDocComment(symbol, context.checker);
+  const metadata = extractPresentationMetadata(parsedDoc);
 
   const exportEntry: ExportDefinition = {
     id: symbol.getName(),
     name: symbol.getName(),
+    ...metadata,
     kind: 'interface',
     description,
     source: getSourceLocation(declaration),
@@ -39,6 +42,7 @@ export function serializeInterface(
   const typeDefinition: TypeDefinition = {
     id: symbol.getName(),
     name: symbol.getName(),
+    ...metadata,
     kind: 'interface',
     schema,
     description,

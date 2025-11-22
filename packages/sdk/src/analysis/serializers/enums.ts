@@ -3,6 +3,7 @@ import { parseJSDocComment } from '../../utils/tsdoc-utils';
 import { getJSDocComment, getSourceLocation } from '../ast-utils';
 import type { ExportDefinition, TypeDefinition } from '../spec-types';
 import type { SerializerContext } from './functions';
+import { extractPresentationMetadata } from './presentation';
 
 export interface EnumSerializationResult {
   exportEntry: ExportDefinition;
@@ -16,10 +17,12 @@ export function serializeEnum(
 ): EnumSerializationResult {
   const parsedDoc = parseJSDocComment(symbol, context.checker);
   const description = parsedDoc?.description ?? getJSDocComment(symbol, context.checker);
+  const metadata = extractPresentationMetadata(parsedDoc);
 
   const exportEntry: ExportDefinition = {
     id: symbol.getName(),
     name: symbol.getName(),
+    ...metadata,
     kind: 'enum',
     description,
     source: getSourceLocation(declaration),
@@ -29,6 +32,7 @@ export function serializeEnum(
   const typeDefinition: TypeDefinition = {
     id: symbol.getName(),
     name: symbol.getName(),
+    ...metadata,
     kind: 'enum',
     members: getEnumMembers(declaration),
     description,

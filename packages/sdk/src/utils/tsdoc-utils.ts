@@ -18,6 +18,7 @@ export interface ParsedJSDoc {
   returns?: string;
   examples?: string[];
   tags?: ParsedTag[];
+  rawParamNames?: string[];
 }
 
 /**
@@ -86,6 +87,7 @@ export function parseJSDocText(commentText: string): ParsedJSDoc {
     description: '',
     params: [],
     examples: [],
+    rawParamNames: [],
   };
 
   // Remove comment delimiters
@@ -147,12 +149,16 @@ function processTag(result: ParsedJSDoc, tags: ParsedTag[], tag: string, content
       if (paramMatch) {
         const [, type, name, description] = paramMatch;
         const processedDescription = replaceInlineLinks(description || '', tags);
+        const normalizedName = name || '';
+        result.rawParamNames?.push(normalizedName);
         result.params.push({
-          name: name || '',
+          name: normalizedName,
           description: processedDescription || '',
           type: type,
         });
       }
+      // Fix: Add param tag to the generic tags list so it's available for drift detection
+      tags.push({ name: 'param', text: content });
       break;
     }
     case 'returns':
@@ -196,7 +202,10 @@ function processTag(result: ParsedJSDoc, tags: ParsedTag[], tag: string, content
       break;
     }
     default: {
-      replaceInlineLinks(content, tags);
+      const text = replaceInlineLinks(content, tags).trim();
+      if (text) {
+        tags.push({ name: tag, text });
+      }
     }
   }
 }

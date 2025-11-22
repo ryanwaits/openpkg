@@ -2,11 +2,10 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import type * as TS from 'typescript';
 import { ts } from '../ts-module';
-
-import type { OpenPkgSpec } from '../types/openpkg';
 import type { AnalysisContextInput } from './context';
 import { createAnalysisContext } from './context';
 import { buildOpenPkgSpec } from './spec-builder';
+import type { OpenPkgSpec } from './spec-types';
 
 export interface AnalysisMetadataInternal {
   baseDir: string;
