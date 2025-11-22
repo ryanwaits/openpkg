@@ -37,6 +37,23 @@ function getArrayLength(value: unknown): number {
   return Array.isArray(value) ? value.length : 0;
 }
 
+function formatDiagnosticOutput(
+  prefix: string,
+  diagnostic: GeneratedSpec['diagnostics'][number],
+  baseDir: string,
+): string {
+  const location = diagnostic.location;
+  const relativePath = location?.file
+    ? path.relative(baseDir, location.file) || location.file
+    : undefined;
+  const locationText =
+    location && relativePath
+      ? chalk.gray(`${relativePath}:${location.line ?? 1}:${location.column ?? 1}`)
+      : null;
+  const locationPrefix = locationText ? `${locationText} ` : '';
+  return `${prefix} ${locationPrefix}${diagnostic.message}`;
+}
+
 export function registerGenerateCommand(
   program: Command,
   dependencies: GenerateCommandDependencies = {},
@@ -55,6 +72,7 @@ export function registerGenerateCommand(
     .option('--no-external-types', 'Skip external type resolution from node_modules')
     .option('--include <ids>', 'Filter exports by identifier (comma-separated or repeated)')
     .option('--exclude <ids>', 'Exclude exports by identifier (comma-separated or repeated)')
+    .option('--show-diagnostics', 'Print TypeScript diagnostics from analysis')
     .option('-y, --yes', 'Skip all prompts and use defaults')
     .action(async (entry, options) => {
       try {
@@ -152,7 +170,7 @@ export function registerGenerateCommand(
         log(chalk.gray(`  ${getArrayLength(normalized.exports)} exports`));
         log(chalk.gray(`  ${getArrayLength(normalized.types)} types`));
 
-        if (result.diagnostics.length > 0) {
+        if (options.showDiagnostics && result.diagnostics.length > 0) {
           log('');
           log(chalk.bold('Diagnostics'));
           for (const diagnostic of result.diagnostics) {
@@ -162,7 +180,7 @@ export function registerGenerateCommand(
                 : diagnostic.severity === 'warning'
                   ? chalk.yellow('⚠')
                   : chalk.cyan('ℹ');
-            log(`${prefix} ${diagnostic.message}`);
+            log(formatDiagnosticOutput(prefix, diagnostic, targetDir));
           }
         }
       } catch (commandError) {

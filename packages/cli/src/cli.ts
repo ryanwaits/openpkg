@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Command } from 'commander';
+import { registerCheckCommand } from './commands/check';
 import { registerGenerateCommand } from './commands/generate';
 import { registerInitCommand } from './commands/init';
 
@@ -20,6 +21,7 @@ program
   .version(packageJson.version);
 
 registerGenerateCommand(program);
+registerCheckCommand(program);
 registerInitCommand(program);
 
 program.command('*', { hidden: true }).action(() => {

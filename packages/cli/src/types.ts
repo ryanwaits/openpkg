@@ -34,12 +34,20 @@ export interface AnalyzeMetadata {
 export interface Export {
   id: string;
   name: string;
+  slug?: string;
+  displayName?: string;
+  category?: string;
+  importPath?: string;
   kind: string;
 }
 
 export interface Type {
   id: string;
   name: string;
+  slug?: string;
+  displayName?: string;
+  category?: string;
+  importPath?: string;
   kind: string;
 }
 
