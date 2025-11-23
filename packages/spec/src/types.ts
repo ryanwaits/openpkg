@@ -18,7 +18,7 @@ export type SpecExtension = Record<string, unknown>;
 export type SpecDocSignal = 'description' | 'params' | 'returns' | 'examples';
 
 export type SpecDocDrift = {
-  type: 'param-mismatch';
+  type: 'param-mismatch' | 'return-type-mismatch';
   target?: string;
   issue: string;
   suggestion?: string;
@@ -40,6 +40,7 @@ export type SpecSignatureParameter = {
 export type SpecSignatureReturn = {
   schema: SpecSchema;
   description?: string;
+  tsType?: string;
 };
 
 export type SpecSignature = {

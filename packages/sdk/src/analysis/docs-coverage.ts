@@ -1,4 +1,10 @@
-import type { SpecDocSignal, SpecDocsMetadata, SpecExport } from '@openpkg-ts/spec';
+import type {
+  SpecDocDrift,
+  SpecDocSignal,
+  SpecDocsMetadata,
+  SpecExport,
+  SpecSignatureReturn,
+} from '@openpkg-ts/spec';
 import type { OpenPkgSpec } from './spec-types';
 
 type ExportCoverageResult = {
@@ -37,7 +43,7 @@ export function computeDocsCoverage(spec: OpenPkgSpec): DocsCoverageResult {
 
 function evaluateExport(entry: SpecExport): ExportCoverageResult {
   const missing: SpecDocSignal[] = [];
-  const drift = detectParamDrift(entry);
+  const drift = [...detectParamDrift(entry), ...detectReturnTypeDrift(entry)];
 
   if (!hasDescription(entry)) {
     missing.push('description');
@@ -100,8 +106,8 @@ function hasExamples(entry: SpecExport): boolean {
   return Array.isArray(entry.examples) && entry.examples.length > 0;
 }
 
-function detectParamDrift(entry: SpecExport): NonNullable<SpecDocsMetadata['drift']> {
-  const drifts: NonNullable<SpecDocsMetadata['drift']> = [];
+function detectParamDrift(entry: SpecExport): SpecDocDrift[] {
+  const drifts: SpecDocDrift[] = [];
   const signatures = entry.signatures ?? [];
   if (signatures.length === 0) {
     return drifts;
@@ -143,11 +149,149 @@ function detectParamDrift(entry: SpecExport): NonNullable<SpecDocsMetadata['drif
       type: 'param-mismatch',
       target: documentedName,
       issue: `JSDoc documents parameter "${documentedName}" which is not present in the signature.`,
-      suggestion: suggestion?.distance !== undefined && suggestion.distance <= 3 ? suggestion.value : undefined,
+      suggestion:
+        suggestion?.distance !== undefined && suggestion.distance <= 3
+          ? suggestion.value
+          : undefined,
     });
   }
 
   return drifts;
+}
+
+function detectReturnTypeDrift(entry: SpecExport): SpecDocDrift[] {
+  const returnsTag = entry.tags?.find((tag) => tag.name === 'returns' && tag.text?.length);
+  if (!returnsTag) {
+    return [];
+  }
+
+  const documentedType = extractReturnTypeFromTag(returnsTag.text);
+  if (!documentedType) {
+    return [];
+  }
+
+  const signatureWithReturns = entry.signatures?.find((signature) => signature.returns);
+  const signatureReturn = signatureWithReturns?.returns;
+  if (!signatureReturn) {
+    return [];
+  }
+
+  const declaredType =
+    normalizeReturnType(signatureReturn.tsType ?? schemaToSimpleType(signatureReturn)) ?? undefined;
+
+  if (!declaredType) {
+    return [];
+  }
+
+  const documentedNormalized = normalizeReturnType(documentedType);
+  if (!documentedNormalized) {
+    return [];
+  }
+
+  if (returnTypesEquivalent(documentedNormalized, declaredType)) {
+    return [];
+  }
+
+  return [
+    {
+      type: 'return-type-mismatch',
+      target: 'returns',
+      issue: buildReturnTypeMismatchIssue(documentedType, documentedNormalized, declaredType),
+      suggestion: `Update @returns to ${declaredType}.`,
+    },
+  ];
+}
+
+function extractReturnTypeFromTag(text: string): string | undefined {
+  const trimmed = text.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+
+  const braceMatch = trimmed.match(/^\{([^}]+)\}/);
+  if (braceMatch) {
+    return braceMatch[1]?.trim();
+  }
+
+  const [first] = trimmed.split(/\s+/);
+  return first?.trim();
+}
+
+function schemaToSimpleType(returnBlock: SpecSignatureReturn): string | undefined {
+  const schema = returnBlock.schema;
+  if (!schema) {
+    return undefined;
+  }
+
+  if (typeof schema === 'string') {
+    return schema;
+  }
+
+  if (typeof schema === 'object') {
+    const record = schema as Record<string, unknown>;
+    if (typeof record.type === 'string') {
+      return record.type;
+    }
+    if (typeof record.$ref === 'string') {
+      const ref = record.$ref;
+      return ref.startsWith('#/types/') ? ref.slice('#/types/'.length) : ref;
+    }
+  }
+
+  return undefined;
+}
+
+function normalizeReturnType(value: string | undefined): string | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  return value
+    .replace(/\s+/g, ' ')
+    .replace(/\s*<\s*/g, '<')
+    .replace(/\s*>\s*/g, '>')
+    .trim();
+}
+
+const VOID_EQUIVALENTS = new Set(['void', 'undefined']);
+
+function returnTypesEquivalent(a: string, b: string): boolean {
+  if (a === b) {
+    return true;
+  }
+
+  const lowerA = a.toLowerCase();
+  const lowerB = b.toLowerCase();
+
+  if (VOID_EQUIVALENTS.has(lowerA) && VOID_EQUIVALENTS.has(lowerB)) {
+    return true;
+  }
+
+  return false;
+}
+
+function unwrapPromise(type: string): string | undefined {
+  const match = type.match(/^promise<(.+)>$/i);
+  return match ? match[1]?.trim() : undefined;
+}
+
+function buildReturnTypeMismatchIssue(
+  documentedRaw: string,
+  documentedNormalized: string,
+  declaredNormalized: string,
+): string {
+  const docPromiseInner = unwrapPromise(documentedNormalized);
+  const declaredPromiseInner = unwrapPromise(declaredNormalized);
+
+  if (docPromiseInner && !declaredPromiseInner && docPromiseInner === declaredNormalized) {
+    return `JSDoc documents Promise<${docPromiseInner}> but the function returns ${declaredNormalized}.`;
+  }
+
+  if (!docPromiseInner && declaredPromiseInner && documentedNormalized === declaredPromiseInner) {
+    return `JSDoc documents ${documentedNormalized} but the function returns Promise<${declaredPromiseInner}>.`;
+  }
+
+  return `JSDoc documents ${documentedRaw} but the function returns ${declaredNormalized}.`;
 }
 
 function findClosestMatch(

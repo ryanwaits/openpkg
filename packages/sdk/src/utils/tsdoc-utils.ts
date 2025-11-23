@@ -16,6 +16,7 @@ export interface ParsedJSDoc {
   description: string;
   params: ParsedParam[];
   returns?: string;
+  returnsType?: string;
   examples?: string[];
   tags?: ParsedTag[];
   rawParamNames?: string[];
@@ -94,7 +95,8 @@ export function parseJSDocText(commentText: string): ParsedJSDoc {
   const cleanedText = commentText
     .replace(/^\/\*\*\s*/, '')
     .replace(/\s*\*\/$/, '')
-    .replace(/^\s*\* ?/gm, '');
+    .replace(/^\s*\* ?/gm, '')
+    .replace(/\n\/\s*$/, '');
 
   const lines = cleanedText.split(/\n/);
   let currentTag = '';
@@ -163,7 +165,21 @@ function processTag(result: ParsedJSDoc, tags: ParsedTag[], tag: string, content
     }
     case 'returns':
     case 'return': {
-      result.returns = replaceInlineLinks(content, tags);
+      const returnMatch = content.match(/^(?:\{([^}]+)\}\s*)?(.*)$/s);
+      const typeText = returnMatch?.[1]?.trim();
+      const descriptionText = replaceInlineLinks(returnMatch?.[2] ?? '', tags).trim();
+
+      if (typeText) {
+        result.returnsType = typeText;
+      }
+
+      if (descriptionText) {
+        result.returns = descriptionText;
+      } else if (!result.returns) {
+        result.returns = '';
+      }
+
+      tags.push({ name: 'returns', text: content });
       break;
     }
     case 'example': {

@@ -125,11 +125,11 @@ export function registerCheckCommand(
           for (const { name, missing } of failingExports.slice(0, 10)) {
             error(chalk.red(`  • ${name}: missing ${missing?.join(', ')}`));
           }
-    for (const drift of driftExports.slice(0, 10)) {
-      error(chalk.red(`  • ${drift.name}: ${drift.issue}`));
-      if (drift.suggestion) {
-        error(chalk.yellow(`    Suggestion: Did you mean "${drift.suggestion}"?`));
-      }
+          for (const drift of driftExports.slice(0, 10)) {
+            error(chalk.red(`  • ${drift.name}: ${drift.issue}`));
+            if (drift.suggestion) {
+              error(chalk.yellow(`    Suggestion: Did you mean "${drift.suggestion}"?`));
+            }
           }
         }
 
@@ -175,7 +175,10 @@ function collectFailingExports(
 }
 
 function collectDrift(
-  exportsList: Array<{ name: string; docs?: { drift?: Array<{ issue?: string; suggestion?: string }> } }>,
+  exportsList: Array<{
+    name: string;
+    docs?: { drift?: Array<{ issue?: string; suggestion?: string }> };
+  }>,
 ): Array<{ name: string; issue: string; suggestion?: string }> {
   const drifts: Array<{ name: string; issue: string; suggestion?: string }> = [];
   for (const entry of exportsList) {

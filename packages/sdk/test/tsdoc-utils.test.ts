@@ -25,4 +25,20 @@ describe('parseJSDocText', () => {
     expect(hasTag('see', 'createFetchFn')).toBe(true);
     expect(hasTag('see', 'STACKS_TESTNET')).toBe(true);
   });
+
+  it('extracts return type metadata', () => {
+    const comment = `
+/**
+ * Gets the latest result.
+ * @returns {Promise<Result>} resolves with the result payload
+ */
+`;
+
+    const parsed = parseJSDocText(comment);
+    expect(parsed.returns).toBe('resolves with the result payload');
+    expect(parsed.returnsType).toBe('Promise<Result>');
+
+    const returnsTag = parsed.tags?.find((tag) => tag.name === 'returns');
+    expect(returnsTag?.text.trim()).toBe('{Promise<Result>} resolves with the result payload');
+  });
 });
