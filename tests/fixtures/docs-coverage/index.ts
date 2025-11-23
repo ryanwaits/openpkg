@@ -37,3 +37,49 @@ export function missingParamDocs(name: string, title: string): string {
 export function undocumentedSubtract(a: number, b: number): number {
   return a - b;
 }
+
+/**
+ * Multiplies two numbers together.
+ *
+ * This intentionally returns a different type than the signature.
+ * @returns {string} Product of the operands.
+ */
+export function returnTypeDrift(a: number, b: number): number {
+  return a * b;
+}
+
+/**
+ * Returns a promise.
+ *
+ * @returns {string} The result (drift: missing Promise wrapper).
+ */
+export function promiseDrift(): Promise<string> {
+  return Promise.resolve('value');
+}
+
+/**
+ * Returns a raw value.
+ *
+ * @returns {Promise<string>} The result (drift: extra Promise wrapper).
+ */
+export function incorrectPromiseDocs(): string {
+  return 'value';
+}
+
+/**
+ * Returns void.
+ *
+ * @returns {undefined} Should match because void ~ undefined.
+ */
+export function voidMatch(): void {
+  return;
+}
+
+/**
+ * Returns string.
+ *
+ * @returns {void} Drift: documents void but returns string.
+ */
+export function voidMismatch(): string {
+  return 'value';
+}

@@ -213,8 +213,9 @@ function extractReturnTypeFromTag(text: string): string | undefined {
     return braceMatch[1]?.trim();
   }
 
-  const [first] = trimmed.split(/\s+/);
-  return first?.trim();
+  // If no braces, assume it's just a description (common in TS) and return undefined
+  // instead of eagerly grabbing the first word.
+  return undefined;
 }
 
 function schemaToSimpleType(returnBlock: SpecSignatureReturn): string | undefined {
