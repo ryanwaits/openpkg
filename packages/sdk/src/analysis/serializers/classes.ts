@@ -3,6 +3,7 @@ import { ts } from '../../ts-module';
 import { formatTypeReference, structureParameter } from '../../utils/parameter-utils';
 import { getParameterDocumentation, parseJSDocComment } from '../../utils/tsdoc-utils';
 import { collectReferencedTypes } from '../../utils/type-utils';
+import { serializeTypeParameterDeclarations } from '../../utils/type-parameter-utils';
 import { getJSDocComment, getSourceLocation } from '../ast-utils';
 import type { ExportDefinition, TypeDefinition } from '../spec-types';
 import type { SerializerContext } from './functions';
@@ -23,6 +24,11 @@ export function serializeClass(
   const referencedTypes = typeRegistry.getReferencedTypes();
 
   const members = serializeClassMembers(declaration, checker, typeRefs, referencedTypes);
+  const typeParameters = serializeTypeParameterDeclarations(
+    declaration.typeParameters,
+    checker,
+    referencedTypes,
+  );
   const parsedDoc = parseJSDocComment(symbol, context.checker);
   const description = parsedDoc?.description ?? getJSDocComment(symbol, context.checker);
   const metadata = extractPresentationMetadata(parsedDoc);
@@ -35,6 +41,7 @@ export function serializeClass(
     description,
     source: getSourceLocation(declaration),
     members: members.length > 0 ? members : undefined,
+    typeParameters,
     tags: parsedDoc?.tags,
   };
 
@@ -197,7 +204,14 @@ function serializeSignature(
   parameters?: ReturnType<typeof structureParameter>[];
   returns?: { schema: ReturnType<typeof formatTypeReference>; description?: string };
   description?: string;
+  typeParameters?: ReturnType<typeof serializeTypeParameterDeclarations>;
 } {
+  const typeParameters = serializeTypeParameterDeclarations(
+    signature.declaration?.typeParameters,
+    checker,
+    referencedTypes,
+  );
+
   return {
     parameters: signature.getParameters().map((param) => {
       const paramDecl = param.valueDeclaration as ts.ParameterDeclaration;
@@ -226,6 +240,7 @@ function serializeSignature(
       description: doc?.returns || '',
     },
     description: doc?.description || (symbol ? getJSDocComment(symbol, checker) : undefined),
+    typeParameters,
   };
 }
 

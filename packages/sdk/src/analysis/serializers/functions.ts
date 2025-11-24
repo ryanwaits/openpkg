@@ -7,6 +7,7 @@ import {
   parseJSDocComment,
 } from '../../utils/tsdoc-utils';
 import { collectReferencedTypes, collectReferencedTypesFromNode } from '../../utils/type-utils';
+import { serializeTypeParameterDeclarations } from '../../utils/type-parameter-utils';
 import { getJSDocComment, getSourceLocation } from '../ast-utils';
 import type { ExportDefinition, TypeReference } from '../spec-types';
 import type { TypeRegistry } from '../type-registry';
@@ -88,6 +89,11 @@ export function serializeCallSignatures(
     if (returnType) {
       collectReferencedTypes(returnType, checker, referencedTypes);
     }
+    const typeParameters = serializeTypeParameterDeclarations(
+      signature.declaration?.typeParameters,
+      checker,
+      referencedTypes,
+    );
 
     return {
       parameters,
@@ -99,6 +105,7 @@ export function serializeCallSignatures(
         tsType: returnTypeText,
       },
       description: functionDoc?.description || undefined,
+      typeParameters,
     };
   });
 }

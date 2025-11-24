@@ -18,7 +18,11 @@ export type SpecExtension = Record<string, unknown>;
 export type SpecDocSignal = 'description' | 'params' | 'returns' | 'examples';
 
 export type SpecDocDrift = {
-  type: 'param-mismatch' | 'return-type-mismatch';
+  type:
+    | 'param-mismatch'
+    | 'param-type-mismatch'
+    | 'return-type-mismatch'
+    | 'generic-constraint-mismatch';
   target?: string;
   issue: string;
   suggestion?: string;
@@ -28,6 +32,12 @@ export type SpecDocsMetadata = {
   coverageScore?: number;
   missing?: SpecDocSignal[];
   drift?: SpecDocDrift[];
+};
+
+export type SpecTypeParameter = {
+  name: string;
+  constraint?: string;
+  default?: string;
 };
 
 export type SpecSignatureParameter = {
@@ -47,6 +57,7 @@ export type SpecSignature = {
   parameters?: SpecSignatureParameter[];
   returns?: SpecSignatureReturn;
   description?: string;
+  typeParameters?: SpecTypeParameter[];
 };
 
 export type SpecMember = unknown;
@@ -73,6 +84,7 @@ export type SpecExport = {
   importPath?: string;
   kind: SpecExportKind;
   signatures?: SpecSignature[];
+  typeParameters?: SpecTypeParameter[];
   members?: SpecMember[];
   type?: string | SpecSchema;
   schema?: SpecSchema;

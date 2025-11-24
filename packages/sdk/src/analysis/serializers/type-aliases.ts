@@ -2,6 +2,7 @@ import type * as TS from 'typescript';
 import { formatTypeReference } from '../../utils/parameter-utils';
 import { parseJSDocComment } from '../../utils/tsdoc-utils';
 import { collectReferencedTypes } from '../../utils/type-utils';
+import { serializeTypeParameterDeclarations } from '../../utils/type-parameter-utils';
 import { getJSDocComment, getSourceLocation } from '../ast-utils';
 import type { ExportDefinition, TypeDefinition, TypeReference } from '../spec-types';
 import type { SerializerContext } from './functions';
@@ -23,6 +24,11 @@ export function serializeTypeAlias(
   const parsedDoc = parseJSDocComment(symbol, checker);
   const description = parsedDoc?.description ?? getJSDocComment(symbol, checker);
   const metadata = extractPresentationMetadata(parsedDoc);
+  const typeParameters = serializeTypeParameterDeclarations(
+    declaration.typeParameters,
+    checker,
+    referencedTypes,
+  );
 
   const exportEntry: ExportDefinition = {
     id: symbol.getName(),
@@ -32,6 +38,7 @@ export function serializeTypeAlias(
     type: typeToRef(declaration.type, checker, typeRefs, referencedTypes),
     description,
     source: getSourceLocation(declaration),
+    typeParameters,
     tags: parsedDoc?.tags,
   };
 

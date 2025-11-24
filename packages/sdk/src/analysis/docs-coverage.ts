@@ -3,7 +3,7 @@ import type {
   SpecDocSignal,
   SpecDocsMetadata,
   SpecExport,
-  SpecSignatureReturn,
+  SpecSchema,
 } from '@openpkg-ts/spec';
 import type { OpenPkgSpec } from './spec-types';
 
@@ -43,7 +43,12 @@ export function computeDocsCoverage(spec: OpenPkgSpec): DocsCoverageResult {
 
 function evaluateExport(entry: SpecExport): ExportCoverageResult {
   const missing: SpecDocSignal[] = [];
-  const drift = [...detectParamDrift(entry), ...detectReturnTypeDrift(entry)];
+  const drift = [
+    ...detectParamDrift(entry),
+    ...detectParamTypeDrift(entry),
+    ...detectReturnTypeDrift(entry),
+    ...detectGenericConstraintDrift(entry),
+  ];
 
   if (!hasDescription(entry)) {
     missing.push('description');
@@ -128,11 +133,8 @@ function detectParamDrift(entry: SpecExport): SpecDocDrift[] {
 
   const documentedParamNames = (entry.tags ?? [])
     .filter((tag) => tag.name === 'param' && Boolean(tag.text))
-    .map((tag) => {
-      const [first] = tag.text.trim().split(/\s+/);
-      return first ?? '';
-    })
-    .filter((name) => name.length > 0);
+    .map((tag) => extractParamFromTag(tag.text ?? '')?.name)
+    .filter((name): name is string => Boolean(name));
 
   if (documentedParamNames.length === 0) {
     return drifts;
@@ -159,6 +161,70 @@ function detectParamDrift(entry: SpecExport): SpecDocDrift[] {
   return drifts;
 }
 
+function detectParamTypeDrift(entry: SpecExport): SpecDocDrift[] {
+  const signatures = entry.signatures ?? [];
+  if (signatures.length === 0) {
+    return [];
+  }
+
+  const documentedParams = (entry.tags ?? [])
+    .filter((tag) => tag.name === 'param' && Boolean(tag.text))
+    .map((tag) => extractParamFromTag(tag.text ?? ''))
+    .filter(
+      (parsed): parsed is { name: string; type?: string } =>
+        Boolean(parsed?.name) && Boolean(parsed?.type),
+    );
+
+  if (documentedParams.length === 0) {
+    return [];
+  }
+
+  const declaredParamTypes = new Map<string, string>();
+  for (const signature of signatures) {
+    for (const param of signature.parameters ?? []) {
+      if (!param.name || declaredParamTypes.has(param.name)) {
+        continue;
+      }
+      const declaredType = extractTypeFromSchema(param.schema);
+      if (declaredType) {
+        declaredParamTypes.set(param.name, declaredType);
+      }
+    }
+  }
+
+  if (declaredParamTypes.size === 0) {
+    return [];
+  }
+
+  const drifts: SpecDocDrift[] = [];
+  for (const documentedParam of documentedParams) {
+    const declaredType = declaredParamTypes.get(documentedParam.name);
+    if (!declaredType || !documentedParam.type) {
+      continue;
+    }
+
+    const documentedNormalized = normalizeType(documentedParam.type);
+    const declaredNormalized = normalizeType(declaredType);
+
+    if (!documentedNormalized || !declaredNormalized) {
+      continue;
+    }
+
+    if (typesEquivalent(documentedNormalized, declaredNormalized)) {
+      continue;
+    }
+
+    drifts.push({
+      type: 'param-type-mismatch',
+      target: documentedParam.name,
+      issue: buildParamTypeMismatchIssue(documentedParam.name, documentedParam.type, declaredType),
+      suggestion: `Update @param {${declaredType}} ${documentedParam.name} to match the signature.`,
+    });
+  }
+
+  return drifts;
+}
+
 function detectReturnTypeDrift(entry: SpecExport): SpecDocDrift[] {
   const returnsTag = entry.tags?.find((tag) => tag.name === 'returns' && tag.text?.length);
   if (!returnsTag) {
@@ -176,19 +242,19 @@ function detectReturnTypeDrift(entry: SpecExport): SpecDocDrift[] {
     return [];
   }
 
-  const declaredType =
-    normalizeReturnType(signatureReturn.tsType ?? schemaToSimpleType(signatureReturn)) ?? undefined;
+  const declaredRaw = signatureReturn.tsType ?? extractTypeFromSchema(signatureReturn.schema);
+  const declaredType = normalizeType(declaredRaw) ?? undefined;
 
   if (!declaredType) {
     return [];
   }
 
-  const documentedNormalized = normalizeReturnType(documentedType);
+  const documentedNormalized = normalizeType(documentedType);
   if (!documentedNormalized) {
     return [];
   }
 
-  if (returnTypesEquivalent(documentedNormalized, declaredType)) {
+  if (typesEquivalent(documentedNormalized, declaredType)) {
     return [];
   }
 
@@ -202,6 +268,104 @@ function detectReturnTypeDrift(entry: SpecExport): SpecDocDrift[] {
   ];
 }
 
+function detectGenericConstraintDrift(entry: SpecExport): SpecDocDrift[] {
+  const templateTags =
+    entry.tags?.filter((tag) => tag.name === 'template' && Boolean(tag.text?.trim())) ?? [];
+  if (templateTags.length === 0) {
+    return [];
+  }
+
+  const documentedTemplates = templateTags
+    .map((tag) => parseTemplateTag(tag.text))
+    .filter((template): template is DocumentedTemplateTag => Boolean(template?.name));
+  if (documentedTemplates.length === 0) {
+    return [];
+  }
+
+  const actualConstraints = collectActualTypeParameterConstraints(entry);
+  if (actualConstraints.size === 0) {
+    return [];
+  }
+
+  const drifts: SpecDocDrift[] = [];
+  for (const doc of documentedTemplates) {
+    if (!actualConstraints.has(doc.name)) {
+      continue;
+    }
+
+    const actualConstraint = actualConstraints.get(doc.name);
+    const normalizedActual = normalizeType(actualConstraint);
+    const normalizedDocumented = normalizeType(doc.constraint);
+
+    if (!normalizedActual && !normalizedDocumented) {
+      continue;
+    }
+
+    if (normalizedActual === normalizedDocumented) {
+      continue;
+    }
+
+    drifts.push({
+      type: 'generic-constraint-mismatch',
+      target: doc.name,
+      issue: buildGenericConstraintMismatchIssue(doc.name, doc.constraint, actualConstraint),
+      suggestion: buildGenericConstraintSuggestion(doc.name, actualConstraint),
+    });
+  }
+
+  return drifts;
+}
+
+function extractParamFromTag(text: string): { name?: string; type?: string } | undefined {
+  const trimmed = text.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+
+  const match = trimmed.match(/^(?:\{([^}]+)\}\s+)?(\S+)(?:\s+-\s+)?/);
+  if (!match) {
+    return undefined;
+  }
+
+  const [, type, rawName] = match;
+  const name = normalizeParamName(rawName);
+
+  if (!name) {
+    return undefined;
+  }
+
+  return {
+    name,
+    type: type?.trim(),
+  };
+}
+
+function normalizeParamName(raw?: string): string | undefined {
+  if (!raw) {
+    return undefined;
+  }
+
+  let name = raw.trim();
+  if (!name) {
+    return undefined;
+  }
+
+  if (name.startsWith('[') && name.endsWith(']')) {
+    name = name.slice(1, -1);
+  }
+
+  const equalsIndex = name.indexOf('=');
+  if (equalsIndex >= 0) {
+    name = name.slice(0, equalsIndex);
+  }
+
+  if (name.endsWith(',')) {
+    name = name.slice(0, -1);
+  }
+
+  return name;
+}
+
 function extractReturnTypeFromTag(text: string): string | undefined {
   const trimmed = text.trim();
   if (!trimmed) {
@@ -213,13 +377,11 @@ function extractReturnTypeFromTag(text: string): string | undefined {
     return braceMatch[1]?.trim();
   }
 
-  // If no braces, assume it's just a description (common in TS) and return undefined
-  // instead of eagerly grabbing the first word.
-  return undefined;
+  const [first] = trimmed.split(/\s+/);
+  return first?.trim();
 }
 
-function schemaToSimpleType(returnBlock: SpecSignatureReturn): string | undefined {
-  const schema = returnBlock.schema;
+function extractTypeFromSchema(schema: SpecSchema | undefined): string | undefined {
   if (!schema) {
     return undefined;
   }
@@ -242,7 +404,7 @@ function schemaToSimpleType(returnBlock: SpecSignatureReturn): string | undefine
   return undefined;
 }
 
-function normalizeReturnType(value: string | undefined): string | undefined {
+function normalizeType(value: string | undefined): string | undefined {
   if (!value) {
     return undefined;
   }
@@ -256,7 +418,7 @@ function normalizeReturnType(value: string | undefined): string | undefined {
 
 const VOID_EQUIVALENTS = new Set(['void', 'undefined']);
 
-function returnTypesEquivalent(a: string, b: string): boolean {
+function typesEquivalent(a: string, b: string): boolean {
   if (a === b) {
     return true;
   }
@@ -293,6 +455,116 @@ function buildReturnTypeMismatchIssue(
   }
 
   return `JSDoc documents ${documentedRaw} but the function returns ${declaredNormalized}.`;
+}
+
+function buildParamTypeMismatchIssue(
+  paramName: string,
+  documentedRaw: string,
+  declaredRaw: string,
+) {
+  return `JSDoc documents ${documentedRaw} for parameter "${paramName}" but the signature declares ${declaredRaw}.`;
+}
+
+type DocumentedTemplateTag = {
+  name: string;
+  constraint?: string;
+};
+
+function parseTemplateTag(text: string | undefined): DocumentedTemplateTag | undefined {
+  const trimmed = text?.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+
+  let remaining = trimmed;
+  let constraint: string | undefined;
+
+  const braceMatch = remaining.match(/^\{([^}]+)\}\s+(.+)$/);
+  if (braceMatch) {
+    constraint = braceMatch[1]?.trim();
+    remaining = braceMatch[2]?.trim() ?? '';
+  }
+
+  if (!remaining) {
+    return undefined;
+  }
+
+  const parts = remaining.split(/\s+/).filter(Boolean);
+  const rawName = parts.shift();
+  if (!rawName) {
+    return undefined;
+  }
+
+  const name = rawName.replace(/[.,;:]+$/, '');
+
+  if (!constraint && parts.length > 0 && parts[0] === 'extends') {
+    const constraintTokens = parts.slice(1);
+    const dashIndex = constraintTokens.findIndex((token) => token === '-' || token === '–');
+    const tokens = dashIndex >= 0 ? constraintTokens.slice(0, dashIndex) : constraintTokens;
+    constraint = tokens.join(' ').trim();
+  }
+
+  if (!constraint) {
+    constraint = undefined;
+  }
+
+  return {
+    name,
+    constraint,
+  };
+}
+
+function collectActualTypeParameterConstraints(entry: SpecExport): Map<string, string | undefined> {
+  const constraints = new Map<string, string | undefined>();
+
+  for (const typeParam of entry.typeParameters ?? []) {
+    if (!typeParam?.name || constraints.has(typeParam.name)) {
+      continue;
+    }
+    constraints.set(typeParam.name, typeParam.constraint ?? undefined);
+  }
+
+  for (const signature of entry.signatures ?? []) {
+    for (const typeParam of signature.typeParameters ?? []) {
+      if (!typeParam?.name || constraints.has(typeParam.name)) {
+        continue;
+      }
+      constraints.set(typeParam.name, typeParam.constraint ?? undefined);
+    }
+  }
+
+  return constraints;
+}
+
+function buildGenericConstraintMismatchIssue(
+  templateName: string,
+  documentedConstraint?: string,
+  actualConstraint?: string,
+): string {
+  if (actualConstraint && documentedConstraint) {
+    return `JSDoc constrains template "${templateName}" to ${documentedConstraint} but the declaration constrains it to ${actualConstraint}.`;
+  }
+
+  if (actualConstraint && !documentedConstraint) {
+    return `JSDoc omits the constraint for template "${templateName}" but the declaration constrains it to ${actualConstraint}.`;
+  }
+
+  if (!actualConstraint && documentedConstraint) {
+    return `JSDoc constrains template "${templateName}" to ${documentedConstraint} but the declaration has no constraint.`;
+  }
+
+  return `Template "${templateName}" has inconsistent constraints between JSDoc and the declaration.`;
+}
+
+function buildGenericConstraintSuggestion(
+  templateName: string,
+  actualConstraint?: string,
+): string | undefined {
+  if (actualConstraint) {
+    return `Update @template to {${actualConstraint}} ${templateName} to reflect the declaration.`;
+  }
+
+  return `Remove the constraint from @template ${templateName} to match the declaration.`;
 }
 
 function findClosestMatch(

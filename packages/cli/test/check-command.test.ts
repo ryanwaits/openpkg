@@ -11,8 +11,9 @@ const spinnerStub = () =>
     fail() {},
   }) as any;
 
+type DriftType = 'param-mismatch' | 'param-type-mismatch' | 'return-type-mismatch';
 type ExportMissingInput = { name: string; missing?: string[]; score?: number };
-type ExportDriftInput = { name: string; issue: string; suggestion?: string };
+type ExportDriftInput = { name: string; issue: string; suggestion?: string; type?: DriftType };
 
 function createSpec({
   coverage,
@@ -27,7 +28,7 @@ function createSpec({
     missing?: string[];
     score?: number;
     drift?: Array<{
-      type: 'param-mismatch';
+      type: DriftType;
       issue: string;
       suggestion?: string;
     }>;
@@ -48,7 +49,7 @@ function createSpec({
       meta.drift = [];
     }
     meta.drift.push({
-      type: 'param-mismatch',
+      type: drift.type ?? 'param-mismatch',
       issue: drift.issue,
       suggestion: drift.suggestion,
     });
@@ -206,6 +207,41 @@ describe('check command', () => {
     ).rejects.toThrow('Documentation coverage requirements not met');
 
     expect(errors.join('\n')).toContain('Suggestion: Did you mean "taxRate"?');
+  });
+
+  it('fails when param type drift is reported', async () => {
+    const program = new Command();
+    program.exitOverride();
+
+    const errors: string[] = [];
+
+    registerCheckCommand(program, {
+      createOpenPkg: () => ({
+        analyzeFileWithDiagnostics: async () =>
+          createSpec({
+            coverage: 95,
+            exportDrift: [
+              {
+                name: 'delta',
+                type: 'param-type-mismatch',
+                issue: 'JSDoc documents string for parameter "amount" but the signature declares number.',
+                suggestion: 'Use number in @param tags.',
+              },
+            ],
+          }),
+      }),
+      spinner: spinnerStub,
+      log: () => {},
+      error: (msg: string) => errors.push(msg),
+    });
+
+    await expect(
+      program.parseAsync(['node', 'openpkg', 'check', 'src/index.ts', '--cwd', process.cwd()]),
+    ).rejects.toThrow('Documentation coverage requirements not met');
+
+    expect(errors.join('\n')).toContain(
+      'JSDoc documents string for parameter "amount" but the signature declares number.',
+    );
   });
 });
 
