@@ -83,3 +83,12 @@ export function voidMatch(): void {
 export function voidMismatch(): string {
   return 'value';
 }
+
+/**
+ * Example function with a constrained generic to showcase @template drift.
+ *
+ * @template T - Template parameter documented without constraint to trigger drift.
+ */
+export function genericConstraintDrift<T extends string>(value: T): T {
+  return value;
+}

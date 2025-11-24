@@ -58,4 +58,16 @@ node packages/cli/dist/cli.js check \
 
 Expected outcome: command fails with a drift report that highlights the mismatched parameter (`tax`) and suggests the new name (`taxRate`).
 
+## Docs Drift Types Playground
+`tests/fixtures/docs-drift-types` documents the right parameters but intentionally assigns the wrong JSDoc types so you can validate the Param Type Drift detector.
+
+```bash
+bun run build:cli
+node packages/cli/dist/cli.js check \
+  --cwd tests/fixtures/docs-drift-types \
+  --min-coverage 50
+```
+
+Expected outcome: command fails and reports `param-type-mismatch` drift for the `amount` parameter.
+
 For more advanced behavior (follow imports, depth limits, etc.), see the CLI documentation in `packages/cli/README.md`.
