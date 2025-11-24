@@ -104,3 +104,67 @@ describe('docs coverage generic constraint drift detection', () => {
   });
 });
 
+describe('docs coverage visibility drift detection', () => {
+  it('reports drift when an exported symbol is tagged @internal', () => {
+    const spec = buildSpec({
+      id: 'internal-export',
+      name: 'internal-export',
+      tags: [{ name: 'internal', text: '' }],
+    });
+
+    const result = computeDocsCoverage(spec);
+    const drift = result.exports.get('internal-export')?.drift;
+    expect(drift).toBeDefined();
+    expect(drift?.[0]).toMatchObject({
+      type: 'visibility-mismatch',
+      target: 'internal-export',
+    });
+    expect(drift?.[0].issue).toContain('@internal');
+  });
+
+  it('reports drift when member visibility contradicts doc tags', () => {
+    const spec = buildSpec({
+      id: 'class-visibility',
+      name: 'class-visibility',
+      kind: 'class',
+      signatures: [],
+      members: [
+        {
+          id: 'helper',
+          name: 'helper',
+          kind: 'method',
+          visibility: 'protected',
+          tags: [{ name: 'public', text: '' }],
+        },
+      ],
+    });
+
+    const result = computeDocsCoverage(spec);
+    const drift = result.exports.get('class-visibility')?.drift;
+    expect(drift?.some((signal) => signal.type === 'visibility-mismatch')).toBe(true);
+    expect(drift?.[0].issue).toContain('@public');
+  });
+
+  it('does not report drift when @internal matches protected members', () => {
+    const spec = buildSpec({
+      id: 'aligned-visibility',
+      name: 'aligned-visibility',
+      kind: 'class',
+      signatures: [],
+      members: [
+        {
+          id: 'helper',
+          name: 'helper',
+          kind: 'method',
+          visibility: 'protected',
+          tags: [{ name: 'internal', text: '' }],
+        },
+      ],
+    });
+
+    const result = computeDocsCoverage(spec);
+    const drift = result.exports.get('aligned-visibility')?.drift;
+    expect(drift).toBeUndefined();
+  });
+});
+

@@ -4,7 +4,7 @@ import { formatTypeReference } from '../../utils/parameter-utils';
 import { parseJSDocComment } from '../../utils/tsdoc-utils';
 import { collectReferencedTypes } from '../../utils/type-utils';
 import { serializeTypeParameterDeclarations } from '../../utils/type-parameter-utils';
-import { getJSDocComment, getSourceLocation } from '../ast-utils';
+import { getJSDocComment, getSourceLocation, isSymbolDeprecated } from '../ast-utils';
 import type { ExportDefinition, TypeDefinition } from '../spec-types';
 import type { SerializerContext } from './functions';
 import { extractPresentationMetadata } from './presentation';
@@ -36,6 +36,7 @@ export function serializeInterface(
     name: symbol.getName(),
     ...metadata,
     kind: 'interface',
+    deprecated: isSymbolDeprecated(symbol),
     description,
     source: getSourceLocation(declaration),
     typeParameters,

@@ -8,7 +8,7 @@ import {
 } from '../../utils/tsdoc-utils';
 import { collectReferencedTypes, collectReferencedTypesFromNode } from '../../utils/type-utils';
 import { serializeTypeParameterDeclarations } from '../../utils/type-parameter-utils';
-import { getJSDocComment, getSourceLocation } from '../ast-utils';
+import { getJSDocComment, getSourceLocation, isSymbolDeprecated } from '../ast-utils';
 import type { ExportDefinition, TypeReference } from '../spec-types';
 import type { TypeRegistry } from '../type-registry';
 import { extractPresentationMetadata } from './presentation';
@@ -127,6 +127,7 @@ export function serializeFunctionExport(
     name: symbol.getName(),
     ...metadata,
     kind: 'function',
+    deprecated: isSymbolDeprecated(symbol),
     signatures: signature
       ? serializeCallSignatures([signature], funcSymbol ?? symbol, context, parsedDoc)
       : [],

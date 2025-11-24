@@ -2,7 +2,7 @@ import type * as TS from 'typescript';
 import { formatTypeReference } from '../../utils/parameter-utils';
 import { parseJSDocComment } from '../../utils/tsdoc-utils';
 import { collectReferencedTypes } from '../../utils/type-utils';
-import { getJSDocComment, getSourceLocation } from '../ast-utils';
+import { getJSDocComment, getSourceLocation, isSymbolDeprecated } from '../ast-utils';
 import type { ExportDefinition, TypeReference } from '../spec-types';
 import { type SerializerContext, serializeCallSignatures } from './functions';
 import { extractPresentationMetadata } from './presentation';
@@ -25,6 +25,7 @@ export function serializeVariable(
       name: symbol.getName(),
       ...metadata,
       kind: 'function',
+      deprecated: isSymbolDeprecated(symbol),
       signatures: serializeCallSignatures(callSignatures, symbol, context, parsedDoc),
       description,
       source: getSourceLocation(declaration.initializer ?? declaration),
@@ -41,6 +42,7 @@ export function serializeVariable(
     name: symbol.getName(),
     ...metadata,
     kind: 'variable',
+    deprecated: isSymbolDeprecated(symbol),
     type: typeToRef(declaration, checker, typeRefs, referencedTypes),
     description,
     source: getSourceLocation(declaration),

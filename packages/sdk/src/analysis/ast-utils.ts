@@ -14,3 +14,22 @@ export function getSourceLocation(node: TS.Node): { file: string; line: number }
     line: line + 1,
   };
 }
+
+export function isSymbolDeprecated(symbol: TS.Symbol | undefined): boolean {
+  if (!symbol) {
+    return false;
+  }
+
+  const jsDocTags = symbol.getJsDocTags();
+  if (jsDocTags.some((tag) => tag.name.toLowerCase() === 'deprecated')) {
+    return true;
+  }
+
+  for (const declaration of symbol.getDeclarations() ?? []) {
+    if (ts.getJSDocDeprecatedTag(declaration)) {
+      return true;
+    }
+  }
+
+  return false;
+}

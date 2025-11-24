@@ -4,6 +4,7 @@ import type {
   SpecDocsMetadata,
   SpecExport,
   SpecSchema,
+  SpecTag,
 } from '@openpkg-ts/spec';
 import type { OpenPkgSpec } from './spec-types';
 
@@ -45,9 +46,12 @@ function evaluateExport(entry: SpecExport): ExportCoverageResult {
   const missing: SpecDocSignal[] = [];
   const drift = [
     ...detectParamDrift(entry),
+    ...detectOptionalityDrift(entry),
     ...detectParamTypeDrift(entry),
     ...detectReturnTypeDrift(entry),
     ...detectGenericConstraintDrift(entry),
+    ...detectDeprecatedDrift(entry),
+    ...detectVisibilityDrift(entry),
   ];
 
   if (!hasDescription(entry)) {
@@ -161,6 +165,66 @@ function detectParamDrift(entry: SpecExport): SpecDocDrift[] {
   return drifts;
 }
 
+function detectOptionalityDrift(entry: SpecExport): SpecDocDrift[] {
+  const signatures = entry.signatures ?? [];
+  if (signatures.length === 0) {
+    return [];
+  }
+
+  const actualOptionality = new Map<string, boolean>();
+  for (const signature of signatures) {
+    for (const param of signature.parameters ?? []) {
+      if (!param.name || actualOptionality.has(param.name)) {
+        continue;
+      }
+      actualOptionality.set(param.name, param.required === false);
+    }
+  }
+
+  if (actualOptionality.size === 0) {
+    return [];
+  }
+
+  const documentedParams = (entry.tags ?? [])
+    .filter((tag) => tag.name === 'param' && Boolean(tag.text))
+    .map((tag) => extractParamFromTag(tag.text ?? ''))
+    .filter((parsed): parsed is ParsedParamTag & { name: string } => Boolean(parsed?.name));
+
+  if (documentedParams.length === 0) {
+    return [];
+  }
+
+  const drifts: SpecDocDrift[] = [];
+
+  for (const docParam of documentedParams) {
+    const actualOptional = actualOptionality.get(docParam.name);
+    if (actualOptional === undefined) {
+      continue;
+    }
+
+    const documentedOptional = Boolean(docParam.isOptional);
+    if (actualOptional === documentedOptional) {
+      continue;
+    }
+
+    const issue = documentedOptional
+      ? `JSDoc marks parameter "${docParam.name}" optional but the signature requires it.`
+      : `JSDoc omits optional brackets for parameter "${docParam.name}" but the signature marks it optional.`;
+    const suggestion = documentedOptional
+      ? `Remove brackets around ${docParam.name} or mark the parameter optional in the signature.`
+      : `Document ${docParam.name} as [${docParam.name}] or make it required in the signature.`;
+
+    drifts.push({
+      type: 'optionality-mismatch',
+      target: docParam.name,
+      issue,
+      suggestion,
+    });
+  }
+
+  return drifts;
+}
+
 function detectParamTypeDrift(entry: SpecExport): SpecDocDrift[] {
   const signatures = entry.signatures ?? [];
   if (signatures.length === 0) {
@@ -171,7 +235,7 @@ function detectParamTypeDrift(entry: SpecExport): SpecDocDrift[] {
     .filter((tag) => tag.name === 'param' && Boolean(tag.text))
     .map((tag) => extractParamFromTag(tag.text ?? ''))
     .filter(
-      (parsed): parsed is { name: string; type?: string } =>
+      (parsed): parsed is ParsedParamTag & { name: string; type: string } =>
         Boolean(parsed?.name) && Boolean(parsed?.type),
     );
 
@@ -268,6 +332,38 @@ function detectReturnTypeDrift(entry: SpecExport): SpecDocDrift[] {
   ];
 }
 
+function detectDeprecatedDrift(entry: SpecExport): SpecDocDrift[] {
+  const codeDeprecated = Boolean(entry.deprecated);
+  const docsDeprecated =
+    entry.tags?.some((tag) => tag.name.toLowerCase() === 'deprecated') ?? false;
+
+  if (codeDeprecated === docsDeprecated) {
+    return [];
+  }
+
+  const target = entry.name ?? entry.id;
+
+  if (codeDeprecated && !docsDeprecated) {
+    return [
+      {
+        type: 'deprecated-mismatch',
+        target,
+        issue: `Declaration for "${target}" is marked deprecated but @deprecated is missing from the docs.`,
+        suggestion: 'Add an @deprecated tag explaining the replacement or removal timeline.',
+      },
+    ];
+  }
+
+  return [
+    {
+      type: 'deprecated-mismatch',
+      target,
+      issue: `JSDoc marks "${target}" as deprecated but the TypeScript declaration is not.`,
+      suggestion: 'Remove the @deprecated tag or deprecate the declaration.',
+    },
+  ];
+}
+
 function detectGenericConstraintDrift(entry: SpecExport): SpecDocDrift[] {
   const templateTags =
     entry.tags?.filter((tag) => tag.name === 'template' && Boolean(tag.text?.trim())) ?? [];
@@ -316,7 +412,154 @@ function detectGenericConstraintDrift(entry: SpecExport): SpecDocDrift[] {
   return drifts;
 }
 
-function extractParamFromTag(text: string): { name?: string; type?: string } | undefined {
+type CodeVisibility = 'public' | 'protected' | 'private';
+type DocVisibility = 'internal' | 'protected' | 'private' | 'public';
+
+type DocVisibilitySignal = {
+  value: DocVisibility;
+  tagName: string;
+};
+
+type SpecMemberWithVisibility = {
+  id?: string;
+  name?: string;
+  visibility?: CodeVisibility;
+  tags?: SpecTag[];
+  kind?: string;
+};
+
+const VISIBILITY_TAG_MAP: Record<string, DocVisibility> = {
+  internal: 'internal',
+  alpha: 'internal',
+  private: 'private',
+  protected: 'protected',
+  public: 'public',
+};
+
+function detectVisibilityDrift(entry: SpecExport): SpecDocDrift[] {
+  const drifts: SpecDocDrift[] = [];
+  const exportDocVisibility = getDocVisibility(entry.tags);
+  const exportActualVisibility: CodeVisibility = 'public';
+
+  if (exportDocVisibility && !visibilityMatches(exportDocVisibility.value, exportActualVisibility)) {
+    const target = entry.name ?? entry.id ?? 'export';
+    drifts.push({
+      type: 'visibility-mismatch',
+      target,
+      issue: buildVisibilityIssue(target, exportDocVisibility, exportActualVisibility),
+      suggestion: buildVisibilitySuggestion(exportDocVisibility, exportActualVisibility),
+    });
+  }
+
+  const members = Array.isArray(entry.members) ? entry.members : [];
+  for (const member of members) {
+    const typedMember = member as SpecMemberWithVisibility;
+    const memberDocVisibility = getDocVisibility(typedMember.tags);
+    if (!memberDocVisibility) {
+      continue;
+    }
+
+    const memberActualVisibility: CodeVisibility = typedMember.visibility ?? 'public';
+    if (visibilityMatches(memberDocVisibility.value, memberActualVisibility)) {
+      continue;
+    }
+
+    const memberName = typedMember.name ?? typedMember.id ?? typedMember.kind ?? 'member';
+    const qualifiedTarget = `${entry.name ?? entry.id ?? 'export'}#${memberName}`;
+
+    drifts.push({
+      type: 'visibility-mismatch',
+      target: qualifiedTarget,
+      issue: buildVisibilityIssue(qualifiedTarget, memberDocVisibility, memberActualVisibility),
+      suggestion: buildVisibilitySuggestion(memberDocVisibility, memberActualVisibility),
+    });
+  }
+
+  return drifts;
+}
+
+function getDocVisibility(tags?: SpecTag[]): DocVisibilitySignal | undefined {
+  if (!tags) {
+    return undefined;
+  }
+
+  for (const tag of tags) {
+    const normalizedName = tag.name?.toLowerCase();
+    if (!normalizedName) {
+      continue;
+    }
+
+    const mapped = VISIBILITY_TAG_MAP[normalizedName];
+    if (mapped) {
+      return {
+        value: mapped,
+        tagName: tag.name,
+      };
+    }
+  }
+
+  return undefined;
+}
+
+function visibilityMatches(docVisibility: DocVisibility, actualVisibility: CodeVisibility): boolean {
+  if (docVisibility === 'internal') {
+    return actualVisibility !== 'public';
+  }
+
+  if (docVisibility === 'public') {
+    return actualVisibility === 'public';
+  }
+
+  return docVisibility === actualVisibility;
+}
+
+function buildVisibilityIssue(
+  target: string,
+  docVisibility: DocVisibilitySignal,
+  actualVisibility: CodeVisibility,
+): string {
+  const docLabel = formatDocVisibilityTag(docVisibility.tagName);
+  return `JSDoc marks "${target}" as ${docLabel} but the declaration is ${actualVisibility}.`;
+}
+
+function buildVisibilitySuggestion(
+  docVisibility: DocVisibilitySignal,
+  actualVisibility: CodeVisibility,
+): string {
+  const docLabel = formatDocVisibilityTag(docVisibility.tagName);
+
+  switch (docVisibility.value) {
+    case 'internal':
+      return `Remove ${docLabel} or mark the declaration protected/private.`;
+    case 'public':
+      return `Remove ${docLabel} or mark the declaration public.`;
+    case 'protected':
+      if (actualVisibility === 'private') {
+        return `Promote the declaration to protected or replace ${docLabel} with @private.`;
+      }
+      return `Remove ${docLabel} or mark the declaration protected.`;
+    case 'private':
+      if (actualVisibility === 'protected') {
+        return `Downgrade the declaration to private or replace ${docLabel} with @protected/@internal.`;
+      }
+      return `Remove ${docLabel} or mark the declaration private.`;
+    default:
+      return 'Align the JSDoc visibility tag with the declaration visibility.';
+  }
+}
+
+function formatDocVisibilityTag(tagName: string): string {
+  const trimmed = tagName.trim();
+  if (!trimmed) {
+    return '@internal';
+  }
+
+  return trimmed.startsWith('@') ? trimmed : `@${trimmed}`;
+}
+
+type ParsedParamTag = { name?: string; type?: string; isOptional?: boolean };
+
+function extractParamFromTag(text: string): ParsedParamTag | undefined {
   const trimmed = text.trim();
   if (!trimmed) {
     return undefined;
@@ -328,6 +571,7 @@ function extractParamFromTag(text: string): { name?: string; type?: string } | u
   }
 
   const [, type, rawName] = match;
+  const isOptional = Boolean(rawName?.startsWith('[') && rawName?.endsWith(']'));
   const name = normalizeParamName(rawName);
 
   if (!name) {
@@ -337,6 +581,7 @@ function extractParamFromTag(text: string): { name?: string; type?: string } | u
   return {
     name,
     type: type?.trim(),
+    isOptional,
   };
 }
 

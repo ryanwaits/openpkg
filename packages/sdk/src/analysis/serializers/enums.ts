@@ -1,6 +1,6 @@
 import type * as TS from 'typescript';
 import { parseJSDocComment } from '../../utils/tsdoc-utils';
-import { getJSDocComment, getSourceLocation } from '../ast-utils';
+import { getJSDocComment, getSourceLocation, isSymbolDeprecated } from '../ast-utils';
 import type { ExportDefinition, TypeDefinition } from '../spec-types';
 import type { SerializerContext } from './functions';
 import { extractPresentationMetadata } from './presentation';
@@ -24,6 +24,7 @@ export function serializeEnum(
     name: symbol.getName(),
     ...metadata,
     kind: 'enum',
+    deprecated: isSymbolDeprecated(symbol),
     description,
     source: getSourceLocation(declaration),
     tags: parsedDoc?.tags,

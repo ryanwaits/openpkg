@@ -11,7 +11,14 @@ const spinnerStub = () =>
     fail() {},
   }) as any;
 
-type DriftType = 'param-mismatch' | 'param-type-mismatch' | 'return-type-mismatch';
+type DriftType =
+  | 'param-mismatch'
+  | 'param-type-mismatch'
+  | 'return-type-mismatch'
+  | 'generic-constraint-mismatch'
+  | 'optionality-mismatch'
+  | 'deprecated-mismatch'
+  | 'visibility-mismatch';
 type ExportMissingInput = { name: string; missing?: string[]; score?: number };
 type ExportDriftInput = { name: string; issue: string; suggestion?: string; type?: DriftType };
 
@@ -206,7 +213,7 @@ describe('check command', () => {
       program.parseAsync(['node', 'openpkg', 'check', 'src/index.ts', '--cwd', process.cwd()]),
     ).rejects.toThrow('Documentation coverage requirements not met');
 
-    expect(errors.join('\n')).toContain('Suggestion: Did you mean "taxRate"?');
+    expect(errors.join('\n')).toContain('Suggestion: taxRate');
   });
 
   it('fails when param type drift is reported', async () => {

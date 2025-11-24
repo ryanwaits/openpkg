@@ -22,11 +22,16 @@ export type SpecDocDrift = {
     | 'param-mismatch'
     | 'param-type-mismatch'
     | 'return-type-mismatch'
-    | 'generic-constraint-mismatch';
+    | 'generic-constraint-mismatch'
+    | 'optionality-mismatch'
+    | 'deprecated-mismatch'
+    | 'visibility-mismatch';
   target?: string;
   issue: string;
   suggestion?: string;
 };
+
+export type SpecVisibility = 'public' | 'protected' | 'private';
 
 export type SpecDocsMetadata = {
   coverageScore?: number;
@@ -60,7 +65,17 @@ export type SpecSignature = {
   typeParameters?: SpecTypeParameter[];
 };
 
-export type SpecMember = unknown;
+export type SpecMember = {
+  id?: string;
+  name?: string;
+  kind?: string;
+  description?: string;
+  tags?: SpecTag[];
+  visibility?: SpecVisibility;
+  flags?: Record<string, unknown>;
+  schema?: SpecSchema;
+  signatures?: SpecSignature[];
+};
 
 export type SpecExportKind =
   | 'function'
@@ -92,6 +107,7 @@ export type SpecExport = {
   examples?: string[];
   docs?: SpecDocsMetadata;
   source?: SpecSource;
+  deprecated?: boolean;
   flags?: Record<string, unknown>;
   tags?: SpecTag[];
 };

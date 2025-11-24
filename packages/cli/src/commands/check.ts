@@ -128,7 +128,7 @@ export function registerCheckCommand(
           for (const drift of driftExports.slice(0, 10)) {
             error(chalk.red(`  • ${drift.name}: ${drift.issue}`));
             if (drift.suggestion) {
-              error(chalk.yellow(`    Suggestion: Did you mean "${drift.suggestion}"?`));
+              error(chalk.yellow(`    Suggestion: ${drift.suggestion}`));
             }
           }
         }

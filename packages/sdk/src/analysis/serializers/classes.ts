@@ -4,7 +4,7 @@ import { formatTypeReference, structureParameter } from '../../utils/parameter-u
 import { getParameterDocumentation, parseJSDocComment } from '../../utils/tsdoc-utils';
 import { collectReferencedTypes } from '../../utils/type-utils';
 import { serializeTypeParameterDeclarations } from '../../utils/type-parameter-utils';
-import { getJSDocComment, getSourceLocation } from '../ast-utils';
+import { getJSDocComment, getSourceLocation, isSymbolDeprecated } from '../ast-utils';
 import type { ExportDefinition, TypeDefinition } from '../spec-types';
 import type { SerializerContext } from './functions';
 import { extractPresentationMetadata } from './presentation';
@@ -38,6 +38,7 @@ export function serializeClass(
     name: symbol.getName(),
     ...metadata,
     kind: 'class',
+    deprecated: isSymbolDeprecated(symbol),
     description,
     source: getSourceLocation(declaration),
     members: members.length > 0 ? members : undefined,
@@ -80,6 +81,7 @@ function serializeClassMembers(
       if (!memberName) continue;
 
       const memberSymbol = member.name ? checker.getSymbolAtLocation(member.name) : undefined;
+      const memberDoc = memberSymbol ? parseJSDocComment(memberSymbol, checker) : null;
       const memberType = memberSymbol
         ? checker.getTypeOfSymbolAtLocation(memberSymbol, member)
         : member.type
@@ -108,8 +110,11 @@ function serializeClassMembers(
         kind: 'property',
         visibility: getMemberVisibility(member.modifiers),
         schema,
-        description: memberSymbol ? getJSDocComment(memberSymbol, checker) : undefined,
+        description:
+          memberDoc?.description ??
+          (memberSymbol ? getJSDocComment(memberSymbol, checker) : undefined),
         flags: Object.keys(flags).length > 0 ? flags : undefined,
+        tags: memberDoc?.tags,
       });
       continue;
     }
@@ -139,8 +144,11 @@ function serializeClassMembers(
         kind: 'method',
         visibility: getMemberVisibility(member.modifiers),
         signatures,
-        description: memberSymbol ? getJSDocComment(memberSymbol, checker) : undefined,
+        description:
+          methodDoc?.description ??
+          (memberSymbol ? getJSDocComment(memberSymbol, checker) : undefined),
         flags: getMethodFlags(member),
+        tags: methodDoc?.tags,
       });
       continue;
     }
@@ -160,7 +168,10 @@ function serializeClassMembers(
         kind: 'constructor',
         visibility: getMemberVisibility(member.modifiers),
         signatures,
-        description: ctorSymbol ? getJSDocComment(ctorSymbol, checker) : undefined,
+        description:
+          ctorDoc?.description ??
+          (ctorSymbol ? getJSDocComment(ctorSymbol, checker) : undefined),
+        tags: ctorDoc?.tags,
       });
       continue;
     }
@@ -170,6 +181,7 @@ function serializeClassMembers(
       if (!memberName) continue;
 
       const memberSymbol = checker.getSymbolAtLocation(member.name);
+      const memberDoc = memberSymbol ? parseJSDocComment(memberSymbol, checker) : null;
       const accessorType = ts.isGetAccessorDeclaration(member)
         ? checker.getTypeAtLocation(member)
         : member.parameters.length > 0
@@ -185,7 +197,10 @@ function serializeClassMembers(
         kind: 'accessor',
         visibility: getMemberVisibility(member.modifiers),
         schema,
-        description: memberSymbol ? getJSDocComment(memberSymbol, checker) : undefined,
+        description:
+          memberDoc?.description ??
+          (memberSymbol ? getJSDocComment(memberSymbol, checker) : undefined),
+        tags: memberDoc?.tags,
       });
     }
   }

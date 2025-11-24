@@ -92,3 +92,44 @@ export function voidMismatch(): string {
 export function genericConstraintDrift<T extends string>(value: T): T {
   return value;
 }
+
+/**
+ * Helper reserved for framework internals only.
+ *
+ * @internal
+ */
+export function internalOnlyHelper(): void {
+  // no-op
+}
+
+/**
+ * Demonstrates class member visibility mismatches for docs coverage fixtures.
+ */
+export class VisibilityShowcase {
+  /**
+   * Documented as internal but left public to trigger drift.
+   *
+   * @internal
+   */
+  public leakedMethod(): void {
+    // no-op
+  }
+
+  /**
+   * Documented as @public even though the method is protected.
+   *
+   * @public
+   */
+  protected misdocumentedProtected(): void {
+    // no-op
+  }
+
+  /**
+   * Properly aligned non-public helper.
+   *
+   * @internal
+   */
+  protected alignedHelper(): void {
+    // no-op
+  }
+}

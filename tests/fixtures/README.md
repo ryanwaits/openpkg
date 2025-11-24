@@ -47,7 +47,7 @@ node packages/cli/dist/cli.js check \
 ```
 
 ## Docs Drift Playground
-`tests/fixtures/docs-drift` intentionally keeps outdated `@param` tags to exercise the new drift detector.
+`tests/fixtures/docs-drift` intentionally keeps outdated `@param` tags to exercise the new drift detector. It now also includes dedicated exports for optionality drift (`announce`, `logMetric`) and deprecated-vs-doc mismatches (`legacyHealthReport`).
 
 ```bash
 bun run build:cli
