@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { badgeRoute } from './routes/badge';
 import { leaderboardRoute } from './routes/leaderboard';
+import { scanRoute } from './routes/scan';
 
 const app = new Hono();
 
@@ -16,6 +17,7 @@ app.get('/', (c) => {
     endpoints: {
       badge: '/badge/:owner/:repo',
       leaderboard: '/leaderboard',
+      scan: '/scan',
       health: '/health',
     },
   });
@@ -28,6 +30,7 @@ app.get('/health', (c) => {
 // Routes
 app.route('/badge', badgeRoute);
 app.route('/leaderboard', leaderboardRoute);
+app.route('/scan', scanRoute);
 
 const port = Number(process.env.PORT) || 3000;
 

@@ -8,6 +8,7 @@ import { registerCheckCommand } from './commands/check';
 import { registerDiffCommand } from './commands/diff';
 import { registerGenerateCommand } from './commands/generate';
 import { registerInitCommand } from './commands/init';
+import { registerScanCommand } from './commands/scan';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -25,6 +26,7 @@ registerGenerateCommand(program);
 registerCheckCommand(program);
 registerDiffCommand(program);
 registerInitCommand(program);
+registerScanCommand(program);
 
 program.command('*', { hidden: true }).action(() => {
   program.outputHelp();

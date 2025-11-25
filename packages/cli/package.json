@@ -46,13 +46,18 @@
     "dist"
   ],
   "dependencies": {
+    "@ai-sdk/anthropic": "^1.0.0",
+    "@ai-sdk/openai": "^1.0.0",
     "@inquirer/prompts": "^7.8.0",
     "@doccov/sdk": "^0.2.0",
     "@openpkg-ts/spec": "^0.2.0",
+    "ai": "^4.0.0",
     "chalk": "^5.4.1",
     "commander": "^14.0.0",
+    "glob": "^11.0.0",
     "ora": "^8.2.0",
-    "zod": "^4.0.5"
+    "simple-git": "^3.27.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/bun": "latest",
