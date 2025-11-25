@@ -2,7 +2,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import chalk from 'chalk';
 import type { Command } from 'commander';
-import { OPENPKG_CONFIG_FILENAMES } from '../config/openpkg-config';
+import { DOCCOV_CONFIG_FILENAMES } from '../config';
 
 export interface InitCommandDependencies {
   fileExists?: typeof fs.existsSync;
@@ -35,7 +35,7 @@ export function registerInitCommand(
 
   program
     .command('init')
-    .description('Create an OpenPkg configuration file')
+    .description('Create a DocCov configuration file')
     .option('--cwd <dir>', 'Working directory', process.cwd())
     .option('--format <format>', 'Config format: auto, mjs, js, cjs', 'auto')
     .action((options) => {
@@ -52,7 +52,7 @@ export function registerInitCommand(
       if (existing) {
         error(
           chalk.red(
-            `An OpenPkg config already exists at ${path.relative(cwd, existing) || './openpkg.config.*'}.`,
+            `A DocCov config already exists at ${path.relative(cwd, existing) || './doccov.config.*'}.`,
           ),
         );
         process.exitCode = 1;
@@ -65,12 +65,12 @@ export function registerInitCommand(
       if (targetFormat === 'js' && packageType !== 'module') {
         log(
           chalk.yellow(
-            'Package is not marked as "type": "module"; creating openpkg.config.js may require enabling ESM.',
+            'Package is not marked as "type": "module"; creating doccov.config.js may require enabling ESM.',
           ),
         );
       }
 
-      const fileName = `openpkg.config.${targetFormat}`;
+      const fileName = `doccov.config.${targetFormat}`;
       const outputPath = path.join(cwd, fileName);
 
       if (fileExists(outputPath)) {
@@ -95,7 +95,7 @@ const findExistingConfig = (cwd: string, fileExists: typeof fs.existsSync): stri
   const { root } = path.parse(current);
 
   while (true) {
-    for (const candidate of OPENPKG_CONFIG_FILENAMES) {
+    for (const candidate of DOCCOV_CONFIG_FILENAMES) {
       const candidatePath = path.join(current, candidate);
       if (fileExists(candidatePath)) {
         return candidatePath;
@@ -169,7 +169,7 @@ const resolveFormat = (format: ConfigFormat, packageType: PackageType): 'mjs' | 
 const buildTemplate = (format: 'mjs' | 'js' | 'cjs'): string => {
   if (format === 'cjs') {
     return [
-      "const { defineConfig } = require('@openpkg-ts/cli/config');",
+      "const { defineConfig } = require('@doccov/cli/config');",
       '',
       'module.exports = defineConfig({',
       '  include: [],',
@@ -180,7 +180,7 @@ const buildTemplate = (format: 'mjs' | 'js' | 'cjs'): string => {
   }
 
   return [
-    "import { defineConfig } from '@openpkg-ts/cli/config';",
+    "import { defineConfig } from '@doccov/cli/config';",
     '',
     'export default defineConfig({',
     '  include: [],',

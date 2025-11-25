@@ -5,6 +5,7 @@ import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Command } from 'commander';
 import { registerCheckCommand } from './commands/check';
+import { registerDiffCommand } from './commands/diff';
 import { registerGenerateCommand } from './commands/generate';
 import { registerInitCommand } from './commands/init';
 
@@ -16,12 +17,13 @@ const packageJson = JSON.parse(readFileSync(path.join(__dirname, '../package.jso
 const program = new Command();
 
 program
-  .name('openpkg')
-  .description('Generate OpenPkg specification for TypeScript packages')
+  .name('doccov')
+  .description('DocCov - Documentation coverage and drift detection for TypeScript')
   .version(packageJson.version);
 
 registerGenerateCommand(program);
 registerCheckCommand(program);
+registerDiffCommand(program);
 registerInitCommand(program);
 
 program.command('*', { hidden: true }).action(() => {

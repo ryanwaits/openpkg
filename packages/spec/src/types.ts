@@ -25,7 +25,9 @@ export type SpecDocDrift = {
     | 'generic-constraint-mismatch'
     | 'optionality-mismatch'
     | 'deprecated-mismatch'
-    | 'visibility-mismatch';
+    | 'visibility-mismatch'
+    | 'example-drift'
+    | 'broken-link';
   target?: string;
   issue: string;
   suggestion?: string;

@@ -89,7 +89,7 @@
       "properties": {
         "type": {
           "type": "string",
-          "enum": ["param-mismatch", "param-type-mismatch", "return-type-mismatch"]
+          "enum": ["param-mismatch", "param-type-mismatch", "return-type-mismatch", "generic-constraint-mismatch", "optionality-mismatch", "deprecated-mismatch", "visibility-mismatch", "example-drift", "broken-link"]
         },
         "target": {
           "type": "string",

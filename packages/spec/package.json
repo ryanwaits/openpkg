@@ -1,18 +1,19 @@
 {
   "name": "@openpkg-ts/spec",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Shared schema, validation, and diff utilities for OpenPkg specs",
   "keywords": [
     "openpkg",
+    "doccov",
     "json-schema",
     "validation",
     "typescript",
     "spec"
   ],
-  "homepage": "https://github.com/openpkg/openpkg#readme",
+  "homepage": "https://github.com/doccov/doccov#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/openpkg/openpkg.git",
+    "url": "git+https://github.com/doccov/doccov.git",
     "directory": "packages/spec"
   },
   "license": "MIT",

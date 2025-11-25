@@ -5,7 +5,7 @@ const stringList: z.ZodUnion<[z.ZodString, z.ZodArray<z.ZodString, 'many'>]> = z
   z.array(z.string()),
 ]);
 
-export const openPkgConfigSchema: z.ZodObject<{
+export const docCovConfigSchema: z.ZodObject<{
   include: z.ZodOptional<typeof stringList>;
   exclude: z.ZodOptional<typeof stringList>;
   plugins: z.ZodOptional<z.ZodArray<z.ZodUnknown, 'many'>>;
@@ -15,9 +15,9 @@ export const openPkgConfigSchema: z.ZodObject<{
   plugins: z.array(z.unknown()).optional(),
 });
 
-export type OpenPkgConfigInput = z.infer<typeof openPkgConfigSchema>;
+export type DocCovConfigInput = z.infer<typeof docCovConfigSchema>;
 
-export interface NormalizedOpenPkgConfig {
+export interface NormalizedDocCovConfig {
   include?: string[];
   exclude?: string[];
   plugins?: unknown[];
@@ -34,7 +34,7 @@ const normalizeList = (value?: string | string[]): string[] | undefined => {
   return normalized.length > 0 ? normalized : undefined;
 };
 
-export const normalizeConfig = (input: OpenPkgConfigInput): NormalizedOpenPkgConfig => {
+export const normalizeConfig = (input: DocCovConfigInput): NormalizedDocCovConfig => {
   const include = normalizeList(input.include);
   const exclude = normalizeList(input.exclude);
 
@@ -44,3 +44,10 @@ export const normalizeConfig = (input: OpenPkgConfigInput): NormalizedOpenPkgCon
     plugins: input.plugins,
   };
 };
+
+/** @deprecated Use docCovConfigSchema instead */
+export const openPkgConfigSchema: typeof docCovConfigSchema = docCovConfigSchema;
+/** @deprecated Use DocCovConfigInput instead */
+export type OpenPkgConfigInput = DocCovConfigInput;
+/** @deprecated Use NormalizedDocCovConfig instead */
+export type NormalizedOpenPkgConfig = NormalizedDocCovConfig;

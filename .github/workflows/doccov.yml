@@ -1,0 +1,115 @@
+name: DocCov
+
+on:
+  pull_request:
+    branches: [main, master]
+  push:
+    branches: [main, master]
+
+jobs:
+  check:
+    name: Documentation Coverage
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Generate spec (head)
+        run: |
+          npx @doccov/cli generate --output openpkg-head.json
+        continue-on-error: true
+
+      - name: Generate spec (base)
+        if: github.event_name == 'pull_request'
+        run: |
+          git checkout ${{ github.event.pull_request.base.sha }}
+          npx @doccov/cli generate --output openpkg-base.json || echo '{}' > openpkg-base.json
+          git checkout ${{ github.event.pull_request.head.sha }}
+        continue-on-error: true
+
+      - name: Run diff
+        if: github.event_name == 'pull_request'
+        id: diff
+        run: |
+          if [ -f openpkg-base.json ] && [ -f openpkg-head.json ]; then
+            DIFF_OUTPUT=$(npx @doccov/cli diff openpkg-base.json openpkg-head.json --output json)
+            echo "diff<<EOF" >> $GITHUB_OUTPUT
+            echo "$DIFF_OUTPUT" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          fi
+        continue-on-error: true
+
+      - name: Check coverage
+        run: |
+          npx @doccov/cli check --min-coverage ${{ vars.DOCCOV_MIN_COVERAGE || 80 }}
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request' && steps.diff.outputs.diff
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const diff = JSON.parse(process.env.DIFF_OUTPUT || '{}');
+            
+            const coverageEmoji = diff.coverageDelta > 0 ? '📈' : diff.coverageDelta < 0 ? '📉' : '➡️';
+            const deltaStr = diff.coverageDelta > 0 ? `+${diff.coverageDelta}` : String(diff.coverageDelta);
+            
+            let body = `## ${coverageEmoji} DocCov Report\n\n`;
+            body += `**Coverage:** ${diff.oldCoverage}% → ${diff.newCoverage}% (${deltaStr}%)\n\n`;
+            
+            if (diff.newUndocumented?.length > 0) {
+              body += `### ⚠️ New Undocumented Exports\n`;
+              body += diff.newUndocumented.slice(0, 10).map(id => `- \`${id}\``).join('\n');
+              if (diff.newUndocumented.length > 10) {
+                body += `\n- ... and ${diff.newUndocumented.length - 10} more`;
+              }
+              body += '\n\n';
+            }
+            
+            if (diff.driftIntroduced > 0) {
+              body += `### 🔀 Drift\n`;
+              body += `+${diff.driftIntroduced} new drift issue(s)\n\n`;
+            }
+            
+            if (diff.driftResolved > 0) {
+              body += `✅ ${diff.driftResolved} drift issue(s) resolved\n\n`;
+            }
+            
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const botComment = comments.find(c => 
+              c.user?.type === 'Bot' && c.body?.includes('DocCov Report')
+            );
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+        env:
+          DIFF_OUTPUT: ${{ steps.diff.outputs.diff }}
+

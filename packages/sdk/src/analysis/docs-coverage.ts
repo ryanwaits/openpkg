@@ -24,11 +24,22 @@ const SECTION_WEIGHT = 100 / DOC_SECTIONS.length;
 export function computeDocsCoverage(spec: OpenPkgSpec): DocsCoverageResult {
   const coverageByExport = new Map<string, SpecDocsMetadata>();
 
+  // Build registry of all export names for cross-reference validation
+  const exportRegistry = new Set<string>();
+  for (const entry of spec.exports ?? []) {
+    exportRegistry.add(entry.name);
+    exportRegistry.add(entry.id);
+  }
+  for (const type of spec.types ?? []) {
+    exportRegistry.add(type.name);
+    exportRegistry.add(type.id);
+  }
+
   let aggregateScore = 0;
   let processed = 0;
 
   for (const entry of spec.exports ?? []) {
-    const coverage = evaluateExport(entry);
+    const coverage = evaluateExport(entry, exportRegistry);
     coverageByExport.set(entry.id ?? entry.name, coverage.docs);
     aggregateScore += coverage.docs.coverageScore ?? 0;
     processed += 1;
@@ -42,7 +53,7 @@ export function computeDocsCoverage(spec: OpenPkgSpec): DocsCoverageResult {
   };
 }
 
-function evaluateExport(entry: SpecExport): ExportCoverageResult {
+function evaluateExport(entry: SpecExport, exportRegistry?: Set<string>): ExportCoverageResult {
   const missing: SpecDocSignal[] = [];
   const drift = [
     ...detectParamDrift(entry),
@@ -52,6 +63,8 @@ function evaluateExport(entry: SpecExport): ExportCoverageResult {
     ...detectGenericConstraintDrift(entry),
     ...detectDeprecatedDrift(entry),
     ...detectVisibilityDrift(entry),
+    ...detectExampleDrift(entry, exportRegistry),
+    ...detectBrokenLinks(entry, exportRegistry),
   ];
 
   if (!hasDescription(entry)) {
@@ -879,4 +892,115 @@ function levenshtein(a: string, b: string): number {
   }
 
   return matrix[b.length][a.length];
+}
+
+function detectExampleDrift(entry: SpecExport, exportRegistry?: Set<string>): SpecDocDrift[] {
+  if (!exportRegistry || !entry.examples || entry.examples.length === 0) {
+    return [];
+  }
+
+  const drifts: SpecDocDrift[] = [];
+
+  // Common identifier pattern - matches word characters that could be identifiers
+  const identifierPattern = /\b([A-Z][a-zA-Z0-9]*)\b/g;
+
+  for (const example of entry.examples) {
+    if (typeof example !== 'string') {
+      continue;
+    }
+
+    // Extract potential identifiers from example code
+    const matches = example.matchAll(identifierPattern);
+    const referencedIdentifiers = new Set<string>();
+
+    for (const match of matches) {
+      const identifier = match[1];
+      // Skip common JS/TS keywords and built-ins
+      if (identifier && !isBuiltInIdentifier(identifier)) {
+        referencedIdentifiers.add(identifier);
+      }
+    }
+
+    // Check if referenced identifiers exist in export registry
+    for (const identifier of referencedIdentifiers) {
+      // Only flag if it looks like it should be a package export (starts with uppercase)
+      // and doesn't exist in the registry
+      if (!exportRegistry.has(identifier)) {
+        // Check if it might be a renamed/removed export
+        const suggestion = findClosestMatch(identifier, Array.from(exportRegistry));
+
+        if (suggestion && suggestion.distance <= 3) {
+          drifts.push({
+            type: 'example-drift',
+            target: identifier,
+            issue: `@example references "${identifier}" which does not exist in this package.`,
+            suggestion: `Did you mean "${suggestion.value}"?`,
+          });
+        }
+      }
+    }
+  }
+
+  return drifts;
+}
+
+function isBuiltInIdentifier(identifier: string): boolean {
+  const builtIns = new Set([
+    // JS built-ins
+    'Array', 'Object', 'String', 'Number', 'Boolean', 'Function', 'Symbol', 'BigInt',
+    'Date', 'RegExp', 'Error', 'TypeError', 'ReferenceError', 'SyntaxError',
+    'Map', 'Set', 'WeakMap', 'WeakSet', 'Promise', 'Proxy', 'Reflect',
+    'JSON', 'Math', 'Intl', 'ArrayBuffer', 'DataView', 'URL',
+    // TS/common patterns
+    'Record', 'Partial', 'Required', 'Readonly', 'Pick', 'Omit', 'Exclude', 'Extract',
+    'NonNullable', 'ReturnType', 'InstanceType', 'Parameters', 'ConstructorParameters',
+    // Common test utilities
+    'Console', 'Event', 'Element', 'Document', 'Window', 'Node',
+    // Common framework types
+    'React', 'Component', 'Props', 'State',
+  ]);
+
+  return builtIns.has(identifier);
+}
+
+function detectBrokenLinks(entry: SpecExport, exportRegistry?: Set<string>): SpecDocDrift[] {
+  if (!exportRegistry) {
+    return [];
+  }
+
+  const drifts: SpecDocDrift[] = [];
+
+  // Check tags for {@link Target} patterns
+  const linkPattern = /\{@link\s+([^}\s]+)\s*\}/g;
+
+  const allText = [
+    entry.description ?? '',
+    ...(entry.tags ?? []).map((tag) => tag.text),
+    ...(entry.examples ?? []),
+  ].join(' ');
+
+  const matches = allText.matchAll(linkPattern);
+
+  for (const match of matches) {
+    const target = match[1];
+    if (!target) {
+      continue;
+    }
+
+    // Handle qualified names (e.g., "Foo.bar" -> check "Foo")
+    const rootName = target.split('.')[0] ?? target;
+
+    if (!exportRegistry.has(rootName) && !exportRegistry.has(target)) {
+      const suggestion = findClosestMatch(rootName, Array.from(exportRegistry));
+
+      drifts.push({
+        type: 'broken-link',
+        target,
+        issue: `{@link ${target}} references a symbol that does not exist.`,
+        suggestion: suggestion && suggestion.distance <= 3 ? `Did you mean "${suggestion.value}"?` : undefined,
+      });
+    }
+  }
+
+  return drifts;
 }

@@ -4,7 +4,7 @@ export default defineConfig({
   entry: ['src/cli.ts', 'src/config/index.ts'],
   dts: true,
   clean: true,
-  splitting: true,
+  splitting: false,
   format: ['esm'],
-  external: ['@openpkg-ts/sdk', '@openpkg-ts/spec', 'commander', 'chalk', 'ora', '@inquirer/prompts'],
+  external: ['@doccov/sdk', '@openpkg-ts/spec', 'commander', 'chalk', 'ora', '@inquirer/prompts'],
 });

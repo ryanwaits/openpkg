@@ -1,21 +1,22 @@
+import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { OpenPkg } from '@openpkg-ts/sdk';
+import { DocCov } from '@doccov/sdk';
 import chalk from 'chalk';
 import type { Command } from 'commander';
 import ora, { type Ora } from 'ora';
 import { findEntryPoint, findPackageInMonorepo } from '../utils/package-utils';
 
 interface CheckCommandDependencies {
-  createOpenPkg?: (
-    options: ConstructorParameters<typeof OpenPkg>[0],
-  ) => Pick<OpenPkg, 'analyzeFileWithDiagnostics'>;
+  createDocCov?: (
+    options: ConstructorParameters<typeof DocCov>[0],
+  ) => Pick<DocCov, 'analyzeFileWithDiagnostics'>;
   spinner?: (text: string) => Ora;
   log?: typeof console.log;
   error?: typeof console.error;
 }
 
 const defaultDependencies: Required<CheckCommandDependencies> = {
-  createOpenPkg: (options) => new OpenPkg(options),
+  createDocCov: (options) => new DocCov(options),
   spinner: (text: string) => ora(text),
   log: console.log,
   error: console.error,
@@ -25,7 +26,7 @@ export function registerCheckCommand(
   program: Command,
   dependencies: CheckCommandDependencies = {},
 ): void {
-  const { createOpenPkg, spinner, log, error } = {
+  const { createDocCov, spinner, log, error } = {
     ...defaultDependencies,
     ...dependencies,
   };
@@ -59,6 +60,11 @@ export function registerCheckCommand(
           log(chalk.gray(`Auto-detected entry point: ${path.relative(targetDir, entryFile)}`));
         } else {
           entryFile = path.resolve(targetDir, entryFile);
+          // If path is a directory, find entry point within it
+          if (fs.existsSync(entryFile) && fs.statSync(entryFile).isDirectory()) {
+            entryFile = await findEntryPoint(entryFile, true);
+            log(chalk.gray(`Auto-detected entry point: ${entryFile}`));
+          }
         }
 
         const minCoverage = clampCoverage(options.minCoverage ?? 80);
@@ -67,11 +73,11 @@ export function registerCheckCommand(
         const spinnerInstance = spinner('Analyzing documentation coverage...');
         spinnerInstance.start();
 
-        let specResult: Awaited<ReturnType<OpenPkg['analyzeFileWithDiagnostics']>> | undefined;
+        let specResult: Awaited<ReturnType<DocCov['analyzeFileWithDiagnostics']>> | undefined;
 
         try {
-          const openpkg = createOpenPkg({ resolveExternalTypes });
-          specResult = await openpkg.analyzeFileWithDiagnostics(entryFile);
+          const doccov = createDocCov({ resolveExternalTypes });
+          specResult = await doccov.analyzeFileWithDiagnostics(entryFile);
           spinnerInstance.succeed('Documentation analysis complete');
         } catch (analysisError) {
           spinnerInstance.fail('Failed to analyze documentation coverage');

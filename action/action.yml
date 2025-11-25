@@ -1,0 +1,160 @@
+name: 'DocCov'
+description: 'Documentation coverage and drift detection for TypeScript'
+author: 'Ryan Waits'
+
+branding:
+  icon: 'file-text'
+  color: 'green'
+
+inputs:
+  min-coverage:
+    description: 'Minimum coverage percentage (0-100)'
+    required: false
+    default: '80'
+  require-examples:
+    description: 'Require @example blocks on all exports'
+    required: false
+    default: 'false'
+  fail-on-regression:
+    description: 'Fail if coverage regresses compared to base branch'
+    required: false
+    default: 'false'
+  fail-on-drift:
+    description: 'Fail if new drift is introduced'
+    required: false
+    default: 'false'
+  comment-on-pr:
+    description: 'Post coverage report as PR comment'
+    required: false
+    default: 'true'
+  working-directory:
+    description: 'Working directory for the check'
+    required: false
+    default: '.'
+  skip-generate:
+    description: 'Skip spec generation and use existing openpkg.json'
+    required: false
+    default: 'false'
+  github-token:
+    description: 'GitHub token for PR comments'
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+  coverage:
+    description: 'Current coverage percentage'
+  coverage-delta:
+    description: 'Coverage change compared to base (on PRs)'
+  drift-count:
+    description: 'Number of drift issues detected'
+  
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Install DocCov CLI
+      shell: bash
+      run: npm install -g @doccov/cli
+
+    - name: Generate spec
+      if: inputs.skip-generate != 'true'
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: doccov generate --output openpkg.json
+
+    - name: Verify spec exists
+      if: inputs.skip-generate == 'true'
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        if [ ! -f openpkg.json ]; then
+          echo "Error: openpkg.json not found. Either commit it or set skip-generate to false."
+          exit 1
+        fi
+
+    - name: Check coverage
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        ARGS="--min-coverage ${{ inputs.min-coverage }}"
+        if [ "${{ inputs.require-examples }}" = "true" ]; then
+          ARGS="$ARGS --require-examples"
+        fi
+        doccov check $ARGS
+
+    - name: Generate base spec (PRs only)
+      if: github.event_name == 'pull_request'
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        git fetch origin ${{ github.base_ref }}
+        git checkout FETCH_HEAD -- . 2>/dev/null || true
+        if [ "${{ inputs.skip-generate }}" = "true" ] && [ -f openpkg.json ]; then
+          cp openpkg.json openpkg-base.json
+        else
+          doccov generate --output openpkg-base.json 2>/dev/null || echo '{"docs":{"coverageScore":0},"exports":[]}' > openpkg-base.json
+        fi
+        git checkout - -- . 2>/dev/null || true
+
+    - name: Run diff (PRs only)
+      if: github.event_name == 'pull_request'
+      id: diff
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        if [ -f openpkg-base.json ]; then
+          DIFF=$(doccov diff openpkg-base.json openpkg.json --output json)
+          echo "result<<EOF" >> $GITHUB_OUTPUT
+          echo "$DIFF" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Post PR comment
+      if: github.event_name == 'pull_request' && inputs.comment-on-pr == 'true'
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ inputs.github-token }}
+        script: |
+          const diff = JSON.parse(process.env.DIFF_RESULT || '{}');
+          
+          const emoji = diff.coverageDelta > 0 ? '📈' : diff.coverageDelta < 0 ? '📉' : '➡️';
+          const delta = diff.coverageDelta > 0 ? `+${diff.coverageDelta}` : String(diff.coverageDelta || 0);
+          
+          let body = `## ${emoji} DocCov Report\n\n`;
+          body += `| Metric | Value |\n|--------|-------|\n`;
+          body += `| Coverage | ${diff.oldCoverage || 0}% → ${diff.newCoverage || 0}% (${delta}%) |\n`;
+          body += `| New exports | ${diff.nonBreaking?.length || 0} |\n`;
+          body += `| Undocumented | ${diff.newUndocumented?.length || 0} |\n`;
+          body += `| Drift introduced | ${diff.driftIntroduced || 0} |\n`;
+          body += `| Drift resolved | ${diff.driftResolved || 0} |\n`;
+          
+          const { data: comments } = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+          });
+          
+          const existing = comments.find(c => c.body?.includes('DocCov Report'));
+          
+          if (existing) {
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: existing.id,
+              body,
+            });
+          } else {
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });
+          }
+      env:
+        DIFF_RESULT: ${{ steps.diff.outputs.result }}
+

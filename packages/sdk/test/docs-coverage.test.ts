@@ -168,3 +168,327 @@ describe('docs coverage visibility drift detection', () => {
   });
 });
 
+describe('docs coverage return type drift detection', () => {
+  it('reports drift when @returns type contradicts the signature', () => {
+    const spec = buildSpec({
+      id: 'return-drift',
+      name: 'return-drift',
+      signatures: [
+        {
+          parameters: [],
+          returns: { schema: { type: 'number' }, description: 'A number' },
+        },
+      ],
+      tags: [{ name: 'returns', text: '{string} The result as a string' }],
+    });
+
+    const result = computeDocsCoverage(spec);
+    const drift = result.exports.get('return-drift')?.drift;
+    expect(drift).toBeDefined();
+    expect(drift?.[0]).toMatchObject({
+      type: 'return-type-mismatch',
+      target: 'returns',
+    });
+    expect(drift?.[0].issue).toContain('string');
+    expect(drift?.[0].issue).toContain('number');
+  });
+
+  it('does not report drift when @returns type matches the signature', () => {
+    const spec = buildSpec({
+      id: 'return-aligned',
+      name: 'return-aligned',
+      signatures: [
+        {
+          parameters: [],
+          returns: { schema: { type: 'boolean' }, description: 'True if valid' },
+        },
+      ],
+      tags: [{ name: 'returns', text: '{boolean} True if valid' }],
+    });
+
+    const result = computeDocsCoverage(spec);
+    const drift = result.exports.get('return-aligned')?.drift;
+    expect(drift).toBeUndefined();
+  });
+
+  it('treats void and undefined as equivalent', () => {
+    const spec = buildSpec({
+      id: 'void-undefined',
+      name: 'void-undefined',
+      signatures: [
+        {
+          parameters: [],
+          returns: { schema: { type: 'void' }, description: 'Nothing' },
+        },
+      ],
+      tags: [{ name: 'returns', text: '{undefined} Nothing' }],
+    });
+
+    const result = computeDocsCoverage(spec);
+    const drift = result.exports.get('void-undefined')?.drift;
+    expect(drift).toBeUndefined();
+  });
+});
+
+describe('docs coverage optionality drift detection', () => {
+  it('reports drift when docs mark optional but signature requires', () => {
+    const spec = buildSpec({
+      id: 'optional-required',
+      name: 'optional-required',
+      signatures: [
+        {
+          parameters: [{ name: 'message', required: true, schema: { type: 'string' } }],
+        },
+      ],
+      tags: [{ name: 'param', text: '[message] - Optional message' }],
+    });
+
+    const result = computeDocsCoverage(spec);
+    const drift = result.exports.get('optional-required')?.drift;
+    expect(drift).toBeDefined();
+    expect(drift?.[0]).toMatchObject({
+      type: 'optionality-mismatch',
+      target: 'message',
+    });
+    expect(drift?.[0].issue).toContain('optional');
+    expect(drift?.[0].issue).toContain('requires');
+  });
+
+  it('reports drift when docs mark required but signature is optional', () => {
+    const spec = buildSpec({
+      id: 'required-optional',
+      name: 'required-optional',
+      signatures: [
+        {
+          parameters: [{ name: 'label', required: false, schema: { type: 'string' } }],
+        },
+      ],
+      tags: [{ name: 'param', text: 'label - Required label' }],
+    });
+
+    const result = computeDocsCoverage(spec);
+    const drift = result.exports.get('required-optional')?.drift;
+    expect(drift).toBeDefined();
+    expect(drift?.[0]).toMatchObject({
+      type: 'optionality-mismatch',
+      target: 'label',
+    });
+    expect(drift?.[0].issue).toContain('optional');
+  });
+
+  it('does not report drift when optionality matches', () => {
+    const spec = buildSpec({
+      id: 'optional-aligned',
+      name: 'optional-aligned',
+      signatures: [
+        {
+          parameters: [{ name: 'suffix', required: false, schema: { type: 'string' } }],
+        },
+      ],
+      tags: [{ name: 'param', text: '[suffix] - Optional suffix' }],
+    });
+
+    const result = computeDocsCoverage(spec);
+    const drift = result.exports.get('optional-aligned')?.drift;
+    expect(drift).toBeUndefined();
+  });
+});
+
+describe('docs coverage deprecated drift detection', () => {
+  it('reports drift when code is deprecated but docs lack @deprecated', () => {
+    const spec = buildSpec({
+      id: 'code-deprecated',
+      name: 'code-deprecated',
+      deprecated: true,
+      tags: [],
+    });
+
+    const result = computeDocsCoverage(spec);
+    const drift = result.exports.get('code-deprecated')?.drift;
+    expect(drift).toBeDefined();
+    expect(drift?.[0]).toMatchObject({
+      type: 'deprecated-mismatch',
+      target: 'code-deprecated',
+    });
+    expect(drift?.[0].issue).toContain('@deprecated is missing');
+  });
+
+  it('reports drift when docs have @deprecated but code is not', () => {
+    const spec = buildSpec({
+      id: 'docs-deprecated',
+      name: 'docs-deprecated',
+      deprecated: false,
+      tags: [{ name: 'deprecated', text: 'Use newMethod instead' }],
+    });
+
+    const result = computeDocsCoverage(spec);
+    const drift = result.exports.get('docs-deprecated')?.drift;
+    expect(drift).toBeDefined();
+    expect(drift?.[0]).toMatchObject({
+      type: 'deprecated-mismatch',
+      target: 'docs-deprecated',
+    });
+    expect(drift?.[0].issue).toContain('declaration is not');
+  });
+
+  it('does not report drift when both agree on deprecated status', () => {
+    const spec = buildSpec({
+      id: 'both-deprecated',
+      name: 'both-deprecated',
+      deprecated: true,
+      tags: [{ name: 'deprecated', text: 'Use newMethod instead' }],
+    });
+
+    const result = computeDocsCoverage(spec);
+    const drift = result.exports.get('both-deprecated')?.drift;
+    expect(drift).toBeUndefined();
+  });
+});
+
+describe('docs coverage example drift detection', () => {
+  it('reports drift when @example references non-existent export', () => {
+    const spec: OpenPkgSpec = {
+      openpkg: '0.2.0',
+      meta: { name: 'fixture' },
+      exports: [
+        {
+          id: 'example-drift',
+          name: 'calculateDiscount',
+          kind: 'function',
+          signatures: [],
+          examples: [
+            "import { calculateDiscount, PriceConfg } from './index';\nconst config: PriceConfg = { rate: 0.1 };",
+          ],
+        },
+        {
+          id: 'PriceConfig',
+          name: 'PriceConfig',
+          kind: 'interface',
+          signatures: [],
+        },
+      ],
+    };
+
+    const result = computeDocsCoverage(spec);
+    const drift = result.exports.get('example-drift')?.drift;
+    expect(drift).toBeDefined();
+    expect(drift?.[0]).toMatchObject({
+      type: 'example-drift',
+      target: 'PriceConfg',
+    });
+    expect(drift?.[0].suggestion).toContain('PriceConfig');
+  });
+
+  it('does not report drift for valid export references', () => {
+    const spec: OpenPkgSpec = {
+      openpkg: '0.2.0',
+      meta: { name: 'fixture' },
+      exports: [
+        {
+          id: 'valid-example',
+          name: 'formatPrice',
+          kind: 'function',
+          signatures: [],
+          examples: [
+            "import { formatPrice, PriceConfig } from './index';\nconst result = formatPrice(19.99);",
+          ],
+        },
+        {
+          id: 'PriceConfig',
+          name: 'PriceConfig',
+          kind: 'interface',
+          signatures: [],
+        },
+      ],
+    };
+
+    const result = computeDocsCoverage(spec);
+    const drift = result.exports.get('valid-example')?.drift;
+    expect(drift).toBeUndefined();
+  });
+});
+
+describe('docs coverage broken link detection', () => {
+  it('reports drift for broken {@link} references', () => {
+    const spec: OpenPkgSpec = {
+      openpkg: '0.2.0',
+      meta: { name: 'fixture' },
+      exports: [
+        {
+          id: 'broken-link',
+          name: 'processOrder',
+          kind: 'function',
+          signatures: [],
+          description: 'See {@link MissingType} for details.',
+        },
+      ],
+    };
+
+    const result = computeDocsCoverage(spec);
+    const drift = result.exports.get('broken-link')?.drift;
+    expect(drift).toBeDefined();
+    expect(drift?.[0]).toMatchObject({
+      type: 'broken-link',
+      target: 'MissingType',
+    });
+    expect(drift?.[0].issue).toContain('does not exist');
+  });
+
+  it('suggests similar exports for typos in links', () => {
+    const spec: OpenPkgSpec = {
+      openpkg: '0.2.0',
+      meta: { name: 'fixture' },
+      exports: [
+        {
+          id: 'typo-link',
+          name: 'getOrderService',
+          kind: 'function',
+          signatures: [],
+          description: 'Uses {@link OrderServce} for processing.',
+        },
+        {
+          id: 'OrderService',
+          name: 'OrderService',
+          kind: 'class',
+          signatures: [],
+        },
+      ],
+    };
+
+    const result = computeDocsCoverage(spec);
+    const drift = result.exports.get('typo-link')?.drift;
+    expect(drift).toBeDefined();
+    expect(drift?.[0]).toMatchObject({
+      type: 'broken-link',
+      target: 'OrderServce',
+    });
+    expect(drift?.[0].suggestion).toContain('OrderService');
+  });
+
+  it('does not report drift for valid {@link} references', () => {
+    const spec: OpenPkgSpec = {
+      openpkg: '0.2.0',
+      meta: { name: 'fixture' },
+      exports: [
+        {
+          id: 'valid-link',
+          name: 'validateOrder',
+          kind: 'function',
+          signatures: [],
+          description: 'See {@link OrderService} for the service class.',
+        },
+        {
+          id: 'OrderService',
+          name: 'OrderService',
+          kind: 'class',
+          signatures: [],
+        },
+      ],
+    };
+
+    const result = computeDocsCoverage(spec);
+    const drift = result.exports.get('valid-link')?.drift;
+    expect(drift).toBeUndefined();
+  });
+});
+

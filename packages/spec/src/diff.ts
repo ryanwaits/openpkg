@@ -1,18 +1,92 @@
-import type { OpenPkg } from './types';
+import type { OpenPkg, SpecExport } from './types';
 
 export type SpecDiff = {
+  // Structural changes
   breaking: string[];
   nonBreaking: string[];
   docsOnly: string[];
+  // Coverage delta
+  coverageDelta: number;
+  oldCoverage: number;
+  newCoverage: number;
+  // Docs health changes
+  newUndocumented: string[];
+  improvedExports: string[];
+  regressedExports: string[];
+  driftIntroduced: number;
+  driftResolved: number;
 };
 
-export function diffSpec(a: OpenPkg, b: OpenPkg): SpecDiff {
-  const result: SpecDiff = { breaking: [], nonBreaking: [], docsOnly: [] };
+export function diffSpec(oldSpec: OpenPkg, newSpec: OpenPkg): SpecDiff {
+  const result: SpecDiff = {
+    breaking: [],
+    nonBreaking: [],
+    docsOnly: [],
+    coverageDelta: 0,
+    oldCoverage: 0,
+    newCoverage: 0,
+    newUndocumented: [],
+    improvedExports: [],
+    regressedExports: [],
+    driftIntroduced: 0,
+    driftResolved: 0,
+  };
 
-  diffCollections(result, a.exports, b.exports);
-  diffCollections(result, a.types ?? [], b.types ?? []);
+  diffCollections(result, oldSpec.exports, newSpec.exports);
+  diffCollections(result, oldSpec.types ?? [], newSpec.types ?? []);
+
+  // Calculate coverage delta
+  result.oldCoverage = oldSpec.docs?.coverageScore ?? 0;
+  result.newCoverage = newSpec.docs?.coverageScore ?? 0;
+  result.coverageDelta = Math.round((result.newCoverage - result.oldCoverage) * 10) / 10;
+
+  // Analyze docs health changes
+  const oldExportMap = toExportMap(oldSpec.exports);
+  const newExportMap = toExportMap(newSpec.exports);
+
+  for (const [id, newExport] of newExportMap.entries()) {
+    const oldExport = oldExportMap.get(id);
+    const newScore = newExport.docs?.coverageScore ?? 0;
+    const newDriftCount = newExport.docs?.drift?.length ?? 0;
+
+    if (!oldExport) {
+      // New export - check if undocumented
+      if (newScore < 100 || (newExport.docs?.missing?.length ?? 0) > 0) {
+        result.newUndocumented.push(id);
+      }
+      result.driftIntroduced += newDriftCount;
+      continue;
+    }
+
+    const oldScore = oldExport.docs?.coverageScore ?? 0;
+    const oldDriftCount = oldExport.docs?.drift?.length ?? 0;
+
+    // Track coverage changes per export
+    if (newScore > oldScore) {
+      result.improvedExports.push(id);
+    } else if (newScore < oldScore) {
+      result.regressedExports.push(id);
+    }
+
+    // Track drift changes
+    if (newDriftCount > oldDriftCount) {
+      result.driftIntroduced += newDriftCount - oldDriftCount;
+    } else if (oldDriftCount > newDriftCount) {
+      result.driftResolved += oldDriftCount - newDriftCount;
+    }
+  }
 
   return result;
+}
+
+function toExportMap(exports: SpecExport[]): Map<string, SpecExport> {
+  const map = new Map<string, SpecExport>();
+  for (const exp of exports) {
+    if (exp && typeof exp.id === 'string') {
+      map.set(exp.id, exp);
+    }
+  }
+  return map;
 }
 
 type WithId = { id: string };

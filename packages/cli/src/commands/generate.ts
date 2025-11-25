@@ -1,11 +1,11 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { OpenPkg } from '@openpkg-ts/sdk';
+import { DocCov } from '@doccov/sdk';
 import { normalize, type OpenPkg as OpenPkgSpec, validateSpec } from '@openpkg-ts/spec';
 import chalk from 'chalk';
 import type { Command } from 'commander';
 import ora, { type Ora } from 'ora';
-import { type LoadedOpenPkgConfig, loadOpenPkgConfig } from '../config';
+import { type LoadedDocCovConfig, loadDocCovConfig } from '../config';
 import {
   type FilterOptions as CliFilterOptions,
   mergeFilterOptions,
@@ -14,9 +14,9 @@ import {
 import { findEntryPoint, findPackageInMonorepo } from '../utils/package-utils';
 
 export interface GenerateCommandDependencies {
-  createOpenPkg?: (
-    options: ConstructorParameters<typeof OpenPkg>[0],
-  ) => Pick<OpenPkg, 'analyzeFileWithDiagnostics'>;
+  createDocCov?: (
+    options: ConstructorParameters<typeof DocCov>[0],
+  ) => Pick<DocCov, 'analyzeFileWithDiagnostics'>;
   writeFileSync?: typeof fs.writeFileSync;
   spinner?: (text: string) => Ora;
   log?: typeof console.log;
@@ -24,17 +24,28 @@ export interface GenerateCommandDependencies {
 }
 
 const defaultDependencies: Required<GenerateCommandDependencies> = {
-  createOpenPkg: (options) => new OpenPkg(options),
+  createDocCov: (options) => new DocCov(options),
   writeFileSync: fs.writeFileSync,
   spinner: (text: string) => ora(text),
   log: console.log,
   error: console.error,
 };
 
-type GeneratedSpec = Awaited<ReturnType<OpenPkg['analyzeFileWithDiagnostics']>>;
+type GeneratedSpec = Awaited<ReturnType<DocCov['analyzeFileWithDiagnostics']>>;
 
 function getArrayLength(value: unknown): number {
   return Array.isArray(value) ? value.length : 0;
+}
+
+function stripDocsFields(spec: OpenPkgSpec): OpenPkgSpec {
+  const { docs: _rootDocs, ...rest } = spec;
+  return {
+    ...rest,
+    exports: spec.exports?.map((exp) => {
+      const { docs: _expDocs, ...expRest } = exp;
+      return expRest;
+    }),
+  };
 }
 
 function formatDiagnosticOutput(
@@ -58,14 +69,14 @@ export function registerGenerateCommand(
   program: Command,
   dependencies: GenerateCommandDependencies = {},
 ): void {
-  const { createOpenPkg, writeFileSync, spinner, log, error } = {
+  const { createDocCov, writeFileSync, spinner, log, error } = {
     ...defaultDependencies,
     ...dependencies,
   };
 
   program
     .command('generate [entry]')
-    .description('Generate OpenPkg specification')
+    .description('Generate OpenPkg specification for documentation coverage analysis')
     .option('-o, --output <file>', 'Output file', 'openpkg.json')
     .option('-p, --package <name>', 'Target package name (for monorepos)')
     .option('--cwd <dir>', 'Working directory', process.cwd())
@@ -73,6 +84,7 @@ export function registerGenerateCommand(
     .option('--include <ids>', 'Filter exports by identifier (comma-separated or repeated)')
     .option('--exclude <ids>', 'Exclude exports by identifier (comma-separated or repeated)')
     .option('--show-diagnostics', 'Print TypeScript diagnostics from analysis')
+    .option('--no-docs', 'Omit docs coverage fields from output (pure structural spec)')
     .option('-y, --yes', 'Skip all prompts and use defaults')
     .action(async (entry, options) => {
       try {
@@ -93,6 +105,11 @@ export function registerGenerateCommand(
           log(chalk.gray(`Auto-detected entry point: ${path.relative(targetDir, entryFile)}`));
         } else {
           entryFile = path.resolve(targetDir, entryFile);
+          // If path is a directory, find entry point within it
+          if (fs.existsSync(entryFile) && fs.statSync(entryFile).isDirectory()) {
+            entryFile = await findEntryPoint(entryFile, true);
+            log(chalk.gray(`Auto-detected entry point: ${entryFile}`));
+          }
         }
 
         const resolveExternalTypes = options.externalTypes !== false;
@@ -102,9 +119,9 @@ export function registerGenerateCommand(
           exclude: parseListFlag(options.exclude),
         };
 
-        let config: LoadedOpenPkgConfig | null = null;
+        let config: LoadedDocCovConfig | null = null;
         try {
-          config = await loadOpenPkgConfig(targetDir);
+          config = await loadDocCovConfig(targetDir);
           if (config?.filePath) {
             log(
               chalk.gray(`Loaded configuration from ${path.relative(targetDir, config.filePath)}`),
@@ -112,7 +129,7 @@ export function registerGenerateCommand(
           }
         } catch (configError) {
           error(
-            chalk.red('Failed to load OpenPkg config:'),
+            chalk.red('Failed to load DocCov config:'),
             configError instanceof Error ? configError.message : configError,
           );
           process.exit(1);
@@ -128,7 +145,7 @@ export function registerGenerateCommand(
 
         let result: GeneratedSpec | undefined;
         try {
-          const openpkg = createOpenPkg({
+          const doccov = createDocCov({
             resolveExternalTypes,
           });
           const analyzeOptions =
@@ -141,7 +158,7 @@ export function registerGenerateCommand(
                 }
               : {};
 
-          result = await openpkg.analyzeFileWithDiagnostics(entryFile, analyzeOptions);
+          result = await doccov.analyzeFileWithDiagnostics(entryFile, analyzeOptions);
           spinnerInstance.succeed('Generated OpenPkg spec');
         } catch (generationError) {
           spinnerInstance.fail('Failed to generate spec');
@@ -152,8 +169,13 @@ export function registerGenerateCommand(
           throw new Error('Failed to produce an OpenPkg spec.');
         }
 
-        const outputPath = path.resolve(targetDir, options.output);
-        const normalized = normalize(result.spec as OpenPkgSpec);
+        const outputPath = path.resolve(process.cwd(), options.output);
+        let normalized = normalize(result.spec as OpenPkgSpec);
+
+        if (options.docs === false) {
+          normalized = stripDocsFields(normalized);
+        }
+
         const validation = validateSpec(normalized);
 
         if (!validation.ok) {
@@ -166,7 +188,7 @@ export function registerGenerateCommand(
 
         writeFileSync(outputPath, JSON.stringify(normalized, null, 2));
 
-        log(chalk.green(`✓ Generated ${path.relative(process.cwd(), outputPath)}`));
+        log(chalk.green(`✓ Generated ${options.output}`));
         log(chalk.gray(`  ${getArrayLength(normalized.exports)} exports`));
         log(chalk.gray(`  ${getArrayLength(normalized.types)} types`));
 

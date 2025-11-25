@@ -1,18 +1,19 @@
 {
-  "name": "@openpkg-ts/sdk",
-  "version": "0.1.0",
-  "description": "TypeScript package specification SDK",
+  "name": "@doccov/sdk",
+  "version": "0.2.0",
+  "description": "DocCov SDK - Documentation coverage and drift detection for TypeScript",
   "keywords": [
     "typescript",
     "documentation",
     "sdk",
-    "openpkg",
-    "package-analysis"
+    "doccov",
+    "docs-coverage",
+    "drift-detection"
   ],
-  "homepage": "https://github.com/openpkg/openpkg#readme",
+  "homepage": "https://github.com/doccov/doccov#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/openpkg/openpkg.git",
+    "url": "git+https://github.com/doccov/doccov.git",
     "directory": "packages/sdk"
   },
   "license": "MIT",
@@ -38,7 +39,7 @@
     "dist"
   ],
   "dependencies": {
-    "@openpkg-ts/spec": "^0.1.0",
+    "@openpkg-ts/spec": "^0.2.0",
     "typescript": "^5.0.0"
   },
   "devDependencies": {

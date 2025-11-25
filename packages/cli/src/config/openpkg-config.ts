@@ -1,9 +1,16 @@
 import { access } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { type NormalizedOpenPkgConfig, normalizeConfig, openPkgConfigSchema } from './schema';
+import { type NormalizedDocCovConfig, docCovConfigSchema, normalizeConfig } from './schema';
 
-export const OPENPKG_CONFIG_FILENAMES = [
+const DOCCOV_CONFIG_FILENAMES = [
+  'doccov.config.ts',
+  'doccov.config.mts',
+  'doccov.config.cts',
+  'doccov.config.js',
+  'doccov.config.mjs',
+  'doccov.config.cjs',
+  // Legacy support
   'openpkg.config.ts',
   'openpkg.config.mts',
   'openpkg.config.cts',
@@ -26,7 +33,7 @@ const findConfigFile = async (cwd: string): Promise<string | null> => {
   const { root } = path.parse(current);
 
   while (true) {
-    for (const candidate of OPENPKG_CONFIG_FILENAMES) {
+    for (const candidate of DOCCOV_CONFIG_FILENAMES) {
       const candidatePath = path.join(current, candidate);
       if (await fileExists(candidatePath)) {
         return candidatePath;
@@ -41,9 +48,12 @@ const findConfigFile = async (cwd: string): Promise<string | null> => {
   }
 };
 
-export interface LoadedOpenPkgConfig extends NormalizedOpenPkgConfig {
+interface LoadedDocCovConfig extends NormalizedDocCovConfig {
   filePath: string;
 }
+
+/** @deprecated Use LoadedDocCovConfig instead */
+type LoadedOpenPkgConfig = LoadedDocCovConfig;
 
 const importConfigModule = async (absolutePath: string): Promise<unknown> => {
   const fileUrl = pathToFileURL(absolutePath);
@@ -55,9 +65,7 @@ const importConfigModule = async (absolutePath: string): Promise<unknown> => {
 
 const formatIssues = (issues: string[]): string => issues.map((issue) => `- ${issue}`).join('\n');
 
-export const loadOpenPkgConfigInternal = async (
-  cwd: string,
-): Promise<LoadedOpenPkgConfig | null> => {
+const loadDocCovConfig = async (cwd: string): Promise<LoadedDocCovConfig | null> => {
   const configPath = await findConfigFile(cwd);
   if (!configPath) {
     return null;
@@ -68,17 +76,17 @@ export const loadOpenPkgConfigInternal = async (
     rawConfig = await importConfigModule(configPath);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    throw new Error(`Failed to load OpenPkg config at ${configPath}: ${message}`);
+    throw new Error(`Failed to load DocCov config at ${configPath}: ${message}`);
   }
 
-  const parsed = openPkgConfigSchema.safeParse(rawConfig);
+  const parsed = docCovConfigSchema.safeParse(rawConfig);
   if (!parsed.success) {
     const issues = parsed.error.issues.map((issue) => {
       const pathLabel = issue.path.length > 0 ? issue.path.join('.') : '(root)';
       return `${pathLabel}: ${issue.message}`;
     });
 
-    throw new Error(`Invalid OpenPkg configuration at ${configPath}.\n${formatIssues(issues)}`);
+    throw new Error(`Invalid DocCov configuration at ${configPath}.\n${formatIssues(issues)}`);
   }
 
   const normalized = normalizeConfig(parsed.data);
@@ -89,6 +97,15 @@ export const loadOpenPkgConfigInternal = async (
   };
 };
 
-export { loadOpenPkgConfigInternal as loadOpenPkgConfig };
+/** @deprecated Use loadDocCovConfig instead */
+const loadOpenPkgConfigInternal: typeof loadDocCovConfig = loadDocCovConfig;
+/** @deprecated Use loadDocCovConfig instead */
+const loadOpenPkgConfig: typeof loadDocCovConfig = loadDocCovConfig;
 
-export type { NormalizedOpenPkgConfig };
+export {
+  DOCCOV_CONFIG_FILENAMES,
+  loadDocCovConfig,
+  loadOpenPkgConfigInternal,
+  loadOpenPkgConfig,
+};
+export type { LoadedDocCovConfig, LoadedOpenPkgConfig };

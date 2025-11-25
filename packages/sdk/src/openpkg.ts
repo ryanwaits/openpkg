@@ -8,8 +8,8 @@ import type { OpenPkgSpec } from './analysis/spec-types';
 import { extractPackageSpec } from './extractor';
 import { applyFilters } from './filtering/apply-filters';
 import type { FilterOptions } from './filtering/types';
-import type { NormalizedOpenPkgOptions, OpenPkgOptions } from './options';
-import { normalizeOpenPkgOptions } from './options';
+import type { DocCovOptions, NormalizedDocCovOptions } from './options';
+import { normalizeDocCovOptions } from './options';
 import { ts } from './ts-module';
 
 export interface Diagnostic {
@@ -40,11 +40,11 @@ export interface AnalyzeOptions {
   filters?: FilterOptions;
 }
 
-export class OpenPkg {
-  private readonly options: NormalizedOpenPkgOptions;
+export class DocCov {
+  private readonly options: NormalizedDocCovOptions;
 
-  constructor(options: OpenPkgOptions = {}) {
-    this.options = normalizeOpenPkgOptions(options);
+  constructor(options: DocCovOptions = {}) {
+    this.options = normalizeDocCovOptions(options);
   }
 
   async analyze(
@@ -191,15 +191,18 @@ export class OpenPkg {
 }
 
 export async function analyze(code: string, options: AnalyzeOptions = {}): Promise<OpenPkgSpec> {
-  return new OpenPkg().analyze(code, 'temp.ts', options);
+  return new DocCov().analyze(code, 'temp.ts', options);
 }
 
 export async function analyzeFile(
   filePath: string,
   options: AnalyzeOptions = {},
 ): Promise<OpenPkgSpec> {
-  return new OpenPkg().analyzeFile(filePath, options);
+  return new DocCov().analyzeFile(filePath, options);
 }
+
+/** @deprecated Use DocCov instead */
+export const OpenPkg: typeof DocCov = DocCov;
 
 function resolvePackageDir(entryFile: string): string {
   const fallbackDir = path.dirname(entryFile);

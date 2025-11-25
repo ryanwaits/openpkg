@@ -1,5 +1,5 @@
 /**
- * Adds a fee to the base amount.
+ * Param type drift: docs say `{string}`, signature says `number`.
  *
  * @param {string} amount - Intentionally documented as a string (should be number).
  * @param {number} fee - Correctly documented parameter for comparison.
@@ -10,7 +10,7 @@ export function addFee(amount: number, fee: number): number {
 }
 
 /**
- * Multiplies a value by a multiplier.
+ * Control case: correctly documented types.
  *
  * @param {number} value - Properly documented parameter.
  * @param {number} multiplier - Another properly documented parameter.
@@ -19,3 +19,4 @@ export function addFee(amount: number, fee: number): number {
 export function multiply(value: number, multiplier: number): number {
   return value * multiplier;
 }
+
