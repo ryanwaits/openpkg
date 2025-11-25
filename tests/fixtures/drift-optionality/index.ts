@@ -24,4 +24,3 @@ export function logMetric(label?: string): string {
 export function greet(suffix?: string): string {
   return suffix ? `Hello${suffix}` : 'Hello';
 }
-

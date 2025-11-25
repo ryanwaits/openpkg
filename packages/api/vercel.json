@@ -1,0 +1,6 @@
+{
+  "buildCommand": "bun install",
+  "installCommand": "bun install",
+  "framework": null,
+  "outputDirectory": "."
+}

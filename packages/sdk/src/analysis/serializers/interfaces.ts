@@ -2,8 +2,8 @@ import type * as TS from 'typescript';
 import { ts } from '../../ts-module';
 import { formatTypeReference } from '../../utils/parameter-utils';
 import { parseJSDocComment } from '../../utils/tsdoc-utils';
-import { collectReferencedTypes } from '../../utils/type-utils';
 import { serializeTypeParameterDeclarations } from '../../utils/type-parameter-utils';
+import { collectReferencedTypes } from '../../utils/type-utils';
 import { getJSDocComment, getSourceLocation, isSymbolDeprecated } from '../ast-utils';
 import type { ExportDefinition, TypeDefinition } from '../spec-types';
 import type { SerializerContext } from './functions';
@@ -43,12 +43,7 @@ export function serializeInterface(
     tags: parsedDoc?.tags,
   };
 
-  const schema = interfaceToSchema(
-    declaration,
-    checker,
-    typeRefs,
-    referencedTypes,
-  );
+  const schema = interfaceToSchema(declaration, checker, typeRefs, referencedTypes);
 
   const typeDefinition: TypeDefinition = {
     id: symbol.getName(),

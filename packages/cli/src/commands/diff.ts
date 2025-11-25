@@ -86,11 +86,7 @@ function loadSpec(filePath: string, readFileSync: typeof fs.readFileSync): OpenP
   }
 }
 
-function printTextDiff(
-  diff: SpecDiff,
-  log: typeof console.log,
-  error: typeof console.error,
-): void {
+function printTextDiff(diff: SpecDiff, log: typeof console.log, error: typeof console.error): void {
   log('');
   log(chalk.bold('DocCov Diff Report'));
   log('─'.repeat(40));
@@ -99,12 +95,13 @@ function printTextDiff(
   const coverageColor =
     diff.coverageDelta > 0 ? chalk.green : diff.coverageDelta < 0 ? chalk.red : chalk.gray;
   const coverageSymbol = diff.coverageDelta > 0 ? '↑' : diff.coverageDelta < 0 ? '↓' : '→';
-  const deltaStr =
-    diff.coverageDelta > 0 ? `+${diff.coverageDelta}` : String(diff.coverageDelta);
+  const deltaStr = diff.coverageDelta > 0 ? `+${diff.coverageDelta}` : String(diff.coverageDelta);
 
   log('');
   log(chalk.bold('Coverage'));
-  log(`  ${diff.oldCoverage}% ${coverageSymbol} ${diff.newCoverage}% ${coverageColor(`(${deltaStr}%)`)}`);
+  log(
+    `  ${diff.oldCoverage}% ${coverageSymbol} ${diff.newCoverage}% ${coverageColor(`(${deltaStr}%)`)}`,
+  );
 
   // Structural changes
   if (diff.breaking.length > 0 || diff.nonBreaking.length > 0) {
@@ -169,4 +166,3 @@ function printTextDiff(
 
   log('');
 }
-

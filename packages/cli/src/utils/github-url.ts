@@ -76,4 +76,3 @@ export function buildCloneUrl(parsed: ParsedGitHubUrl): string {
 export function buildDisplayUrl(parsed: ParsedGitHubUrl): string {
   return `github.com/${parsed.owner}/${parsed.repo}`;
 }
-

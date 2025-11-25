@@ -1,6 +1,6 @@
-import React from 'react';
-import Layout from '@theme/Layout';
 import CodeBlock from '@theme/CodeBlock';
+import Layout from '@theme/Layout';
+import React from 'react';
 
 interface ExportData {
   id: string;
@@ -194,7 +194,9 @@ export default function DocCovExportPage({ exportData }: Props): JSX.Element {
                 >
                   <strong>{member.name}</strong>
                   {member.kind && <span style={{ color: '#666' }}> ({member.kind})</span>}
-                  {member.description && <p style={{ margin: '0.5rem 0 0' }}>{member.description}</p>}
+                  {member.description && (
+                    <p style={{ margin: '0.5rem 0 0' }}>{member.description}</p>
+                  )}
                 </div>
               ))}
             </section>
@@ -253,4 +255,3 @@ function formatSchema(schema: unknown): string {
   }
   return JSON.stringify(schema);
 }
-

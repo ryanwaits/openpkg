@@ -1,7 +1,7 @@
 import { access } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { type NormalizedDocCovConfig, docCovConfigSchema, normalizeConfig } from './schema';
+import { docCovConfigSchema, type NormalizedDocCovConfig, normalizeConfig } from './schema';
 
 const DOCCOV_CONFIG_FILENAMES = [
   'doccov.config.ts',
@@ -102,10 +102,5 @@ const loadOpenPkgConfigInternal: typeof loadDocCovConfig = loadDocCovConfig;
 /** @deprecated Use loadDocCovConfig instead */
 const loadOpenPkgConfig: typeof loadDocCovConfig = loadDocCovConfig;
 
-export {
-  DOCCOV_CONFIG_FILENAMES,
-  loadDocCovConfig,
-  loadOpenPkgConfigInternal,
-  loadOpenPkgConfig,
-};
+export { DOCCOV_CONFIG_FILENAMES, loadDocCovConfig, loadOpenPkgConfigInternal, loadOpenPkgConfig };
 export type { LoadedDocCovConfig, LoadedOpenPkgConfig };

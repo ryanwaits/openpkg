@@ -6,8 +6,8 @@ import {
   type ParsedJSDoc,
   parseJSDocComment,
 } from '../../utils/tsdoc-utils';
-import { collectReferencedTypes, collectReferencedTypesFromNode } from '../../utils/type-utils';
 import { serializeTypeParameterDeclarations } from '../../utils/type-parameter-utils';
+import { collectReferencedTypes, collectReferencedTypesFromNode } from '../../utils/type-utils';
 import { getJSDocComment, getSourceLocation, isSymbolDeprecated } from '../ast-utils';
 import type { ExportDefinition, TypeReference } from '../spec-types';
 import type { TypeRegistry } from '../type-registry';

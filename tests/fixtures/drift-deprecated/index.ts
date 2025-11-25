@@ -31,4 +31,3 @@ export function oldCalculate(x: number): number {
 export function newCalculate(x: number): number {
   return x * 2;
 }
-

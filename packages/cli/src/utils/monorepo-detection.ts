@@ -123,9 +123,7 @@ async function resolveWorkspacePackages(
 
   for (const pattern of patterns) {
     // Normalize pattern - ensure it matches directories
-    const normalizedPattern = pattern.endsWith('/')
-      ? pattern.slice(0, -1)
-      : pattern;
+    const normalizedPattern = pattern.endsWith('/') ? pattern.slice(0, -1) : pattern;
 
     try {
       const matches = await glob(normalizedPattern, {
@@ -173,9 +171,7 @@ export async function findPackage(
     return undefined;
   }
 
-  return mono.packages.find(
-    (pkg) => pkg.name === packageName || pkg.relativePath === packageName,
-  );
+  return mono.packages.find((pkg) => pkg.name === packageName || pkg.relativePath === packageName);
 }
 
 /**
@@ -190,4 +186,3 @@ export function formatPackageList(packages: PackageInfo[], limit = 10): string {
 
   return lines.join('\n');
 }
-

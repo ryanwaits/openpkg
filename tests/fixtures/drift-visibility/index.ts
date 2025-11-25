@@ -50,4 +50,3 @@ export class Service {
 
 // Export privateImpl indirectly to use it (avoids unused warning)
 export const _private = { impl: privateImpl };
-

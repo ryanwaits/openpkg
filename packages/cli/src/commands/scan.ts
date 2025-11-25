@@ -9,11 +9,7 @@ import { simpleGit } from 'simple-git';
 import { detectEntryPoint } from '../utils/entry-detection';
 import { buildCloneUrl, buildDisplayUrl, parseGitHubUrl } from '../utils/github-url';
 import { generateBuildPlan } from '../utils/llm-build-plan';
-import {
-  detectMonorepo,
-  findPackage,
-  formatPackageList,
-} from '../utils/monorepo-detection';
+import { detectMonorepo, findPackage, formatPackageList } from '../utils/monorepo-detection';
 
 export interface ScanCommandDependencies {
   createDocCov?: (
@@ -64,7 +60,10 @@ export function registerScanCommand(
     .option('--package <name>', 'Target package in monorepo')
     .option('--output <format>', 'Output format: text or json', 'text')
     .option('--no-cleanup', 'Keep cloned repo (for debugging)')
-    .option('--skip-install', 'Skip dependency installation (faster, but may limit type resolution)')
+    .option(
+      '--skip-install',
+      'Skip dependency installation (faster, but may limit type resolution)',
+    )
     .option('--save-spec <path>', 'Save full OpenPkg spec to file')
     .action(async (url: string, options) => {
       let tempDir: string | undefined;
@@ -81,7 +80,10 @@ export function registerScanCommand(
         log('');
 
         // Create temp directory
-        tempDir = path.join(os.tmpdir(), `doccov-scan-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+        tempDir = path.join(
+          os.tmpdir(),
+          `doccov-scan-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        );
         fs.mkdirSync(tempDir, { recursive: true });
 
         // Clone repository
@@ -119,19 +121,19 @@ export function registerScanCommand(
           installSpinner.start();
 
           const installErrors: string[] = [];
-          
+
           try {
             const { execSync } = await import('node:child_process');
-            
+
             // Detect package manager from lockfile
             const lockfileCommands = [
               { file: 'pnpm-lock.yaml', cmd: 'pnpm install --frozen-lockfile' },
               { file: 'bun.lock', cmd: 'bun install --frozen-lockfile' },
-              { file: 'bun.lockb', cmd: 'bun install --frozen-lockfile' },  // Legacy bun
+              { file: 'bun.lockb', cmd: 'bun install --frozen-lockfile' }, // Legacy bun
               { file: 'yarn.lock', cmd: 'yarn install --frozen-lockfile' },
               { file: 'package-lock.json', cmd: 'npm install --legacy-peer-deps' },
             ];
-            
+
             let installed = false;
             for (const { file, cmd } of lockfileCommands) {
               if (fs.existsSync(path.join(tempDir, file))) {
@@ -150,7 +152,7 @@ export function registerScanCommand(
                 }
               }
             }
-            
+
             // Fallback: try bun (fast), then npm with permissive flags
             if (!installed) {
               try {
@@ -164,7 +166,7 @@ export function registerScanCommand(
                 const stderr = (bunError as { stderr?: Buffer })?.stderr?.toString() ?? '';
                 const msg = bunError instanceof Error ? bunError.message : String(bunError);
                 installErrors.push(`[bun install] ${stderr.slice(0, 150) || msg.slice(0, 150)}`);
-                
+
                 try {
                   execSync('npm install --legacy-peer-deps --ignore-scripts', {
                     cwd: tempDir,
@@ -175,11 +177,13 @@ export function registerScanCommand(
                 } catch (npmError) {
                   const npmStderr = (npmError as { stderr?: Buffer })?.stderr?.toString() ?? '';
                   const npmMsg = npmError instanceof Error ? npmError.message : String(npmError);
-                  installErrors.push(`[npm install] ${npmStderr.slice(0, 150) || npmMsg.slice(0, 150)}`);
+                  installErrors.push(
+                    `[npm install] ${npmStderr.slice(0, 150) || npmMsg.slice(0, 150)}`,
+                  );
                 }
               }
             }
-            
+
             if (installed) {
               installSpinner.succeed('Dependencies installed');
             } else {
@@ -248,7 +252,7 @@ export function registerScanCommand(
             path.join(pkgDir, 'Cargo.toml'),
             path.join(repoRoot, 'Cargo.toml'),
           ];
-          const hasCargoToml = cargoLocations.some(p => fs.existsSync(p));
+          const hasCargoToml = cargoLocations.some((p) => fs.existsSync(p));
 
           // Check for wasm-pack in package.json scripts (both package and root)
           const checkWasmScripts = (dir: string): boolean => {
@@ -258,7 +262,9 @@ export function registerScanCommand(
                 const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
                 const scripts = Object.values(pkg.scripts ?? {}).join(' ');
                 return scripts.includes('wasm-pack') || scripts.includes('wasm');
-              } catch { /* ignore */ }
+              } catch {
+                /* ignore */
+              }
             }
             return false;
           };
@@ -319,7 +325,11 @@ export function registerScanCommand(
               entryPath = path.join(targetDir, llmEntry);
               if (buildFailed) {
                 entrySpinner.succeed(`Entry point: ${llmEntry} (using pre-committed declarations)`);
-                log(chalk.gray('  Coverage may be limited - generated .d.ts files typically lack JSDoc'));
+                log(
+                  chalk.gray(
+                    '  Coverage may be limited - generated .d.ts files typically lack JSDoc',
+                  ),
+                );
               } else {
                 entrySpinner.succeed(`Entry point: ${llmEntry} (from LLM fallback - WASM project)`);
               }
@@ -327,7 +337,9 @@ export function registerScanCommand(
               // Fall back to original .d.ts entry
               entryPath = path.join(targetDir, entry.entryPath);
               entrySpinner.succeed(`Entry point: ${entry.entryPath} (from ${entry.source})`);
-              log(chalk.yellow('  ⚠ WASM project detected but no API key - analysis may be limited'));
+              log(
+                chalk.yellow('  ⚠ WASM project detected but no API key - analysis may be limited'),
+              );
             }
           } else {
             entryPath = path.join(targetDir, entry.entryPath);
@@ -340,7 +352,9 @@ export function registerScanCommand(
             entryPath = path.join(targetDir, llmEntry);
             entrySpinner.succeed(`Entry point: ${llmEntry} (from LLM fallback)`);
           } else {
-            entrySpinner.fail('Could not detect entry point (set OPENAI_API_KEY for smart fallback)');
+            entrySpinner.fail(
+              'Could not detect entry point (set OPENAI_API_KEY for smart fallback)',
+            );
             throw entryError;
           }
         }
@@ -445,11 +459,7 @@ function printTextResult(result: ScanResult, log: typeof console.log): void {
 
   // Coverage
   const coverageColor =
-    result.coverage >= 80
-      ? chalk.green
-      : result.coverage >= 50
-        ? chalk.yellow
-        : chalk.red;
+    result.coverage >= 80 ? chalk.green : result.coverage >= 50 ? chalk.yellow : chalk.red;
   log(chalk.bold('Coverage'));
   log(`  ${coverageColor(`${result.coverage}%`)}`);
   log('');
@@ -487,4 +497,3 @@ function printTextResult(result: ScanResult, log: typeof console.log): void {
 
   log('');
 }
-

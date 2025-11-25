@@ -2,8 +2,8 @@ import type * as TS from 'typescript';
 import { ts } from '../../ts-module';
 import { formatTypeReference, structureParameter } from '../../utils/parameter-utils';
 import { getParameterDocumentation, parseJSDocComment } from '../../utils/tsdoc-utils';
-import { collectReferencedTypes } from '../../utils/type-utils';
 import { serializeTypeParameterDeclarations } from '../../utils/type-parameter-utils';
+import { collectReferencedTypes } from '../../utils/type-utils';
 import { getJSDocComment, getSourceLocation, isSymbolDeprecated } from '../ast-utils';
 import type { ExportDefinition, TypeDefinition } from '../spec-types';
 import type { SerializerContext } from './functions';
@@ -169,8 +169,7 @@ function serializeClassMembers(
         visibility: getMemberVisibility(member.modifiers),
         signatures,
         description:
-          ctorDoc?.description ??
-          (ctorSymbol ? getJSDocComment(ctorSymbol, checker) : undefined),
+          ctorDoc?.description ?? (ctorSymbol ? getJSDocComment(ctorSymbol, checker) : undefined),
         tags: ctorDoc?.tags,
       });
       continue;

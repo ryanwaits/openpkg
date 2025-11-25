@@ -114,7 +114,7 @@ export function detectEntryPoint(repoDir: string): EntryPointResult {
  */
 function resolveToTs(baseDir: string, filePath: string): string | undefined {
   // Normalize path
-  let normalized = filePath.replace(/^\.\//, '');
+  const normalized = filePath.replace(/^\.\//, '');
 
   // Try original path first (might already be .ts)
   if (normalized.endsWith('.ts') || normalized.endsWith('.tsx')) {
@@ -168,4 +168,3 @@ function resolveToTs(baseDir: string, filePath: string): string | undefined {
 
   return undefined;
 }
-

@@ -454,7 +454,10 @@ function detectVisibilityDrift(entry: SpecExport): SpecDocDrift[] {
   const exportDocVisibility = getDocVisibility(entry.tags);
   const exportActualVisibility: CodeVisibility = 'public';
 
-  if (exportDocVisibility && !visibilityMatches(exportDocVisibility.value, exportActualVisibility)) {
+  if (
+    exportDocVisibility &&
+    !visibilityMatches(exportDocVisibility.value, exportActualVisibility)
+  ) {
     const target = entry.name ?? entry.id ?? 'export';
     drifts.push({
       type: 'visibility-mismatch',
@@ -514,7 +517,10 @@ function getDocVisibility(tags?: SpecTag[]): DocVisibilitySignal | undefined {
   return undefined;
 }
 
-function visibilityMatches(docVisibility: DocVisibility, actualVisibility: CodeVisibility): boolean {
+function visibilityMatches(
+  docVisibility: DocVisibility,
+  actualVisibility: CodeVisibility,
+): boolean {
   if (docVisibility === 'internal') {
     return actualVisibility !== 'public';
   }
@@ -947,17 +953,59 @@ function detectExampleDrift(entry: SpecExport, exportRegistry?: Set<string>): Sp
 function isBuiltInIdentifier(identifier: string): boolean {
   const builtIns = new Set([
     // JS built-ins
-    'Array', 'Object', 'String', 'Number', 'Boolean', 'Function', 'Symbol', 'BigInt',
-    'Date', 'RegExp', 'Error', 'TypeError', 'ReferenceError', 'SyntaxError',
-    'Map', 'Set', 'WeakMap', 'WeakSet', 'Promise', 'Proxy', 'Reflect',
-    'JSON', 'Math', 'Intl', 'ArrayBuffer', 'DataView', 'URL',
+    'Array',
+    'Object',
+    'String',
+    'Number',
+    'Boolean',
+    'Function',
+    'Symbol',
+    'BigInt',
+    'Date',
+    'RegExp',
+    'Error',
+    'TypeError',
+    'ReferenceError',
+    'SyntaxError',
+    'Map',
+    'Set',
+    'WeakMap',
+    'WeakSet',
+    'Promise',
+    'Proxy',
+    'Reflect',
+    'JSON',
+    'Math',
+    'Intl',
+    'ArrayBuffer',
+    'DataView',
+    'URL',
     // TS/common patterns
-    'Record', 'Partial', 'Required', 'Readonly', 'Pick', 'Omit', 'Exclude', 'Extract',
-    'NonNullable', 'ReturnType', 'InstanceType', 'Parameters', 'ConstructorParameters',
+    'Record',
+    'Partial',
+    'Required',
+    'Readonly',
+    'Pick',
+    'Omit',
+    'Exclude',
+    'Extract',
+    'NonNullable',
+    'ReturnType',
+    'InstanceType',
+    'Parameters',
+    'ConstructorParameters',
     // Common test utilities
-    'Console', 'Event', 'Element', 'Document', 'Window', 'Node',
+    'Console',
+    'Event',
+    'Element',
+    'Document',
+    'Window',
+    'Node',
     // Common framework types
-    'React', 'Component', 'Props', 'State',
+    'React',
+    'Component',
+    'Props',
+    'State',
   ]);
 
   return builtIns.has(identifier);
@@ -997,7 +1045,10 @@ function detectBrokenLinks(entry: SpecExport, exportRegistry?: Set<string>): Spe
         type: 'broken-link',
         target,
         issue: `{@link ${target}} references a symbol that does not exist.`,
-        suggestion: suggestion && suggestion.distance <= 3 ? `Did you mean "${suggestion.value}"?` : undefined,
+        suggestion:
+          suggestion && suggestion.distance <= 3
+            ? `Did you mean "${suggestion.value}"?`
+            : undefined,
       });
     }
   }

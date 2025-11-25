@@ -25,4 +25,3 @@ export async function fetchCount(): Promise<number> {
 export function isValid(): boolean {
   return true;
 }
-

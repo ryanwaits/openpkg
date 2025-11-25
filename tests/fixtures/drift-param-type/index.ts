@@ -19,4 +19,3 @@ export function addFee(amount: number, fee: number): number {
 export function multiply(value: number, multiplier: number): number {
   return value * multiplier;
 }
-

@@ -40,4 +40,3 @@ export function serializeTypeParameterDeclarations(
 
   return serialized.length > 0 ? serialized : undefined;
 }
-

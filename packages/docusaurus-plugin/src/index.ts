@@ -1,6 +1,6 @@
-import type { LoadContext, Plugin } from '@docusaurus/types';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import type { LoadContext, Plugin } from '@docusaurus/types';
 import type { OpenPkg, SpecExport, SpecType } from '@openpkg-ts/spec';
 
 export interface DocCovPluginOptions {
@@ -145,4 +145,3 @@ function formatExport(exp: SpecExport) {
 }
 
 export { docusaurusPluginDocCov };
-

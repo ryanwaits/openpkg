@@ -4,9 +4,9 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { generateObject } from 'ai';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { createOpenAI } from '@ai-sdk/openai';
+import { generateObject } from 'ai';
 import { z } from 'zod';
 
 export const BuildPlanSchema = z.object({
@@ -66,7 +66,9 @@ async function gatherContextFiles(repoDir: string): Promise<string> {
   return sections.join('\n\n');
 }
 
-const BUILD_PLAN_PROMPT = (context: string) => `Analyze this project to determine how to build it for TypeScript API analysis.
+const BUILD_PLAN_PROMPT = (
+  context: string,
+) => `Analyze this project to determine how to build it for TypeScript API analysis.
 
 The standard entry detection failed. This might be a WASM project, unusual monorepo, or require a build step before the TypeScript entry point exists.
 
@@ -111,4 +113,3 @@ export async function generateBuildPlan(repoDir: string): Promise<BuildPlan | nu
 
   return object;
 }
-

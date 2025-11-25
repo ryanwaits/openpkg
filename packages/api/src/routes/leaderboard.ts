@@ -1,5 +1,5 @@
-import { Hono } from 'hono';
 import type { OpenPkg } from '@openpkg-ts/spec';
+import { Hono } from 'hono';
 
 export const leaderboardRoute = new Hono();
 
@@ -144,9 +144,7 @@ leaderboardRoute.get('/:owner/:repo', async (c) => {
       return count + (exp.docs?.drift?.length ?? 0);
     }, 0);
 
-    const missingDocs = spec.exports.filter(
-      (exp) => (exp.docs?.missing?.length ?? 0) > 0,
-    );
+    const missingDocs = spec.exports.filter((exp) => (exp.docs?.missing?.length ?? 0) > 0);
 
     return c.json({
       owner,
@@ -214,4 +212,3 @@ leaderboardRoute.post('/submit', async (c) => {
     );
   }
 });
-

@@ -40,4 +40,3 @@ export default {
   port,
   fetch: app.fetch,
 };
-

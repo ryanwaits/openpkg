@@ -1,6 +1,6 @@
-import React from 'react';
-import Layout from '@theme/Layout';
 import Link from '@docusaurus/Link';
+import Layout from '@theme/Layout';
+import React from 'react';
 
 interface ExportListItem {
   id: string;
@@ -162,4 +162,3 @@ export default function DocCovIndexPage({ indexData, exportsList }: Props): JSX.
     </Layout>
   );
 }
-

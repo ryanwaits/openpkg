@@ -14,7 +14,7 @@ export interface ScanOptions {
 
 /**
  * Run a documentation coverage scan in an isolated Vercel Sandbox.
- * 
+ *
  * The sandbox:
  * 1. Clones the repository (automatic via source.url)
  * 2. Installs dependencies (with --ignore-scripts for security)
@@ -24,8 +24,8 @@ export interface ScanOptions {
  */
 export async function runScanInSandbox(options: ScanOptions): Promise<ScanResult> {
   const sandbox = await Sandbox.create({
-    source: { 
-      url: options.url, 
+    source: {
+      url: options.url,
       type: 'git',
     },
     resources: { vcpus: 4 },
@@ -35,14 +35,14 @@ export async function runScanInSandbox(options: ScanOptions): Promise<ScanResult
 
   try {
     // Install project dependencies (with security flags)
-    await sandbox.runCommand({ 
-      cmd: 'npm', 
+    await sandbox.runCommand({
+      cmd: 'npm',
       args: ['install', '--ignore-scripts', '--legacy-peer-deps'],
     });
 
     // Install doccov CLI globally
-    await sandbox.runCommand({ 
-      cmd: 'npm', 
+    await sandbox.runCommand({
+      cmd: 'npm',
       args: ['install', '-g', '@doccov/cli'],
     });
 
@@ -62,7 +62,7 @@ export async function runScanInSandbox(options: ScanOptions): Promise<ScanResult
     // The output may contain spinner text before the JSON, so extract JSON portion
     const stdout = result.stdout ?? '';
     const jsonMatch = stdout.match(/\{[\s\S]*\}/);
-    
+
     if (!jsonMatch) {
       throw new Error('No JSON output from scan');
     }
@@ -80,4 +80,3 @@ export async function runScanInSandbox(options: ScanOptions): Promise<ScanResult
 export function isSandboxAvailable(): boolean {
   return process.env.VERCEL_OIDC_TOKEN !== undefined;
 }
-

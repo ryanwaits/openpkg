@@ -27,4 +27,3 @@ export function sumItems<T extends number>(items: T[]): number {
 export function clone<T extends object>(obj: T): T {
   return { ...obj };
 }
-

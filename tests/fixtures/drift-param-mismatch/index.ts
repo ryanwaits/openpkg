@@ -18,4 +18,3 @@ export function applyTax(base: number, taxRate: number): number {
 export function formatUser(name: string): string {
   return `User: ${name}`;
 }
-

@@ -1,9 +1,16 @@
-import { Hono } from 'hono';
 import type { OpenPkg } from '@openpkg-ts/spec';
+import { Hono } from 'hono';
 
 export const badgeRoute = new Hono();
 
-type BadgeColor = 'brightgreen' | 'green' | 'yellowgreen' | 'yellow' | 'orange' | 'red' | 'lightgrey';
+type BadgeColor =
+  | 'brightgreen'
+  | 'green'
+  | 'yellowgreen'
+  | 'yellow'
+  | 'orange'
+  | 'red'
+  | 'lightgrey';
 
 interface BadgeOptions {
   label: string;
@@ -63,7 +70,11 @@ function generateBadgeSvg(options: BadgeOptions): string {
 </svg>`;
 }
 
-async function fetchSpecFromGitHub(owner: string, repo: string, branch = 'main'): Promise<OpenPkg | null> {
+async function fetchSpecFromGitHub(
+  owner: string,
+  repo: string,
+  branch = 'main',
+): Promise<OpenPkg | null> {
   const urls = [
     `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/openpkg.json`,
     `https://raw.githubusercontent.com/${owner}/${repo}/master/openpkg.json`,
@@ -135,4 +146,3 @@ badgeRoute.get('/:owner/:repo.svg', async (c) => {
   const repoName = repo.replace(/\.svg$/, '');
   return c.redirect(`/badge/${owner}/${repoName}`);
 });
-

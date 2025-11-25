@@ -2,7 +2,7 @@ import { spawn } from 'node:child_process';
 import * as path from 'node:path';
 import { Hono } from 'hono';
 import { isSandboxAvailable, runScanInSandbox } from '../sandbox-runner';
-import { scanJobStore, type ScanJob, type ScanResult } from '../scan-worker';
+import { type ScanJob, type ScanResult, scanJobStore } from '../scan-worker';
 
 export const scanRoute = new Hono();
 

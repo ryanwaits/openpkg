@@ -123,7 +123,9 @@ class ScanJobStore {
 export const scanJobStore = new ScanJobStore();
 
 // Periodic cleanup every 5 minutes
-setInterval(() => {
-  scanJobStore.cleanup();
-}, 5 * 60 * 1000);
-
+setInterval(
+  () => {
+    scanJobStore.cleanup();
+  },
+  5 * 60 * 1000,
+);

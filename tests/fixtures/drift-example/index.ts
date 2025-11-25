@@ -42,4 +42,3 @@ export function applyDiscount(amount: number): number {
 export function formatPrice(price: number): string {
   return `$${price.toFixed(2)}`;
 }
-
