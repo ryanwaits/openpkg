@@ -3,6 +3,7 @@ import { cors } from 'hono/cors';
 import { badgeRoute } from './routes/badge';
 import { leaderboardRoute } from './routes/leaderboard';
 import { scanRoute } from './routes/scan';
+import { widgetRoute } from './routes/widget';
 
 const app = new Hono();
 
@@ -16,6 +17,7 @@ app.get('/', (c) => {
     version: '0.2.0',
     endpoints: {
       badge: '/badge/:owner/:repo',
+      widget: '/widget/:owner/:repo',
       leaderboard: '/leaderboard',
       scan: '/scan',
       health: '/health',
@@ -29,18 +31,9 @@ app.get('/health', (c) => {
 
 // Routes
 app.route('/badge', badgeRoute);
+app.route('/widget', widgetRoute);
 app.route('/leaderboard', leaderboardRoute);
 app.route('/scan', scanRoute);
 
-// Vercel serverless handler
+// Vercel serverless handler + Bun auto-serves this export
 export default app;
-
-// Local dev with Bun
-if (!process.env.VERCEL && typeof Bun !== 'undefined') {
-  const port = Number(process.env.PORT) || 3000;
-  Bun.serve({
-    port,
-    fetch: app.fetch,
-  });
-  console.log(`DocCov API running on http://localhost:${port}`);
-}

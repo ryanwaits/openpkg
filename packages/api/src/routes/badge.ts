@@ -1,5 +1,5 @@
-import type { OpenPkg } from '@openpkg-ts/spec';
 import { Hono } from 'hono';
+import { fetchSpecFromGitHub } from '../utils/github';
 
 export const badgeRoute = new Hono();
 
@@ -68,30 +68,6 @@ function generateBadgeSvg(options: BadgeOptions): string {
     <text x="${labelWidth + messageWidth / 2}" y="14">${message}</text>
   </g>
 </svg>`;
-}
-
-async function fetchSpecFromGitHub(
-  owner: string,
-  repo: string,
-  branch = 'main',
-): Promise<OpenPkg | null> {
-  const urls = [
-    `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/openpkg.json`,
-    `https://raw.githubusercontent.com/${owner}/${repo}/master/openpkg.json`,
-  ];
-
-  for (const url of urls) {
-    try {
-      const response = await fetch(url);
-      if (response.ok) {
-        return (await response.json()) as OpenPkg;
-      }
-    } catch {
-      // Try next URL
-    }
-  }
-
-  return null;
 }
 
 // GET /badge/:owner/:repo
