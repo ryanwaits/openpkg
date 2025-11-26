@@ -52,7 +52,9 @@ jobs:
 
       - name: Check coverage
         run: |
-          npx @doccov/cli check --min-coverage ${{ vars.DOCCOV_MIN_COVERAGE || 80 }}
+          for pkg in sdk cli spec; do
+            npx @doccov/cli check --package @doccov/$pkg --min-coverage ${{ vars.DOCCOV_MIN_COVERAGE || 80 }}
+          done
 
       - name: Comment on PR
         if: github.event_name == 'pull_request' && steps.diff.outputs.diff

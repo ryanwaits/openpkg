@@ -19,8 +19,7 @@
     "dev:spec": "cd packages/spec && bun run dev",
     "changeset": "changeset",
     "version": "changeset version && bun install",
-    "release": "changeset publish",
-    "doccov": "bun run packages/cli/dist/cli.js"
+    "release": "changeset publish"
   },
   "devDependencies": {
     "@biomejs/biome": "2.1.2",
