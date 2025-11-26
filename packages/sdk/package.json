@@ -16,7 +16,7 @@
     "url": "git+https://github.com/doccov/doccov.git",
     "directory": "packages/sdk"
   },
-  "license": "MIT",
+  "license": "BUSL-1.1",
   "author": "Ryan Waits",
   "type": "module",
   "main": "./dist/index.js",
