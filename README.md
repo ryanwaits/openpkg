@@ -21,23 +21,6 @@ doccov check --min-coverage 80
 doccov generate -o openpkg.json
 ```
 
-## Quick Example
-
-```typescript
-import { DocCov } from '@doccov/sdk';
-
-const doccov = new DocCov();
-const { spec } = await doccov.analyzeFileWithDiagnostics('src/index.ts');
-
-console.log(`Coverage: ${spec.docs?.coverageScore}%`);
-```
-
-## Add a Badge
-
-```markdown
-![DocCov](https://api.doccov.com/badge/YOUR_ORG/YOUR_REPO)
-```
-
 ## Documentation
 
 Full documentation at [docs/README.md](./docs/README.md):
