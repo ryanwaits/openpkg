@@ -34,7 +34,9 @@
   },
   "devDependencies": {
     "@types/bun": "latest",
-    "@types/ms": "^0.7.34"
+    "@types/ms": "^0.7.34",
+    "@types/node": "^20.0.0",
+    "@vercel/node": "^3.0.0",
+    "typescript": "^5.0.0"
   }
 }
-

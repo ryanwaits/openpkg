@@ -1,7 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import type { LoadContext, Plugin } from '@docusaurus/types';
-import type { OpenPkg, SpecExport, SpecType } from '@openpkg-ts/spec';
+import type { OpenPkg, SpecExport } from '@openpkg-ts/spec';
 
 export interface DocCovPluginOptions {
   /** Path to openpkg.json file (default: './openpkg.json') */
@@ -59,7 +59,7 @@ export default function docusaurusPluginDocCov(
       }
 
       // Create data file for the spec
-      const specDataPath = await createData('spec.json', JSON.stringify(spec, null, 2));
+      await createData('spec.json', JSON.stringify(spec, null, 2));
 
       // Create index page data
       const indexData = {

@@ -1,6 +1,10 @@
 {
-  "buildCommand": "bun install",
-  "installCommand": "bun install",
-  "framework": null,
-  "outputDirectory": "."
+  "rewrites": [
+    { "source": "/badge/:path*", "destination": "/api" },
+    { "source": "/spec/:path*", "destination": "/api" },
+    { "source": "/scan-stream", "destination": "/api/scan-stream" },
+    { "source": "/scan/detect", "destination": "/api/scan/detect" },
+    { "source": "/scan", "destination": "/api/scan" },
+    { "source": "/(.*)", "destination": "/api" }
+  ]
 }

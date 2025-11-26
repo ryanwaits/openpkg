@@ -126,7 +126,7 @@ badgeRoute.get('/:owner/:repo', async (c) => {
       'Content-Type': 'image/svg+xml',
       'Cache-Control': 'public, max-age=300', // Cache for 5 minutes
     });
-  } catch (error) {
+  } catch {
     const svg = generateBadgeSvg({
       label: 'docs',
       message: 'error',

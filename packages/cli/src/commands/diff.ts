@@ -86,7 +86,11 @@ function loadSpec(filePath: string, readFileSync: typeof fs.readFileSync): OpenP
   }
 }
 
-function printTextDiff(diff: SpecDiff, log: typeof console.log, error: typeof console.error): void {
+function printTextDiff(
+  diff: SpecDiff,
+  log: typeof console.log,
+  _error: typeof console.error,
+): void {
   log('');
   log(chalk.bold('DocCov Diff Report'));
   log('─'.repeat(40));

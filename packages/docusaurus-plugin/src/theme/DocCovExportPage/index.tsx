@@ -1,6 +1,5 @@
 import CodeBlock from '@theme/CodeBlock';
 import Layout from '@theme/Layout';
-import React from 'react';
 
 interface ExportData {
   id: string;
@@ -110,8 +109,8 @@ export default function DocCovExportPage({ exportData }: Props): JSX.Element {
             >
               <strong>⚠️ Documentation Drift Detected</strong>
               <ul style={{ marginBottom: 0, marginTop: '0.5rem' }}>
-                {docs.drift.map((d, i) => (
-                  <li key={i}>
+                {docs.drift.map((d) => (
+                  <li key={`${d.type}-${d.issue}`}>
                     {d.issue}
                     {d.suggestion && <em> — {d.suggestion}</em>}
                   </li>
@@ -131,8 +130,11 @@ export default function DocCovExportPage({ exportData }: Props): JSX.Element {
           {signatures && signatures.length > 0 && (
             <section style={{ marginBottom: '2rem' }}>
               <h2>Signature</h2>
-              {signatures.map((sig, i) => (
-                <div key={i} style={{ marginBottom: '1rem' }}>
+              {signatures.map((sig) => (
+                <div
+                  key={sig.description ?? JSON.stringify(sig.returns)}
+                  style={{ marginBottom: '1rem' }}
+                >
                   {sig.parameters && sig.parameters.length > 0 && (
                     <div style={{ marginBottom: '1rem' }}>
                       <h3>Parameters</h3>
@@ -145,8 +147,8 @@ export default function DocCovExportPage({ exportData }: Props): JSX.Element {
                           </tr>
                         </thead>
                         <tbody>
-                          {sig.parameters.map((param, j) => (
-                            <tr key={j} style={{ borderBottom: '1px solid #e0e0e0' }}>
+                          {sig.parameters.map((param) => (
+                            <tr key={param.name} style={{ borderBottom: '1px solid #e0e0e0' }}>
                               <td style={{ padding: '0.5rem' }}>
                                 <code>{param.name}</code>
                                 {param.required === false && (
@@ -182,9 +184,9 @@ export default function DocCovExportPage({ exportData }: Props): JSX.Element {
           {members && members.length > 0 && (
             <section style={{ marginBottom: '2rem' }}>
               <h2>Members</h2>
-              {members.map((member, i) => (
+              {members.map((member) => (
                 <div
-                  key={i}
+                  key={member.name}
                   style={{
                     padding: '1rem',
                     backgroundColor: '#f5f5f5',
@@ -206,8 +208,8 @@ export default function DocCovExportPage({ exportData }: Props): JSX.Element {
           {examples && examples.length > 0 && (
             <section style={{ marginBottom: '2rem' }}>
               <h2>Examples</h2>
-              {examples.map((example, i) => (
-                <CodeBlock key={i} language="typescript">
+              {examples.map((example) => (
+                <CodeBlock key={example} language="typescript">
                   {example}
                 </CodeBlock>
               ))}
@@ -218,8 +220,8 @@ export default function DocCovExportPage({ exportData }: Props): JSX.Element {
           {tags && tags.length > 0 && (
             <section>
               <h2>Tags</h2>
-              {tags.map((tag, i) => (
-                <div key={i} style={{ marginBottom: '0.5rem' }}>
+              {tags.map((tag) => (
+                <div key={tag.name} style={{ marginBottom: '0.5rem' }}>
                   <strong>@{tag.name}</strong>: {tag.text}
                 </div>
               ))}

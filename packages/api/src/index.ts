@@ -32,11 +32,15 @@ app.route('/badge', badgeRoute);
 app.route('/leaderboard', leaderboardRoute);
 app.route('/scan', scanRoute);
 
-const port = Number(process.env.PORT) || 3000;
+// Vercel serverless handler
+export default app;
 
-console.log(`DocCov API running on http://localhost:${port}`);
-
-export default {
-  port,
-  fetch: app.fetch,
-};
+// Local dev with Bun
+if (!process.env.VERCEL && typeof Bun !== 'undefined') {
+  const port = Number(process.env.PORT) || 3000;
+  Bun.serve({
+    port,
+    fetch: app.fetch,
+  });
+  console.log(`DocCov API running on http://localhost:${port}`);
+}

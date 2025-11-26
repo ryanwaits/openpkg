@@ -52,7 +52,7 @@ async function fetchSpecFromGitHub(owner: string, repo: string): Promise<OpenPkg
   return null;
 }
 
-async function buildLeaderboard(category?: string): Promise<LeaderboardEntry[]> {
+async function buildLeaderboard(_category?: string): Promise<LeaderboardEntry[]> {
   const entries: LeaderboardEntry[] = [];
 
   // Fetch specs for all tracked repos

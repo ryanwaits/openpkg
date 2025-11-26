@@ -36,12 +36,6 @@ export class Service {
   public doWork(): void {}
 
   /**
-   * Marked @public but is private.
-   * @public
-   */
-  private secretMethod(): void {}
-
-  /**
    * Correctly documented protected method.
    * @protected
    */
