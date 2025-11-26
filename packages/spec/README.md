@@ -1,33 +1,43 @@
 # @openpkg-ts/spec
 
-Canonical schema, TypeScript types, validation, normalization, deref, diff, and migration helpers for OpenPkg specs.
+OpenPkg schema, types, validation, and diffing utilities.
 
 ## Install
+
 ```bash
 npm install @openpkg-ts/spec
 ```
 
-## Quick Helpers
-```ts
-import { normalize, validateSpec } from '@openpkg-ts/spec';
+## Usage
 
-const normalized = normalize(spec);
-const result = validateSpec(normalized);
+```typescript
+import { validateSpec, normalize, diffSpec } from '@openpkg-ts/spec';
+
+// Validate
+const result = validateSpec(normalize(spec));
 if (!result.ok) {
-  throw new Error(result.errors.map((e) => `${e.instancePath || '/'} ${e.message}`).join('\n'));
+  console.error(result.errors);
 }
+
+// Diff two specs
+const diff = diffSpec(oldSpec, newSpec);
+console.log(`Coverage delta: ${diff.coverageDelta}%`);
 ```
 
-```ts
-import { dereference, diffSpec } from '@openpkg-ts/spec';
+## Exports
 
-const left = dereference(specA);
-const right = dereference(specB);
-const diff = diffSpec(left, right);
-```
+- `validateSpec` / `assertSpec` - Schema validation
+- `normalize` - Ensure consistent structure
+- `dereference` - Resolve `$ref` pointers
+- `diffSpec` - Compare specs
 
-## See Also
-- [SDK generator](../sdk/README.md)
-- [CLI usage](../cli/README.md)
+## Documentation
 
-MIT License
+- [Spec Overview](../../docs/spec/overview.md)
+- [Types Reference](../../docs/spec/types.md)
+- [Drift Types](../../docs/spec/drift-types.md)
+- [Diffing](../../docs/spec/diffing.md)
+
+## License
+
+MIT
