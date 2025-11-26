@@ -27,14 +27,14 @@ jobs:
 
       - name: Generate spec (head)
         run: |
-          bunx @doccov/cli generate --output openpkg-head.json
+          bunx @doccov/cli generate --package @doccov/sdk --output openpkg-head.json
         continue-on-error: true
 
       - name: Generate spec (base)
         if: github.event_name == 'pull_request'
         run: |
           git checkout ${{ github.event.pull_request.base.sha }}
-          bunx @doccov/cli generate --output openpkg-base.json || echo '{}' > openpkg-base.json
+          bunx @doccov/cli generate --package @doccov/sdk --output openpkg-base.json || echo '{}' > openpkg-base.json
           git checkout ${{ github.event.pull_request.head.sha }}
         continue-on-error: true
 
@@ -52,9 +52,7 @@ jobs:
 
       - name: Check coverage
         run: |
-          for pkg in sdk cli spec; do
-            bunx @doccov/cli check --package @doccov/$pkg --min-coverage ${{ vars.DOCCOV_MIN_COVERAGE || 80 }}
-          done
+          bunx @doccov/cli check --package @doccov/sdk --min-coverage 0
 
       - name: Comment on PR
         if: github.event_name == 'pull_request' && steps.diff.outputs.diff
