@@ -8,6 +8,7 @@ import { registerCheckCommand } from './commands/check';
 import { registerDiffCommand } from './commands/diff';
 import { registerGenerateCommand } from './commands/generate';
 import { registerInitCommand } from './commands/init';
+import { registerReportCommand } from './commands/report';
 import { registerScanCommand } from './commands/scan';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -26,6 +27,7 @@ registerGenerateCommand(program);
 registerCheckCommand(program);
 registerDiffCommand(program);
 registerInitCommand(program);
+registerReportCommand(program);
 registerScanCommand(program);
 
 program.command('*', { hidden: true }).action(() => {

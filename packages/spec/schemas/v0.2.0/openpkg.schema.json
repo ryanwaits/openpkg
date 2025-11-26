@@ -87,7 +87,10 @@
             "deprecated-mismatch",
             "visibility-mismatch",
             "example-drift",
-            "broken-link"
+            "broken-link",
+            "example-syntax-error",
+            "async-mismatch",
+            "property-type-drift"
           ]
         },
         "target": {
