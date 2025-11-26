@@ -316,4 +316,3 @@ describe('diffSpec drift tracking', () => {
     expect(diff.driftIntroduced).toBe(1);
   });
 });
-

@@ -1,25 +1,8 @@
-import type { LoadedDocCovConfig, LoadedOpenPkgConfig } from './openpkg-config';
-import {
-  DOCCOV_CONFIG_FILENAMES,
-  loadDocCovConfig,
-  loadOpenPkgConfig,
-  loadOpenPkgConfigInternal,
-} from './openpkg-config';
-import type { DocCovConfigInput, NormalizedDocCovConfig, NormalizedOpenPkgConfig } from './schema';
+import type { LoadedDocCovConfig } from './doccov-config';
+import { DOCCOV_CONFIG_FILENAMES, loadDocCovConfig } from './doccov-config';
+import type { DocCovConfigInput, NormalizedDocCovConfig } from './schema';
 
 const defineConfig = (config: DocCovConfigInput): DocCovConfigInput => config;
 
-export {
-  DOCCOV_CONFIG_FILENAMES,
-  defineConfig,
-  loadDocCovConfig,
-  loadOpenPkgConfig,
-  loadOpenPkgConfigInternal,
-};
-export type {
-  DocCovConfigInput,
-  LoadedDocCovConfig,
-  LoadedOpenPkgConfig,
-  NormalizedDocCovConfig,
-  NormalizedOpenPkgConfig,
-};
+export { DOCCOV_CONFIG_FILENAMES, defineConfig, loadDocCovConfig };
+export type { DocCovConfigInput, LoadedDocCovConfig, NormalizedDocCovConfig };

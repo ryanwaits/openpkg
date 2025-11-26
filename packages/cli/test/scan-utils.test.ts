@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { parseGitHubUrl, buildCloneUrl, buildDisplayUrl } from '../src/utils/github-url';
+import { buildCloneUrl, buildDisplayUrl, parseGitHubUrl } from '../src/utils/github-url';
 
 describe('parseGitHubUrl', () => {
   describe('full URLs', () => {
@@ -105,4 +105,3 @@ describe('buildDisplayUrl', () => {
     expect(buildDisplayUrl(parsed)).toBe('github.com/sindresorhus/is');
   });
 });
-

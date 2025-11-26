@@ -99,10 +99,15 @@ interface ScanOptions {
 
 async function runScanWithProgress(
   options: ScanOptions,
-  sendEvent: (event: JobEvent) => void
+  sendEvent: (event: JobEvent) => void,
 ): Promise<void> {
   try {
-    sendEvent({ type: 'progress', stage: 'cloning', message: `Cloning ${options.owner}/${options.repo}...`, progress: 5 });
+    sendEvent({
+      type: 'progress',
+      stage: 'cloning',
+      message: `Cloning ${options.owner}/${options.repo}...`,
+      progress: 5,
+    });
 
     const sandbox = await Sandbox.create({
       source: {
@@ -115,7 +120,12 @@ async function runScanWithProgress(
     });
 
     try {
-      sendEvent({ type: 'progress', stage: 'detecting', message: 'Detecting project structure...', progress: 10 });
+      sendEvent({
+        type: 'progress',
+        stage: 'detecting',
+        message: 'Detecting project structure...',
+        progress: 10,
+      });
 
       // Detect package manager
       const lsCapture = createCaptureStream();
@@ -150,15 +160,30 @@ async function runScanWithProgress(
 
       // Install package manager if needed
       if (pm === 'pnpm') {
-        sendEvent({ type: 'progress', stage: 'installing', message: 'Installing pnpm...', progress: 18 });
+        sendEvent({
+          type: 'progress',
+          stage: 'installing',
+          message: 'Installing pnpm...',
+          progress: 18,
+        });
         await sandbox.runCommand({ cmd: 'npm', args: ['install', '-g', 'pnpm'] });
       } else if (pm === 'bun') {
-        sendEvent({ type: 'progress', stage: 'installing', message: 'Installing bun...', progress: 18 });
+        sendEvent({
+          type: 'progress',
+          stage: 'installing',
+          message: 'Installing bun...',
+          progress: 18,
+        });
         await sandbox.runCommand({ cmd: 'npm', args: ['install', '-g', 'bun'] });
       }
 
       // Install dependencies
-      sendEvent({ type: 'progress', stage: 'installing', message: 'Installing dependencies...', progress: 20 });
+      sendEvent({
+        type: 'progress',
+        stage: 'installing',
+        message: 'Installing dependencies...',
+        progress: 20,
+      });
 
       const installCapture = createCaptureStream();
       const install = await sandbox.runCommand({
@@ -172,7 +197,12 @@ async function runScanWithProgress(
         throw new Error(`${installCmd} install failed: ${installCapture.getOutput().slice(-300)}`);
       }
 
-      sendEvent({ type: 'progress', stage: 'installing', message: 'Dependencies installed', progress: 40 });
+      sendEvent({
+        type: 'progress',
+        stage: 'installing',
+        message: 'Dependencies installed',
+        progress: 40,
+      });
 
       // Check for build script
       const pkgCapture = createCaptureStream();
@@ -186,10 +216,15 @@ async function runScanWithProgress(
         const pkgJson = JSON.parse(pkgCapture.getOutput()) as { scripts?: Record<string, string> };
         const scripts = pkgJson.scripts ?? {};
         const buildScript = scripts.build ? 'build' : scripts.compile ? 'compile' : null;
-        
+
         if (buildScript) {
-          sendEvent({ type: 'progress', stage: 'building', message: 'Running build...', progress: 45 });
-          
+          sendEvent({
+            type: 'progress',
+            stage: 'building',
+            message: 'Running build...',
+            progress: 45,
+          });
+
           const buildCapture = createCaptureStream();
           const buildResult = await sandbox.runCommand({
             cmd: pm === 'npm' ? 'npm' : pm,
@@ -197,8 +232,9 @@ async function runScanWithProgress(
             stdout: buildCapture.stream,
             stderr: buildCapture.stream,
           });
-          
-          const buildMessage = buildResult.exitCode === 0 ? 'Build complete' : 'Build failed (continuing)';
+
+          const buildMessage =
+            buildResult.exitCode === 0 ? 'Build complete' : 'Build failed (continuing)';
           sendEvent({ type: 'progress', stage: 'building', message: buildMessage, progress: 55 });
         }
       } catch {
@@ -206,7 +242,12 @@ async function runScanWithProgress(
       }
 
       // Install doccov CLI
-      sendEvent({ type: 'progress', stage: 'analyzing', message: 'Installing DocCov CLI...', progress: 60 });
+      sendEvent({
+        type: 'progress',
+        stage: 'analyzing',
+        message: 'Installing DocCov CLI...',
+        progress: 60,
+      });
 
       const cliInstall = await sandbox.runCommand({
         cmd: 'npm',
@@ -220,7 +261,9 @@ async function runScanWithProgress(
       // Run generate
       const specFile = '/tmp/spec.json';
       const genArgs = ['generate', '--cwd', '.', '-o', specFile];
-      const analyzeMessage = options.package ? `Analyzing ${options.package}...` : 'Generating DocCov spec...';
+      const analyzeMessage = options.package
+        ? `Analyzing ${options.package}...`
+        : 'Generating DocCov spec...';
       if (options.package) {
         genArgs.push('--package', options.package);
       }
@@ -240,7 +283,12 @@ async function runScanWithProgress(
         throw new Error(`doccov generate failed: ${genOutput.slice(-300)}`);
       }
 
-      sendEvent({ type: 'progress', stage: 'extracting', message: 'Extracting results...', progress: 85 });
+      sendEvent({
+        type: 'progress',
+        stage: 'extracting',
+        message: 'Extracting results...',
+        progress: 85,
+      });
 
       // Extract summary
       const extractScript = `
@@ -312,4 +360,3 @@ async function runScanWithProgress(
     sendEvent({ type: 'error', message });
   }
 }
-

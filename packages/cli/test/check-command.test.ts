@@ -231,7 +231,8 @@ describe('check command', () => {
               {
                 name: 'delta',
                 type: 'param-type-mismatch',
-                issue: 'JSDoc documents string for parameter "amount" but the signature declares number.',
+                issue:
+                  'JSDoc documents string for parameter "amount" but the signature declares number.',
                 suggestion: 'Use number in @param tags.',
               },
             ],
@@ -251,4 +252,3 @@ describe('check command', () => {
     );
   });
 });
-

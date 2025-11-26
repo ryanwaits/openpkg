@@ -44,10 +44,3 @@ export const normalizeConfig = (input: DocCovConfigInput): NormalizedDocCovConfi
     plugins: input.plugins,
   };
 };
-
-/** @deprecated Use docCovConfigSchema instead */
-export const openPkgConfigSchema: typeof docCovConfigSchema = docCovConfigSchema;
-/** @deprecated Use DocCovConfigInput instead */
-export type OpenPkgConfigInput = DocCovConfigInput;
-/** @deprecated Use NormalizedDocCovConfig instead */
-export type NormalizedOpenPkgConfig = NormalizedDocCovConfig;

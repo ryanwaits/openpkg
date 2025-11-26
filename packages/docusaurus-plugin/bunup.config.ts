@@ -7,4 +7,3 @@ export default defineConfig({
   format: ['esm'],
   external: ['@docusaurus/core', '@openpkg-ts/spec', 'react'],
 });
-

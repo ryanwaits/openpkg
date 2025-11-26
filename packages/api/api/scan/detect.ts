@@ -119,7 +119,7 @@ async function detectMonorepo(url: string, ref: string): Promise<DetectResponse>
 
     // Check for workspaces (npm/yarn/bun) or pnpm-workspace.yaml
     let workspacePatterns: string[] = [];
-    
+
     if (rootPkg.workspaces) {
       if (Array.isArray(rootPkg.workspaces)) {
         workspacePatterns = rootPkg.workspaces;
@@ -160,7 +160,7 @@ async function detectMonorepo(url: string, ref: string): Promise<DetectResponse>
 
     // Find all packages
     const packages: PackageInfo[] = [];
-    
+
     // Use find to locate package.json files in workspace dirs
     const findCapture = createCaptureStream();
     await sandbox.runCommand({
@@ -169,9 +169,14 @@ async function detectMonorepo(url: string, ref: string): Promise<DetectResponse>
       stdout: findCapture.stream,
     });
 
-    const packagePaths = findCapture.getOutput().trim().split('\n').filter(p => p && p !== './package.json');
+    const packagePaths = findCapture
+      .getOutput()
+      .trim()
+      .split('\n')
+      .filter((p) => p && p !== './package.json');
 
-    for (const pkgPath of packagePaths.slice(0, 30)) { // Limit to 30 packages
+    for (const pkgPath of packagePaths.slice(0, 30)) {
+      // Limit to 30 packages
       const catCapture = createCaptureStream();
       await sandbox.runCommand({
         cmd: 'cat',
@@ -180,7 +185,11 @@ async function detectMonorepo(url: string, ref: string): Promise<DetectResponse>
       });
 
       try {
-        const pkg = JSON.parse(catCapture.getOutput()) as { name?: string; description?: string; private?: boolean };
+        const pkg = JSON.parse(catCapture.getOutput()) as {
+          name?: string;
+          description?: string;
+          private?: boolean;
+        };
         if (pkg.name && !pkg.private) {
           packages.push({
             name: pkg.name,
@@ -206,4 +215,3 @@ async function detectMonorepo(url: string, ref: string): Promise<DetectResponse>
     await sandbox.stop();
   }
 }
-

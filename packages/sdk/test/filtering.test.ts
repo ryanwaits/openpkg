@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
-import { applyFilters } from '../src/filtering/apply-filters';
 import type { OpenPkgSpec } from '../src/analysis/spec-types';
+import { applyFilters } from '../src/filtering/apply-filters';
 
 const createSpec = (): OpenPkgSpec => ({
   openpkg: '0.2.0',
@@ -102,7 +102,9 @@ describe('applyFilters', () => {
     expect(result.spec.exports?.map((entry) => entry.id)).toEqual(['alpha', 'beta']);
     expect(result.spec.types).toEqual([]);
     expect(
-      result.diagnostics.some((diag) => diag.message.includes('Excluded types are still referenced')),
+      result.diagnostics.some((diag) =>
+        diag.message.includes('Excluded types are still referenced'),
+      ),
     ).toBe(true);
   });
 

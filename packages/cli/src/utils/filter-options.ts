@@ -1,5 +1,5 @@
 import chalk from 'chalk';
-import type { NormalizedOpenPkgConfig } from '../config';
+import type { NormalizedDocCovConfig } from '../config';
 
 export interface FilterOptions {
   include?: string[];
@@ -33,7 +33,7 @@ const formatList = (label: string, values: string[]): string =>
   `${label}: ${values.map((value) => chalk.cyan(value)).join(', ')}`;
 
 export const mergeFilterOptions = (
-  config: NormalizedOpenPkgConfig | null,
+  config: NormalizedDocCovConfig | null,
   cliOptions: FilterOptions,
 ): ResolvedFilterOptions => {
   const messages: string[] = [];

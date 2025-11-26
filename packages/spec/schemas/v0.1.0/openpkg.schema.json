@@ -4,11 +4,7 @@
   "title": "OpenPkg Specification",
   "description": "Schema for OpenPkg specification files",
   "type": "object",
-  "required": [
-    "openpkg",
-    "meta",
-    "exports"
-  ],
+  "required": ["openpkg", "meta", "exports"],
   "properties": {
     "$schema": {
       "type": "string",
@@ -24,9 +20,7 @@
     "meta": {
       "type": "object",
       "description": "Package metadata",
-      "required": [
-        "name"
-      ],
+      "required": ["name"],
       "properties": {
         "name": {
           "type": "string",
@@ -72,11 +66,7 @@
   "$defs": {
     "export": {
       "type": "object",
-      "required": [
-        "id",
-        "name",
-        "kind"
-      ],
+      "required": ["id", "name", "kind"],
       "properties": {
         "id": {
           "type": "string",
@@ -105,14 +95,7 @@
         "kind": {
           "type": "string",
           "description": "Kind of export",
-          "enum": [
-            "function",
-            "class",
-            "variable",
-            "interface",
-            "type",
-            "enum"
-          ]
+          "enum": ["function", "class", "variable", "interface", "type", "enum"]
         },
         "description": {
           "type": "string",
@@ -134,10 +117,7 @@
         },
         "type": {
           "description": "Type reference or inline schema for variables",
-          "oneOf": [
-            { "type": "string" },
-            { "$ref": "#/$defs/schema" }
-          ]
+          "oneOf": [{ "type": "string" }, { "$ref": "#/$defs/schema" }]
         },
         "members": {
           "type": "array",
@@ -164,11 +144,7 @@
     },
     "typeDef": {
       "type": "object",
-      "required": [
-        "id",
-        "name",
-        "kind"
-      ],
+      "required": ["id", "name", "kind"],
       "properties": {
         "id": {
           "type": "string",
@@ -197,12 +173,7 @@
         "kind": {
           "type": "string",
           "description": "Kind of type definition",
-          "enum": [
-            "interface",
-            "type",
-            "enum",
-            "class"
-          ]
+          "enum": ["interface", "type", "enum", "class"]
         },
         "description": {
           "type": "string",
@@ -258,10 +229,7 @@
     },
     "parameter": {
       "type": "object",
-      "required": [
-        "name",
-        "required"
-      ],
+      "required": ["name", "required"],
       "properties": {
         "name": {
           "type": "string",
@@ -302,17 +270,13 @@
               "pattern": "^#/types/[A-Za-z0-9_.-]+$"
             }
           },
-          "required": [
-            "$ref"
-          ],
+          "required": ["$ref"],
           "additionalProperties": false
         },
         {
           "type": "object",
           "not": {
-            "required": [
-              "$ref"
-            ]
+            "required": ["$ref"]
           },
           "additionalProperties": true
         }
@@ -320,10 +284,7 @@
     },
     "sourceLocation": {
       "type": "object",
-      "required": [
-        "file",
-        "line"
-      ],
+      "required": ["file", "line"],
       "properties": {
         "file": {
           "type": "string",

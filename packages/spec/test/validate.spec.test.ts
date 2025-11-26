@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { normalize, validateSpec, type OpenPkg } from '../src/index';
+import { normalize, type OpenPkg, validateSpec } from '../src/index';
 
 describe('validateSpec', () => {
   it('accepts specs with inline object schemas and unpkg $schema url', () => {

@@ -10,13 +10,6 @@ const DOCCOV_CONFIG_FILENAMES = [
   'doccov.config.js',
   'doccov.config.mjs',
   'doccov.config.cjs',
-  // Legacy support
-  'openpkg.config.ts',
-  'openpkg.config.mts',
-  'openpkg.config.cts',
-  'openpkg.config.js',
-  'openpkg.config.mjs',
-  'openpkg.config.cjs',
 ] as const;
 
 const fileExists = async (filePath: string): Promise<boolean> => {
@@ -51,9 +44,6 @@ const findConfigFile = async (cwd: string): Promise<string | null> => {
 interface LoadedDocCovConfig extends NormalizedDocCovConfig {
   filePath: string;
 }
-
-/** @deprecated Use LoadedDocCovConfig instead */
-type LoadedOpenPkgConfig = LoadedDocCovConfig;
 
 const importConfigModule = async (absolutePath: string): Promise<unknown> => {
   const fileUrl = pathToFileURL(absolutePath);
@@ -97,10 +87,5 @@ const loadDocCovConfig = async (cwd: string): Promise<LoadedDocCovConfig | null>
   };
 };
 
-/** @deprecated Use loadDocCovConfig instead */
-const loadOpenPkgConfigInternal: typeof loadDocCovConfig = loadDocCovConfig;
-/** @deprecated Use loadDocCovConfig instead */
-const loadOpenPkgConfig: typeof loadDocCovConfig = loadDocCovConfig;
-
-export { DOCCOV_CONFIG_FILENAMES, loadDocCovConfig, loadOpenPkgConfigInternal, loadOpenPkgConfig };
-export type { LoadedDocCovConfig, LoadedOpenPkgConfig };
+export { DOCCOV_CONFIG_FILENAMES, loadDocCovConfig };
+export type { LoadedDocCovConfig };

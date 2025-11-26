@@ -22,7 +22,7 @@ describe('generate command', () => {
     tmpDirs.push(tmpDir);
 
     fs.mkdirSync(path.join(tmpDir, 'src'), { recursive: true });
-    fs.writeFileSync(path.join(tmpDir, 'src', 'index.ts'), "export const value = 1 as const;\n");
+    fs.writeFileSync(path.join(tmpDir, 'src', 'index.ts'), 'export const value = 1 as const;\n');
     fs.writeFileSync(path.join(tmpDir, 'package.json'), JSON.stringify({ name: 'fixture' }));
 
     const analyzedFiles: string[] = [];
@@ -30,7 +30,7 @@ describe('generate command', () => {
     const program = new Command();
     program.exitOverride();
 
-    let capturedOptions: unknown = undefined;
+    let capturedOptions: unknown;
 
     const specStub = {
       openpkg: '0.2.0',
@@ -74,7 +74,7 @@ describe('generate command', () => {
           },
           succeed() {},
           fail() {},
-        } as unknown as { start: () => unknown; succeed: () => void; fail: () => void }),
+        }) as unknown as { start: () => unknown; succeed: () => void; fail: () => void },
       log: () => {},
       error: () => {},
     });
@@ -101,7 +101,7 @@ describe('generate command', () => {
     tmpDirs.push(tmpDir);
 
     fs.mkdirSync(path.join(tmpDir, 'src'), { recursive: true });
-    fs.writeFileSync(path.join(tmpDir, 'src', 'index.ts'), "export const value = 1 as const;\n");
+    fs.writeFileSync(path.join(tmpDir, 'src', 'index.ts'), 'export const value = 1 as const;\n');
     fs.writeFileSync(path.join(tmpDir, 'package.json'), JSON.stringify({ name: 'fixture' }));
     fs.writeFileSync(
       path.join(tmpDir, 'openpkg.config.mjs'),
@@ -111,7 +111,7 @@ describe('generate command', () => {
     const program = new Command();
     program.exitOverride();
 
-    let capturedFilters: unknown = undefined;
+    let capturedFilters: unknown;
 
     registerGenerateCommand(program, {
       createOpenPkg: () => ({
@@ -150,7 +150,7 @@ describe('generate command', () => {
           },
           succeed() {},
           fail() {},
-        } as unknown as { start: () => unknown; succeed: () => void; fail: () => void }),
+        }) as unknown as { start: () => unknown; succeed: () => void; fail: () => void },
       log: () => {},
       error: () => {},
     });

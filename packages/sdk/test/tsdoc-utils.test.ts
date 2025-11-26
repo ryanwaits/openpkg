@@ -19,7 +19,8 @@ describe('parseJSDocText', () => {
 
     expect(parsed.tags).toBeDefined();
     const tags = parsed.tags ?? [];
-    const hasTag = (name: string, text: string) => tags.some((tag) => tag.name === name && tag.text === text);
+    const hasTag = (name: string, text: string) =>
+      tags.some((tag) => tag.name === name && tag.text === text);
 
     expect(hasTag('link', 'createFetchFn')).toBe(true);
     expect(hasTag('see', 'createFetchFn')).toBe(true);

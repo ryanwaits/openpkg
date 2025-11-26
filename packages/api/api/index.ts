@@ -12,7 +12,14 @@ const app = new Hono().basePath('/');
 app.use('*', cors());
 
 // Types
-type BadgeColor = 'brightgreen' | 'green' | 'yellowgreen' | 'yellow' | 'orange' | 'red' | 'lightgrey';
+type BadgeColor =
+  | 'brightgreen'
+  | 'green'
+  | 'yellowgreen'
+  | 'yellow'
+  | 'orange'
+  | 'red'
+  | 'lightgrey';
 
 interface OpenPkgSpec {
   docs?: {
@@ -70,10 +77,16 @@ function generateBadgeSvg(label: string, message: string, color: BadgeColor): st
 </svg>`;
 }
 
-async function fetchSpecFromGitHub(owner: string, repo: string, ref = 'main'): Promise<OpenPkgSpec | null> {
+async function fetchSpecFromGitHub(
+  owner: string,
+  repo: string,
+  ref = 'main',
+): Promise<OpenPkgSpec | null> {
   const urls = [
     `https://raw.githubusercontent.com/${owner}/${repo}/${ref}/openpkg.json`,
-    ...(ref === 'main' ? [`https://raw.githubusercontent.com/${owner}/${repo}/master/openpkg.json`] : []),
+    ...(ref === 'main'
+      ? [`https://raw.githubusercontent.com/${owner}/${repo}/master/openpkg.json`]
+      : []),
   ];
 
   for (const url of urls) {
@@ -156,10 +169,9 @@ app.get('/spec/:owner/:repo/pr/:pr', async (c) => {
 
   try {
     // Get PR head SHA from GitHub API
-    const prResponse = await fetch(
-      `https://api.github.com/repos/${owner}/${repo}/pulls/${pr}`,
-      { headers: { 'User-Agent': 'DocCov' } }
-    );
+    const prResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/pulls/${pr}`, {
+      headers: { 'User-Agent': 'DocCov' },
+    });
 
     if (!prResponse.ok) {
       return c.json({ error: 'PR not found' }, 404);

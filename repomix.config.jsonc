@@ -8,7 +8,7 @@
     "style": "json",
     "parsableStyle": false,
     "compress": false,
-    "headerText": "This repository contains the code for OpenPkg.",
+    "headerText": "This repository contains the code for DocCov.",
     "fileSummary": true,
     "directoryStructure": true,
     "files": true,

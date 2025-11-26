@@ -20,8 +20,11 @@ describe('formatTypeReference', () => {
       interface User { id: string }
       const current: User = { id: '1' };
     `);
-    const variableStatement = getDeclaration(sourceFile, (node): node is ts.VariableStatement =>
-      ts.isVariableStatement(node) && node.declarationList.declarations[0].name.getText() === 'current',
+    const variableStatement = getDeclaration(
+      sourceFile,
+      (node): node is ts.VariableStatement =>
+        ts.isVariableStatement(node) &&
+        node.declarationList.declarations[0].name.getText() === 'current',
     );
     const declaration = variableStatement.declarationList.declarations[0];
     const typeNode = declaration.type as ts.TypeNode;
@@ -101,13 +104,15 @@ describe('formatTypeReference', () => {
   });
 });
 
-
 describe('structureParameter', () => {
   it('uses object for destructured parameters derived from type aliases', () => {
-    const { checker, sourceFile } = createTestCompiler(`\n      type ApiKeyMiddlewareOpts = { apiKey: string };\n      function middleware({ apiKey }: ApiKeyMiddlewareOpts) {}\n    `);
+    const { checker, sourceFile } = createTestCompiler(
+      `\n      type ApiKeyMiddlewareOpts = { apiKey: string };\n      function middleware({ apiKey }: ApiKeyMiddlewareOpts) {}\n    `,
+    );
     const fn = getDeclaration(
       sourceFile,
-      (node): node is ts.FunctionDeclaration => ts.isFunctionDeclaration(node) && node.name?.text === 'middleware',
+      (node): node is ts.FunctionDeclaration =>
+        ts.isFunctionDeclaration(node) && node.name?.text === 'middleware',
     );
     const signature = checker.getSignatureFromDeclaration(fn)!;
     const paramSymbol = signature.getParameters()[0];

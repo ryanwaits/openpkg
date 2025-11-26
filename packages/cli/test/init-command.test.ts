@@ -48,7 +48,10 @@ describe('init command', () => {
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'openpkg-ts-cli-init-module-'));
     tmpDirs.push(tmpDir);
 
-    fs.writeFileSync(path.join(tmpDir, 'package.json'), JSON.stringify({ name: 'fixture', type: 'module' }));
+    fs.writeFileSync(
+      path.join(tmpDir, 'package.json'),
+      JSON.stringify({ name: 'fixture', type: 'module' }),
+    );
 
     const program = new Command();
     registerInitCommand(program);

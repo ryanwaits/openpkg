@@ -25,12 +25,7 @@ export function createTestCompiler(code: string, fileName = 'test.ts'): TestComp
   const originalGetSourceFile = host.getSourceFile.bind(host);
   const originalReadFile = host.readFile?.bind(host);
 
-  host.getSourceFile = (
-    requestedFileName,
-    languageVersion,
-    onError,
-    shouldCreateNewSourceFile,
-  ) => {
+  host.getSourceFile = (requestedFileName, languageVersion, onError, shouldCreateNewSourceFile) => {
     if (requestedFileName === fileName) {
       return sourceFile;
     }
@@ -48,7 +43,9 @@ export function createTestCompiler(code: string, fileName = 'test.ts'): TestComp
       return code;
     }
 
-    return originalReadFile ? originalReadFile(requestedFileName) : ts.sys.readFile(requestedFileName);
+    return originalReadFile
+      ? originalReadFile(requestedFileName)
+      : ts.sys.readFile(requestedFileName);
   };
 
   host.fileExists = (requestedFileName) => {
