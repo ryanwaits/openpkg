@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { DocCov } from '@doccov/sdk';
+import { DocCov, detectExampleRuntimeErrors, runExamples } from '@doccov/sdk';
 import chalk from 'chalk';
 import type { Command } from 'commander';
 import ora, { type Ora } from 'ora';
@@ -40,6 +40,7 @@ export function registerCheckCommand(
       Number(value),
     )
     .option('--require-examples', 'Require at least one @example for every export')
+    .option('--run-examples', 'Execute @example blocks and fail on runtime errors')
     .option('--ignore-drift', 'Do not fail on documentation drift')
     .option('--no-external-types', 'Skip external type resolution from node_modules')
     .action(async (entry, options) => {
@@ -90,12 +91,53 @@ export function registerCheckCommand(
         }
 
         const spec = specResult.spec;
+
+        // Run examples if --run-examples flag is set
+        const runtimeDrifts: Array<{ name: string; issue: string; suggestion?: string }> = [];
+        if (options.runExamples) {
+          const examplesSpinner = spinner('Running @example blocks...');
+          examplesSpinner.start();
+
+          let examplesRun = 0;
+          let examplesFailed = 0;
+
+          for (const entry of spec.exports ?? []) {
+            if (!entry.examples || entry.examples.length === 0) {
+              continue;
+            }
+
+            const results = await runExamples(entry.examples, {
+              timeout: 5000,
+              cwd: targetDir,
+            });
+
+            examplesRun += results.size;
+
+            // Detect runtime errors
+            const entryDrifts = detectExampleRuntimeErrors(entry, results);
+            for (const drift of entryDrifts) {
+              examplesFailed += 1;
+              runtimeDrifts.push({
+                name: entry.name,
+                issue: drift.issue,
+                suggestion: drift.suggestion,
+              });
+            }
+          }
+
+          if (examplesFailed > 0) {
+            examplesSpinner.fail(`${examplesFailed}/${examplesRun} example(s) failed`);
+          } else {
+            examplesSpinner.succeed(`${examplesRun} example(s) passed`);
+          }
+        }
+
         const coverageScore = spec.docs?.coverageScore ?? 0;
         const failingExports = collectFailingExports(spec.exports ?? [], minCoverage);
         const missingExamples = options.requireExamples
           ? failingExports.filter((item) => item.missing?.includes('examples'))
           : [];
-        const driftExports = collectDrift(spec.exports ?? []);
+        const driftExports = [...collectDrift(spec.exports ?? []), ...runtimeDrifts];
 
         const coverageFailed = coverageScore < minCoverage;
         const hasMissingExamples = missingExamples.length > 0;

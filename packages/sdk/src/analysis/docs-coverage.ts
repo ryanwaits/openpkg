@@ -7,6 +7,7 @@ import type {
   SpecTag,
 } from '@openpkg-ts/spec';
 import ts from 'typescript';
+import type { ExampleRunResult } from '../utils/example-runner';
 import type { OpenPkgSpec } from './spec-types';
 
 type ExportCoverageResult = {
@@ -1106,6 +1107,65 @@ function detectExampleSyntaxErrors(entry: SpecExport): SpecDocDrift[] {
   }
 
   return drifts;
+}
+
+/**
+ * Detect runtime errors in @example blocks.
+ * Results are provided externally after running examples via runExamples().
+ */
+export function detectExampleRuntimeErrors(
+  entry: SpecExport,
+  runtimeResults: Map<number, ExampleRunResult>,
+): SpecDocDrift[] {
+  if (!entry.examples || entry.examples.length === 0 || runtimeResults.size === 0) {
+    return [];
+  }
+
+  const drifts: SpecDocDrift[] = [];
+
+  for (let i = 0; i < entry.examples.length; i++) {
+    const result = runtimeResults.get(i);
+    if (!result || result.success) {
+      continue;
+    }
+
+    // Extract meaningful error message
+    const errorMessage = extractErrorMessage(result.stderr);
+    const isTimeout = result.stderr.includes('timed out');
+
+    drifts.push({
+      type: 'example-runtime-error',
+      target: `example[${i}]`,
+      issue: isTimeout
+        ? `@example timed out after ${result.duration}ms.`
+        : `@example throws at runtime: ${errorMessage}`,
+      suggestion: isTimeout
+        ? 'Check for infinite loops or long-running operations.'
+        : 'Fix the example code or update it to match the current API.',
+    });
+  }
+
+  return drifts;
+}
+
+function extractErrorMessage(stderr: string): string {
+  // Try to extract just the error message, not the full stack trace
+  const lines = stderr.split('\n').filter((line) => line.trim());
+  if (lines.length === 0) {
+    return 'Unknown error';
+  }
+
+  // Look for common error patterns
+  for (const line of lines) {
+    const errorMatch = line.match(/^(?:Error|TypeError|ReferenceError|SyntaxError):\s*(.+)/);
+    if (errorMatch) {
+      return errorMatch[0];
+    }
+  }
+
+  // Return first non-empty line, truncated
+  const firstLine = lines[0] ?? 'Unknown error';
+  return firstLine.length > 100 ? `${firstLine.slice(0, 100)}...` : firstLine;
 }
 
 function detectAsyncMismatch(entry: SpecExport): SpecDocDrift[] {

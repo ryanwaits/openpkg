@@ -27,6 +27,7 @@ export type SpecDocDrift = {
     | 'deprecated-mismatch'
     | 'visibility-mismatch'
     | 'example-drift'
+    | 'example-runtime-error'
     | 'broken-link';
   target?: string;
   issue: string;
