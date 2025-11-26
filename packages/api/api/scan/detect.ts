@@ -1,6 +1,6 @@
+import { Writable } from 'node:stream';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Sandbox } from '@vercel/sandbox';
-import { Writable } from 'stream';
 
 export const config = {
   runtime: 'nodejs',
@@ -71,7 +71,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function detectMonorepo(url: string, ref: string): Promise<DetectResponse> {
+async function detectMonorepo(url: string, _ref: string): Promise<DetectResponse> {
   const sandbox = await Sandbox.create({
     source: {
       url,

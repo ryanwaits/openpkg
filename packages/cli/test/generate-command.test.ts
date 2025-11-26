@@ -61,7 +61,7 @@ describe('generate command', () => {
               hasNodeModules: true,
               resolveExternalTypes: true,
             },
-          } as any;
+          };
         },
       }),
       writeFileSync: (file, data) => {

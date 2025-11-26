@@ -40,6 +40,7 @@ export function registerCheckCommand(
       Number(value),
     )
     .option('--require-examples', 'Require at least one @example for every export')
+    .option('--ignore-drift', 'Do not fail on documentation drift')
     .option('--no-external-types', 'Skip external type resolution from node_modules')
     .action(async (entry, options) => {
       try {
@@ -98,7 +99,7 @@ export function registerCheckCommand(
 
         const coverageFailed = coverageScore < minCoverage;
         const hasMissingExamples = missingExamples.length > 0;
-        const hasDrift = driftExports.length > 0;
+        const hasDrift = !options.ignoreDrift && driftExports.length > 0;
 
         if (!coverageFailed && !hasMissingExamples && !hasDrift) {
           log(chalk.green(`✓ Docs coverage ${coverageScore}% (min ${minCoverage}%)`));
@@ -107,6 +108,17 @@ export function registerCheckCommand(
             log(chalk.gray('Some exports have partial docs:'));
             for (const { name, missing } of failingExports.slice(0, 10)) {
               log(chalk.gray(`  • ${name}: missing ${missing?.join(', ')}`));
+            }
+          }
+
+          if (options.ignoreDrift && driftExports.length > 0) {
+            log('');
+            log(chalk.yellow(`⚠️ ${driftExports.length} drift issue(s) detected (ignored):`));
+            for (const drift of driftExports.slice(0, 10)) {
+              log(chalk.yellow(`  • ${drift.name}: ${drift.issue}`));
+              if (drift.suggestion) {
+                log(chalk.gray(`    Suggestion: ${drift.suggestion}`));
+              }
             }
           }
           return;

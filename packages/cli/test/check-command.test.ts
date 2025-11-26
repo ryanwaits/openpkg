@@ -9,7 +9,7 @@ const spinnerStub = () =>
     },
     succeed() {},
     fail() {},
-  }) as any;
+  }) as unknown as { start: () => unknown; succeed: () => void; fail: () => void };
 
 type DriftType =
   | 'param-mismatch'

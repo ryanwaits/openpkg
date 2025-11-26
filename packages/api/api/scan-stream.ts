@@ -1,6 +1,6 @@
+import { Writable } from 'node:stream';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Sandbox } from '@vercel/sandbox';
-import { Writable } from 'stream';
 
 export const config = {
   runtime: 'nodejs',
