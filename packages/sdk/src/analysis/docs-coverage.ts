@@ -6,6 +6,7 @@ import type {
   SpecSchema,
   SpecTag,
 } from '@openpkg-ts/spec';
+import ts from 'typescript';
 import type { OpenPkgSpec } from './spec-types';
 
 type ExportCoverageResult = {
@@ -65,6 +66,9 @@ function evaluateExport(entry: SpecExport, exportRegistry?: Set<string>): Export
     ...detectVisibilityDrift(entry),
     ...detectExampleDrift(entry, exportRegistry),
     ...detectBrokenLinks(entry, exportRegistry),
+    ...detectExampleSyntaxErrors(entry),
+    ...detectAsyncMismatch(entry),
+    ...detectPropertyTypeDrift(entry),
   ];
 
   if (!hasDescription(entry)) {
@@ -1054,4 +1058,156 @@ function detectBrokenLinks(entry: SpecExport, exportRegistry?: Set<string>): Spe
   }
 
   return drifts;
+}
+
+function detectExampleSyntaxErrors(entry: SpecExport): SpecDocDrift[] {
+  if (!entry.examples || entry.examples.length === 0) {
+    return [];
+  }
+
+  const drifts: SpecDocDrift[] = [];
+
+  for (let i = 0; i < entry.examples.length; i++) {
+    const example = entry.examples[i];
+    if (typeof example !== 'string') continue;
+
+    // Strip markdown code block markers if present
+    const codeContent = example
+      .replace(/^```(?:ts|typescript|js|javascript)?\n?/i, '')
+      .replace(/\n?```$/i, '')
+      .trim();
+
+    if (!codeContent) continue;
+
+    // Try to parse as TypeScript/JavaScript
+    const sourceFile = ts.createSourceFile(
+      `example-${i}.ts`,
+      codeContent,
+      ts.ScriptTarget.Latest,
+      true,
+      ts.ScriptKind.TS,
+    );
+
+    // Check for parse diagnostics
+    const parseDiagnostics = (sourceFile as unknown as { parseDiagnostics?: ts.Diagnostic[] })
+      .parseDiagnostics;
+
+    if (parseDiagnostics && parseDiagnostics.length > 0) {
+      const firstError = parseDiagnostics[0];
+      const message = ts.flattenDiagnosticMessageText(firstError.messageText, '\n');
+
+      drifts.push({
+        type: 'example-syntax-error',
+        target: `example[${i}]`,
+        issue: `@example contains invalid syntax: ${message}`,
+        suggestion: 'Check for missing brackets, semicolons, or typos.',
+      });
+    }
+  }
+
+  return drifts;
+}
+
+function detectAsyncMismatch(entry: SpecExport): SpecDocDrift[] {
+  const signatures = entry.signatures ?? [];
+  if (signatures.length === 0) {
+    return [];
+  }
+
+  const drifts: SpecDocDrift[] = [];
+
+  // Check if any signature returns a Promise
+  const returnsPromise = signatures.some((sig) => {
+    const returnType = sig.returns?.tsType ?? extractTypeFromSchema(sig.returns?.schema) ?? '';
+    return returnType.startsWith('Promise<') || returnType === 'Promise';
+  });
+
+  // Check if @returns documents Promise
+  const returnsTag = entry.tags?.find((tag) => tag.name === 'returns' || tag.name === 'return');
+  const documentedAsPromise = returnsTag?.text?.includes('Promise') ?? false;
+
+  // Check if @async tag is present
+  const hasAsyncTag = entry.tags?.some((tag) => tag.name === 'async');
+
+  // Check flags for async
+  const isAsyncFunction = (entry as { flags?: { async?: boolean } }).flags?.async === true;
+
+  // Case 1: Returns Promise but not documented as async/Promise
+  if (returnsPromise && !documentedAsPromise && !hasAsyncTag) {
+    drifts.push({
+      type: 'async-mismatch',
+      target: 'returns',
+      issue: 'Function returns Promise but documentation does not indicate async behavior.',
+      suggestion: 'Add @async tag or document @returns {Promise<...>}.',
+    });
+  }
+
+  // Case 2: Documented as async but doesn't return Promise
+  if (!returnsPromise && (documentedAsPromise || hasAsyncTag) && !isAsyncFunction) {
+    drifts.push({
+      type: 'async-mismatch',
+      target: 'returns',
+      issue: 'Documentation indicates async but function does not return Promise.',
+      suggestion: 'Remove @async tag or update @returns type.',
+    });
+  }
+
+  return drifts;
+}
+
+type SpecMemberWithType = {
+  id?: string;
+  name?: string;
+  kind?: string;
+  tags?: SpecTag[];
+  schema?: SpecSchema;
+};
+
+function detectPropertyTypeDrift(entry: SpecExport): SpecDocDrift[] {
+  const members = entry.members ?? [];
+  if (members.length === 0) {
+    return [];
+  }
+
+  const drifts: SpecDocDrift[] = [];
+
+  for (const member of members) {
+    const typedMember = member as SpecMemberWithType;
+    if (typedMember.kind !== 'property') continue;
+
+    // Find @type tag in member tags
+    const typeTag = typedMember.tags?.find((tag) => tag.name === 'type');
+    if (!typeTag?.text) continue;
+
+    // Extract documented type from @type {Type}
+    const documentedType = extractTypeFromBraces(typeTag.text);
+    if (!documentedType) continue;
+
+    // Get actual type from schema
+    const actualType = extractTypeFromSchema(typedMember.schema);
+    if (!actualType) continue;
+
+    // Compare (using existing normalizeType and typesEquivalent)
+    const normalizedDoc = normalizeType(documentedType);
+    const normalizedActual = normalizeType(actualType);
+
+    if (!normalizedDoc || !normalizedActual) continue;
+
+    if (!typesEquivalent(normalizedDoc, normalizedActual)) {
+      const memberName = typedMember.name ?? typedMember.id ?? 'property';
+      drifts.push({
+        type: 'property-type-drift',
+        target: memberName,
+        issue: `Property "${memberName}" documented as {${documentedType}} but actual type is ${actualType}.`,
+        suggestion: `Update @type {${actualType}} to match the declaration.`,
+      });
+    }
+  }
+
+  return drifts;
+}
+
+function extractTypeFromBraces(text: string): string | undefined {
+  const match = text.match(/^\{([^}]+)\}/);
+  return match?.[1]?.trim();
 }

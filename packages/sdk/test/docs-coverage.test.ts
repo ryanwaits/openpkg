@@ -491,3 +491,150 @@ describe('docs coverage broken link detection', () => {
     expect(drift).toBeUndefined();
   });
 });
+
+describe('docs coverage example syntax error detection', () => {
+  it('reports drift when @example contains invalid syntax (missing brace)', () => {
+    const spec = buildSpec({
+      id: 'syntax-error',
+      name: 'processConfig',
+      examples: ["const config = { name: 'test'\nprocessConfig(config);"],
+    });
+
+    const result = computeDocsCoverage(spec);
+    const drift = result.exports.get('syntax-error')?.drift;
+    expect(drift).toBeDefined();
+    expect(drift?.some((d) => d.type === 'example-syntax-error')).toBe(true);
+  });
+
+  it('reports drift when @example has unclosed parenthesis', () => {
+    const spec = buildSpec({
+      id: 'unclosed-paren',
+      name: 'calculateSum',
+      examples: ['const result = calculateSum(1, 2, 3;\nconsole.log(result);'],
+    });
+
+    const result = computeDocsCoverage(spec);
+    const drift = result.exports.get('unclosed-paren')?.drift;
+    expect(drift).toBeDefined();
+    expect(drift?.some((d) => d.type === 'example-syntax-error')).toBe(true);
+  });
+
+  it('does not report drift for valid example syntax', () => {
+    const spec = buildSpec({
+      id: 'valid-syntax',
+      name: 'formatGreeting',
+      examples: ["const greeting = formatGreeting('World');\nconsole.log(greeting);"],
+    });
+
+    const result = computeDocsCoverage(spec);
+    const drift = result.exports.get('valid-syntax')?.drift;
+    expect(drift?.some((d) => d.type === 'example-syntax-error')).toBeFalsy();
+  });
+});
+
+describe('docs coverage async mismatch detection', () => {
+  it('reports drift when async function lacks Promise documentation', () => {
+    const spec = buildSpec({
+      id: 'async-no-docs',
+      name: 'fetchData',
+      signatures: [
+        {
+          parameters: [],
+          returns: { tsType: 'Promise<string>', description: 'The fetched data' },
+        },
+      ],
+      tags: [{ name: 'returns', text: 'The fetched data as a string' }],
+    });
+
+    const result = computeDocsCoverage(spec);
+    const drift = result.exports.get('async-no-docs')?.drift;
+    expect(drift).toBeDefined();
+    expect(drift?.some((d) => d.type === 'async-mismatch')).toBe(true);
+    expect(drift?.find((d) => d.type === 'async-mismatch')?.issue).toContain('Promise');
+  });
+
+  it('reports drift when sync function has @async tag', () => {
+    const spec = buildSpec({
+      id: 'sync-with-async',
+      name: 'computeValue',
+      signatures: [
+        {
+          parameters: [],
+          returns: { schema: { type: 'number' }, description: 'The computed value' },
+        },
+      ],
+      tags: [{ name: 'async', text: '' }],
+    });
+
+    const result = computeDocsCoverage(spec);
+    const drift = result.exports.get('sync-with-async')?.drift;
+    expect(drift).toBeDefined();
+    expect(drift?.some((d) => d.type === 'async-mismatch')).toBe(true);
+  });
+
+  it('does not report drift when async is properly documented', () => {
+    const spec = buildSpec({
+      id: 'async-aligned',
+      name: 'processAsync',
+      signatures: [
+        {
+          parameters: [],
+          returns: { tsType: 'Promise<number>', description: 'The result' },
+        },
+      ],
+      tags: [{ name: 'async', text: '' }],
+    });
+
+    const result = computeDocsCoverage(spec);
+    const drift = result.exports.get('async-aligned')?.drift;
+    expect(drift?.some((d) => d.type === 'async-mismatch')).toBeFalsy();
+  });
+});
+
+describe('docs coverage property type drift detection', () => {
+  it('reports drift when @type annotation differs from actual type', () => {
+    const spec = buildSpec({
+      id: 'class-with-drift',
+      name: 'UserProfile',
+      kind: 'class',
+      signatures: [],
+      members: [
+        {
+          id: 'age',
+          name: 'age',
+          kind: 'property',
+          schema: { type: 'number' },
+          tags: [{ name: 'type', text: '{string}' }],
+        },
+      ],
+    });
+
+    const result = computeDocsCoverage(spec);
+    const drift = result.exports.get('class-with-drift')?.drift;
+    expect(drift).toBeDefined();
+    expect(drift?.some((d) => d.type === 'property-type-drift')).toBe(true);
+    expect(drift?.find((d) => d.type === 'property-type-drift')?.target).toBe('age');
+  });
+
+  it('does not report drift when @type matches actual type', () => {
+    const spec = buildSpec({
+      id: 'class-aligned',
+      name: 'UserProfile',
+      kind: 'class',
+      signatures: [],
+      members: [
+        {
+          id: 'active',
+          name: 'active',
+          kind: 'property',
+          schema: { type: 'boolean' },
+          tags: [{ name: 'type', text: '{boolean}' }],
+        },
+      ],
+    });
+
+    const result = computeDocsCoverage(spec);
+    const drift = result.exports.get('class-aligned')?.drift;
+    expect(drift?.some((d) => d.type === 'property-type-drift')).toBeFalsy();
+  });
+});
