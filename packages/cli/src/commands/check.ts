@@ -1,6 +1,11 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { DocCov, detectExampleRuntimeErrors, runExamples } from '@doccov/sdk';
+import {
+  DocCov,
+  detectExampleRuntimeErrors,
+  type ExampleRunResult,
+  runExamplesWithPackage,
+} from '@doccov/sdk';
 import chalk from 'chalk';
 import type { Command } from 'commander';
 import ora, { type Ora } from 'ora';
@@ -62,8 +67,9 @@ export function registerCheckCommand(
           log(chalk.gray(`Auto-detected entry point: ${path.relative(targetDir, entryFile)}`));
         } else {
           entryFile = path.resolve(targetDir, entryFile);
-          // If path is a directory, find entry point within it
+          // If path is a directory, find entry point within it and update targetDir
           if (fs.existsSync(entryFile) && fs.statSync(entryFile).isDirectory()) {
+            targetDir = entryFile;
             entryFile = await findEntryPoint(entryFile, true);
             log(chalk.gray(`Auto-detected entry point: ${entryFile}`));
           }
@@ -95,40 +101,75 @@ export function registerCheckCommand(
         // Run examples if --run-examples flag is set
         const runtimeDrifts: Array<{ name: string; issue: string; suggestion?: string }> = [];
         if (options.runExamples) {
-          const examplesSpinner = spinner('Running @example blocks...');
-          examplesSpinner.start();
-
-          let examplesRun = 0;
-          let examplesFailed = 0;
-
+          // Collect all examples from all exports
+          const allExamples: Array<{ exportName: string; examples: string[] }> = [];
           for (const entry of spec.exports ?? []) {
-            if (!entry.examples || entry.examples.length === 0) {
-              continue;
-            }
-
-            const results = await runExamples(entry.examples, {
-              timeout: 5000,
-              cwd: targetDir,
-            });
-
-            examplesRun += results.size;
-
-            // Detect runtime errors
-            const entryDrifts = detectExampleRuntimeErrors(entry, results);
-            for (const drift of entryDrifts) {
-              examplesFailed += 1;
-              runtimeDrifts.push({
-                name: entry.name,
-                issue: drift.issue,
-                suggestion: drift.suggestion,
-              });
+            if (entry.examples && entry.examples.length > 0) {
+              allExamples.push({ exportName: entry.name, examples: entry.examples });
             }
           }
 
-          if (examplesFailed > 0) {
-            examplesSpinner.fail(`${examplesFailed}/${examplesRun} example(s) failed`);
+          if (allExamples.length === 0) {
+            log(chalk.gray('No @example blocks found'));
           } else {
-            examplesSpinner.succeed(`${examplesRun} example(s) passed`);
+            const examplesSpinner = spinner('Installing package for examples...');
+            examplesSpinner.start();
+
+            // Flatten examples for batch execution
+            const flatExamples = allExamples.flatMap((e) => e.examples);
+
+            // Run all examples with package installed
+            const packageResult = await runExamplesWithPackage(flatExamples, {
+              packagePath: targetDir,
+              timeout: 5000,
+              installTimeout: 60000,
+              cwd: targetDir,
+            });
+
+            if (!packageResult.installSuccess) {
+              examplesSpinner.fail(`Package install failed: ${packageResult.installError}`);
+              log(chalk.yellow('Skipping example execution. Ensure the package is built.'));
+            } else {
+              examplesSpinner.text = 'Running @example blocks...';
+
+              let examplesRun = 0;
+              let examplesFailed = 0;
+              let exampleIndex = 0;
+
+              // Map results back to exports
+              for (const { exportName, examples } of allExamples) {
+                const entryResults = new Map<number, ExampleRunResult>();
+
+                for (let i = 0; i < examples.length; i++) {
+                  const result = packageResult.results.get(exampleIndex);
+                  if (result) {
+                    entryResults.set(i, result);
+                    examplesRun++;
+                    if (!result.success) examplesFailed++;
+                  }
+                  exampleIndex++;
+                }
+
+                // Find the entry to detect drifts
+                const entry = (spec.exports ?? []).find((e) => e.name === exportName);
+                if (entry) {
+                  const entryDrifts = detectExampleRuntimeErrors(entry, entryResults);
+                  for (const drift of entryDrifts) {
+                    runtimeDrifts.push({
+                      name: entry.name,
+                      issue: drift.issue,
+                      suggestion: drift.suggestion,
+                    });
+                  }
+                }
+              }
+
+              if (examplesFailed > 0) {
+                examplesSpinner.fail(`${examplesFailed}/${examplesRun} example(s) failed`);
+              } else {
+                examplesSpinner.succeed(`${examplesRun} example(s) passed`);
+              }
+            }
           }
         }
 
