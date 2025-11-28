@@ -28,6 +28,7 @@ export function serializeEnum(
     description,
     source: getSourceLocation(declaration),
     tags: parsedDoc?.tags,
+    examples: parsedDoc?.examples,
   };
 
   const typeDefinition: TypeDefinition = {

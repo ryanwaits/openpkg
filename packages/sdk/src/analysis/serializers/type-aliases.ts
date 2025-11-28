@@ -41,6 +41,7 @@ export function serializeTypeAlias(
     source: getSourceLocation(declaration),
     typeParameters,
     tags: parsedDoc?.tags,
+    examples: parsedDoc?.examples,
   };
 
   const aliasType = checker.getTypeAtLocation(declaration.type);

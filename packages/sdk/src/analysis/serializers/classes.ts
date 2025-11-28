@@ -44,6 +44,7 @@ export function serializeClass(
     members: members.length > 0 ? members : undefined,
     typeParameters,
     tags: parsedDoc?.tags,
+    examples: parsedDoc?.examples,
   };
 
   const typeDefinition: TypeDefinition = {

@@ -47,6 +47,7 @@ export function serializeVariable(
     description,
     source: getSourceLocation(declaration),
     tags: parsedDoc?.tags,
+    examples: parsedDoc?.examples,
   };
 }
 

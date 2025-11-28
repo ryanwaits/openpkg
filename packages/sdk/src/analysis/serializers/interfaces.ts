@@ -41,6 +41,7 @@ export function serializeInterface(
     source: getSourceLocation(declaration),
     typeParameters,
     tags: parsedDoc?.tags,
+    examples: parsedDoc?.examples,
   };
 
   const schema = interfaceToSchema(declaration, checker, typeRefs, referencedTypes);
