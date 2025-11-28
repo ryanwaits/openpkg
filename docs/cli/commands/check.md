@@ -60,6 +60,21 @@ doccov check --run-examples
 
 Requires Node.js 22+ (uses `--experimental-strip-types`).
 
+**Package Pre-Install**: When `--run-examples` is used, the CLI automatically installs the local package in a temp directory before running examples. This means examples that import from your package work:
+
+```typescript
+/**
+ * @example
+ * import { add } from 'my-package';
+ * console.log(add(1, 2)); // 3
+ */
+export function add(a: number, b: number): number {
+  return a + b;
+}
+```
+
+The CLI auto-detects your package manager (bun/pnpm/npm) from lockfiles.
+
 ### Ignore Drift
 
 Pass even with drift issues:
