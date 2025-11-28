@@ -23,6 +23,29 @@ export interface ParsedJSDoc {
 }
 
 /**
+ * Find the last JSDoc block comment (starts with /**) in a list of comment ranges,
+ * ignoring single-line comments like // biome-ignore or // eslint-disable
+ */
+function findJSDocComment(
+  commentRanges: readonly TS.CommentRange[] | undefined,
+  sourceText: string,
+): TS.CommentRange | undefined {
+  if (!commentRanges || commentRanges.length === 0) {
+    return undefined;
+  }
+
+  for (let i = commentRanges.length - 1; i >= 0; i--) {
+    const range = commentRanges[i];
+    const text = sourceText.substring(range.pos, range.end);
+    if (text.startsWith('/**')) {
+      return range;
+    }
+  }
+
+  return undefined;
+}
+
+/**
  * Parse JSDoc/TSDoc comments to extract structured information
  */
 export function parseJSDocComment(
@@ -34,15 +57,30 @@ export function parseJSDocComment(
   if (!node) return null;
 
   const sourceFile = sourceFileOverride || node.getSourceFile();
-  const commentRanges = ts.getLeadingCommentRanges(sourceFile.text, node.pos);
 
-  if (!commentRanges || commentRanges.length === 0) {
+  // Try to find JSDoc on the node itself
+  let jsdocComment = findJSDocComment(
+    ts.getLeadingCommentRanges(sourceFile.text, node.pos),
+    sourceFile.text,
+  );
+
+  // For variable declarations, JSDoc is often on the parent VariableStatement
+  // e.g., `/** docs */ export const PI = 3.14;` - JSDoc is on the statement, not the declaration
+  if (!jsdocComment && ts.isVariableDeclaration(node) && node.parent?.parent) {
+    const statement = node.parent.parent; // VariableDeclaration -> VariableDeclarationList -> VariableStatement
+    if (ts.isVariableStatement(statement)) {
+      jsdocComment = findJSDocComment(
+        ts.getLeadingCommentRanges(sourceFile.text, statement.pos),
+        sourceFile.text,
+      );
+    }
+  }
+
+  if (!jsdocComment) {
     return null;
   }
 
-  // Get the last comment (usually the JSDoc)
-  const lastComment = commentRanges[commentRanges.length - 1];
-  const commentText = sourceFile.text.substring(lastComment.pos, lastComment.end);
+  const commentText = sourceFile.text.substring(jsdocComment.pos, jsdocComment.end);
 
   return parseJSDocText(commentText);
 }
