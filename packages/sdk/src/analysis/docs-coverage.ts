@@ -1271,3 +1271,104 @@ function extractTypeFromBraces(text: string): string | undefined {
   const match = text.match(/^\{([^}]+)\}/);
   return match?.[1]?.trim();
 }
+
+/**
+ * Parse assertion comments from example code.
+ * Matches: // => expected_value
+ */
+export function parseAssertions(code: string): Array<{ lineNumber: number; expected: string }> {
+  const assertions: Array<{ lineNumber: number; expected: string }> = [];
+
+  // Strip markdown code block markers
+  const cleanCode = code
+    .replace(/^```(?:ts|typescript|js|javascript)?\n?/i, '')
+    .replace(/\n?```$/i, '')
+    .trim();
+
+  const lines = cleanCode.split('\n');
+  const assertionPattern = /\/\/\s*=>\s*(.+?)\s*$/;
+
+  for (let i = 0; i < lines.length; i++) {
+    const match = lines[i].match(assertionPattern);
+    if (match?.[1]) {
+      assertions.push({
+        lineNumber: i + 1,
+        expected: match[1].trim(),
+      });
+    }
+  }
+
+  return assertions;
+}
+
+/**
+ * Check if code contains comments that are not assertion syntax.
+ * Used to determine if LLM fallback should be attempted.
+ */
+export function hasNonAssertionComments(code: string): boolean {
+  // Check for any // comments that are not // =>
+  return /\/\/(?!\s*=>)/.test(code);
+}
+
+/**
+ * Detect assertion failures by comparing stdout to expected values.
+ */
+export function detectExampleAssertionFailures(
+  entry: SpecExport,
+  runtimeResults: Map<number, ExampleRunResult>,
+): SpecDocDrift[] {
+  if (!entry.examples || entry.examples.length === 0 || runtimeResults.size === 0) {
+    return [];
+  }
+
+  const drifts: SpecDocDrift[] = [];
+
+  for (let i = 0; i < entry.examples.length; i++) {
+    const example = entry.examples[i];
+    const result = runtimeResults.get(i);
+
+    // Only check assertions if example ran successfully
+    if (!result || !result.success || typeof example !== 'string') {
+      continue;
+    }
+
+    const assertions = parseAssertions(example);
+    if (assertions.length === 0) {
+      continue;
+    }
+
+    // Parse stdout into lines (normalized)
+    const stdoutLines = result.stdout
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
+
+    // Compare each assertion with corresponding stdout line
+    for (let j = 0; j < assertions.length; j++) {
+      const assertion = assertions[j];
+      const actual = stdoutLines[j];
+
+      if (actual === undefined) {
+        drifts.push({
+          type: 'example-assertion-failed',
+          target: `example[${i}]:line${assertion.lineNumber}`,
+          issue: `Assertion expected "${assertion.expected}" but no output was produced`,
+          suggestion: 'Ensure the example produces output for each assertion',
+        });
+        continue;
+      }
+
+      // Normalized comparison (trim whitespace)
+      if (assertion.expected.trim() !== actual.trim()) {
+        drifts.push({
+          type: 'example-assertion-failed',
+          target: `example[${i}]:line${assertion.lineNumber}`,
+          issue: `Assertion failed: expected "${assertion.expected}" but got "${actual}"`,
+          suggestion: `Update assertion to: // => ${actual}`,
+        });
+      }
+    }
+  }
+
+  return drifts;
+}

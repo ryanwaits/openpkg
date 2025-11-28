@@ -200,6 +200,55 @@ export function parse() {}
 example-runtime-error: @example failed with: SyntaxError: Unexpected end of JSON input
 ```
 
+### example-assertion-failed
+
+`@example` output doesn't match inline `// =>` assertion comment.
+
+**Trigger**: Example runs successfully but stdout differs from the expected value in a `// => value` comment.
+
+**Detection**: Requires `--run-examples` flag.
+
+**Example**:
+
+```typescript
+/**
+ * @example
+ * console.log(add(1, 2)); // => 4  // ❌ Actual output is 3
+ */
+export function add(a: number, b: number) {
+  return a + b;
+}
+```
+
+**Output**:
+
+```
+example-assertion-failed: expected "4" but got "3"
+  Suggestion: Update assertion to: // => 3
+```
+
+**Assertion Syntax**:
+
+The `// => value` pattern is inspired by Python doctests:
+
+```typescript
+console.log(add(1, 2));    // => 3
+console.log("hello");      // => hello
+console.log([1, 2, 3]);    // => [1, 2, 3]
+console.log({name: "a"});  // => { name: "a" }
+```
+
+**LLM Fallback**:
+
+If no `// =>` assertions are found but other comments exist, DocCov can use an LLM to detect non-standard assertion patterns (requires `OPENAI_API_KEY` or `ANTHROPIC_API_KEY`):
+
+```typescript
+// These patterns can be detected by LLM fallback:
+console.log(result);  // should be 5
+console.log(data);    // returns "hello"
+console.log(x);       // 42
+```
+
 ### broken-link
 
 `{@link Target}` references a non-existent export.

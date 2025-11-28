@@ -66,7 +66,7 @@ Requires Node.js 22+ (uses `--experimental-strip-types`).
 /**
  * @example
  * import { add } from 'my-package';
- * console.log(add(1, 2)); // 3
+ * console.log(add(1, 2)); // => 3
  */
 export function add(a: number, b: number): number {
   return a + b;
@@ -74,6 +74,29 @@ export function add(a: number, b: number): number {
 ```
 
 The CLI auto-detects your package manager (bun/pnpm/npm) from lockfiles.
+
+#### Doctest Assertions
+
+Add assertions to verify output using `// => expected` comments:
+
+```typescript
+/**
+ * @example
+ * console.log(add(1, 2)); // => 3
+ * console.log(add(0, 0)); // => 0
+ */
+```
+
+When examples run, stdout is compared line-by-line against assertions. Mismatches produce `example-assertion-failed` drift:
+
+```
+example-assertion-failed: expected "4" but got "3"
+  Suggestion: Update assertion to: // => 3
+```
+
+Assertions are optional - examples without `// =>` comments only check for runtime errors.
+
+**LLM Fallback**: If you have `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` set, DocCov can detect non-standard assertion patterns like `// should be 5` or `// returns "hello"` and suggest converting them to standard `// =>` syntax.
 
 ### Ignore Drift
 
@@ -167,6 +190,7 @@ By default, `check` fails on any drift. Drift types detected:
 | `optionality-mismatch` | `[param]` vs required param |
 | `example-drift` | Example references missing export |
 | `example-runtime-error` | Example throws (with `--run-examples`) |
+| `example-assertion-failed` | `// => value` assertion doesn't match output |
 | `broken-link` | `{@link X}` target not found |
 
 See [Drift Types](../../spec/drift-types.md) for full list.

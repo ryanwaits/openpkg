@@ -2,13 +2,20 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import {
   DocCov,
+  detectExampleAssertionFailures,
   detectExampleRuntimeErrors,
   type ExampleRunResult,
+  hasNonAssertionComments,
+  parseAssertions,
   runExamplesWithPackage,
 } from '@doccov/sdk';
 import chalk from 'chalk';
 import type { Command } from 'commander';
 import ora, { type Ora } from 'ora';
+import {
+  isLLMAssertionParsingAvailable,
+  parseAssertionsWithLLM,
+} from '../utils/llm-assertion-parser';
 import { findEntryPoint, findPackageInMonorepo } from '../utils/package-utils';
 
 interface CheckCommandDependencies {
@@ -153,13 +160,66 @@ export function registerCheckCommand(
                 // Find the entry to detect drifts
                 const entry = (spec.exports ?? []).find((e) => e.name === exportName);
                 if (entry) {
-                  const entryDrifts = detectExampleRuntimeErrors(entry, entryResults);
-                  for (const drift of entryDrifts) {
+                  // Detect runtime errors
+                  const runtimeErrorDrifts = detectExampleRuntimeErrors(entry, entryResults);
+                  for (const drift of runtimeErrorDrifts) {
                     runtimeDrifts.push({
                       name: entry.name,
                       issue: drift.issue,
                       suggestion: drift.suggestion,
                     });
+                  }
+
+                  // Detect assertion failures (only for successful examples)
+                  const assertionDrifts = detectExampleAssertionFailures(entry, entryResults);
+                  for (const drift of assertionDrifts) {
+                    runtimeDrifts.push({
+                      name: entry.name,
+                      issue: drift.issue,
+                      suggestion: drift.suggestion,
+                    });
+                  }
+
+                  // LLM fallback: if no standard assertions but comments exist
+                  if (isLLMAssertionParsingAvailable() && entry.examples) {
+                    for (let exIdx = 0; exIdx < entry.examples.length; exIdx++) {
+                      const example = entry.examples[exIdx];
+                      const result = entryResults.get(exIdx);
+                      if (!result?.success || typeof example !== 'string') continue;
+
+                      // Check if regex found no assertions but comments exist
+                      const regexAssertions = parseAssertions(example);
+                      if (regexAssertions.length === 0 && hasNonAssertionComments(example)) {
+                        // Try LLM fallback
+                        const llmResult = await parseAssertionsWithLLM(example);
+                        if (llmResult?.hasAssertions && llmResult.assertions.length > 0) {
+                          // Validate LLM-extracted assertions against stdout
+                          const stdoutLines = result.stdout
+                            .split('\n')
+                            .map((l) => l.trim())
+                            .filter((l) => l.length > 0);
+
+                          for (let aIdx = 0; aIdx < llmResult.assertions.length; aIdx++) {
+                            const assertion = llmResult.assertions[aIdx];
+                            const actual = stdoutLines[aIdx];
+
+                            if (actual === undefined) {
+                              runtimeDrifts.push({
+                                name: entry.name,
+                                issue: `Assertion expected "${assertion.expected}" but no output was produced`,
+                                suggestion: `Consider using standard syntax: ${assertion.suggestedSyntax}`,
+                              });
+                            } else if (assertion.expected.trim() !== actual.trim()) {
+                              runtimeDrifts.push({
+                                name: entry.name,
+                                issue: `Assertion failed: expected "${assertion.expected}" but got "${actual}"`,
+                                suggestion: `Consider using standard syntax: ${assertion.suggestedSyntax}`,
+                              });
+                            }
+                          }
+                        }
+                      }
+                    }
                   }
                 }
               }

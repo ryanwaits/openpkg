@@ -1,4 +1,9 @@
-export { detectExampleRuntimeErrors } from './analysis/docs-coverage';
+export {
+  detectExampleAssertionFailures,
+  detectExampleRuntimeErrors,
+  hasNonAssertionComments,
+  parseAssertions,
+} from './analysis/docs-coverage';
 export type { OpenPkgSpec } from './analysis/spec-types';
 export { extractPackageSpec } from './extractor';
 export type { FilterOptions } from './filtering/types';
