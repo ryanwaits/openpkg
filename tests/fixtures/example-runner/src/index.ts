@@ -10,8 +10,9 @@
  * @returns {number} The sum of a and b
  * @example
  * ```ts
- * // Simple arithmetic example
- * const result = 2 + 3;
+ * // Import and use the add function from the package
+ * import { add } from 'example-runner-fixture';
+ * const result = add(2, 3);
  * console.log(result); // 5
  * ```
  */
@@ -26,8 +27,9 @@ export function add(a: number, b: number): number {
  * @returns {number} The product of x and y
  * @example
  * ```ts
- * // Multiplication example
- * const product = 4 * 5;
+ * // Import and use the multiply function from the package
+ * import { multiply } from 'example-runner-fixture';
+ * const product = multiply(4, 5);
  * console.log(product); // 20
  * ```
  */
@@ -70,7 +72,8 @@ export const PI = 3.14159;
  * ```ts
  * // Class instantiation example
  * class MyGreeter {
- *   constructor(private name: string) {}
+ *   private name: string;
+ *   constructor(name: string) { this.name = name; }
  *   greet() { return `Hello, ${this.name}!`; }
  * }
  * const g = new MyGreeter("World");
@@ -78,7 +81,10 @@ export const PI = 3.14159;
  * ```
  */
 export class Greeter {
-  constructor(private name: string) {}
+  private name: string;
+  constructor(name: string) {
+    this.name = name;
+  }
 
   greet(): string {
     return `Hello, ${this.name}!`;
