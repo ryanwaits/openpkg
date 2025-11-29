@@ -86,11 +86,13 @@
             "optionality-mismatch",
             "deprecated-mismatch",
             "visibility-mismatch",
-            "example-drift",
-            "broken-link",
-            "example-syntax-error",
             "async-mismatch",
-            "property-type-drift"
+            "property-type-drift",
+            "example-drift",
+            "example-syntax-error",
+            "example-runtime-error",
+            "example-assertion-failed",
+            "broken-link"
           ]
         },
         "target": {

@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { Command } from 'commander';
 import { registerCheckCommand } from './commands/check';
 import { registerDiffCommand } from './commands/diff';
+import { registerFixCommand } from './commands/fix';
 import { registerGenerateCommand } from './commands/generate';
 import { registerInitCommand } from './commands/init';
 import { registerReportCommand } from './commands/report';
@@ -26,6 +27,7 @@ program
 registerGenerateCommand(program);
 registerCheckCommand(program);
 registerDiffCommand(program);
+registerFixCommand(program);
 registerInitCommand(program);
 registerReportCommand(program);
 registerScanCommand(program);

@@ -26,7 +26,10 @@ export type SpecDocDrift = {
     | 'optionality-mismatch'
     | 'deprecated-mismatch'
     | 'visibility-mismatch'
+    | 'async-mismatch'
+    | 'property-type-drift'
     | 'example-drift'
+    | 'example-syntax-error'
     | 'example-runtime-error'
     | 'example-assertion-failed'
     | 'broken-link';
