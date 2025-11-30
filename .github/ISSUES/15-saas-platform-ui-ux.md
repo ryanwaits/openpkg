@@ -20,51 +20,141 @@ Inspired by OpenCode's desktop interface - a refined, developer-focused aestheti
 
 ## Design System
 
+### Color Philosophy: Warm Monochromatic
+
+The palette is intentionally restrained - almost entirely warm grayscale. This serves the product:
+
+1. **Data becomes the hero** - Coverage meters, diff counts, status badges pop against neutral backgrounds
+2. **Functional colors carry meaning** - Green/yellow/red for coverage, blue for TypeScript icons
+3. **Premium, native feel** - Like a well-crafted macOS developer tool
+4. **No brand color competing with data** - The coverage spectrum gets full attention
+
 ### Color Palette
 
 ```css
 :root {
-  /* Backgrounds */
-  --bg-primary: #fafaf8;        /* Warm off-white */
-  --bg-secondary: #f5f5f3;      /* Subtle cream */
-  --bg-tertiary: #eeeee9;       /* Card backgrounds */
-  --bg-dark: #1a1a1a;           /* Dark mode primary */
-  --bg-dark-secondary: #242424; /* Dark mode cards */
+  /* ========================================
+     BACKGROUNDS - Warm whites & creams
+     ======================================== */
+  --bg-primary: #ffffff;         /* Pure white - main content areas */
+  --bg-secondary: #fafaf8;       /* Warm off-white - page background */
+  --bg-tertiary: #f5f4f2;        /* Subtle cream - cards, panels */
+  --bg-hover: #f0efed;           /* Hover state for interactive elements */
+  --bg-active: #e7e5e4;          /* Active/pressed state */
 
-  /* Accent - Sage Green (from OpenCode) */
-  --accent: #7c9a7c;            /* Primary sage */
-  --accent-light: #a3bfa3;      /* Hover state */
-  --accent-muted: #e8efe8;      /* Subtle backgrounds */
-  --accent-dark: #5a7a5a;       /* Active state */
+  /* Dark mode */
+  --bg-dark-primary: #1a1918;    /* Warm black - main background */
+  --bg-dark-secondary: #262524;  /* Elevated surfaces */
+  --bg-dark-tertiary: #323130;   /* Cards, panels */
+  --bg-dark-hover: #3d3b3a;      /* Hover state */
+  --bg-dark-active: #484645;     /* Active state */
 
-  /* Text */
-  --text-primary: #1a1a1a;
-  --text-secondary: #6b6b6b;
-  --text-tertiary: #9a9a9a;
-  --text-inverse: #fafafa;
+  /* ========================================
+     TEXT - Warm grays (Stone palette)
+     ======================================== */
+  --text-primary: #1c1917;       /* Stone 900 - headings, primary content */
+  --text-secondary: #57534e;     /* Stone 600 - body text, descriptions */
+  --text-tertiary: #a8a29e;      /* Stone 400 - placeholders, hints */
+  --text-muted: #d6d3d1;         /* Stone 300 - disabled text */
+  --text-inverse: #fafaf9;       /* Light text on dark backgrounds */
 
-  /* Coverage spectrum */
-  --coverage-excellent: #4ade80;  /* 80%+ */
-  --coverage-good: #facc15;       /* 50-79% */
-  --coverage-poor: #f87171;       /* <50% */
+  /* Dark mode text */
+  --text-dark-primary: #fafaf9;  /* Stone 50 */
+  --text-dark-secondary: #a8a29e; /* Stone 400 */
+  --text-dark-tertiary: #78716c; /* Stone 500 */
+  --text-dark-muted: #57534e;    /* Stone 600 */
 
-  /* Diff colors */
-  --diff-add: #22c55e;
-  --diff-remove: #ef4444;
-  --diff-add-bg: #dcfce7;
-  --diff-remove-bg: #fee2e2;
+  /* ========================================
+     BORDERS - Subtle warm grays
+     ======================================== */
+  --border-subtle: #e7e5e4;      /* Stone 200 - card borders, dividers */
+  --border-medium: #d6d3d1;      /* Stone 300 - input borders */
+  --border-strong: #a8a29e;      /* Stone 400 - focus rings */
 
-  /* Kind badges */
-  --kind-function: #8b5cf6;
-  --kind-class: #3b82f6;
-  --kind-interface: #06b6d4;
-  --kind-type: #14b8a6;
-  --kind-enum: #f59e0b;
-  --kind-variable: #64748b;
+  /* Dark mode borders */
+  --border-dark-subtle: #323130;
+  --border-dark-medium: #484645;
+  --border-dark-strong: #78716c;
 
-  /* Borders */
-  --border-subtle: #e5e5e0;
-  --border-medium: #d4d4cf;
+  /* ========================================
+     PRIMARY - Warm brown/taupe (very muted)
+     Used sparingly for interactive elements
+     ======================================== */
+  --primary: #57534e;            /* Stone 600 - buttons, links */
+  --primary-hover: #44403c;      /* Stone 700 */
+  --primary-active: #292524;     /* Stone 800 */
+  --primary-muted: #78716c;      /* Stone 500 - secondary actions */
+
+  /* ========================================
+     FUNCTIONAL COLORS - The only real colors
+     These carry semantic meaning
+     ======================================== */
+
+  /* Coverage spectrum (the hero of the product) */
+  --coverage-excellent: #16a34a; /* Green 600 - 80%+ */
+  --coverage-good: #ca8a04;      /* Yellow 600 - 50-79% */
+  --coverage-poor: #dc2626;      /* Red 600 - <50% */
+
+  /* Coverage backgrounds (for meters, bars) */
+  --coverage-excellent-bg: #dcfce7; /* Green 100 */
+  --coverage-good-bg: #fef9c3;      /* Yellow 100 */
+  --coverage-poor-bg: #fee2e2;      /* Red 100 */
+
+  /* Diff colors (for file changes +43 -2) */
+  --diff-add: #16a34a;           /* Green 600 */
+  --diff-remove: #dc2626;        /* Red 600 */
+  --diff-add-bg: #f0fdf4;        /* Green 50 */
+  --diff-remove-bg: #fef2f2;     /* Red 50 */
+
+  /* Status/Semantic */
+  --status-success: #16a34a;     /* Green 600 */
+  --status-warning: #ca8a04;     /* Yellow 600 */
+  --status-error: #dc2626;       /* Red 600 */
+  --status-info: #0284c7;        /* Sky 600 */
+
+  /* ========================================
+     KIND BADGES - Distinct colors for export types
+     The only place we use saturated colors in UI
+     ======================================== */
+  --kind-function: #7c3aed;      /* Violet 600 */
+  --kind-class: #2563eb;         /* Blue 600 */
+  --kind-interface: #0891b2;     /* Cyan 600 */
+  --kind-type: #0d9488;          /* Teal 600 */
+  --kind-enum: #d97706;          /* Amber 600 */
+  --kind-variable: #64748b;      /* Slate 500 */
+  --kind-namespace: #c026d3;     /* Fuchsia 600 */
+  --kind-module: #059669;        /* Emerald 600 */
+
+  /* Kind badge backgrounds (muted versions) */
+  --kind-function-bg: #f5f3ff;   /* Violet 50 */
+  --kind-class-bg: #eff6ff;      /* Blue 50 */
+  --kind-interface-bg: #ecfeff;  /* Cyan 50 */
+  --kind-type-bg: #f0fdfa;       /* Teal 50 */
+  --kind-enum-bg: #fffbeb;       /* Amber 50 */
+  --kind-variable-bg: #f8fafc;   /* Slate 50 */
+
+  /* ========================================
+     FILE TYPE ICONS - Brand colors
+     ======================================== */
+  --icon-typescript: #3178c6;    /* Official TS blue */
+  --icon-javascript: #f7df1e;    /* Official JS yellow */
+  --icon-html: #e34c26;          /* HTML orange */
+  --icon-css: #1572b6;           /* CSS blue */
+  --icon-json: #292929;          /* JSON dark */
+  --icon-markdown: #083fa1;      /* Markdown blue */
+
+  /* ========================================
+     SHADOWS - Soft, warm
+     ======================================== */
+  --shadow-sm: 0 1px 2px rgba(28, 25, 23, 0.04);
+  --shadow-md: 0 2px 8px rgba(28, 25, 23, 0.06);
+  --shadow-lg: 0 4px 16px rgba(28, 25, 23, 0.08);
+  --shadow-xl: 0 8px 32px rgba(28, 25, 23, 0.12);
+
+  /* Panel shadow (cards, dropdowns) */
+  --shadow-panel:
+    0 0 0 1px var(--border-subtle),
+    0 2px 8px rgba(28, 25, 23, 0.04);
 }
 ```
 
