@@ -20,6 +20,7 @@ export function registerReportCommand(program: Command): void {
     .option('--output <format>', 'Output format: markdown, html, json', 'markdown')
     .option('--out <file>', 'Write to file instead of stdout')
     .option('--limit <n>', 'Max exports to show in tables', '20')
+    .option('--skip-resolve', 'Skip external type resolution from node_modules')
     .action(async (entry, options) => {
       try {
         let spec: OpenPkg;
@@ -44,7 +45,8 @@ export function registerReportCommand(program: Command): void {
           }
 
           const spinner = ora('Analyzing...').start();
-          const doccov = new DocCov({ resolveExternalTypes: true });
+          const resolveExternalTypes = !options.skipResolve;
+          const doccov = new DocCov({ resolveExternalTypes });
           const result = await doccov.analyzeFileWithDiagnostics(entryFile);
           spinner.succeed('Analysis complete');
           spec = result.spec;

@@ -22,7 +22,7 @@ doccov check [entry] [options]
 | `--require-examples` | `false` | Require `@example` for every export |
 | `--run-examples` | `false` | Execute `@example` blocks, fail on errors |
 | `--ignore-drift` | `false` | Don't fail on documentation drift |
-| `--no-external-types` | `false` | Skip external type resolution |
+| `--skip-resolve` | `false` | Skip external type resolution from node_modules |
 | `-p, --package <name>` | - | Target package in monorepo |
 | `--cwd <dir>` | `.` | Working directory |
 

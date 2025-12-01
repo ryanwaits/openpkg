@@ -64,6 +64,7 @@ export function registerScanCommand(
       '--skip-install',
       'Skip dependency installation (faster, but may limit type resolution)',
     )
+    .option('--skip-resolve', 'Skip external type resolution from node_modules')
     .option('--save-spec <path>', 'Save full OpenPkg spec to file')
     .action(async (url: string, options) => {
       let tempDir: string | undefined;
@@ -365,7 +366,8 @@ export function registerScanCommand(
 
         let result: Awaited<ReturnType<DocCov['analyzeFileWithDiagnostics']>>;
         try {
-          const doccov = createDocCov({ resolveExternalTypes: true });
+          const resolveExternalTypes = !options.skipResolve;
+          const doccov = createDocCov({ resolveExternalTypes });
           result = await doccov.analyzeFileWithDiagnostics(entryPath);
           analyzeSpinner.succeed('Analysis complete');
         } catch (analysisError) {

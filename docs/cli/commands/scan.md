@@ -22,6 +22,7 @@ doccov scan <url> [options]
 | `--package <name>` | - | Target package in monorepo |
 | `--output <format>` | `text` | Output: `text` or `json` |
 | `--skip-install` | `false` | Skip dependency installation |
+| `--skip-resolve` | `false` | Skip external type resolution from node_modules |
 | `--save-spec <path>` | - | Save full spec to file |
 | `--no-cleanup` | `false` | Keep cloned repo (debugging) |
 

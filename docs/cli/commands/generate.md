@@ -22,7 +22,7 @@ doccov generate [entry] [options]
 | `--include <ids>` | - | Filter exports by identifier (comma-separated) |
 | `--exclude <ids>` | - | Exclude exports by identifier (comma-separated) |
 | `--show-diagnostics` | `false` | Print TypeScript diagnostics |
-| `--no-external-types` | `false` | Skip external type resolution from node_modules |
+| `--skip-resolve` | `false` | Skip external type resolution from node_modules |
 | `-p, --package <name>` | - | Target package name (for monorepos) |
 | `--cwd <dir>` | `.` | Working directory |
 
@@ -69,7 +69,7 @@ doccov generate --package @myorg/utils -o utils-spec.json
 Faster generation, but loses external type info:
 
 ```bash
-doccov generate --no-external-types
+doccov generate --skip-resolve
 ```
 
 ### Debug TypeScript Issues

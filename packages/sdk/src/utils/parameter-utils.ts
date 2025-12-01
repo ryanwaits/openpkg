@@ -350,6 +350,86 @@ function getDocDescriptionForProperty(
   return match?.description;
 }
 
+/**
+ * Find a discriminator property in a union of object types (tagged union pattern).
+ * A valid discriminator has a unique literal value in each union member.
+ */
+function findDiscriminatorProperty(
+  unionTypes: TS.Type[],
+  typeChecker: TS.TypeChecker,
+): string | undefined {
+  // All members must be object types with properties
+  const memberProps: Map<string, string | number>[] = [];
+
+  for (const t of unionTypes) {
+    // Skip null/undefined in unions
+    if (t.flags & (ts.TypeFlags.Null | ts.TypeFlags.Undefined)) {
+      continue;
+    }
+
+    const props = t.getProperties();
+    if (!props || props.length === 0) {
+      return undefined; // Not an object type
+    }
+
+    const propValues = new Map<string, string | number>();
+    for (const prop of props) {
+      // Get declaration safely
+      const declaration = prop.valueDeclaration ?? prop.declarations?.[0];
+      if (!declaration) {
+        continue; // Skip properties without declarations
+      }
+
+      try {
+        const propType = typeChecker.getTypeOfSymbolAtLocation(prop, declaration);
+
+        // Check if it's a literal type
+        if (propType.isStringLiteral()) {
+          propValues.set(prop.getName(), propType.value);
+        } else if (propType.isNumberLiteral()) {
+          propValues.set(prop.getName(), propType.value);
+        }
+      } catch {
+        // Skip if we can't get the type
+        continue;
+      }
+    }
+
+    memberProps.push(propValues);
+  }
+
+  if (memberProps.length < 2) {
+    return undefined; // Need at least 2 object members
+  }
+
+  // Find property that exists in all members with unique literal values
+  const firstMember = memberProps[0];
+  for (const [propName, firstValue] of firstMember) {
+    const values = new Set<string | number>([firstValue]);
+    let isDiscriminator = true;
+
+    for (let i = 1; i < memberProps.length; i++) {
+      const value = memberProps[i].get(propName);
+      if (value === undefined) {
+        isDiscriminator = false;
+        break;
+      }
+      if (values.has(value)) {
+        // Duplicate value - not a valid discriminator
+        isDiscriminator = false;
+        break;
+      }
+      values.add(value);
+    }
+
+    if (isDiscriminator) {
+      return propName;
+    }
+  }
+
+  return undefined;
+}
+
 function schemaIsAny(schema: string | Record<string, unknown>): boolean {
   if (typeof schema === 'string') {
     return schema === 'any';
@@ -486,6 +566,16 @@ export function formatTypeReference(
       const parts = unionType.types.map((t) =>
         formatTypeReference(t, typeChecker, typeRefs, referencedTypes, visited),
       );
+
+      // Check for discriminator property (tagged union pattern)
+      const discriminatorProp = findDiscriminatorProperty(unionType.types, typeChecker);
+
+      if (discriminatorProp) {
+        return {
+          anyOf: parts,
+          discriminator: { propertyName: discriminatorProp },
+        };
+      }
 
       // Return as an anyOf array (OpenAPI style)
       return {

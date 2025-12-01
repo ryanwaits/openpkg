@@ -22,6 +22,7 @@ doccov report [entry] [options]
 | `--out <file>` | stdout | Write to file instead of stdout |
 | `--spec <file>` | - | Use existing openpkg.json |
 | `--limit <n>` | `20` | Max exports shown in tables |
+| `--skip-resolve` | `false` | Skip external type resolution from node_modules |
 | `-p, --package <name>` | - | Target package in monorepo |
 | `--cwd <dir>` | `.` | Working directory |
 

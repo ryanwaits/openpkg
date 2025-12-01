@@ -98,7 +98,7 @@ export function registerFixCommand(
     .option('--package <name>', 'Target package name (for monorepos)')
     .option('--dry-run', 'Preview changes without writing')
     .option('--only <types>', 'Only fix specific drift types (comma-separated)')
-    .option('--no-external-types', 'Skip external type resolution from node_modules')
+    .option('--skip-resolve', 'Skip external type resolution from node_modules')
     .action(async (entry, options) => {
       try {
         let targetDir = options.cwd;
@@ -127,7 +127,7 @@ export function registerFixCommand(
           }
         }
 
-        const resolveExternalTypes = options.externalTypes !== false;
+        const resolveExternalTypes = !options.skipResolve;
 
         // Analyze the codebase
         const analyzeSpinner = spinner('Analyzing documentation...');

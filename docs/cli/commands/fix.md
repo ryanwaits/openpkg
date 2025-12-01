@@ -20,7 +20,7 @@ The `fix` command analyzes your codebase for documentation drift and automatical
 | `--package <name>` | Target package name (for monorepos) |
 | `--dry-run` | Preview changes without writing to files |
 | `--only <types>` | Only fix specific drift types (comma-separated) |
-| `--no-external-types` | Skip external type resolution from node_modules |
+| `--skip-resolve` | Skip external type resolution from node_modules |
 
 ## Supported Fix Types
 

@@ -15,6 +15,7 @@ import { ts } from './ts-module';
 export interface Diagnostic {
   message: string;
   severity: 'error' | 'warning' | 'info';
+  suggestion?: string;
   location?: {
     file: string;
     line?: number;
@@ -93,6 +94,7 @@ export class DocCov {
       spec: filterOutcome.spec,
       diagnostics: [
         ...analysis.diagnostics.map((diagnostic) => this.normalizeDiagnostic(diagnostic)),
+        ...analysis.specDiagnostics,
         ...filterOutcome.diagnostics,
       ],
       metadata: this.normalizeMetadata(analysis.metadata),
@@ -119,6 +121,7 @@ export class DocCov {
       spec: filterOutcome.spec,
       diagnostics: [
         ...analysis.diagnostics.map((diagnostic) => this.normalizeDiagnostic(diagnostic)),
+        ...analysis.specDiagnostics,
         ...filterOutcome.diagnostics,
       ],
       metadata: this.normalizeMetadata(analysis.metadata),

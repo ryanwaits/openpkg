@@ -80,7 +80,7 @@ export function registerGenerateCommand(
     .option('-o, --output <file>', 'Output file', 'openpkg.json')
     .option('-p, --package <name>', 'Target package name (for monorepos)')
     .option('--cwd <dir>', 'Working directory', process.cwd())
-    .option('--no-external-types', 'Skip external type resolution from node_modules')
+    .option('--skip-resolve', 'Skip external type resolution from node_modules')
     .option('--include <ids>', 'Filter exports by identifier (comma-separated or repeated)')
     .option('--exclude <ids>', 'Exclude exports by identifier (comma-separated or repeated)')
     .option('--show-diagnostics', 'Print TypeScript diagnostics from analysis')
@@ -112,7 +112,7 @@ export function registerGenerateCommand(
           }
         }
 
-        const resolveExternalTypes = options.externalTypes !== false;
+        const resolveExternalTypes = !options.skipResolve;
 
         const cliFilters: CliFilterOptions = {
           include: parseListFlag(options.include),

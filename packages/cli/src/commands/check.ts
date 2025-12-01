@@ -54,7 +54,7 @@ export function registerCheckCommand(
     .option('--require-examples', 'Require at least one @example for every export')
     .option('--run-examples', 'Execute @example blocks and fail on runtime errors')
     .option('--ignore-drift', 'Do not fail on documentation drift')
-    .option('--no-external-types', 'Skip external type resolution from node_modules')
+    .option('--skip-resolve', 'Skip external type resolution from node_modules')
     .action(async (entry, options) => {
       try {
         let targetDir = options.cwd;
@@ -83,7 +83,7 @@ export function registerCheckCommand(
         }
 
         const minCoverage = clampCoverage(options.minCoverage ?? 80);
-        const resolveExternalTypes = options.externalTypes !== false;
+        const resolveExternalTypes = !options.skipResolve;
 
         const spinnerInstance = spinner('Analyzing documentation coverage...');
         spinnerInstance.start();
@@ -104,6 +104,27 @@ export function registerCheckCommand(
         }
 
         const spec = specResult.spec;
+
+        // Display spec diagnostics (warnings/info)
+        const warnings = specResult.diagnostics.filter((d) => d.severity === 'warning');
+        const infos = specResult.diagnostics.filter((d) => d.severity === 'info');
+
+        if (warnings.length > 0 || infos.length > 0) {
+          log('');
+          for (const diag of warnings) {
+            log(chalk.yellow(`⚠ ${diag.message}`));
+            if (diag.suggestion) {
+              log(chalk.gray(`  ${diag.suggestion}`));
+            }
+          }
+          for (const diag of infos) {
+            log(chalk.cyan(`ℹ ${diag.message}`));
+            if (diag.suggestion) {
+              log(chalk.gray(`  ${diag.suggestion}`));
+            }
+          }
+          log('');
+        }
 
         // Run examples if --run-examples flag is set
         const runtimeDrifts: Array<{ name: string; issue: string; suggestion?: string }> = [];
