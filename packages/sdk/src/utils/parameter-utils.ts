@@ -456,6 +456,21 @@ export function formatTypeReference(
       return { type: typeString };
     }
 
+    // Handle mapped types (e.g., { readonly [K in keyof T]: T[K] })
+    if (type.getFlags() & ts.TypeFlags.Object) {
+      const objectType = type as TS.ObjectType;
+      if (objectType.objectFlags & ts.ObjectFlags.Mapped) {
+        // Preserve the original TS syntax for mapped types
+        return { type: 'object', tsType: typeString };
+      }
+    }
+
+    // Handle conditional types (e.g., T extends U ? X : Y)
+    if (type.flags & ts.TypeFlags.Conditional) {
+      // Preserve the original TS syntax for conditional types
+      return { type: 'object', tsType: typeString };
+    }
+
     // Handle union types (e.g., "A | B | undefined")
     if (type.isUnion()) {
       const unionType = type as TS.UnionType;

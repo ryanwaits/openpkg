@@ -10,6 +10,7 @@ import { serializeClass } from './serializers/classes';
 import { serializeEnum } from './serializers/enums';
 import { type SerializerContext, serializeFunctionExport } from './serializers/functions';
 import { serializeInterface } from './serializers/interfaces';
+import { serializeNamespace } from './serializers/namespaces';
 import { serializeTypeAlias } from './serializers/type-aliases';
 import { serializeVariable } from './serializers/variables';
 import type { OpenPkgSpec } from './spec-types';
@@ -114,6 +115,9 @@ export function buildOpenPkgSpec(
     } else if (ts.isVariableDeclaration(declaration)) {
       const exportEntry = serializeVariable(declaration, targetSymbol, serializerContext);
       addExport(spec, exportEntry, exportName, baseDir);
+    } else if (ts.isModuleDeclaration(declaration)) {
+      const exportEntry = serializeNamespace(declaration, targetSymbol, serializerContext);
+      addExport(spec, exportEntry, exportName, baseDir);
     }
   }
 
@@ -170,6 +174,25 @@ export function buildOpenPkgSpec(
           addTypeDefinition(spec, typeRegistry, typeDefinition, baseDir);
         }
       }
+    }
+  }
+
+  // Emit stub definitions for unresolved external types
+  for (const typeName of typeRegistry.getReferencedTypes()) {
+    if (typeRegistry.isKnownType(typeName)) {
+      continue;
+    }
+
+    // This type couldn't be resolved - create a stub external type definition
+    const stubDefinition = {
+      id: typeName,
+      name: typeName,
+      kind: 'external' as const,
+      description: `External type (not resolved)`,
+    };
+
+    if (typeRegistry.registerTypeDefinition(stubDefinition)) {
+      spec.types?.push(stubDefinition);
     }
   }
 

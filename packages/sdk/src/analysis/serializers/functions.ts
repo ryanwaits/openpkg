@@ -116,11 +116,14 @@ export function serializeFunctionExport(
   context: SerializerContext,
 ): ExportDefinition {
   const { checker } = context;
-  const signature = checker.getSignatureFromDeclaration(declaration);
   const funcSymbol = checker.getSymbolAtLocation(declaration.name || declaration);
   const parsedDoc = parseJSDocComment(symbol, checker);
   const description = parsedDoc?.description ?? getJSDocComment(symbol, checker);
   const metadata = extractPresentationMetadata(parsedDoc);
+
+  // Get all call signatures (includes overloads) via the type, not just the declaration
+  const type = checker.getTypeAtLocation(declaration.name || declaration);
+  const callSignatures = type.getCallSignatures();
 
   return {
     id: symbol.getName(),
@@ -128,9 +131,10 @@ export function serializeFunctionExport(
     ...metadata,
     kind: 'function',
     deprecated: isSymbolDeprecated(symbol),
-    signatures: signature
-      ? serializeCallSignatures([signature], funcSymbol ?? symbol, context, parsedDoc)
-      : [],
+    signatures:
+      callSignatures.length > 0
+        ? serializeCallSignatures(callSignatures, funcSymbol ?? symbol, context, parsedDoc)
+        : [],
     description,
     source: getSourceLocation(declaration),
     examples: parsedDoc?.examples,

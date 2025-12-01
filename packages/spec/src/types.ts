@@ -93,9 +93,10 @@ export type SpecExportKind =
   | 'enum'
   | 'module'
   | 'namespace'
-  | 'reference';
+  | 'reference'
+  | 'external';
 
-export type SpecTypeKind = 'class' | 'interface' | 'type' | 'enum';
+export type SpecTypeKind = 'class' | 'interface' | 'type' | 'enum' | 'external';
 
 export type SpecExport = {
   id: string;
@@ -117,6 +118,8 @@ export type SpecExport = {
   deprecated?: boolean;
   flags?: Record<string, unknown>;
   tags?: SpecTag[];
+  extends?: string;
+  implements?: string[];
 };
 
 export type SpecType = {
@@ -134,6 +137,8 @@ export type SpecType = {
   source?: SpecSource;
   tags?: SpecTag[];
   rawComments?: string;
+  extends?: string;
+  implements?: string[];
 };
 
 export type OpenPkgMeta = {

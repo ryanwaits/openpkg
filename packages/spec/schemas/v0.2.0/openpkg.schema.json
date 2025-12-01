@@ -169,7 +169,7 @@
         "kind": {
           "type": "string",
           "description": "Kind of export",
-          "enum": ["function", "class", "variable", "interface", "type", "enum"]
+          "enum": ["function", "class", "variable", "interface", "type", "enum", "namespace", "external"]
         },
         "description": {
           "type": "string",
@@ -197,6 +197,15 @@
           "type": "array",
           "description": "Class/interface/enum members",
           "items": { "type": "object" }
+        },
+        "extends": {
+          "type": "string",
+          "description": "Base class or interface that this class/interface extends"
+        },
+        "implements": {
+          "type": "array",
+          "description": "Interfaces implemented by this class",
+          "items": { "type": "string" }
         },
         "tags": {
           "type": "array",
@@ -251,7 +260,7 @@
         "kind": {
           "type": "string",
           "description": "Kind of type definition",
-          "enum": ["interface", "type", "enum", "class"]
+          "enum": ["interface", "type", "enum", "class", "external"]
         },
         "description": {
           "type": "string",
@@ -268,6 +277,15 @@
           "type": "array",
           "description": "Members for classes/interfaces/enums",
           "items": { "type": "object" }
+        },
+        "extends": {
+          "type": "string",
+          "description": "Base class or interface that this class/interface extends"
+        },
+        "implements": {
+          "type": "array",
+          "description": "Interfaces implemented by this class",
+          "items": { "type": "string" }
         },
         "tags": {
           "type": "array",

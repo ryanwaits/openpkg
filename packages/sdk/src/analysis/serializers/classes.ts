@@ -3,11 +3,16 @@ import { ts } from '../../ts-module';
 import { formatTypeReference, structureParameter } from '../../utils/parameter-utils';
 import { getParameterDocumentation, parseJSDocComment } from '../../utils/tsdoc-utils';
 import { serializeTypeParameterDeclarations } from '../../utils/type-parameter-utils';
-import { collectReferencedTypes } from '../../utils/type-utils';
+import { collectReferencedTypes, collectReferencedTypesFromNode } from '../../utils/type-utils';
 import { getJSDocComment, getSourceLocation, isSymbolDeprecated } from '../ast-utils';
 import type { ExportDefinition, TypeDefinition } from '../spec-types';
 import type { SerializerContext } from './functions';
 import { extractPresentationMetadata } from './presentation';
+
+interface HeritageInfo {
+  extends?: string;
+  implements?: string[];
+}
 
 export interface ClassSerializationResult {
   exportEntry: ExportDefinition;
@@ -29,6 +34,7 @@ export function serializeClass(
     checker,
     referencedTypes,
   );
+  const heritage = extractHeritageInfo(declaration, checker, referencedTypes);
   const parsedDoc = parseJSDocComment(symbol, context.checker);
   const description = parsedDoc?.description ?? getJSDocComment(symbol, context.checker);
   const metadata = extractPresentationMetadata(parsedDoc);
@@ -43,6 +49,10 @@ export function serializeClass(
     source: getSourceLocation(declaration),
     members: members.length > 0 ? members : undefined,
     typeParameters,
+    ...(heritage.extends ? { extends: heritage.extends } : {}),
+    ...(heritage.implements && heritage.implements.length > 0
+      ? { implements: heritage.implements }
+      : {}),
     tags: parsedDoc?.tags,
     examples: parsedDoc?.examples,
   };
@@ -55,6 +65,10 @@ export function serializeClass(
     description,
     source: getSourceLocation(declaration),
     members: members.length > 0 ? members : undefined,
+    ...(heritage.extends ? { extends: heritage.extends } : {}),
+    ...(heritage.implements && heritage.implements.length > 0
+      ? { implements: heritage.implements }
+      : {}),
     tags: parsedDoc?.tags,
   };
 
@@ -62,6 +76,41 @@ export function serializeClass(
     exportEntry,
     typeDefinition,
   };
+}
+
+/**
+ * Extract extends and implements information from a class declaration's heritage clauses.
+ */
+function extractHeritageInfo(
+  declaration: TS.ClassDeclaration,
+  checker: TS.TypeChecker,
+  referencedTypes: Set<string>,
+): HeritageInfo {
+  const result: HeritageInfo = {};
+
+  if (!declaration.heritageClauses) {
+    return result;
+  }
+
+  for (const clause of declaration.heritageClauses) {
+    if (clause.token === ts.SyntaxKind.ExtendsKeyword) {
+      // Classes can only extend one base class
+      const baseType = clause.types[0];
+      if (baseType) {
+        result.extends = baseType.expression.getText();
+        // Add to referenced types so it gets resolved
+        collectReferencedTypesFromNode(baseType, checker, referencedTypes);
+      }
+    } else if (clause.token === ts.SyntaxKind.ImplementsKeyword) {
+      // Classes can implement multiple interfaces
+      result.implements = clause.types.map((type) => {
+        collectReferencedTypesFromNode(type, checker, referencedTypes);
+        return type.expression.getText();
+      });
+    }
+  }
+
+  return result;
 }
 
 function serializeClassMembers(

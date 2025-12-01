@@ -5,8 +5,9 @@ import { z } from "zod"
 import { RawCode } from "codehike/code"
 
 export async function CodeGroup(props: unknown) {
-  const result = Block.extend({
-    code: z.array(CodeBlock),
+  // Type assertion needed due to zod version mismatch between codehike and project
+  const result = (Block.extend as any)({
+    code: z.array(CodeBlock as any),
     flags: z.string().optional(),
     storage: z.string().optional(),
     handlers: z.array(z.any()).optional(),
