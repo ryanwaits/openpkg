@@ -11,7 +11,8 @@ import {
   mergeFilterOptions,
   parseListFlag,
 } from '../utils/filter-options';
-import { findEntryPoint, findPackageInMonorepo } from '../utils/package-utils';
+import { detectEntryPoint } from '../utils/entry-detection';
+import { findPackageInMonorepo } from '../utils/package-utils';
 
 export interface GenerateCommandDependencies {
   createDocCov?: (
@@ -101,14 +102,16 @@ export function registerGenerateCommand(
         }
 
         if (!entryFile) {
-          entryFile = await findEntryPoint(targetDir, true);
-          log(chalk.gray(`Auto-detected entry point: ${path.relative(targetDir, entryFile)}`));
+          const detected = detectEntryPoint(targetDir);
+          entryFile = path.join(targetDir, detected.entryPath);
+          log(chalk.gray(`Auto-detected entry point: ${detected.entryPath} (from ${detected.source})`));
         } else {
           entryFile = path.resolve(targetDir, entryFile);
           // If path is a directory, find entry point within it
           if (fs.existsSync(entryFile) && fs.statSync(entryFile).isDirectory()) {
-            entryFile = await findEntryPoint(entryFile, true);
-            log(chalk.gray(`Auto-detected entry point: ${entryFile}`));
+            const detected = detectEntryPoint(entryFile);
+            entryFile = path.join(entryFile, detected.entryPath);
+            log(chalk.gray(`Auto-detected entry point: ${detected.entryPath} (from ${detected.source})`));
           }
         }
 

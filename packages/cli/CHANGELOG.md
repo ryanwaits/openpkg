@@ -1,5 +1,11 @@
 # @doccov/cli
 
+## 0.4.5
+
+### Patch Changes
+
+- Use improved entry point detection in generate command. When using `--cwd`, the CLI now correctly resolves `.d.ts` paths to source files and supports more project structures.
+
 ## 0.4.4
 
 ### Patch Changes

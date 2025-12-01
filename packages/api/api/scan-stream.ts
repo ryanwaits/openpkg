@@ -44,6 +44,20 @@ function createCaptureStream(): { stream: Writable; getOutput: () => string } {
   return { stream, getOutput: () => output };
 }
 
+// Helper to get install args for each package manager
+function getPmInstallArgs(pm: 'pnpm' | 'bun' | 'yarn' | 'npm'): string[] {
+  switch (pm) {
+    case 'pnpm':
+      return ['install', '--frozen-lockfile'];
+    case 'bun':
+      return ['install', '--frozen-lockfile'];
+    case 'yarn':
+      return ['install', '--frozen-lockfile'];
+    case 'npm':
+      return ['install', '--ignore-scripts', '--legacy-peer-deps'];
+  }
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -120,6 +134,39 @@ async function runScanWithProgress(
     });
 
     try {
+      // Checkout specific ref if not main/master
+      if (options.ref && options.ref !== 'main' && options.ref !== 'master') {
+        sendEvent({
+          type: 'progress',
+          stage: 'cloning',
+          message: `Checking out ${options.ref}...`,
+          progress: 7,
+        });
+
+        const checkoutCapture = createCaptureStream();
+        const checkoutResult = await sandbox.runCommand({
+          cmd: 'git',
+          args: ['checkout', options.ref],
+          stdout: checkoutCapture.stream,
+          stderr: checkoutCapture.stream,
+        });
+
+        if (checkoutResult.exitCode !== 0) {
+          // Try fetching the ref first (might be a tag not fetched by shallow clone)
+          await sandbox.runCommand({
+            cmd: 'git',
+            args: ['fetch', '--depth', '1', 'origin', `refs/tags/${options.ref}:refs/tags/${options.ref}`],
+          });
+          const retryResult = await sandbox.runCommand({
+            cmd: 'git',
+            args: ['checkout', options.ref],
+          });
+          if (retryResult.exitCode !== 0) {
+            throw new Error(`Failed to checkout ${options.ref}: ${checkoutCapture.getOutput()}`);
+          }
+        }
+      }
+
       sendEvent({
         type: 'progress',
         stage: 'detecting',
@@ -127,7 +174,7 @@ async function runScanWithProgress(
         progress: 10,
       });
 
-      // Detect package manager
+      // Detect package manager from lockfiles
       const lsCapture = createCaptureStream();
       await sandbox.runCommand({
         cmd: 'ls',
@@ -136,38 +183,27 @@ async function runScanWithProgress(
       });
       const files = lsCapture.getOutput();
 
-      let installCmd: string;
-      let installArgs: string[];
-      let pm: 'pnpm' | 'bun' | 'npm' = 'npm';
-      let pmMessage = 'Detected npm project';
+      let pm: 'pnpm' | 'bun' | 'yarn' | 'npm' = 'npm';
+      let pmMessage = 'No lockfile detected';
 
       if (files.includes('pnpm-lock.yaml')) {
         pm = 'pnpm';
-        installCmd = 'pnpm';
-        installArgs = ['install', '--frozen-lockfile'];
-        pmMessage = 'Detected pnpm monorepo';
+        pmMessage = 'Detected pnpm project';
       } else if (files.includes('bun.lock') || files.includes('bun.lockb')) {
         pm = 'bun';
-        installCmd = 'bun';
-        installArgs = ['install', '--frozen-lockfile'];
         pmMessage = 'Detected bun project';
-      } else {
-        installCmd = 'npm';
-        installArgs = ['install', '--ignore-scripts', '--legacy-peer-deps'];
+      } else if (files.includes('yarn.lock')) {
+        pm = 'yarn';
+        pmMessage = 'Detected yarn project';
+      } else if (files.includes('package-lock.json')) {
+        pm = 'npm';
+        pmMessage = 'Detected npm project';
       }
 
       sendEvent({ type: 'progress', stage: 'detecting', message: pmMessage, progress: 15 });
 
-      // Install package manager if needed
-      if (pm === 'pnpm') {
-        sendEvent({
-          type: 'progress',
-          stage: 'installing',
-          message: 'Installing pnpm...',
-          progress: 18,
-        });
-        await sandbox.runCommand({ cmd: 'npm', args: ['install', '-g', 'pnpm'] });
-      } else if (pm === 'bun') {
+      // Install package manager if needed (npm and pnpm are pre-installed in node22)
+      if (pm === 'bun') {
         sendEvent({
           type: 'progress',
           stage: 'installing',
@@ -175,9 +211,17 @@ async function runScanWithProgress(
           progress: 18,
         });
         await sandbox.runCommand({ cmd: 'npm', args: ['install', '-g', 'bun'] });
+      } else if (pm === 'yarn') {
+        sendEvent({
+          type: 'progress',
+          stage: 'installing',
+          message: 'Installing yarn...',
+          progress: 18,
+        });
+        await sandbox.runCommand({ cmd: 'npm', args: ['install', '-g', 'yarn'] });
       }
 
-      // Install dependencies
+      // Install dependencies with fallback chain
       sendEvent({
         type: 'progress',
         stage: 'installing',
@@ -185,24 +229,68 @@ async function runScanWithProgress(
         progress: 20,
       });
 
+      let installed = false;
       const installCapture = createCaptureStream();
-      const install = await sandbox.runCommand({
-        cmd: installCmd,
-        args: installArgs,
+
+      // Try primary package manager
+      const primaryArgs = getPmInstallArgs(pm);
+      const primaryResult = await sandbox.runCommand({
+        cmd: pm,
+        args: primaryArgs,
         stdout: installCapture.stream,
         stderr: installCapture.stream,
       });
 
-      if (install.exitCode !== 0) {
-        throw new Error(`${installCmd} install failed: ${installCapture.getOutput().slice(-300)}`);
+      if (primaryResult.exitCode === 0) {
+        installed = true;
+      } else {
+        const errorOutput = installCapture.getOutput();
+
+        // Check if it's a workspace:* protocol error - try bun fallback
+        if (errorOutput.includes('workspace:') || errorOutput.includes('EUNSUPPORTEDPROTOCOL')) {
+          sendEvent({
+            type: 'progress',
+            stage: 'installing',
+            message: 'Trying bun fallback for workspace protocol...',
+            progress: 25,
+          });
+
+          // Install bun if not already the primary
+          if (pm !== 'bun') {
+            await sandbox.runCommand({ cmd: 'npm', args: ['install', '-g', 'bun'] });
+          }
+
+          const bunCapture = createCaptureStream();
+          const bunResult = await sandbox.runCommand({
+            cmd: 'bun',
+            args: ['install'],
+            stdout: bunCapture.stream,
+            stderr: bunCapture.stream,
+          });
+
+          if (bunResult.exitCode === 0) {
+            installed = true;
+            pm = 'bun'; // Update pm for build step
+          }
+        }
       }
 
-      sendEvent({
-        type: 'progress',
-        stage: 'installing',
-        message: 'Dependencies installed',
-        progress: 40,
-      });
+      if (installed) {
+        sendEvent({
+          type: 'progress',
+          stage: 'installing',
+          message: 'Dependencies installed',
+          progress: 40,
+        });
+      } else {
+        // Graceful degradation - continue with limited analysis
+        sendEvent({
+          type: 'progress',
+          stage: 'installing',
+          message: 'Install failed (continuing with limited analysis)',
+          progress: 40,
+        });
+      }
 
       // Check for build script
       const pkgCapture = createCaptureStream();
@@ -226,9 +314,11 @@ async function runScanWithProgress(
           });
 
           const buildCapture = createCaptureStream();
+          const buildCmd = pm === 'npm' || pm === 'yarn' ? pm : pm;
+          const buildArgs = pm === 'npm' || pm === 'yarn' ? ['run', buildScript] : [buildScript];
           const buildResult = await sandbox.runCommand({
-            cmd: pm === 'npm' ? 'npm' : pm,
-            args: pm === 'npm' ? ['run', buildScript] : [buildScript],
+            cmd: buildCmd,
+            args: buildArgs,
             stdout: buildCapture.stream,
             stderr: buildCapture.stream,
           });
@@ -290,30 +380,54 @@ async function runScanWithProgress(
         progress: 85,
       });
 
-      // Extract summary
+      // Check if spec file was created
+      const checkFileCapture = createCaptureStream();
+      await sandbox.runCommand({
+        cmd: 'cat',
+        args: [specFile],
+        stdout: checkFileCapture.stream,
+        stderr: checkFileCapture.stream,
+      });
+      const specContent = checkFileCapture.getOutput();
+      
+      if (!specContent.trim() || specContent.includes('No such file')) {
+        throw new Error(`Spec file not found or empty. Generate output: ${genOutput.slice(-500)}`);
+      }
+
+      // Extract summary with error handling
       const extractScript = `
         const fs = require('fs');
-        const spec = JSON.parse(fs.readFileSync('${specFile}', 'utf-8'));
-        const undocumented = [];
-        const drift = [];
-        for (const exp of spec.exports || []) {
-          const docs = exp.docs;
-          if (!docs) continue;
-          if ((docs.missing?.length || 0) > 0 || (docs.coverageScore || 0) < 100) {
-            undocumented.push(exp.name);
+        try {
+          if (!fs.existsSync('${specFile}')) {
+            console.error('Spec file not found: ${specFile}');
+            process.exit(1);
           }
-          for (const d of docs.drift || []) {
-            drift.push({ export: exp.name, type: d.type, issue: d.issue });
+          const content = fs.readFileSync('${specFile}', 'utf-8');
+          const spec = JSON.parse(content);
+          const undocumented = [];
+          const drift = [];
+          for (const exp of spec.exports || []) {
+            const docs = exp.docs;
+            if (!docs) continue;
+            if ((docs.missing?.length || 0) > 0 || (docs.coverageScore || 0) < 100) {
+              undocumented.push(exp.name);
+            }
+            for (const d of docs.drift || []) {
+              drift.push({ export: exp.name, type: d.type, issue: d.issue });
+            }
           }
+          console.log(JSON.stringify({
+            coverage: spec.docs?.coverageScore || 0,
+            exportCount: spec.exports?.length || 0,
+            typeCount: spec.types?.length || 0,
+            undocumented: undocumented.slice(0, 50),
+            drift: drift.slice(0, 20),
+            driftCount: drift.length,
+          }));
+        } catch (e) {
+          console.error('Extract error:', e.message);
+          process.exit(1);
         }
-        console.log(JSON.stringify({
-          coverage: spec.docs?.coverageScore || 0,
-          exportCount: spec.exports?.length || 0,
-          typeCount: spec.types?.length || 0,
-          undocumented: undocumented.slice(0, 50),
-          drift: drift.slice(0, 20),
-          driftCount: drift.length,
-        }));
       `.replace(/\n/g, ' ');
 
       const nodeCapture = createCaptureStream();
