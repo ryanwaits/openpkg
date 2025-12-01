@@ -61,6 +61,19 @@ Documentation coverage and drift detection for TypeScript.
 - [CI/CD](./integrations/ci-cd.md) - Generic CI patterns
 - [Badges & Widgets](./integrations/badges-widgets.md) - README embeds
 
+## UI Components
+
+- [Overview](./ui/overview.md) - `@doccov/ui` package exports
+- [DocsKit](./ui/docskit/)
+  - [Code Blocks](./ui/docskit/code-blocks.md) - Syntax-highlighted code
+  - [Terminal](./ui/docskit/terminal.md) - macOS-style terminal
+  - [Package Install](./ui/docskit/package-install.md) - Package manager tabs
+  - [Code Tabs](./ui/docskit/code-tabs.md) - Multi-file code blocks
+  - [Inline Code](./ui/docskit/inline-code.md) - Inline highlighting
+  - [Annotations](./ui/docskit/annotations.md) - Mark, diff, collapse, hover, tooltip
+  - [Client Components](./ui/docskit/client-components.md) - Client-side variants
+  - [Skeletons](./ui/docskit/skeletons.md) - Loading states
+
 ## Development
 
 - [Local Testing](./development/local-testing.md) - Test CLI/SDK/API locally
