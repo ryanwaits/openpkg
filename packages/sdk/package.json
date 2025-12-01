@@ -1,6 +1,6 @@
 {
   "name": "@doccov/sdk",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "DocCov SDK - Documentation coverage and drift detection for TypeScript",
   "keywords": [
     "typescript",
@@ -39,7 +39,7 @@
     "dist"
   ],
   "dependencies": {
-    "@openpkg-ts/spec": "^0.2.2",
+    "@openpkg-ts/spec": "^0.3.0",
     "typescript": "^5.0.0"
   },
   "devDependencies": {
