@@ -1,5 +1,11 @@
 # @doccov/cli
 
+## 0.4.4
+
+### Patch Changes
+
+- Fix entry point detection to prefer .ts source files over .d.ts declarations. Scanning repos with `types` field pointing to `.d.ts` now correctly resolves to source files like `src/index.ts`.
+
 ## 0.4.0
 
 ### Minor Changes

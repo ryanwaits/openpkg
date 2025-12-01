@@ -116,8 +116,9 @@ function resolveToTs(baseDir: string, filePath: string): string | undefined {
   // Normalize path
   const normalized = filePath.replace(/^\.\//, '');
 
-  // Try original path first (might already be .ts)
-  if (normalized.endsWith('.ts') || normalized.endsWith('.tsx')) {
+  // Try original path first (might already be .ts, but NOT .d.ts declaration files)
+  const isSourceTs = (normalized.endsWith('.ts') && !normalized.endsWith('.d.ts')) || normalized.endsWith('.tsx');
+  if (isSourceTs) {
     if (fs.existsSync(path.join(baseDir, normalized))) {
       return normalized;
     }
@@ -159,8 +160,9 @@ function resolveToTs(baseDir: string, filePath: string): string | undefined {
     candidates.push(`src/${baseName}.ts`);
   }
 
-  // Check each candidate
+  // Check each candidate (skip .d.ts files - we want source, not declarations)
   for (const candidate of candidates) {
+    if (candidate.endsWith('.d.ts')) continue;
     if (fs.existsSync(path.join(baseDir, candidate))) {
       return candidate;
     }
