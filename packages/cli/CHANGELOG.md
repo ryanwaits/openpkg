@@ -1,5 +1,11 @@
 # @doccov/cli
 
+## 0.4.7
+
+### Patch Changes
+
+- Fix findPackageInMonorepo to check root package.json first, enabling analysis of repos where the main package is at the root (like zod)
+
 ## 0.4.6
 
 ### Patch Changes

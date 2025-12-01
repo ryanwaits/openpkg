@@ -189,6 +189,11 @@ export async function findPackageInMonorepo(
 
   const rootPackageJson: PackageJson = JSON.parse(fs.readFileSync(rootPackageJsonPath, 'utf-8'));
 
+  // Check if root package matches the requested name (for repos like zod where main package is at root)
+  if (rootPackageJson.name === packageName) {
+    return rootDir;
+  }
+
   // Get workspace patterns from package.json
   let workspacePatterns: string[] = Array.isArray(rootPackageJson.workspaces)
     ? rootPackageJson.workspaces

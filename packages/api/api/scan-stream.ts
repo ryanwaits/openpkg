@@ -74,12 +74,31 @@ function getWorkspacePatterns(
 
   // Check pnpm-workspace.yaml
   if (pnpmWorkspaceContent) {
-    const packagesMatch = pnpmWorkspaceContent.match(/packages:\s*\n((?:\s*-\s*.+\n?)+)/);
-    if (packagesMatch) {
-      return packagesMatch[1]
-        .split('\n')
-        .map((line) => line.replace(/^\s*-\s*['"]?/, '').replace(/['"]?\s*$/, ''))
-        .filter((line) => line.length > 0);
+    // Match all lines that start with "- " after packages:
+    const lines = pnpmWorkspaceContent.split('\n');
+    const patterns: string[] = [];
+    let inPackages = false;
+
+    for (const line of lines) {
+      if (line.match(/^packages:/i)) {
+        inPackages = true;
+        continue;
+      }
+      if (inPackages) {
+        // Stop if we hit another top-level key
+        if (line.match(/^\w+:/) && !line.startsWith(' ') && !line.startsWith('\t')) {
+          break;
+        }
+        // Extract pattern from "- pattern" format
+        const match = line.match(/^\s*-\s*['"]?([^'"]+)['"]?\s*$/);
+        if (match) {
+          patterns.push(match[1].trim());
+        }
+      }
+    }
+
+    if (patterns.length > 0) {
+      return patterns;
     }
   }
 
@@ -102,12 +121,31 @@ function getWorkspacePatterns(
 async function listMonorepoPackages(
   sandbox: Sandbox,
   workspacePatterns: string[],
+  rootPackageName?: string,
+  rootIsPrivate?: boolean,
 ): Promise<string[]> {
   const packages: string[] = [];
 
-  for (const pattern of workspacePatterns) {
-    const dir = pattern.replace('/**', '').replace('/*', '');
+  // Include root package if it's a real publishable package (not private, not named "root")
+  if (rootPackageName && !rootIsPrivate && rootPackageName !== 'root') {
+    packages.push(rootPackageName);
+  }
 
+  // Collect unique directories to scan
+  const dirsToScan = new Set<string>();
+  for (const pattern of workspacePatterns) {
+    // Skip negation patterns
+    if (pattern.startsWith('!')) continue;
+    const dir = pattern.replace('/**', '').replace('/*', '');
+    if (dir && !dir.includes('*')) {
+      dirsToScan.add(dir);
+    }
+  }
+
+  // Always scan packages/ as fallback (most common monorepo structure)
+  dirsToScan.add('packages');
+
+  for (const dir of dirsToScan) {
     // List subdirectories in the workspace directory
     const lsCapture = createCaptureStream();
     await sandbox.runCommand({
@@ -117,10 +155,13 @@ async function listMonorepoPackages(
       stderr: lsCapture.stream,
     });
 
-    const subdirs = lsCapture
-      .getOutput()
-      .split('\n')
-      .filter((d) => d.trim().length > 0);
+    const output = lsCapture.getOutput();
+    // Skip if directory doesn't exist
+    if (output.includes('No such file') || output.includes('cannot access')) {
+      continue;
+    }
+
+    const subdirs = output.split('\n').filter((d) => d.trim().length > 0);
 
     // Read package.json from each subdirectory to get package name
     for (const subdir of subdirs) {
@@ -136,8 +177,9 @@ async function listMonorepoPackages(
       try {
         const pkgContent = catCapture.getOutput();
         if (pkgContent && !pkgContent.includes('No such file')) {
-          const pkg = JSON.parse(pkgContent) as { name?: string };
-          if (pkg.name) {
+          const pkg = JSON.parse(pkgContent) as { name?: string; private?: boolean };
+          // Include package if it has a name and is not private
+          if (pkg.name && !pkg.private) {
             packages.push(pkg.name);
           }
         }
@@ -147,7 +189,8 @@ async function listMonorepoPackages(
     }
   }
 
-  return packages.sort();
+  // Remove duplicates and sort
+  return [...new Set(packages)].sort();
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -306,6 +349,8 @@ async function runScanWithProgress(
         });
 
         let rootPkgJson: {
+          name?: string;
+          private?: boolean;
           workspaces?: string[] | { packages: string[] };
           types?: string;
           typings?: string;
@@ -354,7 +399,12 @@ async function runScanWithProgress(
             progress: 17,
           });
 
-          const availablePackages = await listMonorepoPackages(sandbox, workspacePatterns);
+          const availablePackages = await listMonorepoPackages(
+            sandbox,
+            workspacePatterns,
+            rootPkgJson.name,
+            rootPkgJson.private,
+          );
 
           await sandbox.stop();
           sendEvent({
