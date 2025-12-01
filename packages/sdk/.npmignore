@@ -1,0 +1,3 @@
+# Empty .npmignore to override root .gitignore
+# The "files" field in package.json controls what's included
+
