@@ -315,13 +315,13 @@ export function registerCheckCommand(
           }
         }
 
-        throw new Error('Documentation coverage requirements not met.');
+        process.exit(1);
       } catch (commandError) {
         error(
           chalk.red('Error:'),
           commandError instanceof Error ? commandError.message : commandError,
         );
-        throw commandError instanceof Error ? commandError : new Error(String(commandError));
+        process.exit(1);
       }
     });
 }

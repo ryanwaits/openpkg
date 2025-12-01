@@ -36,4 +36,7 @@ program.command('*', { hidden: true }).action(() => {
   program.outputHelp();
 });
 
-program.parseAsync();
+program.parseAsync().catch(() => {
+  // Errors are already logged by commands, just exit silently
+  process.exit(1);
+});
