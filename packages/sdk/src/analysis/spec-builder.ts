@@ -319,9 +319,10 @@ function resolveExportTarget(
 } {
   let targetSymbol = symbol;
 
+  // Use getAliasedSymbol to follow the full alias chain (handles re-exports)
   if (symbol.flags & ts.SymbolFlags.Alias) {
-    const aliasTarget = checker.getImmediateAliasedSymbol(symbol);
-    if (aliasTarget) {
+    const aliasTarget = checker.getAliasedSymbol(symbol);
+    if (aliasTarget && aliasTarget !== symbol) {
       targetSymbol = aliasTarget;
     }
   }
