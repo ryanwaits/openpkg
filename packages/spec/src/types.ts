@@ -103,6 +103,7 @@ export type SpecExport = {
   name: string;
   slug?: string;
   displayName?: string;
+  alias?: string;
   category?: string;
   importPath?: string;
   kind: SpecExportKind;
@@ -127,6 +128,7 @@ export type SpecType = {
   name: string;
   slug?: string;
   displayName?: string;
+  alias?: string;
   category?: string;
   importPath?: string;
   kind: SpecTypeKind;

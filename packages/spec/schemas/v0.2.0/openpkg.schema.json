@@ -158,6 +158,10 @@
           "type": "string",
           "description": "UI-friendly label"
         },
+        "alias": {
+          "type": "string",
+          "description": "Export alias if re-exported with a different name (id uses alias, name uses original)"
+        },
         "category": {
           "type": "string",
           "description": "Grouping hint for navigation"
@@ -248,6 +252,10 @@
         "displayName": {
           "type": "string",
           "description": "UI-friendly label"
+        },
+        "alias": {
+          "type": "string",
+          "description": "Export alias if re-exported with a different name (id uses alias, name uses original)"
         },
         "category": {
           "type": "string",
@@ -341,6 +349,13 @@
         "description": {
           "type": "string",
           "description": "Parameter description"
+        },
+        "default": {
+          "description": "Default value for the parameter"
+        },
+        "rest": {
+          "type": "boolean",
+          "description": "Whether this is a rest parameter (...args)"
         }
       }
     },

@@ -87,7 +87,7 @@ export function buildOpenPkgSpec(
         serializerContext,
       );
       addExport(spec, exportEntry, exportName, baseDir);
-      addTypeDefinition(spec, typeRegistry, typeDefinition, baseDir);
+      addTypeDefinition(spec, typeRegistry, typeDefinition, baseDir, exportName);
     } else if (ts.isInterfaceDeclaration(declaration)) {
       const { exportEntry, typeDefinition } = serializeInterface(
         declaration,
@@ -95,7 +95,7 @@ export function buildOpenPkgSpec(
         serializerContext,
       );
       addExport(spec, exportEntry, exportName, baseDir);
-      addTypeDefinition(spec, typeRegistry, typeDefinition, baseDir);
+      addTypeDefinition(spec, typeRegistry, typeDefinition, baseDir, exportName);
     } else if (ts.isTypeAliasDeclaration(declaration)) {
       const { exportEntry, typeDefinition } = serializeTypeAlias(
         declaration,
@@ -103,7 +103,7 @@ export function buildOpenPkgSpec(
         serializerContext,
       );
       addExport(spec, exportEntry, exportName, baseDir);
-      addTypeDefinition(spec, typeRegistry, typeDefinition, baseDir);
+      addTypeDefinition(spec, typeRegistry, typeDefinition, baseDir, exportName);
     } else if (ts.isEnumDeclaration(declaration)) {
       const { exportEntry, typeDefinition } = serializeEnum(
         declaration,
@@ -111,7 +111,7 @@ export function buildOpenPkgSpec(
         serializerContext,
       );
       addExport(spec, exportEntry, exportName, baseDir);
-      addTypeDefinition(spec, typeRegistry, typeDefinition, baseDir);
+      addTypeDefinition(spec, typeRegistry, typeDefinition, baseDir, exportName);
     } else if (ts.isVariableDeclaration(declaration)) {
       const exportEntry = serializeVariable(declaration, targetSymbol, serializerContext);
       addExport(spec, exportEntry, exportName, baseDir);
@@ -223,12 +223,29 @@ function addTypeDefinition(
   typeRegistry: TypeRegistry,
   definition: NonNullable<OpenPkgSpec['types']>[number] | undefined,
   baseDir: string,
+  exportAlias?: string,
 ): void {
   if (!definition) {
     return;
   }
 
-  const enriched = applyPresentationDefaults(definition, baseDir);
+  // If the export name differs from the original type name, preserve both
+  // - id: the public/exported name (for $ref matching)
+  // - name: the original name in source (matches source location)
+  // - alias: only present when re-exported with a different name
+  let finalDefinition = definition;
+  if (exportAlias && exportAlias !== definition.name) {
+    finalDefinition = {
+      ...definition,
+      id: exportAlias,
+      // Keep original name (matches source file)
+      name: definition.name,
+      // Add alias to indicate re-export
+      alias: exportAlias,
+    };
+  }
+
+  const enriched = applyPresentationDefaults(finalDefinition, baseDir);
   if (typeRegistry.registerTypeDefinition(enriched)) {
     spec.types?.push(enriched);
   }
@@ -326,14 +343,21 @@ function resolveExportTarget(
  * entry so it reflects the public export name without losing the captured
  * metadata.
  */
-function withExportName<T extends { id: string; name: string }>(entry: T, exportName: string): T {
+function withExportName<T extends { id: string; name: string; alias?: string }>(
+  entry: T,
+  exportName: string,
+): T {
   if (entry.name === exportName) {
     return entry;
   }
 
+  // Keep original name (matches source), use alias for the public/exported name
   return {
     ...entry,
     id: exportName,
-    name: exportName,
+    // Keep original name (matches source file)
+    name: entry.name,
+    // Add alias to indicate re-export
+    alias: exportName,
   };
 }

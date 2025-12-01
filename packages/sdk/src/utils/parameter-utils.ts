@@ -10,6 +10,8 @@ export interface StructuredParameter {
   description?: string;
   in?: 'query';
   required?: boolean;
+  default?: unknown;
+  rest?: boolean;
 }
 
 const BUILTIN_TYPE_SCHEMAS: Record<string, Record<string, unknown>> = {
@@ -329,15 +331,22 @@ function getDocDescriptionForProperty(
   functionDoc: ParsedJSDoc | null,
   parentParamName: string,
   propName: string,
+  inferredAlias?: string,
 ): string | undefined {
   if (!functionDoc) {
     return undefined;
   }
 
-  let match = functionDoc.params.find((p) => p.name === `${parentParamName}.${propName}`);
-  if (!match) {
-    match = functionDoc.params.find((p) => p.name.endsWith(`.${propName}`));
-  }
+  // Try multiple matching strategies for destructured param TSDoc
+  let match = functionDoc.params.find(
+    (p) =>
+      // Exact match with original param name
+      p.name === `${parentParamName}.${propName}` ||
+      // Match with inferred alias (e.g., opts.name when @param opts.name)
+      (inferredAlias && p.name === `${inferredAlias}.${propName}`) ||
+      // Fallback: any param ending with .propName (for __0 cases)
+      (parentParamName.match(/^__\d+$/) && p.name.endsWith(`.${propName}`)),
+  );
   return match?.description;
 }
 
@@ -680,15 +689,17 @@ export function structureParameter(
           // Find TSDoc description for this property
           let description = '';
           if (functionDoc) {
-            // Look for exact match first
+            const propName = prop.getName();
+            // Try multiple matching strategies for destructured param TSDoc
             let docParam = functionDoc.params.find(
-              (p) => p.name === `${paramName}.${prop.getName()}`,
+              (p) =>
+                // Exact match with original param name
+                p.name === `${paramName}.${propName}` ||
+                // Match with inferred alias (e.g., opts.name when @param opts.name)
+                (inferredAlias && p.name === `${inferredAlias}.${propName}`) ||
+                // Fallback: any param ending with .propName (for __0 cases)
+                (paramName.match(/^__\d+$/) && p.name.endsWith(`.${propName}`)),
             );
-
-            // If parameter is __0 and no match found, try to find any param with this property
-            if (!docParam && paramName === '__0') {
-              docParam = functionDoc.params.find((p) => p.name.endsWith(`.${prop.getName()}`));
-            }
 
             if (docParam) {
               description = docParam.description;
@@ -908,5 +919,32 @@ export function structureParameter(
   if (docDescription) {
     out.description = docDescription;
   }
+
+  // Extract default value if present
+  if (paramDecl.initializer) {
+    const defaultText = paramDecl.initializer.getText();
+    // Try to parse literal values
+    if (ts.isStringLiteral(paramDecl.initializer)) {
+      out.default = paramDecl.initializer.text;
+    } else if (ts.isNumericLiteral(paramDecl.initializer)) {
+      out.default = Number(paramDecl.initializer.text);
+    } else if (
+      paramDecl.initializer.kind === ts.SyntaxKind.TrueKeyword ||
+      paramDecl.initializer.kind === ts.SyntaxKind.FalseKeyword
+    ) {
+      out.default = paramDecl.initializer.kind === ts.SyntaxKind.TrueKeyword;
+    } else if (paramDecl.initializer.kind === ts.SyntaxKind.NullKeyword) {
+      out.default = null;
+    } else {
+      // For complex expressions, keep as string
+      out.default = defaultText;
+    }
+  }
+
+  // Mark rest parameters (...args)
+  if (paramDecl.dotDotDotToken) {
+    out.rest = true;
+  }
+
   return out;
 }

@@ -121,6 +121,37 @@ function serializeClassMembers(
 ): Array<NonNullable<TypeDefinition['members']>[number]> {
   const members: Array<NonNullable<TypeDefinition['members']>[number]> = [];
 
+  // Collect accessors by name first to merge getter/setter pairs
+  const accessorMap = new Map<
+    string,
+    {
+      get?: TS.GetAccessorDeclaration;
+      set?: TS.SetAccessorDeclaration;
+    }
+  >();
+
+  // First pass: collect all accessors
+  for (const member of declaration.members) {
+    if (ts.isGetAccessorDeclaration(member)) {
+      const name = member.name?.getText();
+      if (name) {
+        const existing = accessorMap.get(name) || {};
+        existing.get = member;
+        accessorMap.set(name, existing);
+      }
+    } else if (ts.isSetAccessorDeclaration(member)) {
+      const name = member.name?.getText();
+      if (name) {
+        const existing = accessorMap.get(name) || {};
+        existing.set = member;
+        accessorMap.set(name, existing);
+      }
+    }
+  }
+
+  // Track which accessor names we've already processed
+  const processedAccessors = new Set<string>();
+
   for (const member of declaration.members) {
     if (!member.name && !ts.isConstructorDeclaration(member)) {
       continue;
@@ -225,30 +256,47 @@ function serializeClassMembers(
       continue;
     }
 
+    // Handle getter/setter accessors - merge pairs into single entry
     if (ts.isGetAccessorDeclaration(member) || ts.isSetAccessorDeclaration(member)) {
       const memberName = member.name?.getText();
-      if (!memberName) continue;
+      if (!memberName || processedAccessors.has(memberName)) continue;
 
-      const memberSymbol = checker.getSymbolAtLocation(member.name);
+      processedAccessors.add(memberName);
+      const accessorPair = accessorMap.get(memberName);
+      const hasGetter = !!accessorPair?.get;
+      const hasSetter = !!accessorPair?.set;
+
+      // Use getter for type info if available, otherwise use setter
+      const primaryMember = accessorPair?.get || accessorPair?.set;
+      if (!primaryMember) continue;
+
+      const memberSymbol = checker.getSymbolAtLocation(primaryMember.name);
       const memberDoc = memberSymbol ? parseJSDocComment(memberSymbol, checker) : null;
-      const accessorType = ts.isGetAccessorDeclaration(member)
-        ? checker.getTypeAtLocation(member)
-        : member.parameters.length > 0
-          ? checker.getTypeAtLocation(member.parameters[0])
-          : checker.getTypeAtLocation(member);
+
+      // Get type from getter return type or setter parameter
+      const accessorType = accessorPair?.get
+        ? checker.getTypeAtLocation(accessorPair.get)
+        : accessorPair?.set && accessorPair.set.parameters.length > 0
+          ? checker.getTypeAtLocation(accessorPair.set.parameters[0])
+          : checker.getTypeAtLocation(primaryMember);
 
       collectReferencedTypes(accessorType, checker, referencedTypes);
       const schema = formatTypeReference(accessorType, checker, typeRefs, referencedTypes);
+
+      const flags: Record<string, boolean> = {};
+      if (hasGetter) flags.readable = true;
+      if (hasSetter) flags.writable = true;
 
       members.push({
         id: memberName,
         name: memberName,
         kind: 'accessor',
-        visibility: getMemberVisibility(member.modifiers),
+        visibility: getMemberVisibility(primaryMember.modifiers),
         schema,
         description:
           memberDoc?.description ??
           (memberSymbol ? getJSDocComment(memberSymbol, checker) : undefined),
+        flags: Object.keys(flags).length > 0 ? flags : undefined,
         tags: memberDoc?.tags,
       });
     }

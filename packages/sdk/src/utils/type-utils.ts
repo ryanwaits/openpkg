@@ -88,17 +88,32 @@ export function getDestructuredProperties(
 }
 
 /**
+ * Get a stable identifier for a type to avoid infinite recursion.
+ * Uses TypeScript's internal type ID when available, falls back to type string.
+ */
+function getTypeId(type: ts.Type, typeChecker: ts.TypeChecker): string {
+  // TypeScript types have an internal `id` property
+  const internalId = (type as { id?: number }).id;
+  if (internalId !== undefined) {
+    return `id:${internalId}`;
+  }
+  // Fallback to type string representation
+  return `str:${typeChecker.typeToString(type)}`;
+}
+
+/**
  * Collect all referenced types from a type and add them to the tracking set
  */
 export function collectReferencedTypes(
   type: ts.Type,
   typeChecker: ts.TypeChecker,
   referencedTypes: Set<string>,
-  visitedTypes: Set<ts.Type> = new Set(),
+  visitedTypeIds: Set<string> = new Set(),
 ): void {
-  // Avoid infinite recursion
-  if (visitedTypes.has(type)) return;
-  visitedTypes.add(type);
+  // Use type ID for cycle detection instead of object identity
+  const typeId = getTypeId(type, typeChecker);
+  if (visitedTypeIds.has(typeId)) return;
+  visitedTypeIds.add(typeId);
 
   // Get the symbol for this type
   const symbol = type.getSymbol();
@@ -114,14 +129,14 @@ export function collectReferencedTypes(
   // Handle intersection types (A & B)
   if (type.isIntersection()) {
     for (const intersectionType of (type as ts.IntersectionType).types) {
-      collectReferencedTypes(intersectionType, typeChecker, referencedTypes, visitedTypes);
+      collectReferencedTypes(intersectionType, typeChecker, referencedTypes, visitedTypeIds);
     }
   }
 
   // Handle union types (A | B)
   if (type.isUnion()) {
     for (const unionType of (type as ts.UnionType).types) {
-      collectReferencedTypes(unionType, typeChecker, referencedTypes, visitedTypes);
+      collectReferencedTypes(unionType, typeChecker, referencedTypes, visitedTypeIds);
     }
   }
 
@@ -132,7 +147,7 @@ export function collectReferencedTypes(
       const typeRef = objectType as ts.TypeReference;
       if (typeRef.typeArguments) {
         for (const typeArg of typeRef.typeArguments) {
-          collectReferencedTypes(typeArg, typeChecker, referencedTypes, visitedTypes);
+          collectReferencedTypes(typeArg, typeChecker, referencedTypes, visitedTypeIds);
         }
       }
     }

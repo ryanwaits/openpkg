@@ -140,11 +140,21 @@ function detectParamDrift(entry: SpecExport): SpecDocDrift[] {
     return drifts;
   }
 
+  // Build map of param names to their schema properties (for destructured params)
   const actualParamNames = new Set<string>();
+  const paramProperties = new Map<string, Set<string>>();
+
   for (const signature of signatures) {
     for (const param of signature.parameters ?? []) {
       if (param.name) {
         actualParamNames.add(param.name);
+
+        // Extract properties from schema for destructured param matching
+        const schema = param.schema as Record<string, unknown> | undefined;
+        if (schema?.properties && typeof schema.properties === 'object') {
+          const propNames = new Set(Object.keys(schema.properties as Record<string, unknown>));
+          paramProperties.set(param.name, propNames);
+        }
       }
     }
   }
@@ -163,10 +173,49 @@ function detectParamDrift(entry: SpecExport): SpecDocDrift[] {
   }
 
   for (const documentedName of documentedParamNames) {
+    // Direct match (e.g., "name" matches "name")
     if (actualParamNames.has(documentedName)) {
       continue;
     }
 
+    // Handle destructured param notation (e.g., "opts.name")
+    if (documentedName.includes('.')) {
+      const [prefix, ...rest] = documentedName.split('.');
+      const propertyPath = rest.join('.');
+
+      // Check if prefix matches an actual param
+      if (actualParamNames.has(prefix)) {
+        const properties = paramProperties.get(prefix);
+
+        // If param has properties, check if the documented property exists
+        if (properties) {
+          // For nested paths like opts.config.host, just check the first level
+          const firstProperty = rest[0];
+          if (properties.has(firstProperty)) {
+            continue; // Property exists, no drift
+          }
+
+          // Property doesn't exist - find closest match among actual properties
+          const suggestion = findClosestMatch(firstProperty, Array.from(properties));
+          drifts.push({
+            type: 'param-mismatch',
+            target: documentedName,
+            issue: `JSDoc documents property "${propertyPath}" on parameter "${prefix}" which does not exist.`,
+            suggestion:
+              suggestion?.distance !== undefined && suggestion.distance <= 3
+                ? `${prefix}.${suggestion.value}`
+                : undefined,
+          });
+          continue;
+        }
+
+        // Param exists but has no extractable properties (e.g., external type)
+        // Don't report drift - we can't verify
+        continue;
+      }
+    }
+
+    // No match found - report drift
     const suggestion = findClosestMatch(documentedName, Array.from(actualParamNames));
 
     drifts.push({

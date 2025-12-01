@@ -95,6 +95,34 @@ export function serializeCallSignatures(
       referencedTypes,
     );
 
+    // Check for type predicates (x is string) and assertion signatures (asserts x is T)
+    const typePredicate = checker.getTypePredicateOfSignature(signature);
+    let typePredicateInfo:
+      | { parameterName: string; type: string; asserts?: boolean }
+      | undefined;
+
+    if (typePredicate) {
+      const paramName =
+        typePredicate.kind === ts.TypePredicateKind.This ||
+        typePredicate.kind === ts.TypePredicateKind.AssertsThis
+          ? 'this'
+          : typePredicate.parameterName ?? '';
+
+      const predicateType = typePredicate.type
+        ? checker.typeToString(typePredicate.type)
+        : undefined;
+
+      const isAsserts =
+        typePredicate.kind === ts.TypePredicateKind.AssertsThis ||
+        typePredicate.kind === ts.TypePredicateKind.AssertsIdentifier;
+
+      typePredicateInfo = {
+        parameterName: paramName,
+        type: predicateType ?? 'unknown',
+        ...(isAsserts ? { asserts: true } : {}),
+      };
+    }
+
     return {
       parameters,
       returns: {
@@ -103,6 +131,7 @@ export function serializeCallSignatures(
           : { type: 'void' },
         description: functionDoc?.returns || '',
         tsType: returnTypeText,
+        ...(typePredicateInfo ? { typePredicate: typePredicateInfo } : {}),
       },
       description: functionDoc?.description || undefined,
       typeParameters,
