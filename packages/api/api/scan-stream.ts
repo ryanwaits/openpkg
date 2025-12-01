@@ -13,6 +13,7 @@ interface JobEvent {
   message?: string;
   progress?: number;
   result?: ScanResult;
+  availablePackages?: string[];
 }
 
 interface ScanResult {
@@ -56,6 +57,97 @@ function getPmInstallArgs(pm: 'pnpm' | 'bun' | 'yarn' | 'npm'): string[] {
     case 'npm':
       return ['install', '--ignore-scripts', '--legacy-peer-deps'];
   }
+}
+
+// Helper to get workspace patterns from package.json, pnpm-workspace.yaml, or lerna.json
+function getWorkspacePatterns(
+  pkgJson: { workspaces?: string[] | { packages: string[] } },
+  pnpmWorkspaceContent?: string,
+  lernaContent?: string,
+): string[] {
+  // Check package.json workspaces (npm/yarn)
+  if (pkgJson.workspaces) {
+    return Array.isArray(pkgJson.workspaces)
+      ? pkgJson.workspaces
+      : pkgJson.workspaces.packages || [];
+  }
+
+  // Check pnpm-workspace.yaml
+  if (pnpmWorkspaceContent) {
+    const packagesMatch = pnpmWorkspaceContent.match(/packages:\s*\n((?:\s*-\s*.+\n?)+)/);
+    if (packagesMatch) {
+      return packagesMatch[1]
+        .split('\n')
+        .map((line) => line.replace(/^\s*-\s*['"]?/, '').replace(/['"]?\s*$/, ''))
+        .filter((line) => line.length > 0);
+    }
+  }
+
+  // Check lerna.json
+  if (lernaContent) {
+    try {
+      const lerna = JSON.parse(lernaContent) as { packages?: string[] };
+      if (lerna.packages && Array.isArray(lerna.packages)) {
+        return lerna.packages;
+      }
+    } catch {
+      // Ignore parse errors
+    }
+  }
+
+  return [];
+}
+
+// Helper to list available packages in a monorepo
+async function listMonorepoPackages(
+  sandbox: Sandbox,
+  workspacePatterns: string[],
+): Promise<string[]> {
+  const packages: string[] = [];
+
+  for (const pattern of workspacePatterns) {
+    const dir = pattern.replace('/**', '').replace('/*', '');
+
+    // List subdirectories in the workspace directory
+    const lsCapture = createCaptureStream();
+    await sandbox.runCommand({
+      cmd: 'ls',
+      args: ['-1', dir],
+      stdout: lsCapture.stream,
+      stderr: lsCapture.stream,
+    });
+
+    const subdirs = lsCapture
+      .getOutput()
+      .split('\n')
+      .filter((d) => d.trim().length > 0);
+
+    // Read package.json from each subdirectory to get package name
+    for (const subdir of subdirs) {
+      const pkgPath = `${dir}/${subdir}/package.json`;
+      const catCapture = createCaptureStream();
+      await sandbox.runCommand({
+        cmd: 'cat',
+        args: [pkgPath],
+        stdout: catCapture.stream,
+        stderr: catCapture.stream,
+      });
+
+      try {
+        const pkgContent = catCapture.getOutput();
+        if (pkgContent && !pkgContent.includes('No such file')) {
+          const pkg = JSON.parse(pkgContent) as { name?: string };
+          if (pkg.name) {
+            packages.push(pkg.name);
+          }
+        }
+      } catch {
+        // Skip packages with invalid package.json
+      }
+    }
+  }
+
+  return packages.sort();
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -201,6 +293,78 @@ async function runScanWithProgress(
       }
 
       sendEvent({ type: 'progress', stage: 'detecting', message: pmMessage, progress: 15 });
+
+      // Early monorepo detection - fail fast if monorepo without package param
+      if (!options.package) {
+        // Read package.json to check for workspaces and entry point
+        const rootPkgCapture = createCaptureStream();
+        await sandbox.runCommand({
+          cmd: 'cat',
+          args: ['package.json'],
+          stdout: rootPkgCapture.stream,
+          stderr: rootPkgCapture.stream,
+        });
+
+        let rootPkgJson: {
+          workspaces?: string[] | { packages: string[] };
+          types?: string;
+          typings?: string;
+          main?: string;
+        } = {};
+        try {
+          rootPkgJson = JSON.parse(rootPkgCapture.getOutput());
+        } catch {
+          // Ignore parse errors
+        }
+
+        // Check for pnpm-workspace.yaml
+        let pnpmWorkspaceContent: string | undefined;
+        if (files.includes('pnpm-workspace.yaml')) {
+          const pnpmCapture = createCaptureStream();
+          await sandbox.runCommand({
+            cmd: 'cat',
+            args: ['pnpm-workspace.yaml'],
+            stdout: pnpmCapture.stream,
+          });
+          pnpmWorkspaceContent = pnpmCapture.getOutput();
+        }
+
+        // Check for lerna.json
+        let lernaContent: string | undefined;
+        if (files.includes('lerna.json')) {
+          const lernaCapture = createCaptureStream();
+          await sandbox.runCommand({
+            cmd: 'cat',
+            args: ['lerna.json'],
+            stdout: lernaCapture.stream,
+          });
+          lernaContent = lernaCapture.getOutput();
+        }
+
+        const workspacePatterns = getWorkspacePatterns(rootPkgJson, pnpmWorkspaceContent, lernaContent);
+        const hasWorkspaces = workspacePatterns.length > 0;
+
+        // If it's a monorepo (has workspaces), require package param
+        // Even if root has types, monorepos usually need explicit package targeting
+        if (hasWorkspaces) {
+          sendEvent({
+            type: 'progress',
+            stage: 'detecting',
+            message: 'Monorepo detected, listing packages...',
+            progress: 17,
+          });
+
+          const availablePackages = await listMonorepoPackages(sandbox, workspacePatterns);
+
+          await sandbox.stop();
+          sendEvent({
+            type: 'error',
+            message: `Monorepo detected. Please specify a package to analyze using the 'package' query parameter.`,
+            availablePackages,
+          });
+          return;
+        }
+      }
 
       // Install package manager if needed (npm and pnpm are pre-installed in node22)
       if (pm === 'bun') {

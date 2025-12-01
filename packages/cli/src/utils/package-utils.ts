@@ -189,10 +189,26 @@ export async function findPackageInMonorepo(
 
   const rootPackageJson: PackageJson = JSON.parse(fs.readFileSync(rootPackageJsonPath, 'utf-8'));
 
-  // Get workspace patterns
-  const workspacePatterns = Array.isArray(rootPackageJson.workspaces)
+  // Get workspace patterns from package.json
+  let workspacePatterns: string[] = Array.isArray(rootPackageJson.workspaces)
     ? rootPackageJson.workspaces
     : rootPackageJson.workspaces?.packages || [];
+
+  // If no workspaces in package.json, check for pnpm-workspace.yaml
+  if (workspacePatterns.length === 0) {
+    const pnpmWorkspacePath = path.join(rootDir, 'pnpm-workspace.yaml');
+    if (fs.existsSync(pnpmWorkspacePath)) {
+      const content = fs.readFileSync(pnpmWorkspacePath, 'utf-8');
+      // Simple YAML parsing for packages array
+      const packagesMatch = content.match(/packages:\s*\n((?:\s*-\s*.+\n?)+)/);
+      if (packagesMatch) {
+        workspacePatterns = packagesMatch[1]
+          .split('\n')
+          .map(line => line.replace(/^\s*-\s*['"]?/, '').replace(/['"]?\s*$/, ''))
+          .filter(line => line.length > 0);
+      }
+    }
+  }
 
   // Search through workspace directories
   for (const pattern of workspacePatterns) {

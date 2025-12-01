@@ -1,5 +1,11 @@
 # @doccov/cli
 
+## 0.4.6
+
+### Patch Changes
+
+- Fix monorepo package detection for pnpm workspaces by parsing pnpm-workspace.yaml
+
 ## 0.4.5
 
 ### Patch Changes
