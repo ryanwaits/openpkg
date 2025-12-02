@@ -3,7 +3,7 @@
   "changelog": "@changesets/cli/changelog",
   "commit": false,
   "fixed": [],
-  "linked": [],
+  "linked": [["@doccov/sdk", "@doccov/cli"]],
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",

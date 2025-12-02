@@ -1,5 +1,11 @@
 # @doccov/cli
 
+## 0.5.2
+
+### Patch Changes
+
+- Fix spinner animation freezing during long-running operations by configuring ora with proper stdin handling and cursor management. Also update SDK dependency to ^0.3.7 to include latest fixes.
+
 ## 0.5.1
 
 ### Patch Changes
