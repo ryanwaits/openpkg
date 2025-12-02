@@ -23,6 +23,9 @@ doccov check [entry] [options]
 | `--run-examples` | `false` | Execute `@example` blocks, fail on errors |
 | `--ignore-drift` | `false` | Don't fail on documentation drift |
 | `--skip-resolve` | `false` | Skip external type resolution from node_modules |
+| `--write` | `false` | Auto-fix drift issues |
+| `--only <types>` | - | Only fix specific drift types (comma-separated) |
+| `--dry-run` | `false` | Preview fixes without writing (requires `--write`) |
 | `-p, --package <name>` | - | Target package in monorepo |
 | `--cwd <dir>` | `.` | Working directory |
 
@@ -105,6 +108,37 @@ Pass even with drift issues:
 ```bash
 doccov check --ignore-drift
 ```
+
+### Auto-Fix Drift
+
+Automatically fix drift issues:
+
+```bash
+doccov check --write
+```
+
+Preview fixes without applying:
+
+```bash
+doccov check --write --dry-run
+```
+
+Fix only specific drift types:
+
+```bash
+doccov check --write --only param-mismatch,return-type-mismatch
+```
+
+Combine with threshold:
+
+```bash
+doccov check --min-coverage 80 --write
+```
+
+When `--write` is used:
+1. Fixes are applied to source files
+2. Fixed drifts are excluded from failure evaluation
+3. Exit code reflects remaining issues after fixes
 
 ### Monorepo
 
@@ -194,6 +228,23 @@ By default, `check` fails on any drift. Drift types detected:
 | `broken-link` | `{@link X}` target not found |
 
 See [Drift Types](../../spec/drift-types.md) for full list.
+
+## Auto-Fixable Drift Types
+
+The `--write` flag can automatically fix:
+
+| Type | Fix Applied |
+|------|-------------|
+| `param-mismatch` | Remove stale `@param` tags, rename parameters |
+| `param-type-mismatch` | Update `@param {type}` to match signature |
+| `optionality-mismatch` | Add/remove `[param]` brackets for optional params |
+| `return-type-mismatch` | Update `@returns {type}` to match signature |
+| `generic-constraint-mismatch` | Update `@template T extends X` constraints |
+| `example-assertion-failed` | Update `// => value` assertions to match output |
+| `deprecated-mismatch` | Add/remove `@deprecated` tag |
+| `async-mismatch` | Add/remove `@async` tag |
+
+Non-fixable types (require manual intervention): `example-drift`, `example-syntax-error`, `example-runtime-error`, `broken-link`, `visibility-mismatch`.
 
 ## Local Testing
 

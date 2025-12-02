@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import * as ts from 'typescript';
-import { collectReferencedTypes, extractTypeReferences } from '../src/utils/type-utils';
+import { collectReferencedTypes } from '../src/utils/type-utils';
 import { createTestCompiler, getDeclaration } from './test-helpers';
 
 describe('collectReferencedTypes', () => {
@@ -39,13 +39,5 @@ describe('collectReferencedTypes', () => {
     collectReferencedTypes(type, checker, referenced);
 
     expect(new Set(referenced)).toEqual(new Set(['Alpha', 'Beta']));
-  });
-});
-
-describe('extractTypeReferences', () => {
-  it('extracts unique type identifiers from a string representation', () => {
-    const result = extractTypeReferences('Result<ClientResponse<User>, Error | null>');
-
-    expect(result).toEqual(['Result', 'ClientResponse', 'User']);
   });
 });

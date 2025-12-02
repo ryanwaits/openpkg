@@ -1,6 +1,9 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import {
+  applyEdits,
+  categorizeDrifts,
+  createSourceFile,
   DocCov,
   detectEntryPoint,
   detectExampleAssertionFailures,
@@ -8,11 +11,20 @@ import {
   detectMonorepo,
   type ExampleRunResult,
   findPackageByName,
+  type FixSuggestion,
+  findJSDocLocation,
+  generateFixesForExport,
   hasNonAssertionComments,
+  type JSDocEdit,
+  type JSDocPatch,
+  mergeFixes,
   NodeFileSystem,
   parseAssertions,
+  parseJSDocToPatch,
   runExamplesWithPackage,
+  serializeJSDoc,
 } from '@doccov/sdk';
+import type { SpecDocDrift, SpecExport } from '@openpkg-ts/spec';
 import chalk from 'chalk';
 import type { Command } from 'commander';
 import ora, { type Ora } from 'ora';
@@ -37,6 +49,48 @@ const defaultDependencies: Required<CheckCommandDependencies> = {
   error: console.error,
 };
 
+/**
+ * Collect all drift issues from exports
+ */
+function collectDriftsFromExports(
+  exports: SpecExport[],
+): Array<{ export: SpecExport; drift: SpecDocDrift }> {
+  const results: Array<{ export: SpecExport; drift: SpecDocDrift }> = [];
+  for (const exp of exports) {
+    for (const drift of exp.docs?.drift ?? []) {
+      results.push({ export: exp, drift });
+    }
+  }
+  return results;
+}
+
+/**
+ * Filter drifts by type
+ */
+function filterDriftsByType(
+  drifts: Array<{ export: SpecExport; drift: SpecDocDrift }>,
+  onlyTypes?: string,
+): Array<{ export: SpecExport; drift: SpecDocDrift }> {
+  if (!onlyTypes) return drifts;
+  const allowedTypes = new Set(onlyTypes.split(',').map((t) => t.trim()));
+  return drifts.filter((d) => allowedTypes.has(d.drift.type));
+}
+
+/**
+ * Group drifts by export
+ */
+function groupByExport(
+  drifts: Array<{ export: SpecExport; drift: SpecDocDrift }>,
+): Map<SpecExport, SpecDocDrift[]> {
+  const map = new Map<SpecExport, SpecDocDrift[]>();
+  for (const { export: exp, drift } of drifts) {
+    const existing = map.get(exp) ?? [];
+    existing.push(drift);
+    map.set(exp, existing);
+  }
+  return map;
+}
+
 export function registerCheckCommand(
   program: Command,
   dependencies: CheckCommandDependencies = {},
@@ -58,6 +112,9 @@ export function registerCheckCommand(
     .option('--run-examples', 'Execute @example blocks and fail on runtime errors')
     .option('--ignore-drift', 'Do not fail on documentation drift')
     .option('--skip-resolve', 'Skip external type resolution from node_modules')
+    .option('--write', 'Auto-fix drift issues')
+    .option('--only <types>', 'Only fix specific drift types (comma-separated)')
+    .option('--dry-run', 'Preview fixes without writing (requires --write)')
     .action(async (entry, options) => {
       try {
         let targetDir = options.cwd;
@@ -274,7 +331,182 @@ export function registerCheckCommand(
         const missingExamples = options.requireExamples
           ? failingExports.filter((item) => item.missing?.includes('examples'))
           : [];
-        const driftExports = [...collectDrift(spec.exports ?? []), ...runtimeDrifts];
+        let driftExports = [...collectDrift(spec.exports ?? []), ...runtimeDrifts];
+
+        // Handle --write: auto-fix drift issues
+        const fixedDriftKeys = new Set<string>();
+        if (options.write && driftExports.length > 0) {
+          const allDrifts = collectDriftsFromExports(spec.exports ?? []);
+          const filteredDrifts = filterDriftsByType(allDrifts, options.only);
+
+          if (filteredDrifts.length === 0 && options.only) {
+            log(chalk.yellow('No matching drift issues for the specified types.'));
+          } else if (filteredDrifts.length > 0) {
+            const { fixable, nonFixable } = categorizeDrifts(filteredDrifts.map((d) => d.drift));
+
+            if (fixable.length === 0) {
+              log(
+                chalk.yellow(
+                  `Found ${nonFixable.length} drift issue(s), but none are auto-fixable.`,
+                ),
+              );
+            } else {
+              log('');
+              log(chalk.bold(`Found ${fixable.length} fixable issue(s)`));
+              if (nonFixable.length > 0) {
+                log(chalk.gray(`(${nonFixable.length} non-fixable issue(s) skipped)`));
+              }
+              log('');
+
+              // Group by export and generate fixes
+              const groupedDrifts = groupByExport(
+                filteredDrifts.filter((d) => fixable.includes(d.drift)),
+              );
+
+              const edits: JSDocEdit[] = [];
+              const editsByFile = new Map<
+                string,
+                Array<{
+                  export: SpecExport;
+                  edit: JSDocEdit;
+                  fixes: FixSuggestion[];
+                  existingPatch: JSDocPatch;
+                }>
+              >();
+
+              for (const [exp, drifts] of groupedDrifts) {
+                // Skip if no source location
+                if (!exp.source?.file) {
+                  log(chalk.gray(`  Skipping ${exp.name}: no source location`));
+                  continue;
+                }
+
+                // Skip .d.ts files
+                if (exp.source.file.endsWith('.d.ts')) {
+                  log(chalk.gray(`  Skipping ${exp.name}: declaration file`));
+                  continue;
+                }
+
+                const filePath = path.resolve(targetDir, exp.source.file);
+
+                // Check file exists
+                if (!fs.existsSync(filePath)) {
+                  log(chalk.gray(`  Skipping ${exp.name}: file not found`));
+                  continue;
+                }
+
+                // Find JSDoc location in source file
+                const sourceFile = createSourceFile(filePath);
+                const location = findJSDocLocation(sourceFile, exp.name, exp.source.line);
+
+                if (!location) {
+                  log(chalk.gray(`  Skipping ${exp.name}: could not find declaration`));
+                  continue;
+                }
+
+                // Parse existing JSDoc if present
+                let existingPatch: JSDocPatch = {};
+                if (location.hasExisting && location.existingJSDoc) {
+                  existingPatch = parseJSDocToPatch(location.existingJSDoc);
+                }
+
+                // Generate fixes
+                const fixes = generateFixesForExport(
+                  { ...exp, docs: { ...exp.docs, drift: drifts } },
+                  existingPatch,
+                );
+
+                if (fixes.length === 0) continue;
+
+                // Track which drifts we're fixing
+                for (const drift of drifts) {
+                  fixedDriftKeys.add(`${exp.name}:${drift.issue}`);
+                }
+
+                // Merge all fixes into a single patch
+                const mergedPatch = mergeFixes(fixes, existingPatch);
+
+                // Serialize the new JSDoc
+                const newJSDoc = serializeJSDoc(mergedPatch, location.indent);
+
+                const edit: JSDocEdit = {
+                  filePath,
+                  symbolName: exp.name,
+                  startLine: location.startLine,
+                  endLine: location.endLine,
+                  hasExisting: location.hasExisting,
+                  existingJSDoc: location.existingJSDoc,
+                  newJSDoc,
+                  indent: location.indent,
+                };
+
+                edits.push(edit);
+
+                // Group for display
+                const fileEdits = editsByFile.get(filePath) ?? [];
+                fileEdits.push({ export: exp, edit, fixes, existingPatch });
+                editsByFile.set(filePath, fileEdits);
+              }
+
+              if (edits.length > 0) {
+                if (options.dryRun) {
+                  log(chalk.bold('Dry run - changes that would be made:'));
+                  log('');
+
+                  for (const [filePath, fileEdits] of editsByFile) {
+                    const relativePath = path.relative(targetDir, filePath);
+                    log(chalk.cyan(`  ${relativePath}:`));
+
+                    for (const { export: exp, edit, fixes } of fileEdits) {
+                      const lineInfo = edit.hasExisting
+                        ? `lines ${edit.startLine + 1}-${edit.endLine + 1}`
+                        : `line ${edit.startLine + 1}`;
+
+                      log(`    ${chalk.bold(exp.name)} [${lineInfo}]`);
+
+                      for (const fix of fixes) {
+                        log(chalk.green(`      + ${fix.description}`));
+                      }
+                    }
+                    log('');
+                  }
+
+                  log(chalk.gray('Run without --dry-run to apply these changes.'));
+                } else {
+                  const applySpinner = spinner('Applying fixes...');
+                  applySpinner.start();
+
+                  const applyResult = await applyEdits(edits);
+
+                  if (applyResult.errors.length > 0) {
+                    applySpinner.warn('Some fixes could not be applied');
+                    for (const err of applyResult.errors) {
+                      error(chalk.red(`  ${err.file}: ${err.error}`));
+                    }
+                  } else {
+                    applySpinner.succeed(
+                      `Applied ${applyResult.editsApplied} fix(es) to ${applyResult.filesModified} file(s)`,
+                    );
+                  }
+
+                  // Show summary
+                  log('');
+                  for (const [filePath, fileEdits] of editsByFile) {
+                    const relativePath = path.relative(targetDir, filePath);
+                    log(chalk.green(`  ✓ ${relativePath}: ${fileEdits.length} fix(es)`));
+                  }
+                }
+              }
+            }
+          }
+
+          // Filter out fixed drifts from the evaluation
+          if (!options.dryRun) {
+            driftExports = driftExports.filter(
+              (d) => !fixedDriftKeys.has(`${d.name}:${d.issue}`),
+            );
+          }
+        }
 
         const coverageFailed = coverageScore < minCoverage;
         const hasMissingExamples = missingExamples.length > 0;

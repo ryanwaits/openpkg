@@ -1,53 +1,6 @@
 import { ts } from '../ts-module';
 
 /**
- * Extract all type references from a type string
- * This helps us identify types that should be included in the types section
- */
-export function extractTypeReferences(typeString: string): string[] {
-  const references: string[] = [];
-
-  // Match type references (word characters followed by optional generics)
-  const typeRefPattern = /\b([A-Z][a-zA-Z0-9]*(?:<[^>]+>)?)\b/g;
-  const matches = typeString.matchAll(typeRefPattern);
-
-  for (const match of matches) {
-    const typeName = match[1].split('<')[0]; // Remove generics
-
-    // Skip primitive types and built-ins
-    const builtIns = [
-      'string',
-      'number',
-      'boolean',
-      'any',
-      'unknown',
-      'void',
-      'undefined',
-      'null',
-      'never',
-      'object',
-      'Promise',
-      'Array',
-      'Map',
-      'Set',
-      'Date',
-      'RegExp',
-      'Error',
-      'Function',
-      'Uint8Array',
-      'ArrayBufferLike',
-      'ArrayBuffer',
-    ];
-
-    if (!builtIns.includes(typeName) && !references.includes(typeName)) {
-      references.push(typeName);
-    }
-  }
-
-  return references;
-}
-
-/**
  * Check if a parameter is using object destructuring
  */
 export function isDestructuredParameter(param: ts.ParameterDeclaration): boolean {

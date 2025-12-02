@@ -955,38 +955,55 @@ function levenshtein(a: string, b: string): number {
 }
 
 function detectExampleDrift(entry: SpecExport, exportRegistry?: Set<string>): SpecDocDrift[] {
-  if (!exportRegistry || !entry.examples || entry.examples.length === 0) {
-    return [];
-  }
+  if (!exportRegistry || !entry.examples?.length) return [];
 
   const drifts: SpecDocDrift[] = [];
 
-  // Common identifier pattern - matches word characters that could be identifiers
-  const identifierPattern = /\b([A-Z][a-zA-Z0-9]*)\b/g;
-
   for (const example of entry.examples) {
-    if (typeof example !== 'string') {
-      continue;
-    }
+    if (typeof example !== 'string') continue;
 
-    // Extract potential identifiers from example code
-    const matches = example.matchAll(identifierPattern);
+    // Strip markdown code block markers if present
+    const codeContent = example
+      .replace(/^```(?:ts|typescript|js|javascript)?\n?/i, '')
+      .replace(/\n?```$/i, '')
+      .trim();
+
+    if (!codeContent) continue;
+
+    // Parse as AST - this automatically excludes comments and string literals
+    const sourceFile = ts.createSourceFile(
+      'example.ts',
+      codeContent,
+      ts.ScriptTarget.Latest,
+      true,
+      ts.ScriptKind.TS,
+    );
+
+    const localDeclarations = new Set<string>();
     const referencedIdentifiers = new Set<string>();
 
-    for (const match of matches) {
-      const identifier = match[1];
-      // Skip common JS/TS keywords and built-ins
-      if (identifier && !isBuiltInIdentifier(identifier)) {
-        referencedIdentifiers.add(identifier);
+    // Walk AST to find local declarations and identifier references
+    function visit(node: ts.Node) {
+      if (ts.isIdentifier(node) && isPascalCase(node.text)) {
+        if (isLocalDeclaration(node)) {
+          // Track locally declared identifiers so we don't flag them as missing
+          localDeclarations.add(node.text);
+        } else if (isIdentifierReference(node) && !isBuiltInIdentifier(node.text)) {
+          referencedIdentifiers.add(node.text);
+        }
       }
+      ts.forEachChild(node, visit);
+    }
+    visit(sourceFile);
+
+    // Remove local declarations from references (they're defined in the example)
+    for (const local of localDeclarations) {
+      referencedIdentifiers.delete(local);
     }
 
     // Check if referenced identifiers exist in export registry
     for (const identifier of referencedIdentifiers) {
-      // Only flag if it looks like it should be a package export (starts with uppercase)
-      // and doesn't exist in the registry
       if (!exportRegistry.has(identifier)) {
-        // Check if it might be a renamed/removed export
         const suggestion = findClosestMatch(identifier, Array.from(exportRegistry));
 
         if (suggestion && suggestion.distance <= 3) {
@@ -1063,6 +1080,51 @@ function isBuiltInIdentifier(identifier: string): boolean {
   ]);
 
   return builtIns.has(identifier);
+}
+
+/**
+ * Check if a string is PascalCase (starts with uppercase, alphanumeric).
+ */
+function isPascalCase(text: string): boolean {
+  return /^[A-Z][a-zA-Z0-9]*$/.test(text);
+}
+
+/**
+ * Check if an identifier node is a local declaration (class, function, variable name).
+ */
+function isLocalDeclaration(node: ts.Identifier): boolean {
+  const parent = node.parent;
+  if (!parent) return false;
+
+  if (ts.isClassDeclaration(parent) && parent.name === node) return true;
+  if (ts.isFunctionDeclaration(parent) && parent.name === node) return true;
+  if (ts.isVariableDeclaration(parent) && parent.name === node) return true;
+
+  return false;
+}
+
+/**
+ * Check if an identifier node is a reference (not a declaration).
+ * Returns false only for declaration sites where the identifier is being defined.
+ * Import specifiers and type references ARE valid references that should be checked.
+ */
+function isIdentifierReference(node: ts.Identifier): boolean {
+  const parent = node.parent;
+  if (!parent) return false;
+
+  // Skip: declarations (class Foo, function Foo, const Foo = ...)
+  // These define the identifier, not reference it
+  if (ts.isClassDeclaration(parent) && parent.name === node) return false;
+  if (ts.isFunctionDeclaration(parent) && parent.name === node) return false;
+  if (ts.isVariableDeclaration(parent) && parent.name === node) return false;
+  if (ts.isMethodDeclaration(parent) && parent.name === node) return false;
+  if (ts.isPropertyDeclaration(parent) && parent.name === node) return false;
+
+  // Import specifiers and type references ARE valid references:
+  // - import { Foo } from 'pkg' - Foo should exist
+  // - const x: Foo = ... - Foo should exist
+
+  return true;
 }
 
 function detectBrokenLinks(entry: SpecExport, exportRegistry?: Set<string>): SpecDocDrift[] {

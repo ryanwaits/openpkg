@@ -21,7 +21,7 @@ Documentation coverage and drift detection for TypeScript.
 - [Overview](./cli/overview.md) - Command list and global options
 - [Commands](./cli/commands/) - Detailed command reference
   - [generate](./cli/commands/generate.md) - Generate OpenPkg spec
-  - [check](./cli/commands/check.md) - Validate coverage thresholds
+  - [check](./cli/commands/check.md) - Validate coverage thresholds, auto-fix drift
   - [diff](./cli/commands/diff.md) - Compare two specs
   - [report](./cli/commands/report.md) - Generate coverage reports
   - [scan](./cli/commands/scan.md) - Analyze remote GitHub repos
