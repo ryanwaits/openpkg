@@ -30,7 +30,12 @@ export interface ScanCommandDependencies {
 
 const defaultDependencies: Required<ScanCommandDependencies> = {
   createDocCov: (options) => new DocCov(options),
-  spinner: (text: string) => ora(text),
+  spinner: (text: string) =>
+    ora({
+      text,
+      discardStdin: false, // Prevent stdin interference
+      hideCursor: true, // Hide cursor during spinner
+    }),
   log: console.log,
   error: console.error,
 };
@@ -100,21 +105,56 @@ export function registerScanCommand(
         cloneSpinner.start();
 
         try {
-          const git = simpleGit();
-          await git.clone(cloneUrl, tempDir, [
-            '--depth',
-            '1',
-            '--branch',
-            parsed.ref,
-            '--single-branch',
-          ]);
+          // Configure git with timeout and disable credential prompting
+          const git = simpleGit({
+            timeout: {
+              block: 30000, // 30 second timeout for clone operations
+            },
+          });
+
+          // Set environment variables to prevent git from prompting for credentials
+          const originalEnv = { ...process.env };
+          process.env.GIT_TERMINAL_PROMPT = '0'; // Disable credential prompts
+          process.env.GIT_ASKPASS = 'echo'; // Prevent password prompts
+
+          try {
+            await git.clone(cloneUrl, tempDir, [
+              '--depth',
+              '1',
+              '--branch',
+              parsed.ref,
+              '--single-branch',
+            ]);
+          } finally {
+            // Restore original environment
+            process.env = originalEnv;
+          }
+
           cloneSpinner.succeed(`Cloned ${parsed.owner}/${parsed.repo}`);
         } catch (cloneError) {
           cloneSpinner.fail('Failed to clone repository');
           const message = cloneError instanceof Error ? cloneError.message : String(cloneError);
 
+          // Check for authentication/permission errors
+          if (
+            message.includes('Authentication failed') ||
+            message.includes('could not read Username') ||
+            message.includes('terminal prompts disabled') ||
+            message.includes('Invalid username or password') ||
+            message.includes('Permission denied')
+          ) {
+            throw new Error(
+              `Authentication required: This repository appears to be private. ` +
+                `Public repositories only are currently supported.\n` +
+                `Repository: ${displayUrl}`,
+            );
+          }
+
           if (message.includes('not found') || message.includes('404')) {
-            throw new Error(`Repository not accessible or does not exist: ${displayUrl}`);
+            throw new Error(
+              `Repository not accessible or does not exist: ${displayUrl}\n` +
+                `Note: Private repositories are not currently supported.`,
+            );
           }
           if (message.includes('Could not find remote branch')) {
             throw new Error(`Branch or tag not found: ${parsed.ref}`);

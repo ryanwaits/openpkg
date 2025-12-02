@@ -61,7 +61,11 @@ export function registerReportCommand(program: Command): void {
             entryFile = path.resolve(targetDir, entryFile);
           }
 
-          const spinner = ora('Analyzing...').start();
+          const spinner = ora({
+            text: 'Analyzing...',
+            discardStdin: false, // Prevent stdin interference
+            hideCursor: true, // Hide cursor during spinner
+          }).start();
           const resolveExternalTypes = !options.skipResolve;
           const doccov = new DocCov({ resolveExternalTypes });
           const result = await doccov.analyzeFileWithDiagnostics(entryFile);

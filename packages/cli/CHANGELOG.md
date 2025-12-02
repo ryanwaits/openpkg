@@ -1,5 +1,11 @@
 # @doccov/cli
 
+## 0.5.1
+
+### Patch Changes
+
+- chore: cleanup ux feedback and add err check for scanning private repos
+
 ## 0.5.0
 
 ### Minor Changes

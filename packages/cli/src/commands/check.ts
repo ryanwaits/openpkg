@@ -44,7 +44,12 @@ interface CheckCommandDependencies {
 
 const defaultDependencies: Required<CheckCommandDependencies> = {
   createDocCov: (options) => new DocCov(options),
-  spinner: (text: string) => ora(text),
+  spinner: (text: string) =>
+    ora({
+      text,
+      discardStdin: false, // Prevent stdin interference
+      hideCursor: true, // Hide cursor during spinner
+    }),
   log: console.log,
   error: console.error,
 };
