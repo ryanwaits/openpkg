@@ -41,17 +41,19 @@ export function serializeCallSignatures(
       const paramDecl = param.declarations?.find(ts.isParameter) as
         | TS.ParameterDeclaration
         | undefined;
+      const location =
+        symbol?.declarations?.[0] ??
+        signature.declaration ??
+        param.declarations?.[0] ??
+        param.valueDeclaration;
+
       const paramType = paramDecl
         ? paramDecl.type != null
           ? checker.getTypeFromTypeNode(paramDecl.type)
           : checker.getTypeAtLocation(paramDecl)
-        : checker.getTypeOfSymbolAtLocation(
-            param,
-            symbol?.declarations?.[0] ??
-              signature.declaration ??
-              param.declarations?.[0] ??
-              param.valueDeclaration!,
-          );
+        : location
+          ? checker.getTypeOfSymbolAtLocation(param, location)
+          : checker.getAnyType();
 
       collectReferencedTypes(paramType, checker, referencedTypes);
       if (paramDecl?.type) {

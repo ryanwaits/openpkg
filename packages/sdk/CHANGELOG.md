@@ -1,5 +1,11 @@
 # @doccov/sdk
 
+## 0.3.4
+
+### Patch Changes
+
+- fix computed type property resolution for TypeBox, Zod, and similar patterns where valueDeclaration is undefined
+
 ## 0.3.3
 
 ### Patch Changes

@@ -8,14 +8,22 @@ const stringList: z.ZodUnion<[z.ZodString, z.ZodArray<z.ZodString, 'many'>]> = z
 /**
  * Docs configuration schema
  */
-const docsConfigSchema = z.object({
+const docsConfigSchema: z.ZodObject<{
+  include: z.ZodOptional<typeof stringList>;
+  exclude: z.ZodOptional<typeof stringList>;
+}> = z.object({
   /** Glob patterns for markdown docs to include */
   include: stringList.optional(),
   /** Glob patterns for markdown docs to exclude */
   exclude: stringList.optional(),
 });
 
-export const docCovConfigSchema = z.object({
+export const docCovConfigSchema: z.ZodObject<{
+  include: z.ZodOptional<typeof stringList>;
+  exclude: z.ZodOptional<typeof stringList>;
+  plugins: z.ZodOptional<z.ZodArray<z.ZodUnknown>>;
+  docs: z.ZodOptional<typeof docsConfigSchema>;
+}> = z.object({
   include: stringList.optional(),
   exclude: stringList.optional(),
   plugins: z.array(z.unknown()).optional(),

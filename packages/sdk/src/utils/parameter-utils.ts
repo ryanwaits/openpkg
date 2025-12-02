@@ -68,6 +68,37 @@ function withDescription(
   };
 }
 
+/**
+ * Safely get the type of a property symbol.
+ * Handles computed types (TypeBox Static<>, Zod infer<>, etc.) where
+ * valueDeclaration may be undefined.
+ */
+function getPropertyType(
+  prop: TS.Symbol,
+  parentType: TS.Type,
+  typeChecker: TS.TypeChecker,
+): TS.Type {
+  // Preferred: use valueDeclaration when available
+  if (prop.valueDeclaration) {
+    return typeChecker.getTypeOfSymbolAtLocation(prop, prop.valueDeclaration);
+  }
+
+  // Fallback for computed/conditional types
+  const propType = typeChecker.getTypeOfPropertyOfType(parentType, prop.getName());
+  if (propType) {
+    return propType;
+  }
+
+  // Last resort: try any declaration
+  const decl = prop.declarations?.[0];
+  if (decl) {
+    return typeChecker.getTypeOfSymbolAtLocation(prop, decl);
+  }
+
+  // Give up - return any
+  return typeChecker.getAnyType();
+}
+
 export interface StructuredProperty {
   name: string;
   type: ReturnType<typeof formatTypeReference>;
@@ -633,7 +664,7 @@ export function formatTypeReference(
             const required: string[] = [];
 
             for (const prop of properties) {
-              const propType = typeChecker.getTypeOfSymbolAtLocation(prop, prop.valueDeclaration!);
+              const propType = getPropertyType(prop, type, typeChecker);
               const propName = prop.getName();
 
               objSchema.properties[propName] = formatTypeReference(
@@ -774,7 +805,7 @@ export function structureParameter(
       if (isAnonymousObject) {
         // This is an object literal - extract its properties
         for (const prop of subType.getProperties()) {
-          const propType = typeChecker.getTypeOfSymbolAtLocation(prop, prop.valueDeclaration!);
+          const propType = getPropertyType(prop, subType, typeChecker);
 
           // Find TSDoc description for this property
           let description = '';
@@ -810,7 +841,7 @@ export function structureParameter(
         // Get the properties from this type and add them to our properties array
         if (!isBuiltInType(_symbolName)) {
           for (const prop of subType.getProperties()) {
-            const propType = typeChecker.getTypeOfSymbolAtLocation(prop, prop.valueDeclaration!);
+            const propType = getPropertyType(prop, subType, typeChecker);
 
             properties.push({
               name: prop.getName(),
@@ -851,7 +882,7 @@ export function structureParameter(
 
         // Extract properties from the object literal
         for (const prop of subType.getProperties()) {
-          const propType = typeChecker.getTypeOfSymbolAtLocation(prop, prop.valueDeclaration!);
+          const propType = getPropertyType(prop, subType, typeChecker);
 
           properties.push({
             name: prop.getName(),
@@ -897,7 +928,7 @@ export function structureParameter(
     const properties: StructuredProperty[] = [];
 
     for (const prop of paramType.getProperties()) {
-      const propType = typeChecker.getTypeOfSymbolAtLocation(prop, prop.valueDeclaration!);
+      const propType = getPropertyType(prop, paramType, typeChecker);
 
       properties.push({
         name: prop.getName(),
