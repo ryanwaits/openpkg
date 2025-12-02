@@ -1,5 +1,11 @@
 # @doccov/sdk
 
+## 0.5.6
+
+### Patch Changes
+
+- add member-level docs impact detection for classes - detects method additions, removals, and signature changes with smart replacement suggestions
+
 ## 0.3.7
 
 ### Patch Changes

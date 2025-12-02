@@ -223,6 +223,44 @@ function printTextDiff(
     }
   }
 
+  // Member-level changes (methods added/removed/changed on classes)
+  if (diff.memberChanges && diff.memberChanges.length > 0) {
+    log('');
+    log(chalk.bold('Member Changes'));
+
+    // Group by class
+    const byClass = new Map<string, typeof diff.memberChanges>();
+    for (const mc of diff.memberChanges) {
+      const list = byClass.get(mc.className) ?? [];
+      list.push(mc);
+      byClass.set(mc.className, list);
+    }
+
+    for (const [className, changes] of byClass) {
+      log(chalk.cyan(`  ${className}:`));
+      const removed = changes.filter((c) => c.changeType === 'removed');
+      const added = changes.filter((c) => c.changeType === 'added');
+      const changed = changes.filter((c) => c.changeType === 'signature-changed');
+
+      for (const mc of removed.slice(0, 3)) {
+        const suggestion = mc.suggestion ? ` (${mc.suggestion})` : '';
+        log(chalk.red(`    - ${mc.memberName}()${suggestion}`));
+      }
+      for (const mc of added.slice(0, 3)) {
+        log(chalk.green(`    + ${mc.memberName}()`));
+      }
+      for (const mc of changed.slice(0, 3)) {
+        log(chalk.yellow(`    ~ ${mc.memberName}() signature changed`));
+      }
+
+      const total = removed.length + added.length + changed.length;
+      const shown = Math.min(removed.length, 3) + Math.min(added.length, 3) + Math.min(changed.length, 3);
+      if (total > shown) {
+        log(chalk.gray(`    ... and ${total - shown} more member change(s)`));
+      }
+    }
+  }
+
   // Docs health
   log('');
   log(chalk.bold('Docs Health'));
@@ -274,17 +312,38 @@ function printTextDiff(
       log(chalk.yellow(`  ${impactedFiles.length} file(s) need updates:`));
       for (const file of impactedFiles.slice(0, 10)) {
         log(chalk.yellow(`    📄 ${file.file}`));
-        for (const ref of file.references.slice(0, 3)) {
-          const changeLabel =
-            ref.changeType === 'signature-changed'
-              ? 'signature changed'
-              : ref.changeType === 'removed'
+        for (const ref of file.references.slice(0, 5)) {
+          // Format based on whether this is a member-level or export-level change
+          if (ref.memberName) {
+            // Member-level change (e.g., method removed/changed)
+            const changeLabel =
+              ref.changeType === 'method-removed'
                 ? 'removed'
-                : 'deprecated';
-          log(chalk.gray(`       Line ${ref.line}: ${ref.exportName} (${changeLabel})`));
+                : ref.changeType === 'method-changed'
+                  ? 'signature changed'
+                  : ref.changeType === 'method-deprecated'
+                    ? 'deprecated'
+                    : 'changed';
+            log(chalk.gray(`       Line ${ref.line}: ${ref.memberName}() ${changeLabel}`));
+            if (ref.replacementSuggestion) {
+              log(chalk.cyan(`         → ${ref.replacementSuggestion}`));
+            }
+          } else if (ref.isInstantiation) {
+            // Class instantiation - lower priority
+            log(chalk.gray(`       Line ${ref.line}: new ${ref.exportName}() (class changed)`));
+          } else {
+            // Export-level change (fallback)
+            const changeLabel =
+              ref.changeType === 'signature-changed'
+                ? 'signature changed'
+                : ref.changeType === 'removed'
+                  ? 'removed'
+                  : 'deprecated';
+            log(chalk.gray(`       Line ${ref.line}: ${ref.exportName} (${changeLabel})`));
+          }
         }
-        if (file.references.length > 3) {
-          log(chalk.gray(`       ... and ${file.references.length - 3} more reference(s)`));
+        if (file.references.length > 5) {
+          log(chalk.gray(`       ... and ${file.references.length - 5} more reference(s)`));
         }
       }
       if (impactedFiles.length > 10) {

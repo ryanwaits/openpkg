@@ -6,6 +6,7 @@
 
 import { diffSpec, type OpenPkg, type SpecDiff } from '@openpkg-ts/spec';
 import { analyzeDocsImpact } from './analyzer';
+import { diffMemberChanges, type MemberChange } from './member-diff';
 import type { DocsImpactResult, MarkdownDocFile } from './types';
 
 /**
@@ -14,6 +15,8 @@ import type { DocsImpactResult, MarkdownDocFile } from './types';
 export interface SpecDiffWithDocs extends SpecDiff {
   /** Docs impact analysis (only present if markdown files provided) */
   docsImpact?: DocsImpactResult;
+  /** Member-level changes for classes (methods added/removed/changed) */
+  memberChanges?: MemberChange[];
 }
 
 /**
@@ -55,24 +58,32 @@ export function diffSpecWithDocs(
   // Get base diff
   const baseDiff = diffSpec(oldSpec, newSpec);
 
-  // If no markdown files, return base diff
+  // Get member-level changes for classes marked as breaking
+  const memberChanges = diffMemberChanges(oldSpec, newSpec, baseDiff.breaking);
+
+  // If no markdown files, return base diff with member changes
   if (!options.markdownFiles?.length) {
-    return baseDiff;
+    return {
+      ...baseDiff,
+      memberChanges: memberChanges.length > 0 ? memberChanges : undefined,
+    };
   }
 
   // Get all export names from new spec for missing docs detection
   const newExportNames = newSpec.exports?.map((e) => e.name) ?? [];
 
-  // Analyze docs impact
+  // Analyze docs impact with member-level granularity
   const docsImpact = analyzeDocsImpact(
     baseDiff,
     options.markdownFiles,
     newExportNames,
+    memberChanges,
   );
 
   return {
     ...baseDiff,
     docsImpact,
+    memberChanges: memberChanges.length > 0 ? memberChanges : undefined,
   };
 }
 
@@ -81,10 +92,7 @@ export function diffSpecWithDocs(
  */
 export function hasDocsImpact(diff: SpecDiffWithDocs): boolean {
   if (!diff.docsImpact) return false;
-  return (
-    diff.docsImpact.impactedFiles.length > 0 ||
-    diff.docsImpact.missingDocs.length > 0
-  );
+  return diff.docsImpact.impactedFiles.length > 0 || diff.docsImpact.missingDocs.length > 0;
 }
 
 /**
@@ -95,6 +103,7 @@ export function getDocsImpactSummary(diff: SpecDiffWithDocs): {
   impactedReferenceCount: number;
   missingDocsCount: number;
   totalIssues: number;
+  memberChangesCount: number;
 } {
   if (!diff.docsImpact) {
     return {
@@ -102,6 +111,7 @@ export function getDocsImpactSummary(diff: SpecDiffWithDocs): {
       impactedReferenceCount: 0,
       missingDocsCount: 0,
       totalIssues: 0,
+      memberChangesCount: diff.memberChanges?.length ?? 0,
     };
   }
 
@@ -117,6 +127,6 @@ export function getDocsImpactSummary(diff: SpecDiffWithDocs): {
     impactedReferenceCount,
     missingDocsCount,
     totalIssues: impactedReferenceCount + missingDocsCount,
+    memberChangesCount: diff.memberChanges?.length ?? 0,
   };
 }
-

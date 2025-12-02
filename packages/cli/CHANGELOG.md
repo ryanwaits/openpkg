@@ -1,5 +1,13 @@
 # @doccov/cli
 
+## 0.5.6
+
+### Patch Changes
+
+- enhance diff command output with member-level changes section and method-level targeting in docs impact
+- Updated dependencies
+  - @doccov/sdk@0.5.6
+
 ## 0.5.4
 
 ### Patch Changes

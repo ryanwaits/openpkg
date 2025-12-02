@@ -49,7 +49,18 @@ export interface ExportReference {
 /**
  * Change type for an impacted reference
  */
-export type DocsChangeType = 'signature-changed' | 'removed' | 'deprecated';
+export type DocsChangeType =
+  | 'signature-changed'
+  | 'removed'
+  | 'deprecated'
+  | 'method-removed'
+  | 'method-changed'
+  | 'method-deprecated';
+
+/**
+ * Member-level change type
+ */
+export type MemberChangeType = 'added' | 'removed' | 'signature-changed';
 
 /**
  * An impacted reference in a documentation file
@@ -65,6 +76,14 @@ export interface DocsImpactReference {
   suggestion?: string;
   /** Context around the reference */
   context?: string;
+  /** Member/method name if this is a member-level change */
+  memberName?: string;
+  /** Type of member change (added, removed, signature-changed) */
+  memberChangeType?: MemberChangeType;
+  /** Suggested replacement for removed/changed members */
+  replacementSuggestion?: string;
+  /** True if this is just a class instantiation (new ClassName()) */
+  isInstantiation?: boolean;
 }
 
 /**
