@@ -1,5 +1,11 @@
 # @doccov/sdk
 
+## 0.3.5
+
+### Patch Changes
+
+- fix interface member serialization with jsdocs
+
 ## 0.3.4
 
 ### Patch Changes
