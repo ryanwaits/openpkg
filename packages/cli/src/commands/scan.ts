@@ -1,15 +1,23 @@
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import { DocCov } from '@doccov/sdk';
+import {
+  DocCov,
+  detectBuildInfo,
+  detectEntryPoint,
+  detectMonorepo,
+  detectPackageManager,
+  findPackageByName,
+  formatPackageList,
+  getInstallCommand,
+  NodeFileSystem,
+} from '@doccov/sdk';
 import chalk from 'chalk';
 import type { Command } from 'commander';
 import ora, { type Ora } from 'ora';
 import { simpleGit } from 'simple-git';
-import { detectEntryPoint } from '../utils/entry-detection';
 import { buildCloneUrl, buildDisplayUrl, parseGitHubUrl } from '../utils/github-url';
 import { generateBuildPlan } from '../utils/llm-build-plan';
-import { detectMonorepo, findPackage, formatPackageList } from '../utils/monorepo-detection';
 
 export interface ScanCommandDependencies {
   createDocCov?: (
@@ -114,6 +122,9 @@ export function registerScanCommand(
           throw new Error(`Clone failed: ${message}`);
         }
 
+        // Create filesystem abstraction for detection
+        const fileSystem = new NodeFileSystem(tempDir);
+
         // Install dependencies (needed for type resolution)
         if (options.skipInstall) {
           log(chalk.gray('Skipping dependency installation (--skip-install)'));
@@ -126,31 +137,26 @@ export function registerScanCommand(
           try {
             const { execSync } = await import('node:child_process');
 
-            // Detect package manager from lockfile
-            const lockfileCommands = [
-              { file: 'pnpm-lock.yaml', cmd: 'pnpm install --frozen-lockfile' },
-              { file: 'bun.lock', cmd: 'bun install --frozen-lockfile' },
-              { file: 'bun.lockb', cmd: 'bun install --frozen-lockfile' }, // Legacy bun
-              { file: 'yarn.lock', cmd: 'yarn install --frozen-lockfile' },
-              { file: 'package-lock.json', cmd: 'npm install --legacy-peer-deps' },
-            ];
+            // Detect package manager using SDK
+            const pmInfo = await detectPackageManager(fileSystem);
+            const installCmd = getInstallCommand(pmInfo);
+            const cmdString = installCmd.join(' ');
 
             let installed = false;
-            for (const { file, cmd } of lockfileCommands) {
-              if (fs.existsSync(path.join(tempDir, file))) {
-                try {
-                  execSync(cmd, {
-                    cwd: tempDir,
-                    stdio: 'pipe',
-                    timeout: 180000,
-                  });
-                  installed = true;
-                  break;
-                } catch (cmdError) {
-                  const stderr = (cmdError as { stderr?: Buffer })?.stderr?.toString() ?? '';
-                  const msg = cmdError instanceof Error ? cmdError.message : String(cmdError);
-                  installErrors.push(`[${cmd}] ${stderr.slice(0, 150) || msg.slice(0, 150)}`);
-                }
+
+            // Try primary package manager if lockfile exists
+            if (pmInfo.lockfile) {
+              try {
+                execSync(cmdString, {
+                  cwd: tempDir,
+                  stdio: 'pipe',
+                  timeout: 180000,
+                });
+                installed = true;
+              } catch (cmdError) {
+                const stderr = (cmdError as { stderr?: Buffer })?.stderr?.toString() ?? '';
+                const msg = cmdError instanceof Error ? cmdError.message : String(cmdError);
+                installErrors.push(`[${cmdString}] ${stderr.slice(0, 150) || msg.slice(0, 150)}`);
               }
             }
 
@@ -206,8 +212,8 @@ export function registerScanCommand(
         let targetDir = tempDir;
         let packageName: string | undefined;
 
-        // Check for monorepo
-        const mono = await detectMonorepo(tempDir);
+        // Check for monorepo using SDK
+        const mono = await detectMonorepo(fileSystem);
         if (mono.isMonorepo) {
           if (!options.package) {
             error('');
@@ -222,7 +228,7 @@ export function registerScanCommand(
             throw new Error('Monorepo requires --package flag');
           }
 
-          const pkg = await findPackage(tempDir, options.package);
+          const pkg = findPackageByName(mono.packages, options.package);
           if (!pkg) {
             error('');
             error(chalk.red(`Package "${options.package}" not found. Available packages:`));
@@ -232,48 +238,19 @@ export function registerScanCommand(
             throw new Error(`Package not found: ${options.package}`);
           }
 
-          targetDir = pkg.path;
+          targetDir = path.join(tempDir, pkg.path);
           packageName = pkg.name;
           log(chalk.gray(`Analyzing package: ${packageName}`));
         }
 
-        // Detect entry point
+        // Detect entry point using SDK
         const entrySpinner = spinner('Detecting entry point...');
         entrySpinner.start();
 
         let entryPath: string;
 
-        // Helper: check if project likely needs a build step
-        const needsBuildStep = (pkgDir: string, repoRoot: string, entryFile: string): boolean => {
-          // Only consider .d.ts entries as potentially needing build
-          if (!entryFile.endsWith('.d.ts')) return false;
-
-          // Check for WASM/Rust indicators - check both package dir and repo root
-          const cargoLocations = [
-            path.join(pkgDir, 'Cargo.toml'),
-            path.join(repoRoot, 'Cargo.toml'),
-          ];
-          const hasCargoToml = cargoLocations.some((p) => fs.existsSync(p));
-
-          // Check for wasm-pack in package.json scripts (both package and root)
-          const checkWasmScripts = (dir: string): boolean => {
-            const pkgPath = path.join(dir, 'package.json');
-            if (fs.existsSync(pkgPath)) {
-              try {
-                const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
-                const scripts = Object.values(pkg.scripts ?? {}).join(' ');
-                return scripts.includes('wasm-pack') || scripts.includes('wasm');
-              } catch {
-                /* ignore */
-              }
-            }
-            return false;
-          };
-
-          const hasWasmPackScript = checkWasmScripts(pkgDir) || checkWasmScripts(repoRoot);
-
-          return hasCargoToml || hasWasmPackScript;
-        };
+        // Create filesystem for target directory (may be different from repo root in monorepo)
+        const targetFs = mono.isMonorepo ? new NodeFileSystem(targetDir) : fileSystem;
 
         // Helper: run LLM fallback
         let buildFailed = false;
@@ -315,10 +292,14 @@ export function registerScanCommand(
         };
 
         try {
-          const entry = detectEntryPoint(targetDir);
+          const entry = await detectEntryPoint(targetFs);
+
+          // Use SDK's build info detection for WASM check
+          const buildInfo = await detectBuildInfo(targetFs);
+          const needsBuildStep = entry.isDeclarationOnly && buildInfo.exoticIndicators.wasm;
 
           // Check if this .d.ts entry likely needs a build step first
-          if (needsBuildStep(targetDir, tempDir, entry.entryPath)) {
+          if (needsBuildStep) {
             entrySpinner.text = 'Detected .d.ts entry with WASM indicators...';
 
             const llmEntry = await runLlmFallback('WASM project detected');
@@ -336,15 +317,15 @@ export function registerScanCommand(
               }
             } else {
               // Fall back to original .d.ts entry
-              entryPath = path.join(targetDir, entry.entryPath);
-              entrySpinner.succeed(`Entry point: ${entry.entryPath} (from ${entry.source})`);
+              entryPath = path.join(targetDir, entry.path);
+              entrySpinner.succeed(`Entry point: ${entry.path} (from ${entry.source})`);
               log(
                 chalk.yellow('  ⚠ WASM project detected but no API key - analysis may be limited'),
               );
             }
           } else {
-            entryPath = path.join(targetDir, entry.entryPath);
-            entrySpinner.succeed(`Entry point: ${entry.entryPath} (from ${entry.source})`);
+            entryPath = path.join(targetDir, entry.path);
+            entrySpinner.succeed(`Entry point: ${entry.path} (from ${entry.source})`);
           }
         } catch (entryError) {
           // LLM Fallback for exotic projects (WASM, unusual monorepos, etc.)

@@ -1,12 +1,17 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { DocCov } from '@doccov/sdk';
+import {
+  DocCov,
+  detectEntryPoint,
+  detectMonorepo,
+  findPackageByName,
+  NodeFileSystem,
+} from '@doccov/sdk';
 import type { OpenPkg } from '@openpkg-ts/spec';
 import chalk from 'chalk';
 import type { Command } from 'commander';
 import ora from 'ora';
 import { computeStats, renderHtml, renderMarkdown } from '../reports';
-import { findEntryPoint, findPackageInMonorepo } from '../utils/package-utils';
 
 type OutputFormat = 'markdown' | 'html' | 'json';
 
@@ -32,14 +37,26 @@ export function registerReportCommand(program: Command): void {
           let targetDir = options.cwd;
           let entryFile = entry as string | undefined;
 
+          // Create filesystem abstraction for detection
+          const fileSystem = new NodeFileSystem(options.cwd);
+
           if (options.package) {
-            const packageDir = await findPackageInMonorepo(options.cwd, options.package);
-            if (!packageDir) throw new Error(`Package "${options.package}" not found`);
-            targetDir = packageDir;
+            const mono = await detectMonorepo(fileSystem);
+            if (!mono.isMonorepo) {
+              throw new Error(`Not a monorepo. Remove --package flag for single-package repos.`);
+            }
+            const pkg = findPackageByName(mono.packages, options.package);
+            if (!pkg) {
+              const available = mono.packages.map((p) => p.name).join(', ');
+              throw new Error(`Package "${options.package}" not found. Available: ${available}`);
+            }
+            targetDir = path.join(options.cwd, pkg.path);
           }
 
           if (!entryFile) {
-            entryFile = await findEntryPoint(targetDir, true);
+            const targetFs = new NodeFileSystem(targetDir);
+            const detected = await detectEntryPoint(targetFs);
+            entryFile = path.join(targetDir, detected.path);
           } else {
             entryFile = path.resolve(targetDir, entryFile);
           }

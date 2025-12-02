@@ -39,3 +39,39 @@ export type {
   RunExamplesWithPackageResult,
 } from './utils/example-runner';
 export { runExample, runExamples, runExamplesWithPackage } from './utils/example-runner';
+
+// Project detection (for CLI and API)
+export {
+  // Types
+  type FileSystem,
+  type PackageManager,
+  type PackageManagerInfo,
+  type MonorepoType,
+  type MonorepoInfo,
+  type WorkspacePackage,
+  type EntryPointSource,
+  type EntryPointInfo,
+  type BuildInfo,
+  type ProjectInfo,
+  type AnalyzeProjectOptions,
+  type PackageJson,
+  type PackageExports,
+  // FileSystem implementations
+  NodeFileSystem,
+  SandboxFileSystem,
+  // Detection functions
+  detectPackageManager,
+  getInstallCommand,
+  getRunCommand,
+  detectMonorepo,
+  findPackageByName,
+  formatPackageList,
+  detectEntryPoint,
+  detectBuildInfo,
+  getPrimaryBuildScript,
+  // Utilities
+  safeParseJson,
+  readPackageJson,
+  // High-level API
+  analyzeProject,
+} from './detect';

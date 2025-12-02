@@ -1,6 +1,14 @@
 import { Writable } from 'node:stream';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Sandbox } from '@vercel/sandbox';
+import {
+  SandboxFileSystem,
+  detectBuildInfo,
+  detectMonorepo,
+  detectPackageManager,
+  getInstallCommand,
+  getPrimaryBuildScript,
+} from '@doccov/sdk';
 
 export const config = {
   runtime: 'nodejs',
@@ -43,154 +51,6 @@ function createCaptureStream(): { stream: Writable; getOutput: () => string } {
     },
   });
   return { stream, getOutput: () => output };
-}
-
-// Helper to get install args for each package manager
-function getPmInstallArgs(pm: 'pnpm' | 'bun' | 'yarn' | 'npm'): string[] {
-  switch (pm) {
-    case 'pnpm':
-      return ['install', '--frozen-lockfile'];
-    case 'bun':
-      return ['install', '--frozen-lockfile'];
-    case 'yarn':
-      return ['install', '--frozen-lockfile'];
-    case 'npm':
-      return ['install', '--ignore-scripts', '--legacy-peer-deps'];
-  }
-}
-
-// Helper to get workspace patterns from package.json, pnpm-workspace.yaml, or lerna.json
-function getWorkspacePatterns(
-  pkgJson: { workspaces?: string[] | { packages: string[] } },
-  pnpmWorkspaceContent?: string,
-  lernaContent?: string,
-): string[] {
-  // Check package.json workspaces (npm/yarn)
-  if (pkgJson.workspaces) {
-    return Array.isArray(pkgJson.workspaces)
-      ? pkgJson.workspaces
-      : pkgJson.workspaces.packages || [];
-  }
-
-  // Check pnpm-workspace.yaml
-  if (pnpmWorkspaceContent) {
-    // Match all lines that start with "- " after packages:
-    const lines = pnpmWorkspaceContent.split('\n');
-    const patterns: string[] = [];
-    let inPackages = false;
-
-    for (const line of lines) {
-      if (line.match(/^packages:/i)) {
-        inPackages = true;
-        continue;
-      }
-      if (inPackages) {
-        // Stop if we hit another top-level key
-        if (line.match(/^\w+:/) && !line.startsWith(' ') && !line.startsWith('\t')) {
-          break;
-        }
-        // Extract pattern from "- pattern" format
-        const match = line.match(/^\s*-\s*['"]?([^'"]+)['"]?\s*$/);
-        if (match) {
-          patterns.push(match[1].trim());
-        }
-      }
-    }
-
-    if (patterns.length > 0) {
-      return patterns;
-    }
-  }
-
-  // Check lerna.json
-  if (lernaContent) {
-    try {
-      const lerna = JSON.parse(lernaContent) as { packages?: string[] };
-      if (lerna.packages && Array.isArray(lerna.packages)) {
-        return lerna.packages;
-      }
-    } catch {
-      // Ignore parse errors
-    }
-  }
-
-  return [];
-}
-
-// Helper to list available packages in a monorepo
-async function listMonorepoPackages(
-  sandbox: Sandbox,
-  workspacePatterns: string[],
-  rootPackageName?: string,
-  rootIsPrivate?: boolean,
-): Promise<string[]> {
-  const packages: string[] = [];
-
-  // Include root package if it's a real publishable package (not private, not named "root")
-  if (rootPackageName && !rootIsPrivate && rootPackageName !== 'root') {
-    packages.push(rootPackageName);
-  }
-
-  // Collect unique directories to scan
-  const dirsToScan = new Set<string>();
-  for (const pattern of workspacePatterns) {
-    // Skip negation patterns
-    if (pattern.startsWith('!')) continue;
-    const dir = pattern.replace('/**', '').replace('/*', '');
-    if (dir && !dir.includes('*')) {
-      dirsToScan.add(dir);
-    }
-  }
-
-  // Always scan packages/ as fallback (most common monorepo structure)
-  dirsToScan.add('packages');
-
-  for (const dir of dirsToScan) {
-    // List subdirectories in the workspace directory
-    const lsCapture = createCaptureStream();
-    await sandbox.runCommand({
-      cmd: 'ls',
-      args: ['-1', dir],
-      stdout: lsCapture.stream,
-      stderr: lsCapture.stream,
-    });
-
-    const output = lsCapture.getOutput();
-    // Skip if directory doesn't exist
-    if (output.includes('No such file') || output.includes('cannot access')) {
-      continue;
-    }
-
-    const subdirs = output.split('\n').filter((d) => d.trim().length > 0);
-
-    // Read package.json from each subdirectory to get package name
-    for (const subdir of subdirs) {
-      const pkgPath = `${dir}/${subdir}/package.json`;
-      const catCapture = createCaptureStream();
-      await sandbox.runCommand({
-        cmd: 'cat',
-        args: [pkgPath],
-        stdout: catCapture.stream,
-        stderr: catCapture.stream,
-      });
-
-      try {
-        const pkgContent = catCapture.getOutput();
-        if (pkgContent && !pkgContent.includes('No such file')) {
-          const pkg = JSON.parse(pkgContent) as { name?: string; private?: boolean };
-          // Include package if it has a name and is not private
-          if (pkg.name && !pkg.private) {
-            packages.push(pkg.name);
-          }
-        }
-      } catch {
-        // Skip packages with invalid package.json
-      }
-    }
-  }
-
-  // Remove duplicates and sort
-  return [...new Set(packages)].sort();
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -269,6 +129,9 @@ async function runScanWithProgress(
     });
 
     try {
+      // Create filesystem abstraction for SDK detection functions
+      const fs = new SandboxFileSystem(sandbox);
+
       // Checkout specific ref if not main/master
       if (options.ref && options.ref !== 'main' && options.ref !== 'master') {
         sendEvent({
@@ -309,89 +172,16 @@ async function runScanWithProgress(
         progress: 10,
       });
 
-      // Detect package manager from lockfiles
-      const lsCapture = createCaptureStream();
-      await sandbox.runCommand({
-        cmd: 'ls',
-        args: ['-1'],
-        stdout: lsCapture.stream,
-      });
-      const files = lsCapture.getOutput();
-
-      let pm: 'pnpm' | 'bun' | 'yarn' | 'npm' = 'npm';
-      let pmMessage = 'No lockfile detected';
-
-      if (files.includes('pnpm-lock.yaml')) {
-        pm = 'pnpm';
-        pmMessage = 'Detected pnpm project';
-      } else if (files.includes('bun.lock') || files.includes('bun.lockb')) {
-        pm = 'bun';
-        pmMessage = 'Detected bun project';
-      } else if (files.includes('yarn.lock')) {
-        pm = 'yarn';
-        pmMessage = 'Detected yarn project';
-      } else if (files.includes('package-lock.json')) {
-        pm = 'npm';
-        pmMessage = 'Detected npm project';
-      }
-
+      // Detect package manager using SDK
+      const pmInfo = await detectPackageManager(fs);
+      const pmMessage = pmInfo.lockfile ? `Detected ${pmInfo.name} project` : 'No lockfile detected';
       sendEvent({ type: 'progress', stage: 'detecting', message: pmMessage, progress: 15 });
 
       // Early monorepo detection - fail fast if monorepo without package param
       if (!options.package) {
-        // Read package.json to check for workspaces and entry point
-        const rootPkgCapture = createCaptureStream();
-        await sandbox.runCommand({
-          cmd: 'cat',
-          args: ['package.json'],
-          stdout: rootPkgCapture.stream,
-          stderr: rootPkgCapture.stream,
-        });
+        const mono = await detectMonorepo(fs);
 
-        let rootPkgJson: {
-          name?: string;
-          private?: boolean;
-          workspaces?: string[] | { packages: string[] };
-          types?: string;
-          typings?: string;
-          main?: string;
-        } = {};
-        try {
-          rootPkgJson = JSON.parse(rootPkgCapture.getOutput());
-        } catch {
-          // Ignore parse errors
-        }
-
-        // Check for pnpm-workspace.yaml
-        let pnpmWorkspaceContent: string | undefined;
-        if (files.includes('pnpm-workspace.yaml')) {
-          const pnpmCapture = createCaptureStream();
-          await sandbox.runCommand({
-            cmd: 'cat',
-            args: ['pnpm-workspace.yaml'],
-            stdout: pnpmCapture.stream,
-          });
-          pnpmWorkspaceContent = pnpmCapture.getOutput();
-        }
-
-        // Check for lerna.json
-        let lernaContent: string | undefined;
-        if (files.includes('lerna.json')) {
-          const lernaCapture = createCaptureStream();
-          await sandbox.runCommand({
-            cmd: 'cat',
-            args: ['lerna.json'],
-            stdout: lernaCapture.stream,
-          });
-          lernaContent = lernaCapture.getOutput();
-        }
-
-        const workspacePatterns = getWorkspacePatterns(rootPkgJson, pnpmWorkspaceContent, lernaContent);
-        const hasWorkspaces = workspacePatterns.length > 0;
-
-        // If it's a monorepo (has workspaces), require package param
-        // Even if root has types, monorepos usually need explicit package targeting
-        if (hasWorkspaces) {
+        if (mono.isMonorepo) {
           sendEvent({
             type: 'progress',
             stage: 'detecting',
@@ -399,12 +189,9 @@ async function runScanWithProgress(
             progress: 17,
           });
 
-          const availablePackages = await listMonorepoPackages(
-            sandbox,
-            workspacePatterns,
-            rootPkgJson.name,
-            rootPkgJson.private,
-          );
+          const availablePackages = mono.packages
+            .filter((p) => !p.private)
+            .map((p) => p.name);
 
           await sandbox.stop();
           sendEvent({
@@ -417,7 +204,7 @@ async function runScanWithProgress(
       }
 
       // Install package manager if needed (npm and pnpm are pre-installed in node22)
-      if (pm === 'bun') {
+      if (pmInfo.name === 'bun') {
         sendEvent({
           type: 'progress',
           stage: 'installing',
@@ -425,7 +212,7 @@ async function runScanWithProgress(
           progress: 18,
         });
         await sandbox.runCommand({ cmd: 'npm', args: ['install', '-g', 'bun'] });
-      } else if (pm === 'yarn') {
+      } else if (pmInfo.name === 'yarn') {
         sendEvent({
           type: 'progress',
           stage: 'installing',
@@ -444,13 +231,14 @@ async function runScanWithProgress(
       });
 
       let installed = false;
+      let activePm = pmInfo.name;
       const installCapture = createCaptureStream();
 
-      // Try primary package manager
-      const primaryArgs = getPmInstallArgs(pm);
+      // Try primary package manager using SDK's getInstallCommand
+      const primaryCmd = getInstallCommand(pmInfo);
       const primaryResult = await sandbox.runCommand({
-        cmd: pm,
-        args: primaryArgs,
+        cmd: primaryCmd[0],
+        args: primaryCmd.slice(1),
         stdout: installCapture.stream,
         stderr: installCapture.stream,
       });
@@ -470,7 +258,7 @@ async function runScanWithProgress(
           });
 
           // Install bun if not already the primary
-          if (pm !== 'bun') {
+          if (pmInfo.name !== 'bun') {
             await sandbox.runCommand({ cmd: 'npm', args: ['install', '-g', 'bun'] });
           }
 
@@ -484,7 +272,7 @@ async function runScanWithProgress(
 
           if (bunResult.exitCode === 0) {
             installed = true;
-            pm = 'bun'; // Update pm for build step
+            activePm = 'bun'; // Update pm for build step
           }
         }
       }
@@ -506,43 +294,35 @@ async function runScanWithProgress(
         });
       }
 
-      // Check for build script
-      const pkgCapture = createCaptureStream();
-      await sandbox.runCommand({
-        cmd: 'cat',
-        args: ['package.json'],
-        stdout: pkgCapture.stream,
-      });
+      // Check for build script using SDK
+      const buildInfo = await detectBuildInfo(fs);
+      const buildScript = getPrimaryBuildScript(buildInfo);
 
-      try {
-        const pkgJson = JSON.parse(pkgCapture.getOutput()) as { scripts?: Record<string, string> };
-        const scripts = pkgJson.scripts ?? {};
-        const buildScript = scripts.build ? 'build' : scripts.compile ? 'compile' : null;
+      if (buildScript) {
+        sendEvent({
+          type: 'progress',
+          stage: 'building',
+          message: 'Running build...',
+          progress: 45,
+        });
 
-        if (buildScript) {
-          sendEvent({
-            type: 'progress',
-            stage: 'building',
-            message: 'Running build...',
-            progress: 45,
-          });
+        const buildCapture = createCaptureStream();
+        // Use activePm (may have changed to bun as fallback)
+        const buildCmd =
+          activePm === 'npm' || activePm === 'yarn'
+            ? [activePm, 'run', buildScript]
+            : [activePm, buildScript];
 
-          const buildCapture = createCaptureStream();
-          const buildCmd = pm === 'npm' || pm === 'yarn' ? pm : pm;
-          const buildArgs = pm === 'npm' || pm === 'yarn' ? ['run', buildScript] : [buildScript];
-          const buildResult = await sandbox.runCommand({
-            cmd: buildCmd,
-            args: buildArgs,
-            stdout: buildCapture.stream,
-            stderr: buildCapture.stream,
-          });
+        const buildResult = await sandbox.runCommand({
+          cmd: buildCmd[0],
+          args: buildCmd.slice(1),
+          stdout: buildCapture.stream,
+          stderr: buildCapture.stream,
+        });
 
-          const buildMessage =
-            buildResult.exitCode === 0 ? 'Build complete' : 'Build failed (continuing)';
-          sendEvent({ type: 'progress', stage: 'building', message: buildMessage, progress: 55 });
-        }
-      } catch {
-        // Ignore package.json errors
+        const buildMessage =
+          buildResult.exitCode === 0 ? 'Build complete' : 'Build failed (continuing)';
+        sendEvent({ type: 'progress', stage: 'building', message: buildMessage, progress: 55 });
       }
 
       // Install doccov CLI
@@ -603,7 +383,7 @@ async function runScanWithProgress(
         stderr: checkFileCapture.stream,
       });
       const specContent = checkFileCapture.getOutput();
-      
+
       if (!specContent.trim() || specContent.includes('No such file')) {
         throw new Error(`Spec file not found or empty. Generate output: ${genOutput.slice(-500)}`);
       }

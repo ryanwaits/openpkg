@@ -2,10 +2,14 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import {
   DocCov,
+  detectEntryPoint,
   detectExampleAssertionFailures,
   detectExampleRuntimeErrors,
+  detectMonorepo,
   type ExampleRunResult,
+  findPackageByName,
   hasNonAssertionComments,
+  NodeFileSystem,
   parseAssertions,
   runExamplesWithPackage,
 } from '@doccov/sdk';
@@ -16,7 +20,6 @@ import {
   isLLMAssertionParsingAvailable,
   parseAssertionsWithLLM,
 } from '../utils/llm-assertion-parser';
-import { findEntryPoint, findPackageInMonorepo } from '../utils/package-utils';
 
 interface CheckCommandDependencies {
   createDocCov?: (
@@ -60,25 +63,37 @@ export function registerCheckCommand(
         let targetDir = options.cwd;
         let entryFile = entry as string | undefined;
 
+        // Create filesystem abstraction for detection
+        const fileSystem = new NodeFileSystem(options.cwd);
+
         if (options.package) {
-          const packageDir = await findPackageInMonorepo(options.cwd, options.package);
-          if (!packageDir) {
-            throw new Error(`Package "${options.package}" not found in monorepo`);
+          const mono = await detectMonorepo(fileSystem);
+          if (!mono.isMonorepo) {
+            throw new Error(`Not a monorepo. Remove --package flag for single-package repos.`);
           }
-          targetDir = packageDir;
-          log(chalk.gray(`Found package at ${path.relative(options.cwd, packageDir)}`));
+          const pkg = findPackageByName(mono.packages, options.package);
+          if (!pkg) {
+            const available = mono.packages.map((p) => p.name).join(', ');
+            throw new Error(`Package "${options.package}" not found. Available: ${available}`);
+          }
+          targetDir = path.join(options.cwd, pkg.path);
+          log(chalk.gray(`Found package at ${pkg.path}`));
         }
 
         if (!entryFile) {
-          entryFile = await findEntryPoint(targetDir, true);
-          log(chalk.gray(`Auto-detected entry point: ${path.relative(targetDir, entryFile)}`));
+          const targetFs = new NodeFileSystem(targetDir);
+          const detected = await detectEntryPoint(targetFs);
+          entryFile = path.join(targetDir, detected.path);
+          log(chalk.gray(`Auto-detected entry point: ${detected.path} (from ${detected.source})`));
         } else {
           entryFile = path.resolve(targetDir, entryFile);
           // If path is a directory, find entry point within it and update targetDir
           if (fs.existsSync(entryFile) && fs.statSync(entryFile).isDirectory()) {
             targetDir = entryFile;
-            entryFile = await findEntryPoint(entryFile, true);
-            log(chalk.gray(`Auto-detected entry point: ${entryFile}`));
+            const dirFs = new NodeFileSystem(entryFile);
+            const detected = await detectEntryPoint(dirFs);
+            entryFile = path.join(entryFile, detected.path);
+            log(chalk.gray(`Auto-detected entry point: ${detected.path}`));
           }
         }
 
