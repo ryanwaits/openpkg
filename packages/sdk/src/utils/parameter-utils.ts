@@ -509,6 +509,23 @@ function schemasAreEqual(
 }
 
 /**
+ * Remove duplicate schemas from an array while preserving order.
+ * Uses deep equality comparison via schemasAreEqual.
+ */
+function deduplicateSchemas(
+  schemas: Array<string | Record<string, unknown>>,
+): Array<string | Record<string, unknown>> {
+  const result: Array<string | Record<string, unknown>> = [];
+  for (const schema of schemas) {
+    const isDuplicate = result.some((existing) => schemasAreEqual(existing, schema));
+    if (!isDuplicate) {
+      result.push(schema);
+    }
+  }
+  return result;
+}
+
+/**
  * Format a type as either a string or a reference object
  * Following OpenAPI standards: use $ref for all named types
  */
@@ -598,19 +615,27 @@ export function formatTypeReference(
         formatTypeReference(t, typeChecker, typeRefs, referencedTypes, visited),
       );
 
+      // Deduplicate (e.g., null and undefined both become { type: 'null' })
+      const uniqueParts = deduplicateSchemas(parts);
+
+      // If only one unique part remains, return it directly (unwrap single-item anyOf)
+      if (uniqueParts.length === 1) {
+        return uniqueParts[0];
+      }
+
       // Check for discriminator property (tagged union pattern)
       const discriminatorProp = findDiscriminatorProperty(unionType.types, typeChecker);
 
       if (discriminatorProp) {
         return {
-          anyOf: parts,
+          anyOf: uniqueParts,
           discriminator: { propertyName: discriminatorProp },
         };
       }
 
       // Return as an anyOf array (OpenAPI style)
       return {
-        anyOf: parts,
+        anyOf: uniqueParts,
       };
     }
 

@@ -1,5 +1,11 @@
 # @doccov/sdk
 
+## 0.3.6
+
+### Patch Changes
+
+- fix duplicate null in schema
+
 ## 0.3.5
 
 ### Patch Changes
