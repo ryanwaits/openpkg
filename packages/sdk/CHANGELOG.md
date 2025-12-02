@@ -1,5 +1,11 @@
 # @doccov/sdk
 
+## 0.3.7
+
+### Patch Changes
+
+- fix: cleanup internal/private type warnings
+
 ## 0.3.6
 
 ### Patch Changes

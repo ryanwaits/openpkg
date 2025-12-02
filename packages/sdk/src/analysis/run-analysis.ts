@@ -2,6 +2,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import type * as TS from 'typescript';
 import { ts } from '../ts-module';
+import { isBuiltInType } from '../utils/type-utils';
 import type { AnalysisContextInput } from './context';
 import { createAnalysisContext } from './context';
 import { buildOpenPkgSpec } from './spec-builder';
@@ -99,7 +100,10 @@ function collectDanglingRefs(spec: OpenPkgSpec): string[] {
   // Collect refs from types (for nested type references)
   collectAllRefs(spec.types, referencedTypes);
 
-  return Array.from(referencedTypes).filter((ref) => !definedTypes.has(ref));
+  // Filter out built-in and library internal types
+  return Array.from(referencedTypes).filter(
+    (ref) => !definedTypes.has(ref) && !isBuiltInType(ref),
+  );
 }
 
 /**
@@ -108,7 +112,8 @@ function collectDanglingRefs(spec: OpenPkgSpec): string[] {
 function collectExternalTypes(spec: OpenPkgSpec): string[] {
   return (spec.types ?? [])
     .filter((t) => t.kind === 'external')
-    .map((t) => t.id);
+    .map((t) => t.id)
+    .filter((id) => !isBuiltInType(id));
 }
 
 /**

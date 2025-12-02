@@ -212,6 +212,39 @@ export function collectReferencedTypesFromNode(
 }
 
 export function isBuiltInType(name: string): boolean {
+  // Skip generic type parameters (single uppercase letters like T, K, V)
+  if (name.length === 1 && /^[A-Z]$/.test(name)) {
+    return true;
+  }
+
+  // Skip TypeBox internal types (T* prefix convention: TObject, TString, TUnion, etc.)
+  // These are schema type constructors, not user-facing types
+  if (/^T[A-Z][a-zA-Z]*$/.test(name)) {
+    return true;
+  }
+
+  // Skip common library internal utility types
+  const libraryInternals = [
+    // TypeBox internals
+    'UnionStatic',
+    'IntersectStatic',
+    'ObjectStatic',
+    'ArrayStatic',
+    'StaticDecode',
+    'StaticEncode',
+    // Zod internals (future-proofing)
+    'ZodType',
+    'ZodObject',
+    'ZodString',
+    'ZodNumber',
+    'ZodArray',
+    'ZodUnion',
+    'ZodIntersection',
+  ];
+  if (libraryInternals.includes(name)) {
+    return true;
+  }
+
   const builtIns = [
     // Primitive types
     'string',
@@ -221,6 +254,8 @@ export function isBuiltInType(name: string): boolean {
     'symbol',
     'undefined',
     'null',
+    'true',
+    'false',
 
     // Special types
     'any',
@@ -274,6 +309,27 @@ export function isBuiltInType(name: string): boolean {
     'Proxy',
     'Intl',
     'globalThis',
+
+    // TypeScript utility types
+    'Record',
+    'Partial',
+    'Required',
+    'Readonly',
+    'Pick',
+    'Omit',
+    'Exclude',
+    'Extract',
+    'NonNullable',
+    'ReturnType',
+    'Parameters',
+    'InstanceType',
+    'ConstructorParameters',
+    'Awaited',
+    'ThisType',
+    'Uppercase',
+    'Lowercase',
+    'Capitalize',
+    'Uncapitalize',
 
     // Special internal types
     '__type', // Anonymous types
