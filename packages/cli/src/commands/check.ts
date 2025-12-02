@@ -27,7 +27,6 @@ import {
 import type { SpecDocDrift, SpecExport } from '@openpkg-ts/spec';
 import chalk from 'chalk';
 import type { Command } from 'commander';
-import ora, { type Ora } from 'ora';
 import {
   isLLMAssertionParsingAvailable,
   parseAssertionsWithLLM,
@@ -37,19 +36,12 @@ interface CheckCommandDependencies {
   createDocCov?: (
     options: ConstructorParameters<typeof DocCov>[0],
   ) => Pick<DocCov, 'analyzeFileWithDiagnostics'>;
-  spinner?: (text: string) => Ora;
   log?: typeof console.log;
   error?: typeof console.error;
 }
 
 const defaultDependencies: Required<CheckCommandDependencies> = {
   createDocCov: (options) => new DocCov(options),
-  spinner: (text: string) =>
-    ora({
-      text,
-      discardStdin: false, // Prevent stdin interference
-      hideCursor: true, // Hide cursor during spinner
-    }),
   log: console.log,
   error: console.error,
 };
@@ -100,7 +92,7 @@ export function registerCheckCommand(
   program: Command,
   dependencies: CheckCommandDependencies = {},
 ): void {
-  const { createDocCov, spinner, log, error } = {
+  const { createDocCov, log, error } = {
     ...defaultDependencies,
     ...dependencies,
   };
@@ -162,17 +154,17 @@ export function registerCheckCommand(
         const minCoverage = clampCoverage(options.minCoverage ?? 80);
         const resolveExternalTypes = !options.skipResolve;
 
-        const spinnerInstance = spinner('Analyzing documentation coverage...');
-        spinnerInstance.start();
+        // Use simple text indicator for CPU-intensive analysis (ora can't animate during blocking operations)
+        process.stdout.write(chalk.cyan('> Analyzing documentation coverage...\n'));
 
         let specResult: Awaited<ReturnType<DocCov['analyzeFileWithDiagnostics']>> | undefined;
 
         try {
           const doccov = createDocCov({ resolveExternalTypes });
           specResult = await doccov.analyzeFileWithDiagnostics(entryFile);
-          spinnerInstance.succeed('Documentation analysis complete');
+          process.stdout.write(chalk.green('✓ Documentation analysis complete\n'));
         } catch (analysisError) {
-          spinnerInstance.fail('Failed to analyze documentation coverage');
+          process.stdout.write(chalk.red('✗ Failed to analyze documentation coverage\n'));
           throw analysisError;
         }
 
@@ -217,8 +209,7 @@ export function registerCheckCommand(
           if (allExamples.length === 0) {
             log(chalk.gray('No @example blocks found'));
           } else {
-            const examplesSpinner = spinner('Installing package for examples...');
-            examplesSpinner.start();
+            process.stdout.write(chalk.cyan('> Installing package for examples...\n'));
 
             // Flatten examples for batch execution
             const flatExamples = allExamples.flatMap((e) => e.examples);
@@ -232,10 +223,10 @@ export function registerCheckCommand(
             });
 
             if (!packageResult.installSuccess) {
-              examplesSpinner.fail(`Package install failed: ${packageResult.installError}`);
+              process.stdout.write(chalk.red(`✗ Package install failed: ${packageResult.installError}\n`));
               log(chalk.yellow('Skipping example execution. Ensure the package is built.'));
             } else {
-              examplesSpinner.text = 'Running @example blocks...';
+              process.stdout.write(chalk.cyan('> Running @example blocks...\n'));
 
               let examplesRun = 0;
               let examplesFailed = 0;
@@ -323,9 +314,9 @@ export function registerCheckCommand(
               }
 
               if (examplesFailed > 0) {
-                examplesSpinner.fail(`${examplesFailed}/${examplesRun} example(s) failed`);
+                process.stdout.write(chalk.red(`✗ ${examplesFailed}/${examplesRun} example(s) failed\n`));
               } else {
-                examplesSpinner.succeed(`${examplesRun} example(s) passed`);
+                process.stdout.write(chalk.green(`✓ ${examplesRun} example(s) passed\n`));
               }
             }
           }
@@ -478,19 +469,18 @@ export function registerCheckCommand(
 
                   log(chalk.gray('Run without --dry-run to apply these changes.'));
                 } else {
-                  const applySpinner = spinner('Applying fixes...');
-                  applySpinner.start();
+                  process.stdout.write(chalk.cyan('> Applying fixes...\n'));
 
                   const applyResult = await applyEdits(edits);
 
                   if (applyResult.errors.length > 0) {
-                    applySpinner.warn('Some fixes could not be applied');
+                    process.stdout.write(chalk.yellow('⚠ Some fixes could not be applied\n'));
                     for (const err of applyResult.errors) {
                       error(chalk.red(`  ${err.file}: ${err.error}`));
                     }
                   } else {
-                    applySpinner.succeed(
-                      `Applied ${applyResult.editsApplied} fix(es) to ${applyResult.filesModified} file(s)`,
+                    process.stdout.write(
+                      chalk.green(`✓ Applied ${applyResult.editsApplied} fix(es) to ${applyResult.filesModified} file(s)\n`),
                     );
                   }
 

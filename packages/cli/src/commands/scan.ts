@@ -14,7 +14,6 @@ import {
 } from '@doccov/sdk';
 import chalk from 'chalk';
 import type { Command } from 'commander';
-import ora, { type Ora } from 'ora';
 import { simpleGit } from 'simple-git';
 import { buildCloneUrl, buildDisplayUrl, parseGitHubUrl } from '../utils/github-url';
 import { generateBuildPlan } from '../utils/llm-build-plan';
@@ -23,19 +22,12 @@ export interface ScanCommandDependencies {
   createDocCov?: (
     options: ConstructorParameters<typeof DocCov>[0],
   ) => Pick<DocCov, 'analyzeFileWithDiagnostics'>;
-  spinner?: (text: string) => Ora;
   log?: typeof console.log;
   error?: typeof console.error;
 }
 
 const defaultDependencies: Required<ScanCommandDependencies> = {
   createDocCov: (options) => new DocCov(options),
-  spinner: (text: string) =>
-    ora({
-      text,
-      discardStdin: false, // Prevent stdin interference
-      hideCursor: true, // Hide cursor during spinner
-    }),
   log: console.log,
   error: console.error,
 };
@@ -61,7 +53,7 @@ export function registerScanCommand(
   program: Command,
   dependencies: ScanCommandDependencies = {},
 ): void {
-  const { createDocCov, spinner, log, error } = {
+  const { createDocCov, log, error} = {
     ...defaultDependencies,
     ...dependencies,
   };
@@ -101,8 +93,7 @@ export function registerScanCommand(
         fs.mkdirSync(tempDir, { recursive: true });
 
         // Clone repository
-        const cloneSpinner = spinner(`Cloning ${parsed.owner}/${parsed.repo}...`);
-        cloneSpinner.start();
+        process.stdout.write(chalk.cyan(`> Cloning ${parsed.owner}/${parsed.repo}...\n`));
 
         try {
           // Configure git with timeout and disable credential prompting
@@ -130,9 +121,9 @@ export function registerScanCommand(
             process.env = originalEnv;
           }
 
-          cloneSpinner.succeed(`Cloned ${parsed.owner}/${parsed.repo}`);
+          process.stdout.write(chalk.green(`✓ Cloned ${parsed.owner}/${parsed.repo}\n`));
         } catch (cloneError) {
-          cloneSpinner.fail('Failed to clone repository');
+          process.stdout.write(chalk.red('✗ Failed to clone repository\n'));
           const message = cloneError instanceof Error ? cloneError.message : String(cloneError);
 
           // Check for authentication/permission errors
@@ -169,8 +160,7 @@ export function registerScanCommand(
         if (options.skipInstall) {
           log(chalk.gray('Skipping dependency installation (--skip-install)'));
         } else {
-          const installSpinner = spinner('Installing dependencies...');
-          installSpinner.start();
+          process.stdout.write(chalk.cyan('> Installing dependencies...\n'));
 
           const installErrors: string[] = [];
 
@@ -232,16 +222,16 @@ export function registerScanCommand(
             }
 
             if (installed) {
-              installSpinner.succeed('Dependencies installed');
+              process.stdout.write(chalk.green('✓ Dependencies installed\n'));
             } else {
-              installSpinner.warn('Could not install dependencies (analysis may be limited)');
+              process.stdout.write(chalk.yellow('⚠ Could not install dependencies (analysis may be limited)\n'));
               for (const err of installErrors) {
                 log(chalk.gray(`  ${err}`));
               }
             }
           } catch (outerError) {
             const msg = outerError instanceof Error ? outerError.message : String(outerError);
-            installSpinner.warn(`Could not install dependencies: ${msg.slice(0, 100)}`);
+            process.stdout.write(chalk.yellow(`⚠ Could not install dependencies: ${msg.slice(0, 100)}\n`));
             for (const err of installErrors) {
               log(chalk.gray(`  ${err}`));
             }
@@ -284,8 +274,7 @@ export function registerScanCommand(
         }
 
         // Detect entry point using SDK
-        const entrySpinner = spinner('Detecting entry point...');
-        entrySpinner.start();
+        process.stdout.write(chalk.cyan('> Detecting entry point...\n'));
 
         let entryPath: string;
 
@@ -295,7 +284,7 @@ export function registerScanCommand(
         // Helper: run LLM fallback
         let buildFailed = false;
         const runLlmFallback = async (reason: string): Promise<string | null> => {
-          entrySpinner.text = `${reason}, trying LLM fallback...`;
+          process.stdout.write(chalk.cyan(`> ${reason}, trying LLM fallback...\n`));
 
           const plan = await generateBuildPlan(targetDir);
           if (!plan) {
@@ -340,59 +329,58 @@ export function registerScanCommand(
 
           // Check if this .d.ts entry likely needs a build step first
           if (needsBuildStep) {
-            entrySpinner.text = 'Detected .d.ts entry with WASM indicators...';
+            process.stdout.write(chalk.cyan('> Detected .d.ts entry with WASM indicators...\n'));
 
             const llmEntry = await runLlmFallback('WASM project detected');
             if (llmEntry) {
               entryPath = path.join(targetDir, llmEntry);
               if (buildFailed) {
-                entrySpinner.succeed(`Entry point: ${llmEntry} (using pre-committed declarations)`);
+                process.stdout.write(chalk.green(`✓ Entry point: ${llmEntry} (using pre-committed declarations)\n`));
                 log(
                   chalk.gray(
                     '  Coverage may be limited - generated .d.ts files typically lack JSDoc',
                   ),
                 );
               } else {
-                entrySpinner.succeed(`Entry point: ${llmEntry} (from LLM fallback - WASM project)`);
+                process.stdout.write(chalk.green(`✓ Entry point: ${llmEntry} (from LLM fallback - WASM project)\n`));
               }
             } else {
               // Fall back to original .d.ts entry
               entryPath = path.join(targetDir, entry.path);
-              entrySpinner.succeed(`Entry point: ${entry.path} (from ${entry.source})`);
+              process.stdout.write(chalk.green(`✓ Entry point: ${entry.path} (from ${entry.source})\n`));
               log(
                 chalk.yellow('  ⚠ WASM project detected but no API key - analysis may be limited'),
               );
             }
           } else {
             entryPath = path.join(targetDir, entry.path);
-            entrySpinner.succeed(`Entry point: ${entry.path} (from ${entry.source})`);
+            process.stdout.write(chalk.green(`✓ Entry point: ${entry.path} (from ${entry.source})\n`));
           }
         } catch (entryError) {
           // LLM Fallback for exotic projects (WASM, unusual monorepos, etc.)
           const llmEntry = await runLlmFallback('Heuristics failed');
           if (llmEntry) {
             entryPath = path.join(targetDir, llmEntry);
-            entrySpinner.succeed(`Entry point: ${llmEntry} (from LLM fallback)`);
+            process.stdout.write(chalk.green(`✓ Entry point: ${llmEntry} (from LLM fallback)\n`));
           } else {
-            entrySpinner.fail(
-              'Could not detect entry point (set OPENAI_API_KEY for smart fallback)',
-            );
+            process.stdout.write(chalk.red(
+              '✗ Could not detect entry point (set OPENAI_API_KEY for smart fallback)\n',
+            ));
             throw entryError;
           }
         }
 
         // Run analysis
-        const analyzeSpinner = spinner('Analyzing documentation coverage...');
-        analyzeSpinner.start();
+        process.stdout.write(chalk.cyan('> Analyzing documentation coverage...\n'));
 
         let result: Awaited<ReturnType<DocCov['analyzeFileWithDiagnostics']>>;
         try {
           const resolveExternalTypes = !options.skipResolve;
           const doccov = createDocCov({ resolveExternalTypes });
           result = await doccov.analyzeFileWithDiagnostics(entryPath);
-          analyzeSpinner.succeed('Analysis complete');
+          process.stdout.write(chalk.green('✓ Analysis complete\n'));
         } catch (analysisError) {
-          analyzeSpinner.fail('Analysis failed');
+          process.stdout.write(chalk.red('✗ Analysis failed\n'));
           throw analysisError;
         }
 

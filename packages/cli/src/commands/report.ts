@@ -10,7 +10,6 @@ import {
 import type { OpenPkg } from '@openpkg-ts/spec';
 import chalk from 'chalk';
 import type { Command } from 'commander';
-import ora from 'ora';
 import { computeStats, renderHtml, renderMarkdown } from '../reports';
 
 type OutputFormat = 'markdown' | 'html' | 'json';
@@ -61,16 +60,19 @@ export function registerReportCommand(program: Command): void {
             entryFile = path.resolve(targetDir, entryFile);
           }
 
-          const spinner = ora({
-            text: 'Analyzing...',
-            discardStdin: false, // Prevent stdin interference
-            hideCursor: true, // Hide cursor during spinner
-          }).start();
-          const resolveExternalTypes = !options.skipResolve;
-          const doccov = new DocCov({ resolveExternalTypes });
-          const result = await doccov.analyzeFileWithDiagnostics(entryFile);
-          spinner.succeed('Analysis complete');
-          spec = result.spec;
+          // Use simple text indicator for CPU-intensive analysis (ora can't animate during blocking operations)
+          process.stdout.write(chalk.cyan('> Analyzing...\n'));
+
+          try {
+            const resolveExternalTypes = !options.skipResolve;
+            const doccov = new DocCov({ resolveExternalTypes });
+            const result = await doccov.analyzeFileWithDiagnostics(entryFile);
+            process.stdout.write(chalk.green('✓ Analysis complete\n'));
+            spec = result.spec;
+          } catch (analysisError) {
+            process.stdout.write(chalk.red('✗ Analysis failed\n'));
+            throw analysisError;
+          }
         }
 
         const stats = computeStats(spec);

@@ -1,5 +1,11 @@
 # @doccov/cli
 
+## 0.5.3
+
+### Patch Changes
+
+- chore(cli): cleanup progress feedback
+
 ## 0.5.2
 
 ### Patch Changes

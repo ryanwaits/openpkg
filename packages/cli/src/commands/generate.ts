@@ -10,7 +10,6 @@ import {
 import { normalize, type OpenPkg as OpenPkgSpec, validateSpec } from '@openpkg-ts/spec';
 import chalk from 'chalk';
 import type { Command } from 'commander';
-import ora, { type Ora } from 'ora';
 import { type LoadedDocCovConfig, loadDocCovConfig } from '../config';
 import {
   type FilterOptions as CliFilterOptions,
@@ -23,7 +22,6 @@ export interface GenerateCommandDependencies {
     options: ConstructorParameters<typeof DocCov>[0],
   ) => Pick<DocCov, 'analyzeFileWithDiagnostics'>;
   writeFileSync?: typeof fs.writeFileSync;
-  spinner?: (text: string) => Ora;
   log?: typeof console.log;
   error?: typeof console.error;
 }
@@ -31,12 +29,6 @@ export interface GenerateCommandDependencies {
 const defaultDependencies: Required<GenerateCommandDependencies> = {
   createDocCov: (options) => new DocCov(options),
   writeFileSync: fs.writeFileSync,
-  spinner: (text: string) =>
-    ora({
-      text,
-      discardStdin: false, // Prevent stdin interference
-      hideCursor: true, // Hide cursor during spinner
-    }),
   log: console.log,
   error: console.error,
 };
@@ -79,7 +71,7 @@ export function registerGenerateCommand(
   program: Command,
   dependencies: GenerateCommandDependencies = {},
 ): void {
-  const { createDocCov, writeFileSync, spinner, log, error } = {
+  const { createDocCov, writeFileSync, log, error } = {
     ...defaultDependencies,
     ...dependencies,
   };
@@ -164,8 +156,8 @@ export function registerGenerateCommand(
           log(chalk.gray(`• ${message}`));
         }
 
-        const spinnerInstance = spinner('Generating OpenPkg spec...');
-        spinnerInstance.start();
+        // Use simple text indicator for CPU-intensive analysis (ora can't animate during blocking operations)
+        process.stdout.write(chalk.cyan('> Generating OpenPkg spec...\n'));
 
         let result: GeneratedSpec | undefined;
         try {
@@ -183,9 +175,9 @@ export function registerGenerateCommand(
               : {};
 
           result = await doccov.analyzeFileWithDiagnostics(entryFile, analyzeOptions);
-          spinnerInstance.succeed('Generated OpenPkg spec');
+          process.stdout.write(chalk.green('✓ Generated OpenPkg spec\n'));
         } catch (generationError) {
-          spinnerInstance.fail('Failed to generate spec');
+          process.stdout.write(chalk.red('✗ Failed to generate spec\n'));
           throw generationError;
         }
 
