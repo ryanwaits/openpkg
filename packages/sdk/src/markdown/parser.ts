@@ -128,6 +128,78 @@ export function extractFunctionCalls(code: string): string[] {
 }
 
 /**
+ * A method call extracted from code (e.g., client.methodName())
+ */
+export interface MethodCall {
+  /** The object/variable name (e.g., "client") */
+  objectName: string;
+  /** The method being called (e.g., "evaluateChainhook") */
+  methodName: string;
+  /** Line number within the code block (0-indexed) */
+  line: number;
+  /** The full match context */
+  context: string;
+}
+
+/**
+ * Extract method calls from code
+ * Finds patterns like: obj.method(, this.method(, await client.asyncMethod(
+ */
+export function extractMethodCalls(code: string): MethodCall[] {
+  const calls: MethodCall[] = [];
+  const lines = code.split('\n');
+
+  // Match: identifier.identifier( with optional whitespace and await
+  // Captures: object name, method name
+  const methodCallRegex = /\b([a-zA-Z_$][a-zA-Z0-9_$]*)\s*\.\s*([a-zA-Z_$][a-zA-Z0-9_$]*)\s*\(/g;
+
+  // Keywords to skip as object names
+  const skipObjects = new Set(['console', 'Math', 'JSON', 'Object', 'Array', 'String', 'Number']);
+
+  for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+    const line = lines[lineIndex];
+    let match: RegExpExecArray | null;
+
+    // Reset regex for each line
+    methodCallRegex.lastIndex = 0;
+
+    while ((match = methodCallRegex.exec(line)) !== null) {
+      const objectName = match[1];
+      const methodName = match[2];
+
+      // Skip common built-in objects
+      if (skipObjects.has(objectName)) {
+        continue;
+      }
+
+      calls.push({
+        objectName,
+        methodName,
+        line: lineIndex,
+        context: line.trim(),
+      });
+    }
+  }
+
+  return calls;
+}
+
+/**
+ * Check if code contains a class instantiation (new ClassName())
+ */
+export function hasInstantiation(code: string, className: string): boolean {
+  const regex = new RegExp(`\\bnew\\s+${escapeRegex(className)}\\s*\\(`, 'g');
+  return regex.test(code);
+}
+
+/**
+ * Escape special regex characters in a string
+ */
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
  * Find all references to given export names in markdown files
  */
 export function findExportReferences(

@@ -11,14 +11,18 @@ export type {
   ExportReference,
   MarkdownCodeBlock,
   MarkdownDocFile,
+  MemberChangeType,
 } from './types';
 
 // Parser functions
+export type { MethodCall } from './parser';
 export {
   blockReferencesExport,
   extractFunctionCalls,
   extractImports,
+  extractMethodCalls,
   findExportReferences,
+  hasInstantiation,
   isExecutableLang,
   parseMarkdownFile,
   parseMarkdownFiles,
@@ -33,6 +37,15 @@ export {
   getUndocumentedExports,
   hasDocsForExport,
 } from './analyzer';
+
+// Member diff functions
+export type { MemberChange } from './member-diff';
+export {
+  diffMemberChanges,
+  getMemberChangesForClass,
+  hasAddedMembers,
+  hasRemovedMembers,
+} from './member-diff';
 
 // Diff with docs impact
 export type { DiffWithDocsOptions, SpecDiffWithDocs } from './diff-with-docs';
