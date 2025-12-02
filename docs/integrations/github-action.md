@@ -26,9 +26,21 @@ jobs:
 | `require-examples` | `false` | Require `@example` on all exports |
 | `fail-on-regression` | `false` | Fail if coverage decreased |
 | `fail-on-drift` | `false` | Fail if new drift introduced |
+| `docs-glob` | - | Glob pattern for markdown docs to check for impact |
+| `fail-on-docs-impact` | `false` | Fail if docs need updates due to API changes |
 | `comment-on-pr` | `true` | Post coverage report as PR comment |
 | `working-directory` | `.` | Working directory |
+| `skip-generate` | `false` | Skip spec generation and use existing openpkg.json |
 | `github-token` | `${{ github.token }}` | Token for PR comments |
+
+## Outputs
+
+| Output | Description |
+|--------|-------------|
+| `coverage` | Current coverage percentage |
+| `coverage-delta` | Coverage change compared to base (on PRs) |
+| `drift-count` | Number of drift issues detected |
+| `docs-impact-count` | Number of docs files needing updates |
 
 ## Examples
 
@@ -68,6 +80,34 @@ jobs:
     min-coverage: 85
 ```
 
+### Docs Impact Check
+
+Check if API changes affect your documentation:
+
+```yaml
+- uses: doccov/doccov@v1
+  with:
+    docs-glob: 'docs/**/*.md'
+    fail-on-docs-impact: true
+```
+
+This will fail the check if:
+- Any markdown code blocks reference changed exports
+- New exports don't have corresponding documentation
+
+### Full Protection
+
+```yaml
+- uses: doccov/doccov@v1
+  with:
+    min-coverage: 90
+    require-examples: true
+    fail-on-regression: true
+    fail-on-drift: true
+    docs-glob: 'docs/**/*.md'
+    fail-on-docs-impact: true
+```
+
 ## PR Comments
 
 When `comment-on-pr: true`, the action posts a comment with:
@@ -76,19 +116,43 @@ When `comment-on-pr: true`, the action posts a comment with:
 - Coverage delta (vs base branch)
 - New undocumented exports
 - Drift issues introduced/resolved
+- **Docs impact** (if `docs-glob` is set)
 
 Example comment:
 
 ```markdown
-## DocCov Report
+## 📈 DocCov Report
 
-📈 Coverage: 80% → 85% (+5%)
+| Metric | Value |
+|--------|-------|
+| Coverage | 80% → 85% (+5%) |
+| New exports | 3 |
+| Undocumented | 1 |
+| Drift introduced | 0 |
+| Drift resolved | 2 |
 
-### New Exports Need Docs
-- `createUser` (missing: params, examples)
+## 📚 Documentation Impact
 
-### Drift Resolved
-- `getUser`: Fixed param-mismatch
+### Files Needing Updates
+
+| File | Issues |
+|------|--------|
+| `docs/getting-started.md` | 2 reference(s) |
+| `docs/guides/webhooks.mdx` | 1 reference(s) |
+
+### Missing Documentation
+
+- `createWebhook()` - new export with no docs
+
+<details>
+<summary>View details</summary>
+
+#### docs/getting-started.md
+
+- **Line 45**: `fetchData` (signature changed)
+- **Line 78**: `fetchData` (signature changed)
+
+</details>
 ```
 
 ## Manual Setup

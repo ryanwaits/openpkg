@@ -4,6 +4,37 @@ export {
   hasNonAssertionComments,
   parseAssertions,
 } from './analysis/docs-coverage';
+
+// Markdown/MDX analysis
+export type {
+  DiffWithDocsOptions,
+  DocsChangeType,
+  DocsImpact,
+  DocsImpactReference,
+  DocsImpactResult,
+  ExportReference,
+  MarkdownCodeBlock,
+  MarkdownDocFile,
+  SpecDiffWithDocs,
+} from './markdown';
+export {
+  analyzeDocsImpact,
+  blockReferencesExport,
+  diffSpecWithDocs,
+  extractFunctionCalls,
+  extractImports,
+  findDeprecatedReferences,
+  findExportReferences,
+  findRemovedReferences,
+  getDocumentedExports,
+  getDocsImpactSummary,
+  getUndocumentedExports,
+  hasDocsForExport,
+  hasDocsImpact,
+  isExecutableLang,
+  parseMarkdownFile,
+  parseMarkdownFiles,
+} from './markdown';
 export type { OpenPkgSpec } from './analysis/spec-types';
 export { extractPackageSpec } from './extractor';
 export type { FilterOptions } from './filtering/types';

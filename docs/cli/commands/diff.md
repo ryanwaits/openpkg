@@ -22,6 +22,9 @@ doccov diff <base> <head> [options]
 | `--output <format>` | `text` | Output format: `text` or `json` |
 | `--fail-on-regression` | `false` | Exit 1 if coverage decreased |
 | `--fail-on-drift` | `false` | Exit 1 if new drift introduced |
+| `--docs <glob>` | - | Glob pattern for markdown docs to check for impact (repeatable) |
+| `--fail-on-docs-impact` | `false` | Exit 1 if docs need updates due to API changes |
+| `--ai` | `false` | Use AI for deeper analysis and fix suggestions |
 
 ## Examples
 
@@ -101,6 +104,110 @@ doccov diff base.json head.json --fail-on-drift
 
 ```bash
 doccov diff base.json head.json --fail-on-regression --fail-on-drift
+```
+
+## Docs Impact Analysis
+
+Detect which markdown documentation files are impacted by API changes.
+
+### Check Docs Impact
+
+```bash
+doccov diff base.json head.json --docs "docs/**/*.md"
+```
+
+Output includes a new section:
+
+```
+Docs Impact
+  Scanned 15 file(s), 42 code block(s)
+
+  3 file(s) need updates:
+    📄 docs/getting-started.md
+       Line 45: fetchData (signature changed)
+       Line 78: fetchData (signature changed)
+    📄 docs/guides/webhooks.mdx
+       Line 23: legacyFetch (removed)
+
+  1 new export(s) missing docs:
+    • createWebhook
+```
+
+### Multiple Globs
+
+```bash
+doccov diff base.json head.json \
+  --docs "docs/**/*.md" \
+  --docs "README.md" \
+  --docs "**/*.mdx"
+```
+
+### Fail on Docs Impact
+
+For CI - fail if any docs need updates:
+
+```bash
+doccov diff base.json head.json --docs "docs/**/*.md" --fail-on-docs-impact
+```
+
+### AI-Enhanced Analysis
+
+Get AI-generated summary and fix suggestions:
+
+```bash
+doccov diff base.json head.json --docs "docs/**/*.md" --ai
+```
+
+Requires `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` environment variable.
+
+### Config-Based Docs Paths
+
+Instead of `--docs` flags, configure in `doccov.config.ts`:
+
+```typescript
+export default defineConfig({
+  docs: {
+    include: ['docs/**/*.md', 'README.md'],
+    exclude: ['docs/archive/**'],
+  },
+});
+```
+
+Then just run:
+
+```bash
+doccov diff base.json head.json
+```
+
+### JSON Output with Docs Impact
+
+```bash
+doccov diff base.json head.json --docs "docs/**/*.md" --output json
+```
+
+```json
+{
+  "breaking": ["legacyFetch"],
+  "nonBreaking": ["createWebhook"],
+  "coverageDelta": 5,
+  "docsImpact": {
+    "impactedFiles": [
+      {
+        "file": "docs/getting-started.md",
+        "references": [
+          { "exportName": "fetchData", "line": 45, "changeType": "signature-changed" }
+        ]
+      }
+    ],
+    "missingDocs": ["createWebhook"],
+    "stats": {
+      "filesScanned": 15,
+      "codeBlocksFound": 42,
+      "referencesFound": 28,
+      "impactedReferences": 3
+    }
+  }
+}
 ```
 
 ## Change Categories

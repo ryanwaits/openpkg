@@ -23,6 +23,14 @@ inputs:
     description: 'Fail if new drift is introduced'
     required: false
     default: 'false'
+  docs-glob:
+    description: 'Glob pattern for markdown docs to check for impact (e.g., "docs/**/*.md")'
+    required: false
+    default: ''
+  fail-on-docs-impact:
+    description: 'Fail if docs need updates due to API changes'
+    required: false
+    default: 'false'
   comment-on-pr:
     description: 'Post coverage report as PR comment'
     required: false
@@ -47,6 +55,8 @@ outputs:
     description: 'Coverage change compared to base (on PRs)'
   drift-count:
     description: 'Number of drift issues detected'
+  docs-impact-count:
+    description: 'Number of docs files needing updates'
   
 runs:
   using: 'composite'
@@ -107,10 +117,23 @@ runs:
       working-directory: ${{ inputs.working-directory }}
       run: |
         if [ -f openpkg-base.json ]; then
-          DIFF=$(doccov diff openpkg-base.json openpkg.json --output json)
+          DIFF_ARGS="--output json"
+          if [ -n "${{ inputs.docs-glob }}" ]; then
+            DIFF_ARGS="$DIFF_ARGS --docs '${{ inputs.docs-glob }}'"
+          fi
+          DIFF=$(eval "doccov diff openpkg-base.json openpkg.json $DIFF_ARGS")
           echo "result<<EOF" >> $GITHUB_OUTPUT
           echo "$DIFF" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Check docs impact
+      if: github.event_name == 'pull_request' && inputs.fail-on-docs-impact == 'true' && inputs.docs-glob != ''
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        if [ -f openpkg-base.json ]; then
+          doccov diff openpkg-base.json openpkg.json --docs '${{ inputs.docs-glob }}' --fail-on-docs-impact
         fi
 
     - name: Post PR comment
@@ -131,6 +154,56 @@ runs:
           body += `| Undocumented | ${diff.newUndocumented?.length || 0} |\n`;
           body += `| Drift introduced | ${diff.driftIntroduced || 0} |\n`;
           body += `| Drift resolved | ${diff.driftResolved || 0} |\n`;
+          
+          // Add docs impact section if available
+          if (diff.docsImpact) {
+            const impact = diff.docsImpact;
+            const impactedCount = impact.impactedFiles?.length || 0;
+            const missingCount = impact.missingDocs?.length || 0;
+            
+            if (impactedCount > 0 || missingCount > 0) {
+              body += `\n## 📚 Documentation Impact\n\n`;
+              
+              if (impactedCount > 0) {
+                body += `### Files Needing Updates\n\n`;
+                body += `| File | Issues |\n|------|--------|\n`;
+                for (const file of impact.impactedFiles.slice(0, 10)) {
+                  body += `| \`${file.file}\` | ${file.references.length} reference(s) |\n`;
+                }
+                if (impactedCount > 10) {
+                  body += `\n_...and ${impactedCount - 10} more file(s)_\n`;
+                }
+              }
+              
+              if (missingCount > 0) {
+                body += `\n### Missing Documentation\n\n`;
+                for (const name of impact.missingDocs.slice(0, 5)) {
+                  body += `- \`${name}()\` - new export with no docs\n`;
+                }
+                if (missingCount > 5) {
+                  body += `\n_...and ${missingCount - 5} more_\n`;
+                }
+              }
+              
+              // Expandable details
+              if (impactedCount > 0) {
+                body += `\n<details>\n<summary>View details</summary>\n\n`;
+                for (const file of impact.impactedFiles.slice(0, 5)) {
+                  body += `#### ${file.file}\n\n`;
+                  for (const ref of file.references.slice(0, 5)) {
+                    const label = ref.changeType === 'signature-changed' ? 'signature changed' :
+                                  ref.changeType === 'removed' ? 'removed' : 'deprecated';
+                    body += `- **Line ${ref.line}**: \`${ref.exportName}\` (${label})\n`;
+                  }
+                  if (file.references.length > 5) {
+                    body += `- _...and ${file.references.length - 5} more_\n`;
+                  }
+                  body += `\n`;
+                }
+                body += `</details>\n`;
+              }
+            }
+          }
           
           const { data: comments } = await github.rest.issues.listComments({
             owner: context.repo.owner,

@@ -28,6 +28,12 @@ export default defineConfig({
   
   // Exclude these exports (glob patterns)
   exclude: ['_internal*', 'debug*', '*Helper'],
+  
+  // Markdown documentation paths (for diff --docs)
+  docs: {
+    include: ['docs/**/*.md', 'README.md'],
+    exclude: ['docs/archive/**'],
+  },
 });
 ```
 
@@ -67,6 +73,28 @@ export default defineConfig({
 });
 ```
 
+### docs
+
+Type: `{ include?: string[], exclude?: string[] }`
+
+Configure markdown documentation paths for impact analysis with `doccov diff`.
+
+```typescript
+export default defineConfig({
+  docs: {
+    include: ['docs/**/*.md', 'docs/**/*.mdx', 'README.md'],
+    exclude: ['docs/archive/**', 'docs/deprecated/**'],
+  },
+});
+```
+
+When configured, `doccov diff` automatically analyzes these files without needing `--docs` flags:
+
+```bash
+# Uses docs paths from config
+doccov diff base.json head.json
+```
+
 ## Pattern Syntax
 
 Patterns use glob-style matching:
@@ -102,6 +130,25 @@ export default defineConfig({
 ```typescript
 export default defineConfig({
   exclude: ['test*', 'mock*', '*Mock', '*Stub'],
+});
+```
+
+### Docs Impact Analysis
+
+```typescript
+export default defineConfig({
+  docs: {
+    include: [
+      'docs/**/*.md',
+      'docs/**/*.mdx',
+      'README.md',
+      'CHANGELOG.md',
+    ],
+    exclude: [
+      'docs/archive/**',
+      'docs/internal/**',
+    ],
+  },
 });
 ```
 
@@ -159,5 +206,6 @@ bun run packages/cli/src/cli.ts generate
 
 - [init](./commands/init.md) - Create config file
 - [generate](./commands/generate.md) - Uses config for filtering
+- [diff](./commands/diff.md) - Uses config for docs paths
 - [Filtering](../sdk/filtering.md) - SDK filtering API
 
