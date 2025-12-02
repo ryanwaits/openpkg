@@ -1,5 +1,11 @@
 # @doccov/cli
 
+## 0.5.4
+
+### Patch Changes
+
+- bug(cli): do not check for doccov config in `diff` when no `--docs` flag is supplied
+
 ## 0.5.3
 
 ### Patch Changes

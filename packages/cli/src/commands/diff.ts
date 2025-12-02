@@ -62,8 +62,8 @@ export function registerDiffCommand(
         // If no --docs flag, try to load from config
         if (!docsPatterns || docsPatterns.length === 0) {
           const configResult = await loadDocCovConfig(process.cwd());
-          if (configResult.config?.docs?.include) {
-            docsPatterns = configResult.config.docs.include;
+          if (configResult?.docs?.include) {
+            docsPatterns = configResult.docs.include;
             log(chalk.gray(`Using docs patterns from config: ${docsPatterns.join(', ')}`));
           }
         }
