@@ -3,8 +3,22 @@ name: DocCov
 on:
   pull_request:
     branches: [main, master]
+    paths:
+      - 'packages/sdk/**'
+      - 'packages/spec/**'
+      - 'packages/cli/**'
+      - 'package.json'
+      - 'bun.lock'
+      - '.github/workflows/doccov.yml'
   push:
     branches: [main, master]
+    paths:
+      - 'packages/sdk/**'
+      - 'packages/spec/**'
+      - 'packages/cli/**'
+      - 'package.json'
+      - 'bun.lock'
+      - '.github/workflows/doccov.yml'
 
 jobs:
   check:

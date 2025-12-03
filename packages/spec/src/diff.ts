@@ -1,4 +1,22 @@
-import type { OpenPkg, SpecExport } from './types';
+import type { OpenPkg, SpecExport, SpecExportKind } from './types';
+
+export type BreakingSeverity = 'high' | 'medium' | 'low';
+
+export interface CategorizedBreaking {
+  id: string;
+  name: string;
+  kind: SpecExportKind;
+  severity: BreakingSeverity;
+  reason: string;
+}
+
+/** Minimal member change info for categorization (avoids circular dep with SDK) */
+export interface MemberChangeInfo {
+  className: string;
+  memberName: string;
+  memberKind: 'method' | 'property' | 'accessor' | 'constructor';
+  changeType: 'added' | 'removed' | 'signature-changed';
+}
 
 export type SpecDiff = {
   // Structural changes
@@ -191,4 +209,104 @@ function sortKeys(value: unknown): unknown {
     result[key] = sortKeys(val);
   }
   return result;
+}
+
+/**
+ * Categorize breaking changes by severity
+ *
+ * @param breaking - Array of breaking change IDs
+ * @param oldSpec - Previous spec version
+ * @param newSpec - Current spec version
+ * @param memberChanges - Optional member-level changes for classes
+ * @returns Categorized breaking changes sorted by severity (high first)
+ */
+export function categorizeBreakingChanges(
+  breaking: string[],
+  oldSpec: OpenPkg,
+  newSpec: OpenPkg,
+  memberChanges?: MemberChangeInfo[],
+): CategorizedBreaking[] {
+  const oldExportMap = toExportMap(oldSpec.exports);
+  const newExportMap = toExportMap(newSpec.exports);
+
+  const categorized: CategorizedBreaking[] = [];
+
+  for (const id of breaking) {
+    const oldExport = oldExportMap.get(id);
+    const newExport = newExportMap.get(id);
+
+    // Removed entirely
+    if (!newExport) {
+      const kind = oldExport?.kind ?? 'variable';
+      categorized.push({
+        id,
+        name: oldExport?.name ?? id,
+        kind,
+        severity: kind === 'function' || kind === 'class' ? 'high' : 'medium',
+        reason: 'removed',
+      });
+      continue;
+    }
+
+    // Class with member changes
+    if (oldExport?.kind === 'class' && memberChanges?.length) {
+      const classChanges = memberChanges.filter((mc) => mc.className === id);
+      if (classChanges.length > 0) {
+        const hasConstructorChange = classChanges.some((mc) => mc.memberKind === 'constructor');
+        const hasMethodRemoval = classChanges.some(
+          (mc) => mc.changeType === 'removed' && mc.memberKind === 'method',
+        );
+
+        categorized.push({
+          id,
+          name: oldExport.name,
+          kind: 'class',
+          severity: hasConstructorChange || hasMethodRemoval ? 'high' : 'medium',
+          reason: hasConstructorChange
+            ? 'constructor changed'
+            : hasMethodRemoval
+              ? 'methods removed'
+              : 'methods changed',
+        });
+        continue;
+      }
+    }
+
+    // Interface/type changed
+    if (oldExport?.kind === 'interface' || oldExport?.kind === 'type') {
+      categorized.push({
+        id,
+        name: oldExport.name,
+        kind: oldExport.kind,
+        severity: 'medium',
+        reason: 'type definition changed',
+      });
+      continue;
+    }
+
+    // Function signature changed
+    if (oldExport?.kind === 'function') {
+      categorized.push({
+        id,
+        name: oldExport.name,
+        kind: 'function',
+        severity: 'high',
+        reason: 'signature changed',
+      });
+      continue;
+    }
+
+    // Default fallback
+    categorized.push({
+      id,
+      name: oldExport?.name ?? id,
+      kind: oldExport?.kind ?? 'variable',
+      severity: 'low',
+      reason: 'changed',
+    });
+  }
+
+  // Sort by severity: high > medium > low
+  const severityOrder: Record<BreakingSeverity, number> = { high: 0, medium: 1, low: 2 };
+  return categorized.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
 }

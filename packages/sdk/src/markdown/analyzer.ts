@@ -19,13 +19,18 @@ import type {
 /**
  * Map spec diff categories to change types
  */
-function getChangeType(exportName: string, diff: SpecDiff): DocsChangeType | null {
+function getChangeType(
+  exportName: string,
+  diff: SpecDiff,
+  newExportNames: string[],
+): DocsChangeType | null {
   if (diff.breaking.includes(exportName)) {
+    // Check if removed (not in new spec) vs signature changed (still exists)
+    if (!newExportNames.includes(exportName)) {
+      return 'removed';
+    }
     return 'signature-changed';
   }
-  // Check if it's in breaking but was removed (not just changed)
-  // For now, treat all breaking as signature-changed
-  // In future, we could check old vs new spec to distinguish
   return null;
 }
 
@@ -153,7 +158,7 @@ export function analyzeDocsImpact(
       if (exportsWithoutMemberChanges.length > 0) {
         const refs = findExportReferences([{ ...mdFile, codeBlocks: [block] }], exportsWithoutMemberChanges);
         for (const ref of refs) {
-          const changeType = getChangeType(ref.exportName, diff);
+          const changeType = getChangeType(ref.exportName, diff, newExportNames);
           if (!changeType) continue;
 
           const refKey = `${ref.file}:${ref.line}:${ref.exportName}`;
@@ -171,20 +176,25 @@ export function analyzeDocsImpact(
     }
   }
 
-  // Find new exports without documentation
-  const documentedExports = new Set<string>();
+  // Find ALL exports that are documented in markdown files
+  // Check all exports from the spec, not just new ones
+  const documentedExportsSet = new Set<string>();
   for (const file of markdownFiles) {
     for (const block of file.codeBlocks) {
-      // Simple check: if export name appears in code, consider it documented
+      // Check if export name appears in code block
       for (const exportName of newExportNames) {
         if (block.code.includes(exportName)) {
-          documentedExports.add(exportName);
+          documentedExportsSet.add(exportName);
         }
       }
     }
   }
 
-  const missingDocs = diff.nonBreaking.filter((name) => !documentedExports.has(name));
+  // New exports (from this diff) that are undocumented
+  const missingDocs = diff.nonBreaking.filter((name) => !documentedExportsSet.has(name));
+
+  // ALL exports that are undocumented (holistic view)
+  const allUndocumented = newExportNames.filter((name) => !documentedExportsSet.has(name));
 
   // Calculate stats
   const totalCodeBlocks = markdownFiles.reduce((sum, f) => sum + f.codeBlocks.length, 0);
@@ -199,11 +209,14 @@ export function analyzeDocsImpact(
   return {
     impactedFiles: Array.from(impactByFile.values()),
     missingDocs,
+    allUndocumented,
     stats: {
       filesScanned: markdownFiles.length,
       codeBlocksFound: totalCodeBlocks,
       referencesFound: allReferences.length,
       impactedReferences,
+      totalExports: newExportNames.length,
+      documentedExports: documentedExportsSet.size,
     },
   };
 }

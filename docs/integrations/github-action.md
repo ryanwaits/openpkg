@@ -24,10 +24,9 @@ jobs:
 |-------|---------|-------------|
 | `min-coverage` | `80` | Minimum coverage percentage |
 | `require-examples` | `false` | Require `@example` on all exports |
-| `fail-on-regression` | `false` | Fail if coverage decreased |
-| `fail-on-drift` | `false` | Fail if new drift introduced |
+| `strict` | - | Fail conditions (comma-separated): `regression`, `drift`, `docs-impact`, `breaking`, `undocumented`, `all` |
 | `docs-glob` | - | Glob pattern for markdown docs to check for impact |
-| `fail-on-docs-impact` | `false` | Fail if docs need updates due to API changes |
+| `format` | `github` | Output format for diff: `text`, `json`, `github` |
 | `comment-on-pr` | `true` | Post coverage report as PR comment |
 | `working-directory` | `.` | Working directory |
 | `skip-generate` | `false` | Skip spec generation and use existing openpkg.json |
@@ -59,7 +58,7 @@ jobs:
   with:
     min-coverage: 90
     require-examples: true
-    fail-on-drift: true
+    strict: drift,undocumented
 ```
 
 ### PR Diff
@@ -67,7 +66,7 @@ jobs:
 ```yaml
 - uses: doccov/doccov@v1
   with:
-    fail-on-regression: true
+    strict: regression
     comment-on-pr: true
 ```
 
@@ -88,7 +87,7 @@ Check if API changes affect your documentation:
 - uses: doccov/doccov@v1
   with:
     docs-glob: 'docs/**/*.md'
-    fail-on-docs-impact: true
+    strict: docs-impact
 ```
 
 This will fail the check if:
@@ -102,10 +101,8 @@ This will fail the check if:
   with:
     min-coverage: 90
     require-examples: true
-    fail-on-regression: true
-    fail-on-drift: true
+    strict: all
     docs-glob: 'docs/**/*.md'
-    fail-on-docs-impact: true
 ```
 
 ## PR Comments
@@ -215,11 +212,19 @@ jobs:
       - name: Checkout head
         run: git checkout ${{ github.head_ref }}
       
-      # Compare
-      - name: Diff specs
+      # Output GitHub annotations (shows inline in PR)
+      - name: Diff with annotations
+        run: npx @doccov/cli diff base.json head.json --docs "docs/**/*.md" --format github
+      
+      # Fail on conditions
+      - name: Strict check
+        run: npx @doccov/cli diff base.json head.json --strict regression,drift
+          
+      # Get JSON for PR comment
+      - name: Get diff JSON
         id: diff
         run: |
-          npx @doccov/cli diff base.json head.json --output json > diff.json
+          npx @doccov/cli diff base.json head.json --format json > diff.json
           echo "delta=$(jq .coverageDelta diff.json)" >> $GITHUB_OUTPUT
           
       - name: Comment on PR

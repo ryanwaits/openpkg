@@ -1,5 +1,15 @@
 # @doccov/cli
 
+## 0.5.7
+
+### Patch Changes
+
+- show holistic documentation coverage percentage in diff output
+- Updated dependencies
+- Updated dependencies
+  - @openpkg-ts/spec@0.4.0
+  - @doccov/sdk@0.5.7
+
 ## 0.5.6
 
 ### Patch Changes

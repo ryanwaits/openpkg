@@ -5,7 +5,7 @@
  * to identify granular changes like method additions/removals
  */
 
-import type { OpenPkg, SpecExport, SpecMember, SpecSignature } from '@openpkg-ts/spec';
+import type { OpenPkg, SpecExport, SpecMember, SpecSchema, SpecSignature } from '@openpkg-ts/spec';
 
 export type MemberChangeType = 'added' | 'removed' | 'signature-changed';
 
@@ -102,7 +102,20 @@ export function diffMemberChanges(
     }
   }
 
-  return changes;
+  return deduplicateMemberChanges(changes);
+}
+
+/**
+ * Remove duplicate member changes (same class, member, and change type)
+ */
+function deduplicateMemberChanges(changes: MemberChange[]): MemberChange[] {
+  const seen = new Set<string>();
+  return changes.filter((mc) => {
+    const key = `${mc.className}:${mc.memberName}:${mc.changeType}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 /**
@@ -150,7 +163,7 @@ function getMemberKind(member: SpecMember): MemberChange['memberKind'] {
 }
 
 /**
- * Format a member signature for display
+ * Format a member signature for display with parameter types
  */
 function formatSignature(member: SpecMember): string {
   if (!member.signatures?.length) {
@@ -158,12 +171,48 @@ function formatSignature(member: SpecMember): string {
   }
 
   const sig = member.signatures[0];
-  const params = sig.parameters?.map((p) => {
-    const optional = p.required === false ? '?' : '';
-    return `${p.name}${optional}`;
-  }) ?? [];
+  const params =
+    sig.parameters?.map((p) => {
+      const optional = p.required === false ? '?' : '';
+      const typeName = extractTypeName(p.schema);
+      return typeName ? `${p.name}${optional}: ${typeName}` : `${p.name}${optional}`;
+    }) ?? [];
 
   return `${member.name}(${params.join(', ')})`;
+}
+
+/**
+ * Extract a short type name from a schema for display
+ */
+function extractTypeName(schema: SpecSchema): string | undefined {
+  if (!schema || typeof schema !== 'object') {
+    return undefined;
+  }
+
+  const s = schema as Record<string, unknown>;
+
+  // Handle $ref (e.g., "#/types/User" -> "User")
+  if (typeof s.$ref === 'string') {
+    const parts = s.$ref.split('/');
+    return parts[parts.length - 1];
+  }
+
+  // Handle primitive types
+  if (typeof s.type === 'string') {
+    return s.type;
+  }
+
+  // Handle tsType if available
+  if (typeof s.tsType === 'string') {
+    // Shorten long type names
+    const tsType = s.tsType as string;
+    if (tsType.length > 30) {
+      return tsType.slice(0, 27) + '...';
+    }
+    return tsType;
+  }
+
+  return undefined;
 }
 
 /**

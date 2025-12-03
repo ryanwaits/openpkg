@@ -4,7 +4,13 @@
  * Wraps the base diffSpec() and adds markdown impact detection
  */
 
-import { diffSpec, type OpenPkg, type SpecDiff } from '@openpkg-ts/spec';
+import {
+  categorizeBreakingChanges,
+  diffSpec,
+  type CategorizedBreaking,
+  type OpenPkg,
+  type SpecDiff,
+} from '@openpkg-ts/spec';
 import { analyzeDocsImpact } from './analyzer';
 import { diffMemberChanges, type MemberChange } from './member-diff';
 import type { DocsImpactResult, MarkdownDocFile } from './types';
@@ -17,6 +23,8 @@ export interface SpecDiffWithDocs extends SpecDiff {
   docsImpact?: DocsImpactResult;
   /** Member-level changes for classes (methods added/removed/changed) */
   memberChanges?: MemberChange[];
+  /** Breaking changes categorized by severity (high/medium/low) */
+  categorizedBreaking?: CategorizedBreaking[];
 }
 
 /**
@@ -61,11 +69,20 @@ export function diffSpecWithDocs(
   // Get member-level changes for classes marked as breaking
   const memberChanges = diffMemberChanges(oldSpec, newSpec, baseDiff.breaking);
 
+  // Categorize breaking changes by severity
+  const categorizedBreaking = categorizeBreakingChanges(
+    baseDiff.breaking,
+    oldSpec,
+    newSpec,
+    memberChanges,
+  );
+
   // If no markdown files, return base diff with member changes
   if (!options.markdownFiles?.length) {
     return {
       ...baseDiff,
       memberChanges: memberChanges.length > 0 ? memberChanges : undefined,
+      categorizedBreaking: categorizedBreaking.length > 0 ? categorizedBreaking : undefined,
     };
   }
 
@@ -84,6 +101,7 @@ export function diffSpecWithDocs(
     ...baseDiff,
     docsImpact,
     memberChanges: memberChanges.length > 0 ? memberChanges : undefined,
+    categorizedBreaking: categorizedBreaking.length > 0 ? categorizedBreaking : undefined,
   };
 }
 

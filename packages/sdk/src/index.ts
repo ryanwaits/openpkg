@@ -15,6 +15,7 @@ export type {
   ExportReference,
   MarkdownCodeBlock,
   MarkdownDocFile,
+  MemberChange,
   SpecDiffWithDocs,
 } from './markdown';
 export {

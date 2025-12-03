@@ -102,8 +102,10 @@ export interface DocsImpact {
 export interface DocsImpactResult {
   /** Files with impacted references */
   impactedFiles: DocsImpact[];
-  /** New exports that have no documentation */
+  /** New exports (from this diff) that have no documentation */
   missingDocs: string[];
+  /** ALL exports from the spec that have no documentation in the scanned files */
+  allUndocumented: string[];
   /** Statistics */
   stats: {
     /** Total markdown files scanned */
@@ -114,6 +116,10 @@ export interface DocsImpactResult {
     referencesFound: number;
     /** References impacted by changes */
     impactedReferences: number;
+    /** Total exports in the spec */
+    totalExports: number;
+    /** Exports found documented in markdown */
+    documentedExports: number;
   };
 }
 

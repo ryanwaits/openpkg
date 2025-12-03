@@ -1,5 +1,11 @@
 # @openpkg-ts/spec
 
+## 0.4.0
+
+### Minor Changes
+
+- add allUndocumented and totalExports/documentedExports stats to DocsImpactResults
+
 ## 0.3.0
 
 ### Minor Changes

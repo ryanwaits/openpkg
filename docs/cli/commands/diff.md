@@ -19,12 +19,30 @@ doccov diff <base> <head> [options]
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `--output <format>` | `text` | Output format: `text` or `json` |
-| `--fail-on-regression` | `false` | Exit 1 if coverage decreased |
-| `--fail-on-drift` | `false` | Exit 1 if new drift introduced |
+| `--format <format>` | `text` | Output format: `text`, `json`, `github`, `report` |
+| `--strict <options>` | - | Fail conditions (comma-separated): `regression`, `drift`, `docs-impact`, `breaking`, `undocumented`, `all` |
 | `--docs <glob>` | - | Glob pattern for markdown docs to check for impact (repeatable) |
-| `--fail-on-docs-impact` | `false` | Exit 1 if docs need updates due to API changes |
 | `--ai` | `false` | Use AI for deeper analysis and fix suggestions |
+
+### Output Formats
+
+| Format | Description | Use Case |
+|--------|-------------|----------|
+| `text` | Human-readable CLI output | Local dev, quick checks |
+| `json` | Structured JSON object | AI/LLM consumption, programmatic use |
+| `github` | GitHub Actions annotations | CI inline feedback in PR diffs |
+| `report` | HTML report | Documentation, sharing |
+
+### Strict Options
+
+| Option | Description |
+|--------|-------------|
+| `regression` | Fail if coverage decreased |
+| `drift` | Fail if new drift introduced |
+| `docs-impact` | Fail if docs need updates (requires `--docs`) |
+| `breaking` | Fail if any breaking changes detected |
+| `undocumented` | Fail if new exports lack documentation |
+| `all` | Enable all strict checks |
 
 ## Examples
 
@@ -38,72 +56,91 @@ Output:
 
 ```
 DocCov Diff Report
-────────────────────────────────────
+────────────────────────────────────────
 
 Coverage
-  80% → 85% (+5%)
+  80% ↑ 85% (+5%)
 
 API Changes
-  2 breaking change(s)
-    - oldFunction
-    - deprecatedHelper
-  3 new export(s)
-    + createUser
-    + updateUser
-    + deleteUser
+  ChainhooksClient [BREAKING]
+    ✖ evaluateChainhook() → Use replayChainhook instead
+    ~ bulkEnableChainhooks() signature changed
+        was: bulkEnableChainhooks(filters)
+        now: bulkEnableChainhooks(options)
+    + deleteAllChainhooks(), replayChainhook()
 
-Docs Health
-  1 new undocumented export(s)
-    ! deleteUser
-  2 export(s) improved docs
+  Function Changes (1):
+    ✖ legacyFetch (removed)
 
-Drift
-  +1 new drift issue(s)
-  -2 drift issue(s) resolved
+  New Exports (3) (1 undocumented)
+    + createUser, updateUser, deleteUser
+
+  Drift: +1 drift, -2 resolved
 ```
 
 ### JSON Output
 
 ```bash
-doccov diff old.json new.json --output json
+doccov diff old.json new.json --format json
 ```
 
 ```json
 {
-  "breaking": ["oldFunction", "deprecatedHelper"],
+  "breaking": ["legacyFetch", "ChainhooksClient"],
   "nonBreaking": ["createUser", "updateUser", "deleteUser"],
-  "docsOnly": [],
   "coverageDelta": 5,
   "oldCoverage": 80,
   "newCoverage": 85,
+  "categorizedBreaking": [
+    { "id": "legacyFetch", "name": "legacyFetch", "kind": "function", "severity": "high", "reason": "removed" }
+  ],
+  "memberChanges": [
+    { "className": "ChainhooksClient", "memberName": "evaluateChainhook", "changeType": "removed", "suggestion": "Use replayChainhook instead" }
+  ],
   "newUndocumented": ["deleteUser"],
-  "improvedExports": ["createUser", "updateUser"],
-  "regressedExports": [],
   "driftIntroduced": 1,
   "driftResolved": 2
 }
 ```
 
-### Fail on Regression
+### GitHub Annotations
 
-For CI - fail if coverage dropped:
+For CI - output annotations that show inline in PR diffs:
 
 ```bash
-doccov diff base.json head.json --fail-on-regression
+doccov diff base.json head.json --format github
 ```
 
-### Fail on New Drift
-
-Fail if any new drift issues:
-
-```bash
-doccov diff base.json head.json --fail-on-drift
+```
+::warning file=docs/evaluate.mdx,line=30,title=API Change::evaluateChainhook() removed → Use replayChainhook instead
+::error title=Breaking Change::legacyFetch - removed
+::notice title=Missing Documentation::New export deleteUser needs documentation
 ```
 
-### Combined
+### Strict Mode
+
+Fail CI on specific conditions:
 
 ```bash
-doccov diff base.json head.json --fail-on-regression --fail-on-drift
+# Fail if coverage dropped
+doccov diff base.json head.json --strict regression
+
+# Fail if any breaking changes
+doccov diff base.json head.json --strict breaking
+
+# Fail on multiple conditions
+doccov diff base.json head.json --strict regression,drift,undocumented
+
+# Fail on all conditions
+doccov diff base.json head.json --strict all
+```
+
+### HTML Report
+
+Generate a standalone HTML report:
+
+```bash
+doccov diff base.json head.json --format report > report.html
 ```
 
 ## Docs Impact Analysis
@@ -116,21 +153,26 @@ Detect which markdown documentation files are impacted by API changes.
 doccov diff base.json head.json --docs "docs/**/*.md"
 ```
 
-Output includes a new section:
+Output:
 
 ```
-Docs Impact
-  Scanned 15 file(s), 42 code block(s)
+Docs Requiring Updates
+  Scanned 15 files, 42 code blocks
 
-  3 file(s) need updates:
-    📄 docs/getting-started.md
-       Line 45: fetchData (signature changed)
-       Line 78: fetchData (signature changed)
-    📄 docs/guides/webhooks.mdx
-       Line 23: legacyFetch (removed)
+  evaluate.mdx (2 issues)
+    L30: evaluateChainhook() → Use replayChainhook instead
+    L44: evaluateChainhook() → Use replayChainhook instead
 
-  1 new export(s) missing docs:
-    • createWebhook
+  create.mdx (4 issues)
+    L78: bulkEnableChainhooks() ~ signature changed
+    L96: bulkEnableChainhooks() ~ signature changed
+    ... and 2 more
+
+  5 file(s) with class instantiation to review:
+    migration.mdx, update.mdx, secrets.mdx, ...
+
+  Missing documentation for 1 new export(s):
+    deleteUser
 ```
 
 ### Multiple Globs
@@ -144,10 +186,8 @@ doccov diff base.json head.json \
 
 ### Fail on Docs Impact
 
-For CI - fail if any docs need updates:
-
 ```bash
-doccov diff base.json head.json --docs "docs/**/*.md" --fail-on-docs-impact
+doccov diff base.json head.json --docs "docs/**/*.md" --strict docs-impact
 ```
 
 ### AI-Enhanced Analysis
@@ -162,7 +202,7 @@ Requires `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` environment variable.
 
 ### Config-Based Docs Paths
 
-Instead of `--docs` flags, configure in `doccov.config.ts`:
+Configure in `doccov.config.ts`:
 
 ```typescript
 export default defineConfig({
@@ -179,96 +219,60 @@ Then just run:
 doccov diff base.json head.json
 ```
 
-### JSON Output with Docs Impact
-
-```bash
-doccov diff base.json head.json --docs "docs/**/*.md" --output json
-```
-
-```json
-{
-  "breaking": ["legacyFetch"],
-  "nonBreaking": ["createWebhook"],
-  "coverageDelta": 5,
-  "docsImpact": {
-    "impactedFiles": [
-      {
-        "file": "docs/getting-started.md",
-        "references": [
-          { "exportName": "fetchData", "line": 45, "changeType": "signature-changed" }
-        ]
-      }
-    ],
-    "missingDocs": ["createWebhook"],
-    "stats": {
-      "filesScanned": 15,
-      "codeBlocksFound": 42,
-      "referencesFound": 28,
-      "impactedReferences": 3
-    }
-  }
-}
-```
-
 ## Change Categories
 
-### Breaking Changes
+### Breaking Changes (High Severity)
 
-Exports removed or with incompatible signature changes.
+- Functions removed
+- Class methods removed
+- Constructor signature changed
+
+### Breaking Changes (Medium Severity)
+
+- Method signature changed
+- Interface/type definition changed
 
 ### Non-Breaking Changes
 
-New exports added.
-
-### Docs-Only Changes
-
-Only documentation changed, API unchanged.
+- New exports added
 
 ### Coverage Delta
 
 Difference in package-wide coverage score.
 
-### New Undocumented
-
-New exports that lack documentation.
-
-### Improved/Regressed Exports
-
-Individual exports with better or worse coverage.
-
-### Drift Changes
-
-Count of new drift issues introduced or resolved.
-
 ## Exit Codes
 
 | Code | Meaning |
 |------|---------|
-| 0 | Success (or no `--fail-on-*` flags) |
-| 1 | Regression or drift (with corresponding flags) |
+| 0 | Success (or no `--strict` options) |
+| 1 | Strict condition failed |
 
 ## CI/CD Integration
 
-### GitHub Actions PR Check
+### GitHub Actions with Annotations
 
 ```yaml
-- name: Generate head spec
-  run: doccov generate -o head.json
+- name: Generate specs
+  run: |
+    doccov generate -o head.json
+    git fetch origin main
+    git checkout origin/main -- openpkg.json
+    mv openpkg.json base.json
 
-- name: Download base spec
-  run: curl -o base.json https://raw.githubusercontent.com/$REPO/main/openpkg.json
+- name: Diff with annotations
+  run: doccov diff base.json head.json --docs "docs/**/*.md" --format github
 
-- name: Diff specs
-  run: doccov diff base.json head.json --fail-on-regression
+- name: Strict check
+  run: doccov diff base.json head.json --strict regression,drift
 ```
 
-### PR Comment
+### PR Comment with JSON
 
 ```yaml
 - name: Diff specs
   id: diff
   run: |
-    doccov diff base.json head.json --output json > diff.json
+    doccov diff base.json head.json --format json > diff.json
     echo "delta=$(jq .coverageDelta diff.json)" >> $GITHUB_OUTPUT
 
 - name: Comment on PR
@@ -289,13 +293,13 @@ Count of new drift issues introduced or resolved.
 
 ```bash
 # Generate two specs
-bun run packages/cli/src/cli.ts generate tests/fixtures/simple-math.ts -o /tmp/v1.json
+doccov generate tests/fixtures/v1 -o /tmp/v1.json
+doccov generate tests/fixtures/v2 -o /tmp/v2.json
 
-# Modify fixture, generate again
-bun run packages/cli/src/cli.ts generate tests/fixtures/simple-math.ts -o /tmp/v2.json
-
-# Diff
-bun run packages/cli/src/cli.ts diff /tmp/v1.json /tmp/v2.json
+# Diff with different formats
+doccov diff /tmp/v1.json /tmp/v2.json --format text
+doccov diff /tmp/v1.json /tmp/v2.json --format json
+doccov diff /tmp/v1.json /tmp/v2.json --format github
 ```
 
 ## See Also
@@ -303,4 +307,3 @@ bun run packages/cli/src/cli.ts diff /tmp/v1.json /tmp/v2.json
 - [Diffing](../../spec/diffing.md) - SDK diff API
 - [GitHub Action](../../integrations/github-action.md) - Full PR integration
 - [generate](./generate.md) - Generate specs to diff
-

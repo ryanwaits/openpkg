@@ -15,22 +15,18 @@ inputs:
     description: 'Require @example blocks on all exports'
     required: false
     default: 'false'
-  fail-on-regression:
-    description: 'Fail if coverage regresses compared to base branch'
+  strict:
+    description: 'Fail conditions (comma-separated): regression, drift, docs-impact, breaking, undocumented, all'
     required: false
-    default: 'false'
-  fail-on-drift:
-    description: 'Fail if new drift is introduced'
-    required: false
-    default: 'false'
+    default: ''
   docs-glob:
     description: 'Glob pattern for markdown docs to check for impact (e.g., "docs/**/*.md")'
     required: false
     default: ''
-  fail-on-docs-impact:
-    description: 'Fail if docs need updates due to API changes'
+  format:
+    description: 'Output format for diff: text, json, github'
     required: false
-    default: 'false'
+    default: 'github'
   comment-on-pr:
     description: 'Post coverage report as PR comment'
     required: false
@@ -117,7 +113,8 @@ runs:
       working-directory: ${{ inputs.working-directory }}
       run: |
         if [ -f openpkg-base.json ]; then
-          DIFF_ARGS="--output json"
+          # Get JSON output for PR comment
+          DIFF_ARGS="--format json"
           if [ -n "${{ inputs.docs-glob }}" ]; then
             DIFF_ARGS="$DIFF_ARGS --docs '${{ inputs.docs-glob }}'"
           fi
@@ -127,13 +124,30 @@ runs:
           echo "EOF" >> $GITHUB_OUTPUT
         fi
 
-    - name: Check docs impact
-      if: github.event_name == 'pull_request' && inputs.fail-on-docs-impact == 'true' && inputs.docs-glob != ''
+    - name: Output GitHub annotations (PRs only)
+      if: github.event_name == 'pull_request'
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: |
         if [ -f openpkg-base.json ]; then
-          doccov diff openpkg-base.json openpkg.json --docs '${{ inputs.docs-glob }}' --fail-on-docs-impact
+          DIFF_ARGS="--format github"
+          if [ -n "${{ inputs.docs-glob }}" ]; then
+            DIFF_ARGS="$DIFF_ARGS --docs '${{ inputs.docs-glob }}'"
+          fi
+          eval "doccov diff openpkg-base.json openpkg.json $DIFF_ARGS" || true
+        fi
+
+    - name: Check strict conditions
+      if: github.event_name == 'pull_request' && inputs.strict != ''
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        if [ -f openpkg-base.json ]; then
+          DIFF_ARGS="--format text --strict '${{ inputs.strict }}'"
+          if [ -n "${{ inputs.docs-glob }}" ]; then
+            DIFF_ARGS="$DIFF_ARGS --docs '${{ inputs.docs-glob }}'"
+          fi
+          eval "doccov diff openpkg-base.json openpkg.json $DIFF_ARGS"
         fi
 
     - name: Post PR comment

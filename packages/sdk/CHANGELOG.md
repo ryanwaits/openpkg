@@ -1,5 +1,13 @@
 # @doccov/sdk
 
+## 0.5.7
+
+### Patch Changes
+
+- return all undocumented exports (not just new) in docs impact analysis
+- Updated dependencies
+  - @openpkg-ts/spec@0.4.0
+
 ## 0.5.6
 
 ### Patch Changes
