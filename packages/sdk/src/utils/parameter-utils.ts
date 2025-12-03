@@ -39,6 +39,264 @@ const BUILTIN_TYPE_SCHEMAS: Record<string, Record<string, unknown>> = {
   BigUint64Array: { type: 'string', format: 'byte' },
 };
 
+/**
+ * TypeBox primitive type mappings to JSON Schema
+ */
+const TYPEBOX_PRIMITIVE_MAP: Record<string, Record<string, unknown>> = {
+  TString: { type: 'string' },
+  TNumber: { type: 'number' },
+  TBoolean: { type: 'boolean' },
+  TInteger: { type: 'integer' },
+  TNull: { type: 'null' },
+  TAny: {},
+  TUnknown: {},
+  TNever: { not: {} },
+  TVoid: { type: 'null' },
+  TUndefined: { type: 'null' },
+};
+
+/**
+ * Check if a symbol name matches TypeBox schema type pattern (T* prefix)
+ */
+function isTypeBoxSchemaType(symbolName: string): boolean {
+  return /^T[A-Z][a-zA-Z]*$/.test(symbolName);
+}
+
+/**
+ * Extract JSON Schema from TypeBox schema types (TObject, TArray, TUnion, etc.)
+ * Returns null if the type cannot be converted.
+ */
+function formatTypeBoxSchema(
+  type: TS.Type,
+  typeChecker: TS.TypeChecker,
+  typeRefs: Map<string, string>,
+  referencedTypes: Set<string> | undefined,
+  visited: Set<string>,
+): Record<string, unknown> | null {
+  const symbol = type.getSymbol();
+  if (!symbol) return null;
+
+  const symbolName = symbol.getName();
+
+  // Check for primitive TypeBox types
+  if (TYPEBOX_PRIMITIVE_MAP[symbolName]) {
+    return { ...TYPEBOX_PRIMITIVE_MAP[symbolName] };
+  }
+
+  // Get type arguments for generic TypeBox types
+  const objectType = type as TS.ObjectType;
+  if (!(objectType.objectFlags & ts.ObjectFlags.Reference)) {
+    return null;
+  }
+
+  const typeRef = type as TS.TypeReference;
+  const typeArgs = typeRef.typeArguments;
+
+  switch (symbolName) {
+    case 'TObject': {
+      // TObject<Props> - extract properties from first type argument
+      if (!typeArgs || typeArgs.length === 0) {
+        return { type: 'object' };
+      }
+      const propsType = typeArgs[0];
+      const properties: Record<string, unknown> = {};
+      const required: string[] = [];
+
+      for (const prop of propsType.getProperties()) {
+        const propName = prop.getName();
+        const propType = getPropertyType(prop, propsType, typeChecker);
+        const propSymbol = propType.getSymbol();
+        const propSymbolName = propSymbol?.getName();
+
+        // Check if this property references another exported schema variable
+        if (propSymbolName && typeRefs.has(propSymbolName)) {
+          properties[propName] = { $ref: `#/types/${propSymbolName}` };
+        } else if (propSymbolName && isTypeBoxSchemaType(propSymbolName)) {
+          // Recursively format nested TypeBox schemas
+          const nested = formatTypeBoxSchema(propType, typeChecker, typeRefs, referencedTypes, visited);
+          properties[propName] = nested ?? { type: 'object' };
+        } else {
+          // Use standard formatTypeReference for non-TypeBox types
+          properties[propName] = formatTypeReference(propType, typeChecker, typeRefs, referencedTypes, visited);
+        }
+
+        // Check if property is optional (wrapped in TOptional)
+        if (propSymbolName !== 'TOptional') {
+          required.push(propName);
+        }
+      }
+
+      const schema: Record<string, unknown> = { type: 'object', properties };
+      if (required.length > 0) {
+        schema.required = required;
+      }
+      return schema;
+    }
+
+    case 'TArray': {
+      // TArray<T> - extract items type from first type argument
+      if (!typeArgs || typeArgs.length === 0) {
+        return { type: 'array' };
+      }
+      const itemType = typeArgs[0];
+      const itemSymbol = itemType.getSymbol();
+      const itemSymbolName = itemSymbol?.getName();
+
+      let items: unknown;
+      if (itemSymbolName && typeRefs.has(itemSymbolName)) {
+        items = { $ref: `#/types/${itemSymbolName}` };
+      } else if (itemSymbolName && isTypeBoxSchemaType(itemSymbolName)) {
+        items = formatTypeBoxSchema(itemType, typeChecker, typeRefs, referencedTypes, visited) ?? { type: 'object' };
+      } else {
+        items = formatTypeReference(itemType, typeChecker, typeRefs, referencedTypes, visited);
+      }
+
+      return { type: 'array', items };
+    }
+
+    case 'TUnion': {
+      // TUnion<[A, B, ...]> - extract union members from tuple type argument
+      if (!typeArgs || typeArgs.length === 0) {
+        return { anyOf: [] };
+      }
+      const tupleType = typeArgs[0];
+      const members: unknown[] = [];
+
+      if (tupleType.isUnion()) {
+        for (const memberType of (tupleType as TS.UnionType).types) {
+          const memberSymbol = memberType.getSymbol();
+          const memberSymbolName = memberSymbol?.getName();
+
+          if (memberSymbolName && typeRefs.has(memberSymbolName)) {
+            members.push({ $ref: `#/types/${memberSymbolName}` });
+          } else if (memberSymbolName && isTypeBoxSchemaType(memberSymbolName)) {
+            members.push(formatTypeBoxSchema(memberType, typeChecker, typeRefs, referencedTypes, visited) ?? { type: 'object' });
+          } else {
+            members.push(formatTypeReference(memberType, typeChecker, typeRefs, referencedTypes, visited));
+          }
+        }
+      } else if ((tupleType as TS.TypeReference).typeArguments) {
+        // Handle tuple representation
+        for (const memberType of (tupleType as TS.TypeReference).typeArguments!) {
+          const memberSymbol = memberType.getSymbol();
+          const memberSymbolName = memberSymbol?.getName();
+
+          if (memberSymbolName && typeRefs.has(memberSymbolName)) {
+            members.push({ $ref: `#/types/${memberSymbolName}` });
+          } else if (memberSymbolName && isTypeBoxSchemaType(memberSymbolName)) {
+            members.push(formatTypeBoxSchema(memberType, typeChecker, typeRefs, referencedTypes, visited) ?? { type: 'object' });
+          } else {
+            members.push(formatTypeReference(memberType, typeChecker, typeRefs, referencedTypes, visited));
+          }
+        }
+      }
+
+      return { anyOf: members };
+    }
+
+    case 'TIntersect': {
+      // TIntersect<[A, B, ...]> - extract intersection members
+      if (!typeArgs || typeArgs.length === 0) {
+        return { allOf: [] };
+      }
+      const tupleType = typeArgs[0];
+      const members: unknown[] = [];
+
+      if ((tupleType as TS.TypeReference).typeArguments) {
+        for (const memberType of (tupleType as TS.TypeReference).typeArguments!) {
+          const memberSymbol = memberType.getSymbol();
+          const memberSymbolName = memberSymbol?.getName();
+
+          if (memberSymbolName && typeRefs.has(memberSymbolName)) {
+            members.push({ $ref: `#/types/${memberSymbolName}` });
+          } else if (memberSymbolName && isTypeBoxSchemaType(memberSymbolName)) {
+            members.push(formatTypeBoxSchema(memberType, typeChecker, typeRefs, referencedTypes, visited) ?? { type: 'object' });
+          } else {
+            members.push(formatTypeReference(memberType, typeChecker, typeRefs, referencedTypes, visited));
+          }
+        }
+      }
+
+      return { allOf: members };
+    }
+
+    case 'TOptional': {
+      // TOptional<T> - unwrap and mark as optional (handled at property level)
+      if (!typeArgs || typeArgs.length === 0) {
+        return {};
+      }
+      const innerType = typeArgs[0];
+      const innerSymbol = innerType.getSymbol();
+      const innerSymbolName = innerSymbol?.getName();
+
+      if (innerSymbolName && typeRefs.has(innerSymbolName)) {
+        return { $ref: `#/types/${innerSymbolName}` };
+      } else if (innerSymbolName && isTypeBoxSchemaType(innerSymbolName)) {
+        return formatTypeBoxSchema(innerType, typeChecker, typeRefs, referencedTypes, visited) ?? { type: 'object' };
+      }
+      return formatTypeReference(innerType, typeChecker, typeRefs, referencedTypes, visited) as Record<string, unknown>;
+    }
+
+    case 'TLiteral': {
+      // TLiteral<'value'> - extract literal value from type argument
+      if (!typeArgs || typeArgs.length === 0) {
+        return { enum: [] };
+      }
+      const literalType = typeArgs[0];
+      if (literalType.isLiteral()) {
+        const value = (literalType as TS.LiteralType).value;
+        return { enum: [value] };
+      }
+      // Fallback: use typeToString
+      const literalStr = typeChecker.typeToString(literalType);
+      if (literalStr.startsWith('"') && literalStr.endsWith('"')) {
+        return { enum: [literalStr.slice(1, -1)] };
+      }
+      return { enum: [literalStr] };
+    }
+
+    case 'TRecord': {
+      // TRecord<K, V> - additionalProperties schema
+      if (!typeArgs || typeArgs.length < 2) {
+        return { type: 'object', additionalProperties: true };
+      }
+      const valueType = typeArgs[1];
+      const valueSymbol = valueType.getSymbol();
+      const valueSymbolName = valueSymbol?.getName();
+
+      let additionalProperties: unknown;
+      if (valueSymbolName && typeRefs.has(valueSymbolName)) {
+        additionalProperties = { $ref: `#/types/${valueSymbolName}` };
+      } else if (valueSymbolName && isTypeBoxSchemaType(valueSymbolName)) {
+        additionalProperties = formatTypeBoxSchema(valueType, typeChecker, typeRefs, referencedTypes, visited) ?? true;
+      } else {
+        additionalProperties = formatTypeReference(valueType, typeChecker, typeRefs, referencedTypes, visited);
+      }
+
+      return { type: 'object', additionalProperties };
+    }
+
+    case 'TRef': {
+      // TRef<T> - reference to another schema
+      if (!typeArgs || typeArgs.length === 0) {
+        return { $ref: '#/types/unknown' };
+      }
+      const refType = typeArgs[0];
+      const refSymbol = refType.getSymbol();
+      const refSymbolName = refSymbol?.getName();
+
+      if (refSymbolName) {
+        return { $ref: `#/types/${refSymbolName}` };
+      }
+      return { type: 'object' };
+    }
+
+    default:
+      // Unknown TypeBox type - return null to fall back to default handling
+      return null;
+  }
+}
+
 function isObjectLiteralType(type: TS.Type): type is TS.ObjectType {
   if (!(type.getFlags() & ts.TypeFlags.Object)) {
     return false;
@@ -727,6 +985,14 @@ export function formatTypeReference(
       const builtInSchema = BUILTIN_TYPE_SCHEMAS[symbolName];
       if (builtInSchema) {
         return { ...builtInSchema };
+      }
+
+      // Check for TypeBox schema types and extract their structure
+      if (isTypeBoxSchemaType(symbolName)) {
+        const typeBoxSchema = formatTypeBoxSchema(type, typeChecker, typeRefs, referencedTypes, visited);
+        if (typeBoxSchema) {
+          return typeBoxSchema;
+        }
       }
 
       // Add to referenced types for potential collection

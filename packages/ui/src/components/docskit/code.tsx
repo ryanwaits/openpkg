@@ -10,19 +10,20 @@ import { CodeIcon } from "./code.icon"
 export async function DocsKitCode(props: {
   codeblock: RawCode
   handlers?: AnnotationHandler[]
+  className?: string
 }) {
-  const { codeblock, ...rest } = props
+  const { codeblock, className, ...rest } = props
   const group = await toCodeGroup({ codeblocks: [codeblock], ...rest })
-  return <SingleCode group={group} />
+  return <SingleCode group={group} className={className} />
 }
 
-export async function SingleCode(props: { group: CodeInfo }) {
+export async function SingleCode(props: { group: CodeInfo; className?: string }) {
   const { pre, title, code, icon, options } = props.group.tabs[0]
 
   const showCopy = options?.copyButton
 
   return (
-    <div className="group rounded overflow-hidden relative border-dk-border flex flex-col border my-4 not-prose">
+    <div className={cn("group rounded overflow-hidden relative border-dk-border flex flex-col border my-4 not-prose", props.className)}>
       {title ? (
         <div
           className={cn(

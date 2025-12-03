@@ -19,8 +19,9 @@ import { useStateOrLocalStorage } from "../../hooks/use-locale-storage"
 export function ClientDocsKitCode(props: {
   codeblock: RawCode
   handlers?: AnnotationHandler[]
+  className?: string
 }) {
-  const { codeblock, handlers: extraHandlers } = props
+  const { codeblock, handlers: extraHandlers, className: wrapperClassName } = props
   const [highlighted, setHighlighted] = useState<HighlightedCode | null>(null)
 
   const { title, flags } = extractFlags(codeblock)
@@ -54,7 +55,7 @@ export function ClientDocsKitCode(props: {
   const icon = <CodeIcon title={title} lang={codeblock.lang} className="opacity-60" />
 
   return (
-    <div className="group rounded overflow-hidden relative border-dk-border flex flex-col border my-4 not-prose">
+    <div className={cn("group rounded overflow-hidden relative border-dk-border flex flex-col border my-4 not-prose", wrapperClassName)}>
       {title ? (
         <div
           className={cn(

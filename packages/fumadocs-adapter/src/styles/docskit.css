@@ -1,0 +1,130 @@
+/**
+ * Docskit CSS Variables for Fumadocs
+ * 
+ * This file defines the CSS variables needed for @doccov/ui docskit components
+ * to work within Fumadocs themes.
+ * 
+ * Import this in your global CSS:
+ *   @import '@doccov/fumadocs-adapter/css';
+ * 
+ * Or add these variables to your Tailwind CSS:
+ *   @import 'tailwindcss';
+ *   @import 'fumadocs-ui/css/neutral.css';
+ *   @import 'fumadocs-ui/css/preset.css';
+ *   @import '@doccov/fumadocs-adapter/css';
+ */
+
+@layer base {
+  :root {
+    /* Docskit code block colors - mapped to Fumadocs variables */
+    --dk-background: var(--color-fd-card, hsl(0 0% 3%));
+    --dk-border: var(--color-fd-border, hsl(0 0% 18%));
+    --dk-tabs-background: var(--color-fd-muted, hsl(0 0% 10%));
+    --dk-tab-inactive-foreground: var(--color-fd-muted-foreground, hsl(0 0% 60%));
+    --dk-tab-active-foreground: var(--color-fd-foreground, hsl(0 0% 98%));
+    --dk-selection: var(--color-fd-primary, hsl(220 70% 50%));
+    
+    /* Line highlight colors */
+    --dk-line-bg: transparent;
+    --dk-line-border: transparent;
+  }
+
+  /* Light mode overrides if needed */
+  .light, [data-theme="light"] {
+    --dk-background: var(--color-fd-card, hsl(0 0% 98%));
+    --dk-border: var(--color-fd-border, hsl(0 0% 85%));
+    --dk-tabs-background: var(--color-fd-muted, hsl(0 0% 95%));
+    --dk-tab-inactive-foreground: var(--color-fd-muted-foreground, hsl(0 0% 45%));
+    --dk-tab-active-foreground: var(--color-fd-foreground, hsl(0 0% 10%));
+  }
+}
+
+/* Tailwind utility classes for docskit */
+@layer utilities {
+  .bg-dk-background {
+    background-color: var(--dk-background);
+  }
+  .bg-dk-tabs-background {
+    background-color: var(--dk-tabs-background);
+  }
+  .border-dk-border {
+    border-color: var(--dk-border);
+  }
+  .text-dk-tab-inactive-foreground {
+    color: var(--dk-tab-inactive-foreground);
+  }
+  .text-dk-tab-active-foreground {
+    color: var(--dk-tab-active-foreground);
+  }
+  .selection\:bg-dk-selection::selection,
+  .selection\:bg-dk-selection *::selection {
+    background-color: var(--dk-selection);
+  }
+}
+
+/* CodeHike syntax highlighting theme - github-from-css */
+/* These --ch-* variables are required for the "github-from-css" theme */
+@layer base {
+  /* GitHub Dark theme (default) */
+  :root {
+    --ch-0: #e6edf3; /* default text */
+    --ch-1: #ff7b72; /* strings, inherited class */
+    --ch-2: #a5d6ff; /* string literals */
+    --ch-3: #79c0ff; /* keywords, function names */
+    --ch-4: #a5d6ff; /* constants */
+    --ch-5: #d2a8ff; /* entity names, types */
+    --ch-6: #ffa657; /* variables, tag names */
+    --ch-7: #8b949e; /* comments */
+    --ch-8: #79c0ff; /* support */
+    --ch-9: #e6edf3; /* punctuation */
+    --ch-10: #f0f6fc;
+    --ch-11: #490202;
+    --ch-12: #04260f;
+    --ch-13: #5a1e02;
+    --ch-14: #161b22;
+    --ch-15: #8b949e;
+    --ch-16: #0d1117;
+    --ch-17: #6e76811a;
+    --ch-18: #ffffff0b;
+    --ch-19: #3794ff;
+    --ch-20: #264f78;
+    --ch-21: #1f6feb;
+    --ch-22: #010409;
+    --ch-23: #30363d;
+    --ch-24: #6e7681;
+    --ch-25: #6e768166;
+    --ch-26: #0d1117e6;
+  }
+
+  /* GitHub Light theme */
+  .light, [data-theme="light"] {
+    --ch-0: #24292f; /* default text */
+    --ch-1: #cf222e; /* strings, inherited class */
+    --ch-2: #116329; /* string literals */
+    --ch-3: #0550ae; /* keywords, function names */
+    --ch-4: #0a3069; /* constants */
+    --ch-5: #8250df; /* entity names, types */
+    --ch-6: #953800; /* variables, tag names */
+    --ch-7: #6e7781; /* comments */
+    --ch-8: #0550ae; /* support */
+    --ch-9: #24292f; /* punctuation */
+    --ch-10: #f6f8fa;
+    --ch-11: #ffebe9;
+    --ch-12: #dafbe1;
+    --ch-13: #ffd8b5;
+    --ch-14: #eaeef2;
+    --ch-15: #57606a;
+    --ch-16: #ffffff;
+    --ch-17: #eaeef280;
+    --ch-18: #fdff0033;
+    --ch-19: #1a85ff;
+    --ch-20: #add6ff;
+    --ch-21: #0969da;
+    --ch-22: #f6f8fa;
+    --ch-23: #d0d7de;
+    --ch-24: #8c959f;
+    --ch-25: #afb8c133;
+    --ch-26: #ffffffe6;
+  }
+}
+

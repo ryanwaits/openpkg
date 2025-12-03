@@ -1,5 +1,11 @@
 # @doccov/sdk
 
+## 0.5.9
+
+### Patch Changes
+
+- feat: support typebox types
+
 ## 0.5.8
 
 ### Patch Changes

@@ -1,0 +1,33 @@
+{
+  "name": "@doccov/fumadocs-adapter",
+  "version": "0.0.1",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts",
+    "./server": "./src/server.ts",
+    "./components": "./src/components/index.ts",
+    "./css": "./src/styles/docskit.css"
+  },
+  "scripts": {
+    "build": "bunup",
+    "lint": "biome check src/",
+    "lint:fix": "biome check --write src/",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@openpkg-ts/spec": "../spec"
+  },
+  "peerDependencies": {
+    "@doccov/ui": "../ui",
+    "codehike": "^1.0.0",
+    "react": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "bunup": "^0.11.5",
+    "codehike": "^1.0.7",
+    "typescript": "^5.0.0"
+  }
+}
+
