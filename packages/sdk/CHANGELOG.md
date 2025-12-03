@@ -1,5 +1,11 @@
 # @doccov/sdk
 
+## 0.5.8
+
+### Patch Changes
+
+- feat: add lint and typechecking commands
+
 ## 0.5.7
 
 ### Patch Changes
