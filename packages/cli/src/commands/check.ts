@@ -14,15 +14,20 @@ import {
   type FixSuggestion,
   findJSDocLocation,
   generateFixesForExport,
+  getDefaultConfig as getLintDefaultConfig,
   hasNonAssertionComments,
   type JSDocEdit,
   type JSDocPatch,
+  lintExport,
+  type LintViolation,
   mergeFixes,
   NodeFileSystem,
   parseAssertions,
   parseJSDocToPatch,
   runExamplesWithPackage,
   serializeJSDoc,
+  typecheckExamples,
+  type ExampleTypeError,
 } from '@doccov/sdk';
 import type { SpecDocDrift, SpecExport } from '@openpkg-ts/spec';
 import chalk from 'chalk';
@@ -106,12 +111,15 @@ export function registerCheckCommand(
       Number(value),
     )
     .option('--require-examples', 'Require at least one @example for every export')
-    .option('--run-examples', 'Execute @example blocks and fail on runtime errors')
+    .option('--exec', 'Execute @example blocks at runtime')
+    .option('--no-lint', 'Skip lint checks')
+    .option('--no-typecheck', 'Skip example type checking')
     .option('--ignore-drift', 'Do not fail on documentation drift')
     .option('--skip-resolve', 'Skip external type resolution from node_modules')
-    .option('--write', 'Auto-fix drift issues')
+    .option('--fix', 'Auto-fix drift and lint issues')
+    .option('--write', 'Alias for --fix')
     .option('--only <types>', 'Only fix specific drift types (comma-separated)')
-    .option('--dry-run', 'Preview fixes without writing (requires --write)')
+    .option('--dry-run', 'Preview fixes without writing (requires --fix)')
     .action(async (entry, options) => {
       try {
         let targetDir = options.cwd;
@@ -195,9 +203,64 @@ export function registerCheckCommand(
           log('');
         }
 
-        // Run examples if --run-examples flag is set
+        // Normalize --fix / --write
+        const shouldFix = options.fix || options.write;
+
+        // Run lint if not disabled
+        const lintViolations: Array<{ exportName: string; violation: LintViolation }> = [];
+        if (options.lint !== false) {
+          process.stdout.write(chalk.cyan('> Running lint checks...\n'));
+
+          const lintConfig = getLintDefaultConfig();
+          for (const exp of spec.exports ?? []) {
+            const violations = lintExport(exp, undefined, lintConfig);
+            for (const violation of violations) {
+              lintViolations.push({ exportName: exp.name, violation });
+            }
+          }
+
+          if (lintViolations.length === 0) {
+            process.stdout.write(chalk.green('✓ No lint issues\n'));
+          } else {
+            const errors = lintViolations.filter((v) => v.violation.severity === 'error').length;
+            const warns = lintViolations.filter((v) => v.violation.severity === 'warn').length;
+            process.stdout.write(
+              chalk.yellow(`⚠ ${lintViolations.length} lint issue(s) (${errors} error, ${warns} warn)\n`),
+            );
+          }
+        }
+
+        // Run typecheck if not disabled
+        const typecheckErrors: Array<{ exportName: string; error: ExampleTypeError }> = [];
+        if (options.typecheck !== false) {
+          const allExamplesForTypecheck: Array<{ exportName: string; examples: string[] }> = [];
+          for (const exp of spec.exports ?? []) {
+            if (exp.examples && exp.examples.length > 0) {
+              allExamplesForTypecheck.push({ exportName: exp.name, examples: exp.examples as string[] });
+            }
+          }
+
+          if (allExamplesForTypecheck.length > 0) {
+            process.stdout.write(chalk.cyan('> Type-checking examples...\n'));
+
+            for (const { exportName, examples } of allExamplesForTypecheck) {
+              const result = typecheckExamples(examples, targetDir);
+              for (const err of result.errors) {
+                typecheckErrors.push({ exportName, error: err });
+              }
+            }
+
+            if (typecheckErrors.length === 0) {
+              process.stdout.write(chalk.green('✓ All examples type-check\n'));
+            } else {
+              process.stdout.write(chalk.red(`✗ ${typecheckErrors.length} type error(s)\n`));
+            }
+          }
+        }
+
+        // Run examples at runtime if --exec flag is set
         const runtimeDrifts: Array<{ name: string; issue: string; suggestion?: string }> = [];
-        if (options.runExamples) {
+        if (options.exec) {
           // Collect all examples from all exports
           const allExamples: Array<{ exportName: string; examples: string[] }> = [];
           for (const entry of spec.exports ?? []) {
@@ -329,9 +392,9 @@ export function registerCheckCommand(
           : [];
         let driftExports = [...collectDrift(spec.exports ?? []), ...runtimeDrifts];
 
-        // Handle --write: auto-fix drift issues
+        // Handle --fix / --write: auto-fix drift issues
         const fixedDriftKeys = new Set<string>();
-        if (options.write && driftExports.length > 0) {
+        if (shouldFix && driftExports.length > 0) {
           const allDrifts = collectDriftsFromExports(spec.exports ?? []);
           const filteredDrifts = filterDriftsByType(allDrifts, options.only);
 
@@ -506,8 +569,10 @@ export function registerCheckCommand(
         const coverageFailed = coverageScore < minCoverage;
         const hasMissingExamples = missingExamples.length > 0;
         const hasDrift = !options.ignoreDrift && driftExports.length > 0;
+        const hasLintErrors = lintViolations.filter((v) => v.violation.severity === 'error').length > 0;
+        const hasTypecheckErrors = typecheckErrors.length > 0;
 
-        if (!coverageFailed && !hasMissingExamples && !hasDrift) {
+        if (!coverageFailed && !hasMissingExamples && !hasDrift && !hasLintErrors && !hasTypecheckErrors) {
           log(chalk.green(`✓ Docs coverage ${coverageScore}% (min ${minCoverage}%)`));
 
           if (failingExports.length > 0) {
@@ -541,6 +606,22 @@ export function registerCheckCommand(
               `${missingExamples.length} export(s) missing examples (required via --require-examples)`,
             ),
           );
+        }
+
+        if (hasLintErrors) {
+          error('');
+          error(chalk.bold('Lint errors:'));
+          for (const { exportName, violation } of lintViolations.filter((v) => v.violation.severity === 'error').slice(0, 10)) {
+            error(chalk.red(`  • ${exportName}: ${violation.message}`));
+          }
+        }
+
+        if (hasTypecheckErrors) {
+          error('');
+          error(chalk.bold('Type errors in examples:'));
+          for (const { exportName, error: err } of typecheckErrors.slice(0, 10)) {
+            error(chalk.red(`  • ${exportName} @example ${err.exampleIndex + 1}, line ${err.line}: ${err.message}`));
+          }
         }
 
         if (failingExports.length > 0 || driftExports.length > 0) {

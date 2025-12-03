@@ -107,3 +107,31 @@ export {
   // High-level API
   analyzeProject,
 } from './detect';
+
+// Lint engine
+export {
+  allRules,
+  getDefaultConfig,
+  getRule,
+  lintExport,
+  lintExports,
+  mergeConfig,
+  consistentParamStyle,
+  noEmptyReturns,
+  requireDescription,
+  requireExample,
+  type LintConfig,
+  type LintResult,
+  type LintRule,
+  type LintSeverity,
+  type LintViolation,
+} from './lint';
+
+// Example typechecker
+export {
+  typecheckExample,
+  typecheckExamples,
+  type ExampleTypeError,
+  type TypecheckOptions,
+  type TypecheckResult,
+} from './typecheck';
