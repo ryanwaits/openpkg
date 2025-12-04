@@ -23,7 +23,9 @@ export default function Dashboard() {
       </div>
       <div className="rounded-lg border bg-card p-6">
         <h2 className="text-lg font-semibold mb-4">Recent Projects</h2>
-        <p className="text-muted-foreground">No projects yet. Create your first project to get started.</p>
+        <p className="text-muted-foreground">
+          No projects yet. Create your first project to get started.
+        </p>
       </div>
     </div>
   );

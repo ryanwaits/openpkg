@@ -1,13 +1,13 @@
 'use client';
 
 import {
+  ClientCode,
   ClientDocsKitCode,
   ClientInlineCode,
-  ClientCode,
   ClientTerminal,
-  WithHover,
   HoverLink,
   PackageInstall,
+  WithHover,
 } from '@doccov/ui/docskit';
 
 const exampleCode = `import { useState, useEffect } from 'react';
@@ -151,7 +151,9 @@ export function DocsKitShowcase() {
 
       {/* Terminal with multiple commands */}
       <div>
-        <p className="text-xs font-medium text-muted-foreground mb-3">Terminal with multiple commands</p>
+        <p className="text-xs font-medium text-muted-foreground mb-3">
+          Terminal with multiple commands
+        </p>
         <ClientTerminal
           codeblock={{
             value: `git clone https://github.com/example/repo.git
@@ -166,13 +168,17 @@ npm run dev`,
 
       {/* Package Install */}
       <div>
-        <p className="text-xs font-medium text-muted-foreground mb-3">Package Install (with package manager tabs)</p>
+        <p className="text-xs font-medium text-muted-foreground mb-3">
+          Package Install (with package manager tabs)
+        </p>
         <PackageInstall package="@doccov/ui" />
       </div>
 
       {/* Package Install - Dev Dependency */}
       <div>
-        <p className="text-xs font-medium text-muted-foreground mb-3">Package Install - Dev Dependency</p>
+        <p className="text-xs font-medium text-muted-foreground mb-3">
+          Package Install - Dev Dependency
+        </p>
         <PackageInstall package="typescript" dev />
       </div>
 
@@ -184,7 +190,9 @@ npm run dev`,
 
       {/* Code Block */}
       <div>
-        <p className="text-xs font-medium text-muted-foreground mb-3">Code Block with Title & Copy Button</p>
+        <p className="text-xs font-medium text-muted-foreground mb-3">
+          Code Block with Title & Copy Button
+        </p>
         <ClientDocsKitCode
           codeblock={{
             value: exampleCode,
@@ -208,7 +216,9 @@ npm run dev`,
 
       {/* Code Block with Line Numbers */}
       <div>
-        <p className="text-xs font-medium text-muted-foreground mb-3">Code Block with Line Numbers (-n flag)</p>
+        <p className="text-xs font-medium text-muted-foreground mb-3">
+          Code Block with Line Numbers (-n flag)
+        </p>
         <ClientDocsKitCode
           codeblock={{
             value: exampleCode,
@@ -220,7 +230,9 @@ npm run dev`,
 
       {/* Code Block with Mark Annotation */}
       <div>
-        <p className="text-xs font-medium text-muted-foreground mb-3">Code Block with Mark Annotation (// !mark)</p>
+        <p className="text-xs font-medium text-muted-foreground mb-3">
+          Code Block with Mark Annotation (<code>{'// !mark'}</code>)
+        </p>
         <ClientDocsKitCode
           codeblock={{
             value: markExample,
@@ -232,7 +244,9 @@ npm run dev`,
 
       {/* Code Block with Diff Annotation */}
       <div>
-        <p className="text-xs font-medium text-muted-foreground mb-3">Code Block with Diff Annotation (// !diff +/-)</p>
+        <p className="text-xs font-medium text-muted-foreground mb-3">
+          Code Block with Diff Annotation (<code>{'// !diff +/-'}</code>)
+        </p>
         <ClientDocsKitCode
           codeblock={{
             value: diffExample,
@@ -244,7 +258,9 @@ npm run dev`,
 
       {/* Code Block with Link Annotation */}
       <div>
-        <p className="text-xs font-medium text-muted-foreground mb-3">Code Block with Link Annotation (// !link)</p>
+        <p className="text-xs font-medium text-muted-foreground mb-3">
+          Code Block with Link Annotation (<code>{'// !link'}</code>)
+        </p>
         <ClientDocsKitCode
           codeblock={{
             value: linkExample,
@@ -256,7 +272,9 @@ npm run dev`,
 
       {/* Code Block with Callout Annotation */}
       <div>
-        <p className="text-xs font-medium text-muted-foreground mb-3">Code Block with Callout Annotation (// !callout)</p>
+        <p className="text-xs font-medium text-muted-foreground mb-3">
+          Code Block with Callout Annotation (<code>{'// !callout'}</code>)
+        </p>
         <ClientDocsKitCode
           codeblock={{
             value: calloutExample,
@@ -268,7 +286,9 @@ npm run dev`,
 
       {/* Code Block with Collapse Annotation */}
       <div>
-        <p className="text-xs font-medium text-muted-foreground mb-3">Code Block with Collapse Annotation (// !collapse)</p>
+        <p className="text-xs font-medium text-muted-foreground mb-3">
+          Code Block with Collapse Annotation (<code>{'// !collapse'}</code>)
+        </p>
         <ClientDocsKitCode
           codeblock={{
             value: collapseExample,
@@ -280,7 +300,9 @@ npm run dev`,
 
       {/* Code Block with Collapse (Initially Collapsed) */}
       <div>
-        <p className="text-xs font-medium text-muted-foreground mb-3">Code Block with Collapse - Initially Collapsed (// !collapse collapsed)</p>
+        <p className="text-xs font-medium text-muted-foreground mb-3">
+          Code Block with Collapse - Initially Collapsed (<code>{'// !collapse collapsed'}</code>)
+        </p>
         <ClientDocsKitCode
           codeblock={{
             value: collapseCollapsedExample,
@@ -292,7 +314,9 @@ npm run dev`,
 
       {/* Code Block with Expandable Annotation */}
       <div>
-        <p className="text-xs font-medium text-muted-foreground mb-3">Code Block with Expandable Annotation (// !expandable)</p>
+        <p className="text-xs font-medium text-muted-foreground mb-3">
+          Code Block with Expandable Annotation (// !expandable)
+        </p>
         <ClientDocsKitCode
           codeblock={{
             value: expandableExample,
@@ -304,7 +328,9 @@ npm run dev`,
 
       {/* Code Block with Hover Annotation */}
       <div>
-        <p className="text-xs font-medium text-muted-foreground mb-3">Code Block with Hover Annotation (// !hover)</p>
+        <p className="text-xs font-medium text-muted-foreground mb-3">
+          Code Block with Hover Annotation (// !hover)
+        </p>
         <WithHover>
           <p className="text-sm text-foreground mb-3">
             Is <HoverLink href="hover:item">pink</HoverLink> in the list?
@@ -321,7 +347,9 @@ npm run dev`,
 
       {/* Code Block with Tooltip Annotation */}
       <div>
-        <p className="text-xs font-medium text-muted-foreground mb-3">Code Block with Tooltip Annotation (// !tooltip)</p>
+        <p className="text-xs font-medium text-muted-foreground mb-3">
+          Code Block with Tooltip Annotation (// !tooltip)
+        </p>
         <ClientDocsKitCode
           codeblock={{
             value: tooltipExample,
@@ -333,7 +361,9 @@ npm run dev`,
 
       {/* Code Block with Word Wrap */}
       <div>
-        <p className="text-xs font-medium text-muted-foreground mb-3">Code Block with Word Wrap (-w flag)</p>
+        <p className="text-xs font-medium text-muted-foreground mb-3">
+          Code Block with Word Wrap (-w flag)
+        </p>
         <ClientDocsKitCode
           codeblock={{
             value: wordWrapExample,
@@ -348,10 +378,10 @@ npm run dev`,
         <p className="text-xs font-medium text-muted-foreground mb-3">Inline Code</p>
         <p className="text-foreground">
           Use the{' '}
-          <ClientInlineCode codeblock={{ value: 'useState', lang: 'typescript', meta: '' }} />{' '}
-          hook to manage state, or{' '}
-          <ClientInlineCode codeblock={{ value: 'useEffect', lang: 'typescript', meta: '' }} />{' '}
-          for side effects.
+          <ClientInlineCode codeblock={{ value: 'useState', lang: 'typescript', meta: '' }} /> hook
+          to manage state, or{' '}
+          <ClientInlineCode codeblock={{ value: 'useEffect', lang: 'typescript', meta: '' }} /> for
+          side effects.
         </p>
       </div>
 

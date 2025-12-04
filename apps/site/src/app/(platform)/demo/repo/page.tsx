@@ -1,7 +1,7 @@
 import { Button } from '@doccov/ui/button';
-import { FileChip } from '@doccov/ui/file-chip';
 import { DocsKitCode } from '@doccov/ui/docskit';
-import { ChevronDown, Plus, FolderOpen, Check, X } from 'lucide-react';
+import { FileChip } from '@doccov/ui/file-chip';
+import { Check, ChevronDown, FolderOpen, Plus, X } from 'lucide-react';
 
 // File icon component
 function FileIcon({ type = 'ts' }: { type?: 'ts' | 'html' }) {
@@ -22,8 +22,15 @@ function FileIcon({ type = 'ts' }: { type?: 'ts' | 'html' }) {
 // Chevron icon for expand/collapse
 function ChevronIcon({ className }: { className?: string }) {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={className}>
-      <path d="M4 6L8 10L12 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={className} aria-hidden="true">
+      <title>Chevron icon</title>
+      <path
+        d="M4 6L8 10L12 6"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -193,9 +200,9 @@ export function ContactForm({ onSubmit }) {
           <div className="space-y-4">
             <p className="font-mono text-sm leading-relaxed">...includes contact details</p>
             <p className="font-mono text-sm leading-relaxed">
-              <FileChip filename="footer.tsx" /> add a variation of <FileChip filename="form.tsx" /> that includes the{' '}
-              <FileChip filename="ut.tsx" /> <FileChip filename="select.tsx" /> and <FileChip filename="button.tsx" />,
-              and use submitted to
+              <FileChip filename="footer.tsx" /> add a variation of <FileChip filename="form.tsx" />{' '}
+              that includes the <FileChip filename="ut.tsx" /> <FileChip filename="select.tsx" />{' '}
+              and <FileChip filename="button.tsx" />, and use submitted to
             </p>
           </div>
 
@@ -203,17 +210,38 @@ export function ContactForm({ onSubmit }) {
           <div className="space-y-4">
             <h3 className="font-mono text-sm font-medium text-muted-foreground">Summary</h3>
             <p className="font-mono text-sm leading-relaxed">
-              Added a fictional contact form using mock components and imaginary file imports. Referenced the files you
-              mentioned and made the following.
+              Added a fictional contact form using mock components and imaginary file imports.
+              Referenced the files you mentioned and made the following.
             </p>
           </div>
 
           {/* File changes list */}
           <div className="border border-border rounded-lg overflow-hidden">
-            <FileChangeRow path="resources/js/components/" filename="contacts.tsx" additions={43} deletions={2} />
-            <FileChangeRow path="resources/js/components/" filename="footer.tsx" additions={43} deletions={2} />
-            <FileChangeRow path="resources/js/packages/" filename="button.tsx" additions={43} deletions={2} />
-            <FileChangeRow path="resources/components/" filename="form.html" additions={43} deletions={2} type="html" />
+            <FileChangeRow
+              path="resources/js/components/"
+              filename="contacts.tsx"
+              additions={43}
+              deletions={2}
+            />
+            <FileChangeRow
+              path="resources/js/components/"
+              filename="footer.tsx"
+              additions={43}
+              deletions={2}
+            />
+            <FileChangeRow
+              path="resources/js/packages/"
+              filename="button.tsx"
+              additions={43}
+              deletions={2}
+            />
+            <FileChangeRow
+              path="resources/components/"
+              filename="form.html"
+              additions={43}
+              deletions={2}
+              type="html"
+            />
           </div>
 
           {/* Show details link */}

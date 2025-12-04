@@ -1,14 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Button } from '@doccov/ui/button';
 import { KindBadge, StatusBadge } from '@doccov/ui/badge';
+import { Breadcrumb, type BreadcrumbItem } from '@doccov/ui/breadcrumb';
+import { Button } from '@doccov/ui/button';
+import { FileChangeList, FileChangeRow } from '@doccov/ui/file-change-row';
+import { FileChip } from '@doccov/ui/file-chip';
 import { Input, InputWithButton, SearchInput } from '@doccov/ui/input';
 import { SegmentedTabs, type TabCell } from '@doccov/ui/tabs';
-import { Breadcrumb, type BreadcrumbItem } from '@doccov/ui/breadcrumb';
-import { FileChip } from '@doccov/ui/file-chip';
-import { FileChangeRow, FileChangeList } from '@doccov/ui/file-change-row';
-import { Sun, Moon, Check, X, Settings, Download, Plus } from 'lucide-react';
+import { Check, Download, Moon, Plus, Settings, Sun, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export function DesignSystemClient() {
   const [isDark, setIsDark] = useState(false);
@@ -37,7 +37,10 @@ export function DesignSystemClient() {
 
   const handleAddCellTab = () => {
     const newId = `tab-${Date.now()}`;
-    setCellTabs([...cellTabs, { id: newId, type: 'file', label: 'new-file.ts', fileType: 'ts', closeable: true }]);
+    setCellTabs([
+      ...cellTabs,
+      { id: newId, type: 'file', label: 'new-file.ts', fileType: 'ts', closeable: true },
+    ]);
     setActiveCellTab(newId);
   };
 
@@ -233,7 +236,9 @@ function BadgeShowcase() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-xs font-medium text-muted-foreground mb-3">Kind Badges (TypeScript Syntax)</p>
+        <p className="text-xs font-medium text-muted-foreground mb-3">
+          Kind Badges (TypeScript Syntax)
+        </p>
         <div className="flex flex-wrap items-center gap-3">
           <KindBadge kind="function" />
           <KindBadge kind="class" />
@@ -245,7 +250,9 @@ function BadgeShowcase() {
       </div>
 
       <div>
-        <p className="text-xs font-medium text-muted-foreground mb-3">Status Badges (Coverage States)</p>
+        <p className="text-xs font-medium text-muted-foreground mb-3">
+          Status Badges (Coverage States)
+        </p>
         <div className="flex flex-wrap items-center gap-3">
           <StatusBadge status="success" label="Passing" />
           <StatusBadge status="warning" label="Partial" />
@@ -270,7 +277,9 @@ function InputShowcase() {
     <div className="space-y-8">
       {/* Input with Button */}
       <div>
-        <p className="text-xs font-medium text-muted-foreground mb-3">Input with Button (Email Subscribe)</p>
+        <p className="text-xs font-medium text-muted-foreground mb-3">
+          Input with Button (Email Subscribe)
+        </p>
         <InputWithButton
           placeholder="Email address"
           buttonText="Subscribe"
@@ -297,7 +306,11 @@ function InputShowcase() {
       {/* With Label and Helper */}
       <div>
         <p className="text-xs font-medium text-muted-foreground mb-3">With Label and Helper Text</p>
-        <Input label="Package name" placeholder="@scope/package-name" helperText="Enter your npm package name" />
+        <Input
+          label="Package name"
+          placeholder="@scope/package-name"
+          helperText="Enter your npm package name"
+        />
       </div>
 
       {/* Error State */}
@@ -365,13 +378,18 @@ function SegmentedTabsShowcase({
   onAddTab: () => void;
 }) {
   // Add the action tab to the list
-  const tabsWithAction: TabCell[] = [...tabs, { id: '__add__', type: 'action', icon: <Plus className="size-4" /> }];
+  const tabsWithAction: TabCell[] = [
+    ...tabs,
+    { id: '__add__', type: 'action', icon: <Plus className="size-4" /> },
+  ];
 
   return (
     <div className="space-y-8">
       {/* OpenCode Style */}
       <div>
-        <p className="text-xs font-medium text-muted-foreground mb-3">OpenCode Style (with progress + file + action)</p>
+        <p className="text-xs font-medium text-muted-foreground mb-3">
+          OpenCode Style (with progress + file + action)
+        </p>
         <SegmentedTabs
           tabs={tabsWithAction}
           activeTab={activeTab}
@@ -505,10 +523,30 @@ function FileChangeRowShowcase() {
       <div>
         <p className="text-xs font-medium text-muted-foreground mb-3">Collapsible File List</p>
         <FileChangeList title="Files changed" count={4} defaultOpen>
-          <FileChangeRow path="resources/js/components/" filename="contacts.tsx" additions={43} deletions={2} />
-          <FileChangeRow path="resources/js/components/" filename="footer.tsx" additions={43} deletions={2} />
-          <FileChangeRow path="resources/js/packages/" filename="button.tsx" additions={43} deletions={2} />
-          <FileChangeRow path="resources/components/" filename="form.html" additions={43} deletions={2} />
+          <FileChangeRow
+            path="resources/js/components/"
+            filename="contacts.tsx"
+            additions={43}
+            deletions={2}
+          />
+          <FileChangeRow
+            path="resources/js/components/"
+            filename="footer.tsx"
+            additions={43}
+            deletions={2}
+          />
+          <FileChangeRow
+            path="resources/js/packages/"
+            filename="button.tsx"
+            additions={43}
+            deletions={2}
+          />
+          <FileChangeRow
+            path="resources/components/"
+            filename="form.html"
+            additions={43}
+            deletions={2}
+          />
         </FileChangeList>
       </div>
 
@@ -516,7 +554,12 @@ function FileChangeRowShowcase() {
       <div>
         <p className="text-xs font-medium text-muted-foreground mb-3">Individual File Rows</p>
         <div className="border border-border rounded-lg overflow-hidden">
-          <FileChangeRow path="src/components/" filename="dialog.tsx" additions={156} deletions={23} />
+          <FileChangeRow
+            path="src/components/"
+            filename="dialog.tsx"
+            additions={156}
+            deletions={23}
+          />
           <FileChangeRow path="src/utils/" filename="helpers.ts" additions={12} deletions={45} />
           <FileChangeRow path="public/" filename="index.html" additions={5} deletions={0} />
         </div>
