@@ -1,5 +1,16 @@
 # @doccov/api
 
+## 0.3.0
+
+### Minor Changes
+
+- add rate limiting middleware and job store abstractions
+
+### Patch Changes
+
+- Updated dependencies
+  - @openpkg-ts/spec@0.4.1
+
 ## 0.2.3
 
 ### Patch Changes

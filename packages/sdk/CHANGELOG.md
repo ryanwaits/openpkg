@@ -1,5 +1,16 @@
 # @doccov/sdk
 
+## 0.6.0
+
+### Minor Changes
+
+- extract tsdoc parser, builtin detection, and ast extractor utilities
+
+### Patch Changes
+
+- Updated dependencies
+  - @openpkg-ts/spec@0.4.1
+
 ## 0.5.9
 
 ### Patch Changes

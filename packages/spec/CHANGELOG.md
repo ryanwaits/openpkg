@@ -1,5 +1,11 @@
 # @openpkg-ts/spec
 
+## 0.4.1
+
+### Patch Changes
+
+- improve validation and diff logic
+
 ## 0.4.0
 
 ### Minor Changes
