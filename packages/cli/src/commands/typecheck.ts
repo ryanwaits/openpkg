@@ -1,13 +1,13 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import {
+  DocCov,
   detectEntryPoint,
   detectMonorepo,
-  DocCov,
+  type ExampleTypeError,
   findPackageByName,
   NodeFileSystem,
   typecheckExamples,
-  type ExampleTypeError,
 } from '@doccov/sdk';
 import chalk from 'chalk';
 import type { Command } from 'commander';
@@ -140,24 +140,21 @@ export function registerTypecheckCommand(
         for (const [exportName, errors] of byExport) {
           log(chalk.red(`✗ ${exportName}`));
           for (const err of errors) {
-            log(
-              chalk.gray(`  @example block ${err.exampleIndex + 1}, line ${err.line}:`),
-            );
+            log(chalk.gray(`  @example block ${err.exampleIndex + 1}, line ${err.line}:`));
             log(chalk.red(`    ${err.message}`));
           }
           log('');
         }
 
-        log(
-          chalk.red(`${failed} example(s) failed`) +
-            chalk.gray(`, ${passed} passed`),
-        );
+        log(chalk.red(`${failed} example(s) failed`) + chalk.gray(`, ${passed} passed`));
 
         process.exit(1);
       } catch (commandError) {
-        error(chalk.red('Error:'), commandError instanceof Error ? commandError.message : commandError);
+        error(
+          chalk.red('Error:'),
+          commandError instanceof Error ? commandError.message : commandError,
+        );
         process.exit(1);
       }
     });
 }
-

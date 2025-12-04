@@ -4,20 +4,17 @@ import {
   diffSpecWithDocs,
   getDocsImpactSummary,
   hasDocsImpact,
-  parseMarkdownFiles,
   type MarkdownDocFile,
   type MemberChange,
+  parseMarkdownFiles,
   type SpecDiffWithDocs,
 } from '@doccov/sdk';
-import { type OpenPkg } from '@openpkg-ts/spec';
+import type { OpenPkg } from '@openpkg-ts/spec';
 import chalk from 'chalk';
 import type { Command } from 'commander';
 import { glob } from 'glob';
 import { loadDocCovConfig } from '../config';
-import {
-  generateImpactSummary,
-  isAIDocsAnalysisAvailable,
-} from '../utils/docs-impact-ai';
+import { generateImpactSummary, isAIDocsAnalysisAvailable } from '../utils/docs-impact-ai';
 
 export interface DiffCommandDependencies {
   readFileSync?: typeof fs.readFileSync;
@@ -142,8 +139,6 @@ export function registerDiffCommand(
             // In future, this could write to a file
             log(generateHTMLReport(diff));
             break;
-
-          case 'text':
           default:
             printTextDiff(diff, log, error);
 
@@ -151,7 +146,9 @@ export function registerDiffCommand(
             if (options.ai && diff.docsImpact && hasDocsImpact(diff)) {
               if (!isAIDocsAnalysisAvailable()) {
                 log(
-                  chalk.yellow('\n⚠ AI analysis unavailable (set OPENAI_API_KEY or ANTHROPIC_API_KEY)'),
+                  chalk.yellow(
+                    '\n⚠ AI analysis unavailable (set OPENAI_API_KEY or ANTHROPIC_API_KEY)',
+                  ),
                 );
               } else {
                 log(chalk.gray('\nGenerating AI summary...'));
@@ -347,7 +344,7 @@ function printAPIChanges(diff: SpecDiffWithDocs, log: typeof console.log): void 
     // Additions collapsed into single line
     const added = changes.filter((c) => c.changeType === 'added');
     if (added.length > 0) {
-      const addedNames = added.map((a) => a.memberName + '()').join(', ');
+      const addedNames = added.map((a) => `${a.memberName}()`).join(', ');
       log(chalk.green(`    + ${addedNames}`));
     }
   }
@@ -403,7 +400,9 @@ function printAPIChanges(diff: SpecDiffWithDocs, log: typeof console.log): void 
     log('');
     log(chalk.green(`  New Exports (${diff.nonBreaking.length})`) + undocSuffix);
     const exportNames = diff.nonBreaking.slice(0, 3);
-    log(chalk.green(`    + ${exportNames.join(', ')}${diff.nonBreaking.length > 3 ? ', ...' : ''}`));
+    log(
+      chalk.green(`    + ${exportNames.join(', ')}${diff.nonBreaking.length > 3 ? ', ...' : ''}`),
+    );
   }
 
   // Drift summary (compact)
@@ -462,7 +461,10 @@ function printDocsRequiringUpdates(diff: SpecDiffWithDocs, log: typeof console.l
     const issueCount = file.references.length;
 
     log('');
-    log(chalk.yellow(`  ${filename}`) + chalk.gray(` (${issueCount} issue${issueCount > 1 ? 's' : ''})`));
+    log(
+      chalk.yellow(`  ${filename}`) +
+        chalk.gray(` (${issueCount} issue${issueCount > 1 ? 's' : ''})`),
+    );
 
     // Show actionable refs (method-level or export-level, not instantiations)
     const actionableRefs = file.references.filter((r) => !r.isInstantiation);
@@ -502,9 +504,7 @@ function printDocsRequiringUpdates(diff: SpecDiffWithDocs, log: typeof console.l
     const fileNames = instantiationOnlyFiles.slice(0, 4).map((f) => path.basename(f.file));
     const suffix = instantiationOnlyFiles.length > 4 ? ', ...' : '';
     log(
-      chalk.gray(
-        `  ${instantiationOnlyFiles.length} file(s) with class instantiation to review:`,
-      ),
+      chalk.gray(`  ${instantiationOnlyFiles.length} file(s) with class instantiation to review:`),
     );
     log(chalk.gray(`    ${fileNames.join(', ')}${suffix}`));
   }
@@ -529,7 +529,11 @@ function printDocsRequiringUpdates(diff: SpecDiffWithDocs, log: typeof console.l
       ),
     );
     if (existingUndocumented.length > 0 && existingUndocumented.length <= 10) {
-      log(chalk.gray(`    ${existingUndocumented.slice(0, 6).join(', ')}${existingUndocumented.length > 6 ? ', ...' : ''}`));
+      log(
+        chalk.gray(
+          `    ${existingUndocumented.slice(0, 6).join(', ')}${existingUndocumented.length > 6 ? ', ...' : ''}`,
+        ),
+      );
     }
   }
 }
@@ -537,9 +541,7 @@ function printDocsRequiringUpdates(diff: SpecDiffWithDocs, log: typeof console.l
 /**
  * Group member changes by class name
  */
-function groupMemberChangesByClass(
-  memberChanges: MemberChange[],
-): Map<string, MemberChange[]> {
+function groupMemberChangesByClass(memberChanges: MemberChange[]): Map<string, MemberChange[]> {
   const byClass = new Map<string, MemberChange[]>();
   for (const mc of memberChanges) {
     const list = byClass.get(mc.className) ?? [];
@@ -573,7 +575,9 @@ function printGitHubAnnotations(diff: SpecDiffWithDocs, log: typeof console.log)
   for (const mc of diff.memberChanges ?? []) {
     if (mc.changeType === 'removed') {
       const suggestion = mc.suggestion ? ` ${mc.suggestion}` : '';
-      log(`::warning title=Method Removed::${mc.className}.${mc.memberName}() removed.${suggestion}`);
+      log(
+        `::warning title=Method Removed::${mc.className}.${mc.memberName}() removed.${suggestion}`,
+      );
     } else if (mc.changeType === 'signature-changed') {
       log(
         `::warning title=Signature Changed::${mc.className}.${mc.memberName}() signature changed`,
@@ -585,7 +589,8 @@ function printGitHubAnnotations(diff: SpecDiffWithDocs, log: typeof console.log)
   if (diff.docsImpact) {
     for (const file of diff.docsImpact.impactedFiles) {
       for (const ref of file.references) {
-        const level = ref.changeType === 'removed' || ref.changeType === 'method-removed' ? 'error' : 'warning';
+        const level =
+          ref.changeType === 'removed' || ref.changeType === 'method-removed' ? 'error' : 'warning';
         const name = ref.memberName ? `${ref.memberName}()` : ref.exportName;
         const changeDesc =
           ref.changeType === 'removed' || ref.changeType === 'method-removed'
@@ -595,7 +600,9 @@ function printGitHubAnnotations(diff: SpecDiffWithDocs, log: typeof console.log)
               : 'changed';
         const suggestion = ref.replacementSuggestion ? ` → ${ref.replacementSuggestion}` : '';
 
-        log(`::${level} file=${file.file},line=${ref.line},title=API Change::${name} ${changeDesc}${suggestion}`);
+        log(
+          `::${level} file=${file.file},line=${ref.line},title=API Change::${name} ${changeDesc}${suggestion}`,
+        );
       }
     }
 
@@ -763,7 +770,8 @@ function generateHTMLReport(diff: SpecDiffWithDocs): string {
 
   // Missing docs - show both new and all undocumented
   const hasNewUndocumented = diff.newUndocumented.length > 0;
-  const hasAllUndocumented = diff.docsImpact?.allUndocumented && diff.docsImpact.allUndocumented.length > 0;
+  const hasAllUndocumented =
+    diff.docsImpact?.allUndocumented && diff.docsImpact.allUndocumented.length > 0;
 
   if (hasNewUndocumented || hasAllUndocumented) {
     html += `
@@ -790,7 +798,9 @@ function generateHTMLReport(diff: SpecDiffWithDocs): string {
     // Total documentation coverage
     if (diff.docsImpact?.stats) {
       const { stats, allUndocumented } = diff.docsImpact;
-      const docPercent = Math.round((1 - (allUndocumented?.length ?? 0) / stats.totalExports) * 100);
+      const docPercent = Math.round(
+        (1 - (allUndocumented?.length ?? 0) / stats.totalExports) * 100,
+      );
       html += `
       <div class="metric" style="margin-top: 1rem; border-top: 1px solid #30363d; padding-top: 1rem;">
         <span class="metric-label">Total Documentation Coverage</span>

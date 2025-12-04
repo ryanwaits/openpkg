@@ -3,21 +3,19 @@ import * as path from 'node:path';
 import {
   applyEdits,
   createSourceFile,
+  DocCov,
   detectEntryPoint,
   detectMonorepo,
-  DocCov,
   findJSDocLocation,
   findPackageByName,
   getDefaultConfig,
   getRule,
   type JSDocEdit,
-  lintExport,
   type LintConfig,
   type LintSeverity,
   type LintViolation,
-  mergeConfig,
+  lintExport,
   NodeFileSystem,
-  parseJSDocToPatch,
   serializeJSDoc,
 } from '@doccov/sdk';
 import type { SpecExport } from '@openpkg-ts/spec';
@@ -159,7 +157,12 @@ export function registerLintCommand(
         }
 
         // Run lint
-        const allViolations: Array<{ export: SpecExport; violation: LintViolation; filePath?: string; rawJSDoc?: string }> = [];
+        const allViolations: Array<{
+          export: SpecExport;
+          violation: LintViolation;
+          filePath?: string;
+          rawJSDoc?: string;
+        }> = [];
 
         for (const { export: exp, rawJSDoc, filePath } of exportsWithJSDoc) {
           const violations = lintExport(exp, rawJSDoc, config);
@@ -214,7 +217,9 @@ export function registerLintCommand(
               }
             } else {
               process.stdout.write(
-                chalk.green(`✓ Fixed ${result.editsApplied} issue(s) in ${result.filesModified} file(s)\n`),
+                chalk.green(
+                  `✓ Fixed ${result.editsApplied} issue(s) in ${result.filesModified} file(s)\n`,
+                ),
               );
             }
 
@@ -250,9 +255,12 @@ export function registerLintCommand(
 
           for (const { export: exp, violation } of violations) {
             const line = exp.source?.line ?? 0;
-            const severity = violation.severity === 'error' ? chalk.red('error') : chalk.yellow('warning');
+            const severity =
+              violation.severity === 'error' ? chalk.red('error') : chalk.yellow('warning');
             const fixable = violation.fixable ? chalk.gray(' (fixable)') : '';
-            log(`  ${line}:1  ${severity}  ${violation.message}  ${chalk.gray(violation.rule)}${fixable}`);
+            log(
+              `  ${line}:1  ${severity}  ${violation.message}  ${chalk.gray(violation.rule)}${fixable}`,
+            );
           }
           log('');
         }
@@ -274,9 +282,11 @@ export function registerLintCommand(
           process.exit(1);
         }
       } catch (commandError) {
-        error(chalk.red('Error:'), commandError instanceof Error ? commandError.message : commandError);
+        error(
+          chalk.red('Error:'),
+          commandError instanceof Error ? commandError.message : commandError,
+        );
         process.exit(1);
       }
     });
 }
-

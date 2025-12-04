@@ -1,4 +1,5 @@
 import * as fs from 'node:fs';
+import * as fsPromises from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import {
@@ -53,7 +54,7 @@ export function registerScanCommand(
   program: Command,
   dependencies: ScanCommandDependencies = {},
 ): void {
-  const { createDocCov, log, error} = {
+  const { createDocCov, log, error } = {
     ...defaultDependencies,
     ...dependencies,
   };
@@ -224,14 +225,18 @@ export function registerScanCommand(
             if (installed) {
               process.stdout.write(chalk.green('✓ Dependencies installed\n'));
             } else {
-              process.stdout.write(chalk.yellow('⚠ Could not install dependencies (analysis may be limited)\n'));
+              process.stdout.write(
+                chalk.yellow('⚠ Could not install dependencies (analysis may be limited)\n'),
+              );
               for (const err of installErrors) {
                 log(chalk.gray(`  ${err}`));
               }
             }
           } catch (outerError) {
             const msg = outerError instanceof Error ? outerError.message : String(outerError);
-            process.stdout.write(chalk.yellow(`⚠ Could not install dependencies: ${msg.slice(0, 100)}\n`));
+            process.stdout.write(
+              chalk.yellow(`⚠ Could not install dependencies: ${msg.slice(0, 100)}\n`),
+            );
             for (const err of installErrors) {
               log(chalk.gray(`  ${err}`));
             }
@@ -335,26 +340,34 @@ export function registerScanCommand(
             if (llmEntry) {
               entryPath = path.join(targetDir, llmEntry);
               if (buildFailed) {
-                process.stdout.write(chalk.green(`✓ Entry point: ${llmEntry} (using pre-committed declarations)\n`));
+                process.stdout.write(
+                  chalk.green(`✓ Entry point: ${llmEntry} (using pre-committed declarations)\n`),
+                );
                 log(
                   chalk.gray(
                     '  Coverage may be limited - generated .d.ts files typically lack JSDoc',
                   ),
                 );
               } else {
-                process.stdout.write(chalk.green(`✓ Entry point: ${llmEntry} (from LLM fallback - WASM project)\n`));
+                process.stdout.write(
+                  chalk.green(`✓ Entry point: ${llmEntry} (from LLM fallback - WASM project)\n`),
+                );
               }
             } else {
               // Fall back to original .d.ts entry
               entryPath = path.join(targetDir, entry.path);
-              process.stdout.write(chalk.green(`✓ Entry point: ${entry.path} (from ${entry.source})\n`));
+              process.stdout.write(
+                chalk.green(`✓ Entry point: ${entry.path} (from ${entry.source})\n`),
+              );
               log(
                 chalk.yellow('  ⚠ WASM project detected but no API key - analysis may be limited'),
               );
             }
           } else {
             entryPath = path.join(targetDir, entry.path);
-            process.stdout.write(chalk.green(`✓ Entry point: ${entry.path} (from ${entry.source})\n`));
+            process.stdout.write(
+              chalk.green(`✓ Entry point: ${entry.path} (from ${entry.source})\n`),
+            );
           }
         } catch (entryError) {
           // LLM Fallback for exotic projects (WASM, unusual monorepos, etc.)
@@ -363,9 +376,9 @@ export function registerScanCommand(
             entryPath = path.join(targetDir, llmEntry);
             process.stdout.write(chalk.green(`✓ Entry point: ${llmEntry} (from LLM fallback)\n`));
           } else {
-            process.stdout.write(chalk.red(
-              '✗ Could not detect entry point (set OPENAI_API_KEY for smart fallback)\n',
-            ));
+            process.stdout.write(
+              chalk.red('✗ Could not detect entry point (set OPENAI_API_KEY for smart fallback)\n'),
+            );
             throw entryError;
           }
         }
@@ -441,13 +454,11 @@ export function registerScanCommand(
         );
         process.exitCode = 1;
       } finally {
-        // Cleanup temp directory (fire-and-forget)
+        // Cleanup temp directory (fire-and-forget, cross-platform)
         if (tempDir && options.cleanup !== false) {
-          const { spawn } = await import('node:child_process');
-          spawn('rm', ['-rf', tempDir], {
-            detached: true,
-            stdio: 'ignore',
-          }).unref();
+          fsPromises.rm(tempDir, { recursive: true, force: true }).catch(() => {
+            // Ignore cleanup errors
+          });
         } else if (tempDir) {
           log(chalk.gray(`Repo preserved at: ${tempDir}`));
         }

@@ -10,16 +10,17 @@ import {
   detectExampleRuntimeErrors,
   detectMonorepo,
   type ExampleRunResult,
-  findPackageByName,
+  type ExampleTypeError,
   type FixSuggestion,
   findJSDocLocation,
+  findPackageByName,
   generateFixesForExport,
   getDefaultConfig as getLintDefaultConfig,
   hasNonAssertionComments,
   type JSDocEdit,
   type JSDocPatch,
-  lintExport,
   type LintViolation,
+  lintExport,
   mergeFixes,
   NodeFileSystem,
   parseAssertions,
@@ -27,7 +28,6 @@ import {
   runExamplesWithPackage,
   serializeJSDoc,
   typecheckExamples,
-  type ExampleTypeError,
 } from '@doccov/sdk';
 import type { SpecDocDrift, SpecExport } from '@openpkg-ts/spec';
 import chalk from 'chalk';
@@ -225,7 +225,9 @@ export function registerCheckCommand(
             const errors = lintViolations.filter((v) => v.violation.severity === 'error').length;
             const warns = lintViolations.filter((v) => v.violation.severity === 'warn').length;
             process.stdout.write(
-              chalk.yellow(`⚠ ${lintViolations.length} lint issue(s) (${errors} error, ${warns} warn)\n`),
+              chalk.yellow(
+                `⚠ ${lintViolations.length} lint issue(s) (${errors} error, ${warns} warn)\n`,
+              ),
             );
           }
         }
@@ -236,7 +238,10 @@ export function registerCheckCommand(
           const allExamplesForTypecheck: Array<{ exportName: string; examples: string[] }> = [];
           for (const exp of spec.exports ?? []) {
             if (exp.examples && exp.examples.length > 0) {
-              allExamplesForTypecheck.push({ exportName: exp.name, examples: exp.examples as string[] });
+              allExamplesForTypecheck.push({
+                exportName: exp.name,
+                examples: exp.examples as string[],
+              });
             }
           }
 
@@ -286,7 +291,9 @@ export function registerCheckCommand(
             });
 
             if (!packageResult.installSuccess) {
-              process.stdout.write(chalk.red(`✗ Package install failed: ${packageResult.installError}\n`));
+              process.stdout.write(
+                chalk.red(`✗ Package install failed: ${packageResult.installError}\n`),
+              );
               log(chalk.yellow('Skipping example execution. Ensure the package is built.'));
             } else {
               process.stdout.write(chalk.cyan('> Running @example blocks...\n'));
@@ -377,7 +384,9 @@ export function registerCheckCommand(
               }
 
               if (examplesFailed > 0) {
-                process.stdout.write(chalk.red(`✗ ${examplesFailed}/${examplesRun} example(s) failed\n`));
+                process.stdout.write(
+                  chalk.red(`✗ ${examplesFailed}/${examplesRun} example(s) failed\n`),
+                );
               } else {
                 process.stdout.write(chalk.green(`✓ ${examplesRun} example(s) passed\n`));
               }
@@ -543,7 +552,9 @@ export function registerCheckCommand(
                     }
                   } else {
                     process.stdout.write(
-                      chalk.green(`✓ Applied ${applyResult.editsApplied} fix(es) to ${applyResult.filesModified} file(s)\n`),
+                      chalk.green(
+                        `✓ Applied ${applyResult.editsApplied} fix(es) to ${applyResult.filesModified} file(s)\n`,
+                      ),
                     );
                   }
 
@@ -560,19 +571,24 @@ export function registerCheckCommand(
 
           // Filter out fixed drifts from the evaluation
           if (!options.dryRun) {
-            driftExports = driftExports.filter(
-              (d) => !fixedDriftKeys.has(`${d.name}:${d.issue}`),
-            );
+            driftExports = driftExports.filter((d) => !fixedDriftKeys.has(`${d.name}:${d.issue}`));
           }
         }
 
         const coverageFailed = coverageScore < minCoverage;
         const hasMissingExamples = missingExamples.length > 0;
         const hasDrift = !options.ignoreDrift && driftExports.length > 0;
-        const hasLintErrors = lintViolations.filter((v) => v.violation.severity === 'error').length > 0;
+        const hasLintErrors =
+          lintViolations.filter((v) => v.violation.severity === 'error').length > 0;
         const hasTypecheckErrors = typecheckErrors.length > 0;
 
-        if (!coverageFailed && !hasMissingExamples && !hasDrift && !hasLintErrors && !hasTypecheckErrors) {
+        if (
+          !coverageFailed &&
+          !hasMissingExamples &&
+          !hasDrift &&
+          !hasLintErrors &&
+          !hasTypecheckErrors
+        ) {
           log(chalk.green(`✓ Docs coverage ${coverageScore}% (min ${minCoverage}%)`));
 
           if (failingExports.length > 0) {
@@ -611,7 +627,9 @@ export function registerCheckCommand(
         if (hasLintErrors) {
           error('');
           error(chalk.bold('Lint errors:'));
-          for (const { exportName, violation } of lintViolations.filter((v) => v.violation.severity === 'error').slice(0, 10)) {
+          for (const { exportName, violation } of lintViolations
+            .filter((v) => v.violation.severity === 'error')
+            .slice(0, 10)) {
             error(chalk.red(`  • ${exportName}: ${violation.message}`));
           }
         }
@@ -620,7 +638,11 @@ export function registerCheckCommand(
           error('');
           error(chalk.bold('Type errors in examples:'));
           for (const { exportName, error: err } of typecheckErrors.slice(0, 10)) {
-            error(chalk.red(`  • ${exportName} @example ${err.exampleIndex + 1}, line ${err.line}: ${err.message}`));
+            error(
+              chalk.red(
+                `  • ${exportName} @example ${err.exampleIndex + 1}, line ${err.line}: ${err.message}`,
+              ),
+            );
           }
         }
 
