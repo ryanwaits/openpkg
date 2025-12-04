@@ -19,4 +19,3 @@ export type {
   LintSeverity,
   LintViolation,
 } from './types';
-

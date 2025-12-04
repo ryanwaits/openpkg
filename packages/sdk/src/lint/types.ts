@@ -28,4 +28,3 @@ export interface LintResult {
   warningCount: number;
   fixableCount: number;
 }
-

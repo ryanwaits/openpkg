@@ -125,7 +125,12 @@ export function typecheckExample(
   const lineOffset = hasImport ? 2 : 0; // import + blank line
 
   // Create a custom compiler host
-  const sourceFile = ts.createSourceFile(virtualFileName, virtualSource, ts.ScriptTarget.ES2022, true);
+  const sourceFile = ts.createSourceFile(
+    virtualFileName,
+    virtualSource,
+    ts.ScriptTarget.ES2022,
+    true,
+  );
 
   const defaultHost = ts.createCompilerHost(compilerOptions);
   const customHost: ts.CompilerHost = {
@@ -212,4 +217,3 @@ export function typecheckExamples(
     failed,
   };
 }
-

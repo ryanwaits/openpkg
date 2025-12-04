@@ -1,10 +1,5 @@
 import type { SpecExport } from '@openpkg-ts/spec';
-import {
-  consistentParamStyle,
-  noEmptyReturns,
-  requireDescription,
-  requireExample,
-} from './rules';
+import { consistentParamStyle, noEmptyReturns, requireDescription, requireExample } from './rules';
 import type { LintConfig, LintResult, LintRule, LintSeverity, LintViolation } from './types';
 
 /** All available lint rules */
@@ -82,4 +77,3 @@ export function mergeConfig(userConfig: Partial<LintConfig>): LintConfig {
     },
   };
 }
-

@@ -26,4 +26,3 @@ export interface TypecheckOptions {
   /** Package name for imports (auto-detected from package.json if not provided) */
   packageName?: string;
 }
-

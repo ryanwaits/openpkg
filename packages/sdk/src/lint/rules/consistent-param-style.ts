@@ -7,7 +7,7 @@ export const consistentParamStyle: LintRule = {
   name: 'consistent-param-style',
   defaultSeverity: 'off',
 
-  check(exp: SpecExport, rawJSDoc?: string): LintViolation[] {
+  check(_exp: SpecExport, rawJSDoc?: string): LintViolation[] {
     if (!rawJSDoc) return [];
 
     const violations: LintViolation[] = [];
@@ -45,4 +45,3 @@ export const consistentParamStyle: LintRule = {
     return patch;
   },
 };
-
