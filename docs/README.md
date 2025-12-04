@@ -10,6 +10,18 @@ Documentation coverage and drift detection for TypeScript.
 | `@doccov/sdk` | Programmatic API | [![npm](https://img.shields.io/npm/v/@doccov/sdk)](https://npmjs.com/package/@doccov/sdk) |
 | `@openpkg-ts/spec` | Schema, types, validation | [![npm](https://img.shields.io/npm/v/@openpkg-ts/spec)](https://npmjs.com/package/@openpkg-ts/spec) |
 
+## Naming Convention
+
+DocCov uses two naming conventions:
+
+| Name | Usage | Examples |
+|------|-------|----------|
+| **DocCov** | Product name, CLI tool, most packages | `@doccov/cli`, `@doccov/sdk`, `doccov.config.js` |
+| **OpenPkg** | Specification format (open standard) | `@openpkg-ts/spec`, `openpkg.json` output files |
+
+- **DocCov** is the tool that analyzes your TypeScript documentation
+- **OpenPkg** is the open specification format that DocCov outputs (designed to be tool-agnostic)
+
 ## Getting Started
 
 - [Installation](./getting-started/installation.md) - Install DocCov packages
