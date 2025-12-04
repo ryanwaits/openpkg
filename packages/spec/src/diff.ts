@@ -152,7 +152,32 @@ function toMap<T extends WithId>(items: T[]): Map<string, T> {
   return map;
 }
 
-const DOC_KEYS = new Set(['description', 'examples', 'tags', 'source', 'rawComments']);
+/**
+ * Keys that are considered documentation/presentation only.
+ * Changes to these fields are classified as docsOnly, not breaking.
+ */
+const DOC_KEYS = new Set([
+  // Core documentation
+  'description',
+  'examples',
+  'tags',
+  'rawComments',
+
+  // Source info (doesn't affect API)
+  'source',
+
+  // Presentation/metadata
+  'docs',
+  'displayName',
+  'slug',
+  'importPath',
+  'category',
+
+  // Coverage metadata
+  'coverageScore',
+  'missing',
+  'drift',
+]);
 
 function isDocOnlyChange(a: unknown, b: unknown): boolean {
   const structuralA = normalizeForComparison(removeDocFields(a));

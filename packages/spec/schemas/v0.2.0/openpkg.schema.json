@@ -173,7 +173,16 @@
         "kind": {
           "type": "string",
           "description": "Kind of export",
-          "enum": ["function", "class", "variable", "interface", "type", "enum", "namespace", "external"]
+          "enum": [
+            "function",
+            "class",
+            "variable",
+            "interface",
+            "type",
+            "enum",
+            "namespace",
+            "external"
+          ]
         },
         "description": {
           "type": "string",

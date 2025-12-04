@@ -1,10 +1,10 @@
 export * from './constants';
 export { dereference } from './deref';
 export {
-  categorizeBreakingChanges,
-  diffSpec,
   type BreakingSeverity,
   type CategorizedBreaking,
+  categorizeBreakingChanges,
+  diffSpec,
   type MemberChangeInfo,
   type SpecDiff,
 } from './diff';

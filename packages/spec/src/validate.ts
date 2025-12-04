@@ -1,8 +1,18 @@
+import type { ValidateFunction } from 'ajv';
 import Ajv from 'ajv/dist/2020.js';
 import addFormats from 'ajv-formats';
-import schema from '../schemas/v0.2.0/openpkg.schema.json';
+
+// Import all schema versions
+import schemaV020 from '../schemas/v0.2.0/openpkg.schema.json';
+import schemaV010 from '../schemas/v0.1.0/openpkg.schema.json';
 
 import type { OpenPkg } from './types';
+
+/** Supported schema versions */
+export type SchemaVersion = '0.1.0' | '0.2.0' | 'latest';
+
+/** Current/latest schema version */
+export const LATEST_VERSION: SchemaVersion = '0.2.0';
 
 export type SpecError = {
   instancePath: string;
@@ -10,6 +20,13 @@ export type SpecError = {
   keyword: string;
 };
 
+// Schema registry
+const schemas: Record<string, unknown> = {
+  '0.1.0': schemaV010,
+  '0.2.0': schemaV020,
+};
+
+// Ajv instance (shared)
 const ajv = new Ajv({
   strict: false,
   allErrors: true,
@@ -17,9 +34,53 @@ const ajv = new Ajv({
   $data: true,
 });
 addFormats(ajv);
-const validate = ajv.compile<OpenPkg>(schema as unknown);
-export function validateSpec(spec: unknown): { ok: true } | { ok: false; errors: SpecError[] } {
+
+// Validator cache by version
+const validatorCache = new Map<string, ValidateFunction<OpenPkg>>();
+
+/**
+ * Get a compiled validator for a specific schema version.
+ * Validators are cached for reuse.
+ *
+ * @param version - Schema version ('0.1.0', '0.2.0', or 'latest')
+ * @returns Compiled Ajv validator
+ */
+function getValidator(version: SchemaVersion = 'latest'): ValidateFunction<OpenPkg> {
+  const resolvedVersion = version === 'latest' ? LATEST_VERSION : version;
+
+  let validator = validatorCache.get(resolvedVersion);
+  if (validator) {
+    return validator;
+  }
+
+  const schema = schemas[resolvedVersion];
+  if (!schema) {
+    throw new Error(
+      `Unknown schema version: ${resolvedVersion}. Available: ${Object.keys(schemas).join(', ')}`,
+    );
+  }
+
+  // Cast to any to avoid strict Ajv type checking on dynamic schemas
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  validator = ajv.compile<OpenPkg>(schema as any);
+  validatorCache.set(resolvedVersion, validator);
+  return validator;
+}
+
+/**
+ * Validate a spec against a specific schema version.
+ *
+ * @param spec - The spec object to validate
+ * @param version - Schema version to validate against (default: 'latest')
+ * @returns Validation result
+ */
+export function validateSpec(
+  spec: unknown,
+  version: SchemaVersion = 'latest',
+): { ok: true } | { ok: false; errors: SpecError[] } {
+  const validate = getValidator(version);
   const ok = validate(spec);
+
   if (ok) {
     return { ok: true };
   }
@@ -36,8 +97,22 @@ export function validateSpec(spec: unknown): { ok: true } | { ok: false; errors:
   };
 }
 
-export function assertSpec(spec: unknown): asserts spec is OpenPkg {
-  const result = validateSpec(spec);
+/**
+ * Get available schema versions.
+ */
+export function getAvailableVersions(): string[] {
+  return Object.keys(schemas);
+}
+
+/**
+ * Assert that a value is a valid OpenPkg spec.
+ * Throws an error with details if validation fails.
+ *
+ * @param spec - The value to validate
+ * @param version - Schema version to validate against (default: 'latest')
+ */
+export function assertSpec(spec: unknown, version: SchemaVersion = 'latest'): asserts spec is OpenPkg {
+  const result = validateSpec(spec, version);
   if (!result.ok) {
     const details = result.errors
       .map((error) => `- ${error.instancePath || '/'} ${error.message}`)
@@ -46,7 +121,14 @@ export function assertSpec(spec: unknown): asserts spec is OpenPkg {
   }
 }
 
-export function getValidationErrors(spec: unknown): SpecError[] {
-  const result = validateSpec(spec);
+/**
+ * Get validation errors for a spec.
+ *
+ * @param spec - The spec to validate
+ * @param version - Schema version to validate against (default: 'latest')
+ * @returns Array of validation errors (empty if valid)
+ */
+export function getValidationErrors(spec: unknown, version: SchemaVersion = 'latest'): SpecError[] {
+  const result = validateSpec(spec, version);
   return result.ok ? [] : result.errors;
 }
