@@ -102,6 +102,67 @@ describe('formatTypeReference', () => {
       });
     }
   });
+
+  it('filters out TypeBox internal symbols from object types', () => {
+    const { checker, sourceFile } = createTestCompiler(`
+      type TypeBoxOptional = {
+        "__@OptionalKind@123": "Optional";
+        other: string;
+      };
+      const val: TypeBoxOptional = { "__@OptionalKind@123": "Optional", other: "test" };
+    `);
+
+    const variableStatement = getDeclaration(sourceFile, ts.isVariableStatement);
+    const declaration = variableStatement.declarationList.declarations[0];
+    const type = checker.getTypeAtLocation(declaration.name);
+
+    const result = formatTypeReference(type, checker, new Map());
+
+    expect(result).toEqual({
+      type: 'object',
+      properties: {
+        other: { type: 'string' },
+      },
+      required: ['other'],
+    });
+  });
+
+  it('filters TypeBox OptionalKind markers from intersection types', () => {
+    // Simulates TypeBox Type.Optional which creates: T & { [OptionalKind]: 'Optional' }
+    const { checker, sourceFile } = createTestCompiler(`
+      type OptionalMarker = { "__@OptionalKind@77": "Optional" };
+      type TypeBoxOptionalString = string & OptionalMarker;
+      const val: TypeBoxOptionalString = "test" as any;
+    `);
+
+    const variableStatement = getDeclaration(sourceFile, ts.isVariableStatement);
+    const declaration = variableStatement.declarationList.declarations[0];
+    const type = checker.getTypeAtLocation(declaration.name);
+
+    const result = formatTypeReference(type, checker, new Map());
+
+    // Should unwrap to just string, filtering out the OptionalKind marker
+    expect(result).toEqual({ type: 'string' });
+  });
+
+  it('filters OptionalKind from complex intersection types', () => {
+    const { checker, sourceFile } = createTestCompiler(`
+      type OptionalMarker = { "__@OptionalKind@77": "Optional" };
+      interface User { id: string; name: string }
+      type TypeBoxOptionalUser = User & OptionalMarker;
+      const val: TypeBoxOptionalUser = { id: "1", name: "test" } as any;
+    `);
+
+    const variableStatement = getDeclaration(sourceFile, ts.isVariableStatement);
+    const declaration = variableStatement.declarationList.declarations[0];
+    const type = checker.getTypeAtLocation(declaration.name);
+
+    const typeRefs = new Map<string, string>([['User', 'User']]);
+    const result = formatTypeReference(type, checker, typeRefs);
+
+    // Should unwrap to just User ref, filtering out the OptionalKind marker
+    expect(result).toEqual({ $ref: '#/types/User' });
+  });
 });
 
 describe('structureParameter', () => {
