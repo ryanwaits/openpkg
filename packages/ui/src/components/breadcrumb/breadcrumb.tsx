@@ -1,7 +1,7 @@
 'use client';
 
-import * as React from 'react';
 import { ChevronDown } from 'lucide-react';
+import * as React from 'react';
 import { cn } from '../../lib/utils';
 
 interface BreadcrumbItem {
@@ -22,7 +22,11 @@ interface BreadcrumbProps {
 const Breadcrumb = React.forwardRef<HTMLDivElement, BreadcrumbProps>(
   ({ items, separator = '/', className }, ref) => {
     return (
-      <nav ref={ref} className={cn('flex items-center gap-2 text-sm', className)} aria-label="Breadcrumb">
+      <nav
+        ref={ref}
+        className={cn('flex items-center gap-2 text-sm', className)}
+        aria-label="Breadcrumb"
+      >
         {items.map((item, index) => (
           <React.Fragment key={item.id}>
             {index > 0 && <span className="text-muted-foreground/50 select-none">{separator}</span>}
@@ -96,4 +100,10 @@ const BreadcrumbDropdown = React.forwardRef<HTMLButtonElement, BreadcrumbDropdow
 );
 BreadcrumbDropdown.displayName = 'BreadcrumbDropdown';
 
-export { Breadcrumb, BreadcrumbDropdown, type BreadcrumbItem, type BreadcrumbProps, type BreadcrumbDropdownProps };
+export {
+  Breadcrumb,
+  BreadcrumbDropdown,
+  type BreadcrumbItem,
+  type BreadcrumbProps,
+  type BreadcrumbDropdownProps,
+};

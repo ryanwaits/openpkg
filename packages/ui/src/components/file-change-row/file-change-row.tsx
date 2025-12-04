@@ -1,24 +1,40 @@
 'use client';
 
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import * as React from 'react';
-import { ChevronUp, ChevronDown } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../collapsible';
 
-type FileType = 'typescript' | 'javascript' | 'html' | 'css' | 'json' | 'tsx' | 'jsx' | 'js' | 'other';
+type FileType =
+  | 'typescript'
+  | 'javascript'
+  | 'html'
+  | 'css'
+  | 'json'
+  | 'tsx'
+  | 'jsx'
+  | 'js'
+  | 'other';
 
 // File type icon component
 function FileTypeIcon({ type, className }: { type: FileType; className?: string }) {
-  const iconClass = cn('size-4 font-mono text-xs font-bold flex items-center justify-center rounded-sm', className);
+  const iconClass = cn(
+    'size-4 font-mono text-xs font-bold flex items-center justify-center rounded-sm',
+    className,
+  );
 
   switch (type) {
     case 'typescript':
     case 'tsx':
-      return <span className={cn(iconClass, 'bg-icon-typescript/20 text-icon-typescript')}>TS</span>;
+      return (
+        <span className={cn(iconClass, 'bg-icon-typescript/20 text-icon-typescript')}>TS</span>
+      );
     case 'javascript':
     case 'jsx':
     case 'js':
-      return <span className={cn(iconClass, 'bg-icon-javascript/20 text-icon-javascript')}>JS</span>;
+      return (
+        <span className={cn(iconClass, 'bg-icon-javascript/20 text-icon-javascript')}>JS</span>
+      );
     case 'html':
       return <span className={cn(iconClass, 'bg-icon-html/20 text-icon-html')}>H</span>;
     case 'css':
@@ -55,8 +71,18 @@ function getFileType(filename: string): FileType {
 function StackedChevrons({ isOpen, className }: { isOpen?: boolean; className?: string }) {
   return (
     <div className={cn('flex flex-col items-center -space-y-1 transition-opacity', className)}>
-      <ChevronUp className={cn('size-3 transition-colors', isOpen ? 'text-foreground' : 'text-muted-foreground')} />
-      <ChevronDown className={cn('size-3 transition-colors', isOpen ? 'text-foreground' : 'text-muted-foreground')} />
+      <ChevronUp
+        className={cn(
+          'size-3 transition-colors',
+          isOpen ? 'text-foreground' : 'text-muted-foreground',
+        )}
+      />
+      <ChevronDown
+        className={cn(
+          'size-3 transition-colors',
+          isOpen ? 'text-foreground' : 'text-muted-foreground',
+        )}
+      />
     </div>
   );
 }
@@ -98,8 +124,12 @@ function FileChangeRowTrigger({
       </div>
 
       <div className="flex items-center gap-2 text-sm shrink-0">
-        {additions !== undefined && additions > 0 && <span className="text-success font-medium">+{additions}</span>}
-        {deletions !== undefined && deletions > 0 && <span className="text-destructive font-medium">-{deletions}</span>}
+        {additions !== undefined && additions > 0 && (
+          <span className="text-success font-medium">+{additions}</span>
+        )}
+        {deletions !== undefined && deletions > 0 && (
+          <span className="text-destructive font-medium">-{deletions}</span>
+        )}
       </div>
 
       <StackedChevrons isOpen={isOpen} />

@@ -1,7 +1,7 @@
 'use client';
 
-import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
+import * as React from 'react';
 import { cn } from '../../lib/utils';
 
 const inputVariants = cva(
@@ -29,7 +29,11 @@ const inputVariants = cva(
           'focus:bg-[var(--input-bg-focus)]',
           'focus:shadow-[var(--input-focus-shadow)]',
         ],
-        error: ['border-destructive/60', 'focus:border-destructive', 'focus:shadow-[0_0_0_3px_rgb(254,202,202)]'],
+        error: [
+          'border-destructive/60',
+          'focus:border-destructive',
+          'focus:shadow-[0_0_0_3px_rgb(254,202,202)]',
+        ],
       },
     },
     defaultVariants: {
@@ -79,7 +83,12 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           />
         </div>
         {(helperText || error) && (
-          <p className={cn('text-sm font-mono', hasError ? 'text-destructive' : 'text-[var(--input-placeholder)]')}>
+          <p
+            className={cn(
+              'text-sm font-mono',
+              hasError ? 'text-destructive' : 'text-[var(--input-placeholder)]',
+            )}
+          >
             {error || helperText}
           </p>
         )}
@@ -98,7 +107,15 @@ export interface InputWithButtonProps extends Omit<InputProps, 'rightIcon' | 'on
 
 const InputWithButton = React.forwardRef<HTMLInputElement, InputWithButtonProps>(
   (
-    { className, inputSize = 'lg', buttonText = 'Subscribe', buttonLoading, onButtonClick, onSubmit, ...props },
+    {
+      className,
+      inputSize = 'lg',
+      buttonText = 'Subscribe',
+      buttonLoading,
+      onButtonClick,
+      onSubmit,
+      ...props
+    },
     ref,
   ) => {
     const generatedId = React.useId();
@@ -160,7 +177,14 @@ const InputWithButton = React.forwardRef<HTMLInputElement, InputWithButtonProps>
             {buttonLoading ? (
               <span className="inline-flex items-center gap-2">
                 <svg className="animate-spin size-4" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-25" />
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    className="opacity-25"
+                  />
                   <path
                     fill="currentColor"
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
@@ -175,7 +199,12 @@ const InputWithButton = React.forwardRef<HTMLInputElement, InputWithButtonProps>
           </button>
         </div>
         {(props.helperText || props.error) && (
-          <p className={cn('text-sm font-mono', props.error ? 'text-destructive' : 'text-[var(--input-placeholder)]')}>
+          <p
+            className={cn(
+              'text-sm font-mono',
+              props.error ? 'text-destructive' : 'text-[var(--input-placeholder)]',
+            )}
+          >
             {props.error || props.helperText}
           </p>
         )}
@@ -194,7 +223,9 @@ const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
   ({ className, inputSize = 'md', showClear, onClear, ...props }, ref) => {
     return (
       <div className="w-full space-y-2">
-        {props.label && <label className="text-sm font-medium text-[var(--input-text)]">{props.label}</label>}
+        {props.label && (
+          <label className="text-sm font-medium text-[var(--input-text)]">{props.label}</label>
+        )}
         <div className="relative">
           {/* Search icon */}
           <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--input-placeholder)]">
@@ -225,13 +256,23 @@ const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
               className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--input-placeholder)] hover:text-[var(--input-text)] transition-colors"
             >
               <svg className="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           )}
         </div>
         {(props.helperText || props.error) && (
-          <p className={cn('text-sm font-mono', props.error ? 'text-destructive' : 'text-[var(--input-placeholder)]')}>
+          <p
+            className={cn(
+              'text-sm font-mono',
+              props.error ? 'text-destructive' : 'text-[var(--input-placeholder)]',
+            )}
+          >
             {props.error || props.helperText}
           </p>
         )}

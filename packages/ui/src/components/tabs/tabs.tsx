@@ -1,7 +1,7 @@
 'use client';
 
+import { Plus, X } from 'lucide-react';
 import * as React from 'react';
-import { X, Plus } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 interface TabCellBase {
@@ -79,7 +79,15 @@ function MiniProgress({ percent, className }: { percent: number; className?: str
 
   return (
     <svg className={cn('size-4', className)} viewBox="0 0 14 14">
-      <circle cx="7" cy="7" r={radius} fill="none" stroke="currentColor" strokeWidth="1.5" className="opacity-20" />
+      <circle
+        cx="7"
+        cy="7"
+        r={radius}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        className="opacity-20"
+      />
       <circle
         cx="7"
         cy="7"

@@ -1,6 +1,6 @@
-import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { Loader2 } from 'lucide-react';
+import * as React from 'react';
 import { cn } from '../../lib/utils';
 
 function ArrowIcon({ className }: { className?: string }) {
@@ -60,7 +60,19 @@ export interface ButtonProps
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
-    { className, variant, size, isLoading, leftIcon, rightIcon, withArrow, count, children, disabled, ...props },
+    {
+      className,
+      variant,
+      size,
+      isLoading,
+      leftIcon,
+      rightIcon,
+      withArrow,
+      count,
+      children,
+      disabled,
+      ...props
+    },
     ref,
   ) => {
     const effectiveSize = variant === 'nav' ? 'nav' : size;
@@ -76,7 +88,10 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     return (
       <button
-        className={cn(buttonVariants({ variant, size: effectiveSize, className }), arrowPaddingClass)}
+        className={cn(
+          buttonVariants({ variant, size: effectiveSize, className }),
+          arrowPaddingClass,
+        )}
         ref={ref}
         disabled={disabled || isLoading}
         {...props}

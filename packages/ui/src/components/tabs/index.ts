@@ -1,2 +1,2 @@
+export type { SegmentedTabsProps, TabCell, TabItem, TabsProps } from './tabs';
 export { SegmentedTabs, Tabs } from './tabs';
-export type { TabCell, TabItem, SegmentedTabsProps, TabsProps } from './tabs';
