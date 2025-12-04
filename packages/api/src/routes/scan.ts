@@ -3,25 +3,36 @@ import * as path from 'node:path';
 import { Hono } from 'hono';
 import { isSandboxAvailable, runScanInSandbox } from '../sandbox-runner';
 import { type ScanJob, type ScanResult, scanJobStore } from '../scan-worker';
+import { scanRequestSchema } from '../schemas/scan';
 
 export const scanRoute = new Hono();
-
-interface ScanRequestBody {
-  url: string;
-  ref?: string;
-  package?: string;
-}
 
 /**
  * POST /scan
  * Start a new scan job
  */
 scanRoute.post('/', async (c) => {
-  const body = await c.req.json<ScanRequestBody>();
-
-  if (!body.url) {
-    return c.json({ error: 'url is required' }, 400);
+  // Parse JSON with error handling
+  let rawBody: unknown;
+  try {
+    rawBody = await c.req.json();
+  } catch {
+    return c.json({ error: 'Invalid JSON' }, 400);
   }
+
+  // Validate request body with Zod schema
+  const parsed = scanRequestSchema.safeParse(rawBody);
+  if (!parsed.success) {
+    return c.json(
+      {
+        error: 'Validation failed',
+        details: parsed.error.issues.map((i) => i.message),
+      },
+      400,
+    );
+  }
+
+  const body = parsed.data;
 
   // Generate job ID
   const jobId = `scan-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;

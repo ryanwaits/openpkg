@@ -1,14 +1,14 @@
 import { Writable } from 'node:stream';
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { Sandbox } from '@vercel/sandbox';
 import {
-  SandboxFileSystem,
   detectBuildInfo,
   detectMonorepo,
   detectPackageManager,
   getInstallCommand,
   getPrimaryBuildScript,
+  SandboxFileSystem,
 } from '@doccov/sdk';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { Sandbox } from '@vercel/sandbox';
 
 export const config = {
   runtime: 'nodejs',
@@ -153,7 +153,13 @@ async function runScanWithProgress(
           // Try fetching the ref first (might be a tag not fetched by shallow clone)
           await sandbox.runCommand({
             cmd: 'git',
-            args: ['fetch', '--depth', '1', 'origin', `refs/tags/${options.ref}:refs/tags/${options.ref}`],
+            args: [
+              'fetch',
+              '--depth',
+              '1',
+              'origin',
+              `refs/tags/${options.ref}:refs/tags/${options.ref}`,
+            ],
           });
           const retryResult = await sandbox.runCommand({
             cmd: 'git',
@@ -174,7 +180,9 @@ async function runScanWithProgress(
 
       // Detect package manager using SDK
       const pmInfo = await detectPackageManager(fs);
-      const pmMessage = pmInfo.lockfile ? `Detected ${pmInfo.name} project` : 'No lockfile detected';
+      const pmMessage = pmInfo.lockfile
+        ? `Detected ${pmInfo.name} project`
+        : 'No lockfile detected';
       sendEvent({ type: 'progress', stage: 'detecting', message: pmMessage, progress: 15 });
 
       // Early monorepo detection - fail fast if monorepo without package param
@@ -189,9 +197,7 @@ async function runScanWithProgress(
             progress: 17,
           });
 
-          const availablePackages = mono.packages
-            .filter((p) => !p.private)
-            .map((p) => p.name);
+          const availablePackages = mono.packages.filter((p) => !p.private).map((p) => p.name);
 
           await sandbox.stop();
           sendEvent({

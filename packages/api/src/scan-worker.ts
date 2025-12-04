@@ -2,6 +2,8 @@
  * Scan job store and caching layer
  */
 
+import type { JobStore } from './stores/job-store.interface';
+
 export interface ScanResult {
   owner: string;
   repo: string;
@@ -42,8 +44,9 @@ const JOB_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
 /**
  * In-memory job store with caching
+ * Implements JobStore interface for easy swap to Redis/KV
  */
-class ScanJobStore {
+class ScanJobStore implements JobStore {
   private jobs = new Map<string, ScanJob>();
   private cache = new Map<string, CacheEntry>();
 
@@ -123,9 +126,10 @@ class ScanJobStore {
 export const scanJobStore = new ScanJobStore();
 
 // Periodic cleanup every 5 minutes
+// Use .unref() to prevent keeping the process alive
 setInterval(
   () => {
     scanJobStore.cleanup();
   },
   5 * 60 * 1000,
-);
+).unref();

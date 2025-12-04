@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
+import { rateLimit } from './middleware/rate-limit';
 import { badgeRoute } from './routes/badge';
 import { leaderboardRoute } from './routes/leaderboard';
 import { scanRoute } from './routes/scan';
@@ -9,6 +10,16 @@ const app = new Hono();
 
 // Middleware
 app.use('*', cors());
+
+// Rate limit /scan endpoint: 10 requests per minute per IP
+app.use(
+  '/scan/*',
+  rateLimit({
+    windowMs: 60 * 1000,
+    max: 10,
+    message: 'Too many scan requests. Please try again in a minute.',
+  }),
+);
 
 // Health check
 app.get('/', (c) => {
