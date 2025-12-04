@@ -6,37 +6,42 @@
       "id": "createClient",
       "name": "createClient",
       "kind": "function",
-      "signatures": [{
-        "parameters": [
-          { "name": "url", "required": true },
-          { "name": "apiKey", "required": true }
-        ]
-      }]
+      "signatures": [
+        {
+          "parameters": [
+            { "name": "url", "required": true },
+            { "name": "apiKey", "required": true }
+          ]
+        }
+      ]
     },
     {
       "id": "fetchData",
       "name": "fetchData",
       "kind": "function",
-      "signatures": [{
-        "parameters": [
-          { "name": "client", "required": true },
-          { "name": "endpoint", "required": true },
-          { "name": "options", "required": false }
-        ]
-      }]
+      "signatures": [
+        {
+          "parameters": [
+            { "name": "client", "required": true },
+            { "name": "endpoint", "required": true },
+            { "name": "options", "required": false }
+          ]
+        }
+      ]
     },
     {
       "id": "createWebhook",
       "name": "createWebhook",
       "kind": "function",
-      "signatures": [{
-        "parameters": [
-          { "name": "url", "required": true },
-          { "name": "events", "required": true }
-        ]
-      }]
+      "signatures": [
+        {
+          "parameters": [
+            { "name": "url", "required": true },
+            { "name": "events", "required": true }
+          ]
+        }
+      ]
     }
   ],
   "docs": { "coverageScore": 80 }
 }
-

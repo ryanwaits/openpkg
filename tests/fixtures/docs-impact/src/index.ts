@@ -14,9 +14,9 @@ export function createClient(url: string, apiKey: string) {
  * @param options - Fetch options (NEW in v2)
  */
 export function fetchData(
-  client: { url: string; apiKey: string },
-  endpoint: string,
-  options?: { timeout?: number }  // NEW param in v2
+  _client: { url: string; apiKey: string },
+  _endpoint: string,
+  _options?: { timeout?: number }, // NEW param in v2
 ) {
   return { data: [] };
 }
@@ -29,4 +29,3 @@ export function createWebhook(url: string, events: string[]) {
 }
 
 // REMOVED in v2: legacyFetch was here
-
