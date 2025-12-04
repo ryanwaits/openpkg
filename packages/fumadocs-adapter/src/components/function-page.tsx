@@ -1,9 +1,9 @@
 'use client';
 
 import type { OpenPkg, SpecExport } from '@openpkg-ts/spec';
-import { ParameterCard } from './parameter-card';
 import { CodeExample } from './code-example';
 import { CoverageBadge } from './coverage-badge';
+import { ParameterCard } from './parameter-card';
 
 export interface FunctionPageProps {
   export: SpecExport;
@@ -33,9 +33,7 @@ export function FunctionPage({ export: exp, spec }: FunctionPageProps) {
     <div className="space-y-6 not-prose">
       {/* Description */}
       {exp.description && (
-        <p className="text-fd-muted-foreground leading-relaxed">
-          {exp.description}
-        </p>
+        <p className="text-fd-muted-foreground leading-relaxed">{exp.description}</p>
       )}
 
       {/* Returns */}
@@ -47,13 +45,13 @@ export function FunctionPage({ export: exp, spec }: FunctionPageProps) {
       )}
 
       {/* Two-column layout - using inline styles to override prose */}
-      <div 
+      <div
         className="not-prose"
-        style={{ 
+        style={{
           display: hasExamples ? 'grid' : 'block',
           gridTemplateColumns: hasExamples ? 'repeat(2, minmax(0, 1fr))' : undefined,
           gap: '2rem',
-          alignItems: 'start'
+          alignItems: 'start',
         }}
       >
         {/* Left column: Parameters */}
@@ -78,8 +76,8 @@ export function FunctionPage({ export: exp, spec }: FunctionPageProps) {
             <h3 className="text-sm font-semibold uppercase tracking-wide text-fd-muted-foreground mb-4">
               Example
             </h3>
-            <CodeExample 
-              code={exp.examples![0]} 
+            <CodeExample
+              code={exp.examples![0]}
               filename={`${exp.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}.ts`}
             />
           </div>

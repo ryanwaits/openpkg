@@ -81,4 +81,3 @@ export function ExamplesSection({ examples }: ExamplesSectionProps) {
     </div>
   );
 }
-

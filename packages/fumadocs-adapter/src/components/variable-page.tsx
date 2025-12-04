@@ -31,9 +31,7 @@ export function VariablePage({ export: exp, spec }: VariablePageProps) {
     <div className="space-y-8">
       {/* Description */}
       {exp.description && (
-        <p className="text-fd-muted-foreground text-lg leading-relaxed">
-          {exp.description}
-        </p>
+        <p className="text-fd-muted-foreground text-lg leading-relaxed">{exp.description}</p>
       )}
 
       {/* Declaration */}
@@ -63,10 +61,7 @@ export function VariablePage({ export: exp, spec }: VariablePageProps) {
             <h3 className="text-sm font-semibold uppercase tracking-wide text-fd-muted-foreground mb-3">
               {exp.name} usage
             </h3>
-            <CodeExample 
-              code={exp.examples![0]} 
-              filename={`${exp.name.toLowerCase()}.ts`}
-            />
+            <CodeExample code={exp.examples![0]} filename={`${exp.name.toLowerCase()}.ts`} />
           </div>
         )}
       </div>

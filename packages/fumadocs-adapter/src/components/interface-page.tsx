@@ -1,10 +1,10 @@
 'use client';
 
 import type { OpenPkg, SpecExport } from '@openpkg-ts/spec';
+import { CoverageBadge } from './coverage-badge';
+import { ExamplesSection } from './examples';
 import { Signature } from './signature';
 import { TypeTable } from './type-table';
-import { ExamplesSection } from './examples';
-import { CoverageBadge } from './coverage-badge';
 
 export interface InterfacePageProps {
   export: SpecExport;
@@ -14,7 +14,7 @@ export interface InterfacePageProps {
 export function InterfacePage({ export: exp, spec }: InterfacePageProps) {
   // For interfaces/types, members are the properties
   const properties = exp.members?.filter(
-    (m) => m.kind === 'property' || m.kind === 'field' || !m.kind
+    (m) => m.kind === 'property' || m.kind === 'field' || !m.kind,
   );
   const methods = exp.members?.filter((m) => m.kind === 'method' || m.kind === 'function');
 
@@ -67,7 +67,9 @@ export function InterfacePage({ export: exp, spec }: InterfacePageProps) {
                       .map((p) => {
                         const optional = p.required === false ? '?' : '';
                         const type =
-                          typeof p.schema === 'string' ? p.schema : (p.schema as any)?.tsType ?? 'any';
+                          typeof p.schema === 'string'
+                            ? p.schema
+                            : ((p.schema as any)?.tsType ?? 'any');
                         return `${p.name}${optional}: ${type}`;
                       })
                       .join(', ')}
@@ -91,4 +93,3 @@ export function InterfacePage({ export: exp, spec }: InterfacePageProps) {
     </div>
   );
 }
-

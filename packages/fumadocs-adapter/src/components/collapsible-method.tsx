@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import type { SpecMember, SpecSchema } from '@openpkg-ts/spec';
+import { useEffect, useState } from 'react';
 import { ExpandableProperty } from './expandable-property';
 
 export interface CollapsibleMethodProps {
@@ -40,7 +40,7 @@ function formatSchema(schema: unknown): string {
     }
     if (s.tsType) {
       const tsType = String(s.tsType);
-      if (tsType.length > 40) return tsType.slice(0, 37) + '...';
+      if (tsType.length > 40) return `${tsType.slice(0, 37)}...`;
       return tsType;
     }
     if (s.type) return String(s.type);
@@ -52,7 +52,7 @@ function formatReturnType(returns: { schema?: SpecSchema; tsType?: string } | un
   if (!returns) return 'void';
   if (returns.tsType) {
     const t = returns.tsType;
-    if (t.length > 40) return t.slice(0, 37) + '...';
+    if (t.length > 40) return `${t.slice(0, 37)}...`;
     return t;
   }
   return formatSchema(returns.schema);
@@ -90,10 +90,7 @@ export function CollapsibleMethod({ member, defaultExpanded = false }: Collapsib
   }, [member.name]);
 
   return (
-    <div
-      id={member.name}
-      className="scroll-mt-20 border-b border-fd-border last:border-0"
-    >
+    <div id={member.name} className="scroll-mt-20 border-b border-fd-border last:border-0">
       {/* Clickable header */}
       <button
         onClick={() => setExpanded(!expanded)}
@@ -111,9 +108,7 @@ export function CollapsibleMethod({ member, defaultExpanded = false }: Collapsib
             <span className="text-fd-muted-foreground font-normal">({paramPreview})</span>
           </span>
           <span className="text-fd-muted-foreground">→</span>
-          <span className="font-mono text-sm text-fd-muted-foreground truncate">
-            {returnType}
-          </span>
+          <span className="font-mono text-sm text-fd-muted-foreground truncate">{returnType}</span>
         </div>
 
         {/* Badges */}
@@ -141,9 +136,7 @@ export function CollapsibleMethod({ member, defaultExpanded = false }: Collapsib
         <div className="pb-6 pl-8 pr-4">
           {/* Description */}
           {member.description && (
-            <p className="text-fd-muted-foreground mb-4 leading-relaxed">
-              {member.description}
-            </p>
+            <p className="text-fd-muted-foreground mb-4 leading-relaxed">{member.description}</p>
           )}
 
           {/* Parameters */}

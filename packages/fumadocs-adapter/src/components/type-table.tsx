@@ -1,6 +1,6 @@
 'use client';
 
-import type { OpenPkg, SpecSignatureParameter, SpecMember } from '@openpkg-ts/spec';
+import type { OpenPkg, SpecMember, SpecSignatureParameter } from '@openpkg-ts/spec';
 
 export interface TypeTableProps {
   items: (SpecSignatureParameter | SpecMember)[];
@@ -40,7 +40,9 @@ export function TypeTable({ items, showRequired = true }: TypeTableProps) {
           <tr className="border-b border-fd-border">
             <th className="text-left py-2 px-3 font-medium text-fd-muted-foreground">Name</th>
             <th className="text-left py-2 px-3 font-medium text-fd-muted-foreground">Type</th>
-            <th className="text-left py-2 px-3 font-medium text-fd-muted-foreground">Description</th>
+            <th className="text-left py-2 px-3 font-medium text-fd-muted-foreground">
+              Description
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -56,9 +58,7 @@ export function TypeTable({ items, showRequired = true }: TypeTableProps) {
                   <code className="text-fd-primary font-mono text-xs bg-fd-secondary px-1.5 py-0.5 rounded">
                     {name}
                   </code>
-                  {showRequired && required && (
-                    <span className="ml-1 text-red-500 text-xs">*</span>
-                  )}
+                  {showRequired && required && <span className="ml-1 text-red-500 text-xs">*</span>}
                   {showRequired && !required && (
                     <span className="ml-1 text-fd-muted-foreground text-xs">?</span>
                   )}
@@ -66,9 +66,7 @@ export function TypeTable({ items, showRequired = true }: TypeTableProps) {
                 <td className="py-2 px-3 align-top">
                   <code className="font-mono text-xs text-fd-muted-foreground">{type}</code>
                 </td>
-                <td className="py-2 px-3 align-top text-fd-muted-foreground">
-                  {description}
-                </td>
+                <td className="py-2 px-3 align-top text-fd-muted-foreground">{description}</td>
               </tr>
             );
           })}
@@ -77,4 +75,3 @@ export function TypeTable({ items, showRequired = true }: TypeTableProps) {
     </div>
   );
 }
-

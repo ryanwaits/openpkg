@@ -2,9 +2,9 @@
 
 import type { OpenPkg, SpecExport, SpecMember } from '@openpkg-ts/spec';
 import { CodeExample } from './code-example';
+import { CollapsibleMethod } from './collapsible-method';
 import { CoverageBadge } from './coverage-badge';
 import { ExpandableProperty } from './expandable-property';
-import { CollapsibleMethod } from './collapsible-method';
 
 export interface ClassPageProps {
   export: SpecExport;
@@ -79,9 +79,7 @@ export function ClassPage({ export: exp, spec }: ClassPageProps) {
     <div className="space-y-8">
       {/* Description */}
       {exp.description && (
-        <p className="text-fd-muted-foreground text-lg leading-relaxed">
-          {exp.description}
-        </p>
+        <p className="text-fd-muted-foreground text-lg leading-relaxed">{exp.description}</p>
       )}
 
       {/* Declaration */}
@@ -150,10 +148,7 @@ export function ClassPage({ export: exp, spec }: ClassPageProps) {
             <h3 className="text-sm font-semibold uppercase tracking-wide text-fd-muted-foreground mb-4">
               Example
             </h3>
-            <CodeExample
-              code={exp.examples![0]}
-              filename={`${exp.name.toLowerCase()}.ts`}
-            />
+            <CodeExample code={exp.examples![0]} filename={`${exp.name.toLowerCase()}.ts`} />
           </div>
         )}
       </div>

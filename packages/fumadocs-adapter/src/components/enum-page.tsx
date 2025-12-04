@@ -1,9 +1,9 @@
 'use client';
 
 import type { OpenPkg, SpecExport } from '@openpkg-ts/spec';
-import { Signature } from './signature';
-import { ExamplesSection } from './examples';
 import { CoverageBadge } from './coverage-badge';
+import { ExamplesSection } from './examples';
+import { Signature } from './signature';
 
 export interface EnumPageProps {
   export: SpecExport;
@@ -35,7 +35,9 @@ export function EnumPage({ export: exp, spec }: EnumPageProps) {
               <thead>
                 <tr className="border-b border-fd-border">
                   <th className="text-left py-2 px-3 font-medium text-fd-muted-foreground">Name</th>
-                  <th className="text-left py-2 px-3 font-medium text-fd-muted-foreground">Value</th>
+                  <th className="text-left py-2 px-3 font-medium text-fd-muted-foreground">
+                    Value
+                  </th>
                   <th className="text-left py-2 px-3 font-medium text-fd-muted-foreground">
                     Description
                   </th>
@@ -47,12 +49,15 @@ export function EnumPage({ export: exp, spec }: EnumPageProps) {
                   const value =
                     member.schema !== undefined
                       ? typeof member.schema === 'object' && member.schema !== null
-                        ? (member.schema as any).const ?? (member.schema as any).default ?? '-'
+                        ? ((member.schema as any).const ?? (member.schema as any).default ?? '-')
                         : member.schema
                       : '-';
 
                   return (
-                    <tr key={member.name ?? index} className="border-b border-fd-border last:border-0">
+                    <tr
+                      key={member.name ?? index}
+                      className="border-b border-fd-border last:border-0"
+                    >
                       <td className="py-2 px-3 align-top">
                         <code className="text-fd-primary font-mono text-xs bg-fd-secondary px-1.5 py-0.5 rounded">
                           {member.name}
@@ -83,4 +88,3 @@ export function EnumPage({ export: exp, spec }: EnumPageProps) {
     </div>
   );
 }
-

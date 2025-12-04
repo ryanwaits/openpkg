@@ -1,11 +1,11 @@
 'use client';
 
-import type { OpenPkg, SpecExport } from '@openpkg-ts/spec';
+import type { OpenPkg } from '@openpkg-ts/spec';
 import type { OpenPkgInstance } from '../server';
-import { FunctionPage } from './function-page';
 import { ClassPage } from './class-page';
-import { InterfacePage } from './interface-page';
 import { EnumPage } from './enum-page';
+import { FunctionPage } from './function-page';
+import { InterfacePage } from './interface-page';
 import { VariablePage } from './variable-page';
 
 export interface APIPageProps {
@@ -78,13 +78,7 @@ export function APIPage({ spec, instance, id }: APIPageProps) {
       return <InterfacePage {...pageProps} />;
     case 'enum':
       return <EnumPage {...pageProps} />;
-    case 'variable':
-    case 'namespace':
-    case 'module':
-    case 'reference':
-    case 'external':
     default:
       return <VariablePage {...pageProps} />;
   }
 }
-

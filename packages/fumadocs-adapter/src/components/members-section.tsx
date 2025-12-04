@@ -1,7 +1,6 @@
 'use client';
 
-import type { SpecMember, OpenPkg } from '@openpkg-ts/spec';
-import { TypeTable } from './type-table';
+import type { OpenPkg, SpecMember } from '@openpkg-ts/spec';
 
 export interface MembersSectionProps {
   members: SpecMember[];
@@ -76,10 +75,11 @@ function MemberRow({ member }: { member: SpecMember }) {
   const sig = member.signatures?.[0];
   let signature = '';
   if (sig) {
-    const params = sig.parameters?.map((p) => {
-      const optional = p.required === false ? '?' : '';
-      return `${p.name}${optional}: ${formatSchema(p.schema)}`;
-    }) ?? [];
+    const params =
+      sig.parameters?.map((p) => {
+        const optional = p.required === false ? '?' : '';
+        return `${p.name}${optional}: ${formatSchema(p.schema)}`;
+      }) ?? [];
     const returnType = sig.returns?.tsType ?? formatSchema(sig.returns?.schema) ?? 'void';
     signature = `(${params.join(', ')}): ${returnType}`;
   }
@@ -190,4 +190,3 @@ export function MembersSection({ members, spec, title = 'Members' }: MembersSect
     </div>
   );
 }
-

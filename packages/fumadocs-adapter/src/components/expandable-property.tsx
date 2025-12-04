@@ -1,7 +1,7 @@
 'use client';
 
+import type { SpecSchema, SpecSignatureParameter } from '@openpkg-ts/spec';
 import { useState } from 'react';
-import type { SpecSignatureParameter, SpecSchema } from '@openpkg-ts/spec';
 
 export interface ExpandablePropertyProps {
   param: SpecSignatureParameter;
@@ -46,7 +46,7 @@ function formatType(schema: SpecSchema): string {
     if (s.tsType && typeof s.tsType === 'string') {
       const tsType = s.tsType as string;
       if (tsType.length > 80) {
-        return tsType.slice(0, 77) + '...';
+        return `${tsType.slice(0, 77)}...`;
       }
       return tsType;
     }
@@ -58,8 +58,8 @@ function formatType(schema: SpecSchema): string {
 
     // Handle enums
     if (s.enum && Array.isArray(s.enum)) {
-      const enumVals = (s.enum as unknown[]).map(v => JSON.stringify(v)).join(' | ');
-      if (enumVals.length > 50) return enumVals.slice(0, 47) + '...';
+      const enumVals = (s.enum as unknown[]).map((v) => JSON.stringify(v)).join(' | ');
+      if (enumVals.length > 50) return `${enumVals.slice(0, 47)}...`;
       return enumVals;
     }
 
@@ -135,9 +135,7 @@ export function NestedProperty({ name, schema, required = false, depth = 0 }: Ne
             </span>
           </div>
           {description && (
-            <p className="text-sm text-fd-muted-foreground mt-0.5 leading-relaxed">
-              {description}
-            </p>
+            <p className="text-sm text-fd-muted-foreground mt-0.5 leading-relaxed">{description}</p>
           )}
         </div>
 

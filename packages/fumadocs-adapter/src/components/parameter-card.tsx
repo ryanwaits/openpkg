@@ -38,15 +38,11 @@ export function ParameterCard({ param, spec }: ParameterCardProps) {
       </div>
 
       {/* Type */}
-      <div className="text-sm text-fd-muted-foreground font-mono">
-        {type}
-      </div>
+      <div className="text-sm text-fd-muted-foreground font-mono">{type}</div>
 
       {/* Description */}
       {param.description && (
-        <p className="text-sm text-fd-muted-foreground mt-2">
-          {param.description}
-        </p>
+        <p className="text-sm text-fd-muted-foreground mt-2">{param.description}</p>
       )}
     </div>
   );

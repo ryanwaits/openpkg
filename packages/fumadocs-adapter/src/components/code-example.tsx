@@ -25,9 +25,13 @@ function cleanCode(code: string): string {
   return cleaned;
 }
 
-export function CodeExample({ code, filename = 'example.ts', language = 'typescript' }: CodeExampleProps) {
+export function CodeExample({
+  code,
+  filename = 'example.ts',
+  language = 'typescript',
+}: CodeExampleProps) {
   const cleaned = cleanCode(code);
-  
+
   // Build RawCode object for ClientDocsKitCode
   // The meta field uses flags: 'c' for copyButton, 'n' for lineNumbers
   const codeblock: RawCode = {

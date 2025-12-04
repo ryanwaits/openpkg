@@ -7,4 +7,3 @@ export default defineConfig({
   format: ['esm'],
   external: ['react', 'react-dom', '@doccov/ui'],
 });
-
