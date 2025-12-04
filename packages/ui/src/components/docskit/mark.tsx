@@ -1,22 +1,22 @@
-import { AnnotationHandler } from "codehike/code"
+import type { AnnotationHandler } from 'codehike/code';
 
 export const mark: AnnotationHandler = {
-  name: "mark",
+  name: 'mark',
   Block: ({ annotation, children }) => {
-    const color = getColor(annotation)
+    const color = getColor(annotation);
     return (
       <div
         style={{
-          ["--dk-line-bg" as string]: `rgb(from ${color} r g b / 0.13)`,
-          ["--dk-line-border" as string]: color,
+          ['--dk-line-bg' as string]: `rgb(from ${color} r g b / 0.13)`,
+          ['--dk-line-border' as string]: color,
         }}
       >
         {children}
       </div>
-    )
+    );
   },
   Inline: ({ annotation, children }) => {
-    const color = getColor(annotation)
+    const color = getColor(annotation);
     return (
       <span
         style={{
@@ -27,13 +27,13 @@ export const mark: AnnotationHandler = {
       >
         {children}
       </span>
-    )
+    );
   },
-}
+};
 
 function getColor(annotation?: { query?: string }) {
-  const n = Number(annotation?.query || "0") % colors.length
-  return colors[n] || annotation?.query
+  const n = Number(annotation?.query || '0') % colors.length;
+  return colors[n] || annotation?.query;
 }
 
-const colors = ["var(--ch-5)", "var(--ch-3)", "var(--ch-2)"]
+const colors = ['var(--ch-5)', 'var(--ch-3)', 'var(--ch-2)'];

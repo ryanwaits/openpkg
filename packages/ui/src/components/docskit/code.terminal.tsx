@@ -1,9 +1,9 @@
-import { AnnotationHandler, Pre, RawCode, highlight } from "codehike/code"
+import { type AnnotationHandler, highlight, Pre, type RawCode } from 'codehike/code';
 
-import { cn } from "../../lib/utils"
-import { getHandlers } from "./code.handlers"
-import { theme, flagsToOptions } from "./code.config"
-import { CopyButton } from "./code.copy"
+import { cn } from '../../lib/utils';
+import { flagsToOptions, theme } from './code.config';
+import { CopyButton } from './code.copy';
+import { getHandlers } from './code.handlers';
 
 /**
  * Terminal-style code block with macOS window controls.
@@ -19,36 +19,30 @@ import { CopyButton } from "./code.copy"
  * />
  * ```
  */
-export async function Terminal(props: {
-  codeblock: RawCode
-  handlers?: AnnotationHandler[]
-}) {
-  const { codeblock, handlers: extraHandlers } = props
-  const { flags } = extractFlags(codeblock)
-  const options = flagsToOptions(flags)
+export async function Terminal(props: { codeblock: RawCode; handlers?: AnnotationHandler[] }) {
+  const { codeblock, handlers: extraHandlers } = props;
+  const { flags } = extractFlags(codeblock);
+  const options = flagsToOptions(flags);
 
-  const highlighted = await highlight(
-    { ...codeblock, lang: codeblock.lang || "bash" },
-    theme,
-  )
+  const highlighted = await highlight({ ...codeblock, lang: codeblock.lang || 'bash' }, theme);
 
-  const handlers = getHandlers(options)
+  const handlers = getHandlers(options);
   if (extraHandlers) {
-    handlers.push(...extraHandlers)
+    handlers.push(...extraHandlers);
   }
 
-  const { background, ...highlightedStyle } = highlighted.style
-  const showCopy = options?.copyButton
-  const isMultiLine = highlighted.code.includes("\n")
+  const { background, ...highlightedStyle } = highlighted.style;
+  const showCopy = options?.copyButton;
+  const isMultiLine = highlighted.code.includes('\n');
 
   return (
     <div className="group rounded overflow-hidden relative border-dk-border flex flex-col border my-4 not-prose">
       {/* Terminal header with macOS dots */}
       <div
         className={cn(
-          "border-b border-dk-border bg-dk-tabs-background",
-          "w-full h-9 flex items-center justify-center shrink-0",
-          "relative",
+          'border-b border-dk-border bg-dk-tabs-background',
+          'w-full h-9 flex items-center justify-center shrink-0',
+          'relative',
         )}
       >
         {/* macOS window controls (3 dots) */}
@@ -73,19 +67,19 @@ export async function Terminal(props: {
             text={highlighted.code}
             variant="floating"
             className={cn(
-              "absolute right-3 z-10 text-dk-tab-inactive-foreground",
-              isMultiLine ? "top-3" : "top-1/2 -translate-y-1/2"
+              'absolute right-3 z-10 text-dk-tab-inactive-foreground',
+              isMultiLine ? 'top-3' : 'top-1/2 -translate-y-1/2',
             )}
           />
         )}
       </div>
     </div>
-  )
+  );
 }
 
 function extractFlags(codeblock: RawCode) {
-  const meta = codeblock.meta || ""
-  const flagMatch = meta.split(" ").find((flag) => flag.startsWith("-"))
-  const flags = flagMatch ? flagMatch.slice(1) : ""
-  return { flags }
+  const meta = codeblock.meta || '';
+  const flagMatch = meta.split(' ').find((flag) => flag.startsWith('-'));
+  const flags = flagMatch ? flagMatch.slice(1) : '';
+  return { flags };
 }

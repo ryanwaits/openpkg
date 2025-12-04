@@ -1,44 +1,40 @@
-"use client"
+'use client';
 
-import { Copy, Check } from "lucide-react"
-import { cn } from "../../lib/utils"
-import { useState } from "react"
+import { Check, Copy } from 'lucide-react';
+import { useState } from 'react';
+import { cn } from '../../lib/utils';
 
 export function CopyButton({
   text,
   className,
-  variant = "floating",
+  variant = 'floating',
 }: {
-  text: string
-  className?: string
-  variant?: "floating" | "inline"
+  text: string;
+  className?: string;
+  variant?: 'floating' | 'inline';
 }) {
-  const [copied, setCopied] = useState(false)
+  const [copied, setCopied] = useState(false);
 
   return (
     <button
       className={cn(
-        "cursor-pointer transition-opacity duration-200",
-        variant === "floating" && [
-          "size-8 flex items-center justify-center",
-          "rounded border border-dk-border bg-dk-background",
-          "opacity-0 group-hover:opacity-100",
+        'cursor-pointer transition-opacity duration-200',
+        variant === 'floating' && [
+          'size-8 flex items-center justify-center',
+          'rounded border border-dk-border bg-dk-background',
+          'opacity-0 group-hover:opacity-100',
         ],
-        variant === "inline" && "rounded",
+        variant === 'inline' && 'rounded',
         className,
       )}
       onClick={() => {
-        navigator.clipboard.writeText(text)
-        setCopied(true)
-        setTimeout(() => setCopied(false), 1200)
+        navigator.clipboard.writeText(text);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1200);
       }}
       aria-label="Copy to clipboard"
     >
-      {copied ? (
-        <Check size={16} className="block" />
-      ) : (
-        <Copy size={16} className="block" />
-      )}
+      {copied ? <Check size={16} className="block" /> : <Copy size={16} className="block" />}
     </button>
-  )
+  );
 }

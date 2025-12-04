@@ -1,33 +1,33 @@
-import { CodeHikeConfig } from "codehike/mdx"
+import type { CodeHikeConfig } from 'codehike/mdx';
 
 export type CodeOptions = {
-  copyButton?: boolean
-  lineNumbers?: boolean
-  wordWrap?: boolean
-  animate?: boolean
-}
+  copyButton?: boolean;
+  lineNumbers?: boolean;
+  wordWrap?: boolean;
+  animate?: boolean;
+};
 
 export type CodeInfo = {
-  storage?: string
-  options: CodeOptions
+  storage?: string;
+  options: CodeOptions;
   tabs: {
-    options: CodeOptions
-    title: string
-    code: string
-    pre: React.ReactNode
-    icon: React.ReactNode
-    lang: string
-  }[]
-}
+    options: CodeOptions;
+    title: string;
+    code: string;
+    pre: React.ReactNode;
+    icon: React.ReactNode;
+    lang: string;
+  }[];
+};
 
-export const theme = "github-from-css"
+export const theme = 'github-from-css';
 
 export const chConfig: CodeHikeConfig = {
   components: {
-    code: "DocsKitCode",
-    inlineCode: "DocsKitInlineCode",
+    code: 'DocsKitCode',
+    inlineCode: 'DocsKitInlineCode',
   },
-}
+};
 
 /**
  * Convert flags string to options object.
@@ -36,22 +36,22 @@ export const chConfig: CodeHikeConfig = {
  * flagsToOptions("na") // { lineNumbers: true, animate: true }
  * flagsToOptions("c") // { copyButton: true }
  */
-export function flagsToOptions(flags: string = "") {
-  const options: CodeOptions = {}
+export function flagsToOptions(flags: string = '') {
+  const options: CodeOptions = {};
   const map = {
-    c: "copyButton",
-    n: "lineNumbers",
-    w: "wordWrap",
-    a: "animate",
-  } as const
-  flags.split("").forEach((flag) => {
-    if (!flag) return // Skip empty strings
+    c: 'copyButton',
+    n: 'lineNumbers',
+    w: 'wordWrap',
+    a: 'animate',
+  } as const;
+  flags.split('').forEach((flag) => {
+    if (!flag) return; // Skip empty strings
     if (flag in map) {
-      const key = map[flag as keyof typeof map]
-      options[key] = true
+      const key = map[flag as keyof typeof map];
+      options[key] = true;
     } else {
-      console.warn(`Unknown flag: ${flag}`)
+      console.warn(`Unknown flag: ${flag}`);
     }
-  })
-  return options
+  });
+  return options;
 }

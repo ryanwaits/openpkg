@@ -1,46 +1,38 @@
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "../collapsible/collapsible"
-import { ChevronDownIcon } from "lucide-react"
-import { BlockAnnotation, AnnotationHandler, InnerLine } from "codehike/code"
+import { type AnnotationHandler, type BlockAnnotation, InnerLine } from 'codehike/code';
+import { ChevronDownIcon } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../collapsible/collapsible';
 
 const collapseRoot: AnnotationHandler = {
-  name: "collapse",
+  name: 'collapse',
   transform: (annotation: BlockAnnotation) => {
-    const { fromLineNumber } = annotation
+    const { fromLineNumber } = annotation;
     return [
       annotation,
       {
         ...annotation,
         fromLineNumber: fromLineNumber,
         toLineNumber: fromLineNumber,
-        name: "CollapseTrigger",
+        name: 'CollapseTrigger',
       },
       {
         ...annotation,
         fromLineNumber: fromLineNumber + 1,
-        name: "CollapseContent",
+        name: 'CollapseContent',
       },
-    ]
+    ];
   },
   Block: ({ annotation, children }) => {
-    return (
-      <Collapsible defaultOpen={annotation.query !== "collapsed"}>
-        {children}
-      </Collapsible>
-    )
+    return <Collapsible defaultOpen={annotation.query !== 'collapsed'}>{children}</Collapsible>;
   },
-}
+};
 const icon = (
   <ChevronDownIcon
     className="inline-block group-data-[state=closed]:-rotate-90 transition select-none opacity-30 group-data-[state=closed]:opacity-80 group-hover:!opacity-100 mb-0.5 ml-1 -mr-1 "
     size={15}
   />
-)
+);
 const collapseTrigger: AnnotationHandler = {
-  name: "CollapseTrigger",
+  name: 'CollapseTrigger',
   onlyIfAnnotated: true,
   AnnotatedLine: ({ annotation, ...props }) => (
     <CollapsibleTrigger className="group contents">
@@ -48,7 +40,7 @@ const collapseTrigger: AnnotationHandler = {
     </CollapsibleTrigger>
   ),
   Line: (props) => {
-    const icon = props.data?.icon as React.ReactNode
+    const icon = props.data?.icon as React.ReactNode;
     return (
       <div className="table-row">
         <span className="w-4 text-center table-cell">{icon}</span>
@@ -56,13 +48,13 @@ const collapseTrigger: AnnotationHandler = {
           <InnerLine merge={props} />
         </div>
       </div>
-    )
+    );
   },
-}
+};
 
 const collapseContent: AnnotationHandler = {
-  name: "CollapseContent",
+  name: 'CollapseContent',
   Block: CollapsibleContent,
-}
+};
 
-export const collapse = [collapseRoot, collapseTrigger, collapseContent]
+export const collapse = [collapseRoot, collapseTrigger, collapseContent];

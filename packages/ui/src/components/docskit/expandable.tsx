@@ -1,14 +1,10 @@
-import { AnnotationHandler, BlockAnnotation } from "codehike/code"
-import {
-  Collapsible,
-  CollapsibleTrigger,
-  CollapsibleContent,
-} from "../collapsible/collapsible"
+import type { AnnotationHandler, BlockAnnotation } from 'codehike/code';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../collapsible/collapsible';
 
 export const expandable: AnnotationHandler = {
-  name: "expandable",
+  name: 'expandable',
   transform: (annotation: BlockAnnotation) => {
-    return { ...annotation, toLineNumber: 999 }
+    return { ...annotation, toLineNumber: 999 };
   },
   Block: ({ children }) => {
     return (
@@ -18,6 +14,6 @@ export const expandable: AnnotationHandler = {
         </CollapsibleTrigger>
         <CollapsibleContent>{children}</CollapsibleContent>
       </Collapsible>
-    )
+    );
   },
-}
+};

@@ -1,9 +1,9 @@
-import { AnnotationHandler, InnerLine } from "codehike/code"
+import { type AnnotationHandler, InnerLine } from 'codehike/code';
 
 export const lineNumbers: AnnotationHandler = {
-  name: "line-numbers",
+  name: 'line-numbers',
   Line: (props) => {
-    const width = props.totalLines.toString().length + 1
+    const width = props.totalLines.toString().length + 1;
     return (
       <>
         <span
@@ -14,6 +14,6 @@ export const lineNumbers: AnnotationHandler = {
         </span>
         <InnerLine merge={props} />
       </>
-    )
+    );
   },
-}
+};
