@@ -207,7 +207,7 @@ function extractTypeName(schema: SpecSchema): string | undefined {
     // Shorten long type names
     const tsType = s.tsType as string;
     if (tsType.length > 30) {
-      return tsType.slice(0, 27) + '...';
+      return `${tsType.slice(0, 27)}...`;
     }
     return tsType;
   }
@@ -392,4 +392,3 @@ export function hasRemovedMembers(changes: MemberChange[]): boolean {
 export function hasAddedMembers(changes: MemberChange[]): boolean {
   return changes.some((c) => c.changeType === 'added');
 }
-

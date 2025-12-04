@@ -122,4 +122,3 @@ export interface DocsImpactResult {
     documentedExports: number;
   };
 }
-

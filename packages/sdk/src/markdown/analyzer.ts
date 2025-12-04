@@ -132,7 +132,9 @@ export function analyzeDocsImpact(
               const hasMethodRefs = Array.from(reportedRefs).some(
                 (key) =>
                   key.startsWith(`${mdFile.path}:`) &&
-                  memberChanges.some((mc) => mc.className === className && key.includes(mc.memberName)),
+                  memberChanges.some(
+                    (mc) => mc.className === className && key.includes(mc.memberName),
+                  ),
               );
 
               if (!hasMethodRefs) {
@@ -156,7 +158,10 @@ export function analyzeDocsImpact(
       );
 
       if (exportsWithoutMemberChanges.length > 0) {
-        const refs = findExportReferences([{ ...mdFile, codeBlocks: [block] }], exportsWithoutMemberChanges);
+        const refs = findExportReferences(
+          [{ ...mdFile, codeBlocks: [block] }],
+          exportsWithoutMemberChanges,
+        );
         for (const ref of refs) {
           const changeType = getChangeType(ref.exportName, diff, newExportNames);
           if (!changeType) continue;
@@ -198,7 +203,10 @@ export function analyzeDocsImpact(
 
   // Calculate stats
   const totalCodeBlocks = markdownFiles.reduce((sum, f) => sum + f.codeBlocks.length, 0);
-  const allReferences = findExportReferences(markdownFiles, [...changedExports, ...diff.nonBreaking]);
+  const allReferences = findExportReferences(markdownFiles, [
+    ...changedExports,
+    ...diff.nonBreaking,
+  ]);
 
   // Count total impacted references
   let impactedReferences = 0;

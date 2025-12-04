@@ -9,38 +9,110 @@ import remarkMdx from 'remark-mdx';
 import remarkParse from 'remark-parse';
 import { unified } from 'unified';
 import { visit } from 'unist-util-visit';
+import {
+  extractImports,
+  extractFunctionCalls,
+  extractMethodCalls,
+  hasInstantiationAST,
+  type MethodCallInfo,
+} from './ast-extractor';
 import type { ExportReference, MarkdownCodeBlock, MarkdownDocFile } from './types';
 
+// Re-export AST-based extraction functions
+export { extractImports, extractFunctionCalls, extractMethodCalls } from './ast-extractor';
+export type { MethodCallInfo } from './ast-extractor';
+
 /**
- * Languages that can be executed
+ * @deprecated Use MethodCallInfo instead
  */
-const EXECUTABLE_LANGS = new Set([
+export type MethodCall = MethodCallInfo;
+
+/**
+ * Default set of languages that can be executed.
+ * Extended to cover more modern JS/TS conventions.
+ */
+const DEFAULT_EXECUTABLE_LANGS = new Set([
+  // TypeScript
   'ts',
   'typescript',
+  'tsx',
+  'mts',
+  'cts',
+  // JavaScript
   'js',
   'javascript',
-  'tsx',
   'jsx',
+  'mjs',
+  'cjs',
+  // Generic aliases
+  'node',
+  'esm',
 ]);
+
+/** Options for parsing markdown files */
+export interface ParseOptions {
+  /** Custom set of executable language tags */
+  executableLangs?: string[];
+}
+
+// Global executable langs (can be configured)
+let configuredExecutableLangs: Set<string> = DEFAULT_EXECUTABLE_LANGS;
+
+/**
+ * Configure the global set of executable language tags.
+ * Call this before parsing to customize which code blocks are considered executable.
+ *
+ * @param langs - Array of language tags to consider executable
+ */
+export function setExecutableLangs(langs: string[]): void {
+  configuredExecutableLangs = new Set(langs.map((l) => l.toLowerCase()));
+}
+
+/**
+ * Get the current set of executable language tags.
+ */
+export function getExecutableLangs(): string[] {
+  return Array.from(configuredExecutableLangs);
+}
+
+/**
+ * Reset executable languages to defaults.
+ */
+export function resetExecutableLangs(): void {
+  configuredExecutableLangs = DEFAULT_EXECUTABLE_LANGS;
+}
 
 /**
  * Check if a language tag represents executable code
  */
-export function isExecutableLang(lang: string | null | undefined): boolean {
+export function isExecutableLang(
+  lang: string | null | undefined,
+  customLangs?: Set<string>,
+): boolean {
   if (!lang) return false;
-  return EXECUTABLE_LANGS.has(lang.toLowerCase());
+  const langsToCheck = customLangs ?? configuredExecutableLangs;
+  return langsToCheck.has(lang.toLowerCase());
 }
 
 /**
  * Parse a markdown file and extract code blocks
  */
-export function parseMarkdownFile(content: string, filePath: string): MarkdownDocFile {
+export function parseMarkdownFile(
+  content: string,
+  filePath: string,
+  options?: ParseOptions,
+): MarkdownDocFile {
   const processor = unified().use(remarkParse).use(remarkMdx);
   const tree = processor.parse(content) as Root;
   const codeBlocks: MarkdownCodeBlock[] = [];
 
+  // Use custom langs if provided, otherwise use global config
+  const executableLangs = options?.executableLangs
+    ? new Set(options.executableLangs.map((l) => l.toLowerCase()))
+    : undefined;
+
   visit(tree, 'code', (node: Code) => {
-    if (isExecutableLang(node.lang)) {
+    if (isExecutableLang(node.lang, executableLangs)) {
       codeBlocks.push({
         lang: node.lang ?? 'ts',
         code: node.value,
@@ -59,144 +131,17 @@ export function parseMarkdownFile(content: string, filePath: string): MarkdownDo
  */
 export function parseMarkdownFiles(
   files: Array<{ path: string; content: string }>,
+  options?: ParseOptions,
 ): MarkdownDocFile[] {
-  return files.map((f) => parseMarkdownFile(f.content, f.path));
+  return files.map((f) => parseMarkdownFile(f.content, f.path, options));
 }
 
-/**
- * Extract import statements from code
- * Finds named imports: import { X, Y } from 'pkg'
- */
-export function extractImports(code: string): Array<{ name: string; from: string }> {
-  const imports: Array<{ name: string; from: string }> = [];
-  // Match: import { X, Y, Z } from 'pkg' or "pkg"
-  const importRegex = /import\s+\{([^}]+)\}\s+from\s+['"]([^'"]+)['"]/g;
-
-  let match: RegExpExecArray | null;
-  while ((match = importRegex.exec(code)) !== null) {
-    const names = match[1];
-    const from = match[2];
-    // Split by comma and clean up
-    const namedImports = names.split(',').map((n) => n.trim().split(/\s+as\s+/)[0].trim());
-    for (const name of namedImports) {
-      if (name) {
-        imports.push({ name, from });
-      }
-    }
-  }
-
-  return imports;
-}
-
-/**
- * Extract function calls from code
- * Finds: functionName( or functionName<
- */
-export function extractFunctionCalls(code: string): string[] {
-  const calls = new Set<string>();
-  // Match identifier followed by ( or <
-  // Exclude common keywords
-  const callRegex = /\b([a-zA-Z_$][a-zA-Z0-9_$]*)\s*[(<]/g;
-  const keywords = new Set([
-    'if',
-    'for',
-    'while',
-    'switch',
-    'catch',
-    'function',
-    'class',
-    'interface',
-    'type',
-    'import',
-    'export',
-    'return',
-    'throw',
-    'new',
-    'typeof',
-    'instanceof',
-  ]);
-
-  let match: RegExpExecArray | null;
-  while ((match = callRegex.exec(code)) !== null) {
-    const name = match[1];
-    if (!keywords.has(name)) {
-      calls.add(name);
-    }
-  }
-
-  return Array.from(calls);
-}
-
-/**
- * A method call extracted from code (e.g., client.methodName())
- */
-export interface MethodCall {
-  /** The object/variable name (e.g., "client") */
-  objectName: string;
-  /** The method being called (e.g., "evaluateChainhook") */
-  methodName: string;
-  /** Line number within the code block (0-indexed) */
-  line: number;
-  /** The full match context */
-  context: string;
-}
-
-/**
- * Extract method calls from code
- * Finds patterns like: obj.method(, this.method(, await client.asyncMethod(
- */
-export function extractMethodCalls(code: string): MethodCall[] {
-  const calls: MethodCall[] = [];
-  const lines = code.split('\n');
-
-  // Match: identifier.identifier( with optional whitespace and await
-  // Captures: object name, method name
-  const methodCallRegex = /\b([a-zA-Z_$][a-zA-Z0-9_$]*)\s*\.\s*([a-zA-Z_$][a-zA-Z0-9_$]*)\s*\(/g;
-
-  // Keywords to skip as object names
-  const skipObjects = new Set(['console', 'Math', 'JSON', 'Object', 'Array', 'String', 'Number']);
-
-  for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
-    const line = lines[lineIndex];
-    let match: RegExpExecArray | null;
-
-    // Reset regex for each line
-    methodCallRegex.lastIndex = 0;
-
-    while ((match = methodCallRegex.exec(line)) !== null) {
-      const objectName = match[1];
-      const methodName = match[2];
-
-      // Skip common built-in objects
-      if (skipObjects.has(objectName)) {
-        continue;
-      }
-
-      calls.push({
-        objectName,
-        methodName,
-        line: lineIndex,
-        context: line.trim(),
-      });
-    }
-  }
-
-  return calls;
-}
 
 /**
  * Check if code contains a class instantiation (new ClassName())
  */
 export function hasInstantiation(code: string, className: string): boolean {
-  const regex = new RegExp(`\\bnew\\s+${escapeRegex(className)}\\s*\\(`, 'g');
-  return regex.test(code);
-}
-
-/**
- * Escape special regex characters in a string
- */
-function escapeRegex(str: string): string {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return hasInstantiationAST(code, className);
 }
 
 /**
@@ -235,8 +180,7 @@ export function findExportReferences(
         if (exportSet.has(call)) {
           // Avoid duplicates if already found via import
           const alreadyFound = references.some(
-            (r) =>
-              r.exportName === call && r.file === file.path && r.blockIndex === blockIndex,
+            (r) => r.exportName === call && r.file === file.path && r.blockIndex === blockIndex,
           );
           if (!alreadyFound) {
             references.push({
@@ -283,4 +227,3 @@ export function blockReferencesExport(block: MarkdownCodeBlock, exportName: stri
   const calls = extractFunctionCalls(block.code);
   return calls.includes(exportName);
 }
-

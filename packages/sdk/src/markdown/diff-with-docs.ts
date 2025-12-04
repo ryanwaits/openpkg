@@ -5,9 +5,9 @@
  */
 
 import {
+  type CategorizedBreaking,
   categorizeBreakingChanges,
   diffSpec,
-  type CategorizedBreaking,
   type OpenPkg,
   type SpecDiff,
 } from '@openpkg-ts/spec';
