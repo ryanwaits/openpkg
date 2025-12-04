@@ -46,6 +46,10 @@ export interface DiffWithDocsOptions {
  * @example
  * ```ts
  * import { diffSpecWithDocs, parseMarkdownFiles } from '@doccov/sdk';
+ * import type { OpenPkg } from '@openpkg-ts/spec';
+ *
+ * const oldSpec: OpenPkg = { openpkg: '0.2.0', meta: { name: 'my-pkg' }, exports: [] };
+ * const newSpec: OpenPkg = { openpkg: '0.2.1', meta: { name: 'my-pkg' }, exports: [] };
  *
  * const markdownFiles = parseMarkdownFiles([
  *   { path: 'docs/guide.md', content: '...' },

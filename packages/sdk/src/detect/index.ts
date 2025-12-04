@@ -72,13 +72,15 @@ import type { AnalyzeProjectOptions, FileSystem, ProjectInfo } from './types';
  *
  * @example
  * ```typescript
+ * import { NodeFileSystem, analyzeProject } from '@doccov/sdk';
+ *
  * // Single package
- * const fs = new NodeFileSystem('/path/to/package');
- * const project = await analyzeProject(fs);
+ * const singleFs = new NodeFileSystem('/path/to/package');
+ * const singleProject = await analyzeProject(singleFs);
  *
  * // Monorepo with target package
- * const fs = new NodeFileSystem('/path/to/monorepo');
- * const project = await analyzeProject(fs, { targetPackage: '@scope/core' });
+ * const monoFs = new NodeFileSystem('/path/to/monorepo');
+ * const monoProject = await analyzeProject(monoFs, { targetPackage: '@scope/core' });
  * ```
  */
 export async function analyzeProject(
