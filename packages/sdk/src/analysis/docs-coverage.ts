@@ -7,6 +7,7 @@ import type {
   SpecTag,
 } from '@openpkg-ts/spec';
 import ts from 'typescript';
+import { isBuiltInIdentifier } from '../utils/builtin-detection';
 import type { ExampleRunResult } from '../utils/example-runner';
 import type { OpenPkgSpec } from './spec-types';
 
@@ -20,8 +21,35 @@ export type DocsCoverageResult = {
   exports: Map<string, SpecDocsMetadata>;
 };
 
+/**
+ * Documentation signals required per export kind.
+ * This ensures exports are only penalized for missing docs that make sense for their type.
+ */
+type ExportKind = 'function' | 'class' | 'interface' | 'type' | 'variable' | 'enum' | 'namespace' | 'module' | 'reference' | 'external';
+
+const SIGNALS_BY_KIND: Record<ExportKind, SpecDocSignal[]> = {
+  function: ['description', 'params', 'returns', 'examples'],
+  class: ['description', 'examples'], // params/returns only apply to methods
+  interface: ['description'], // no params/returns at interface level
+  type: ['description'], // type aliases don't have params/returns
+  variable: ['description'], // constants/variables don't have params/returns
+  enum: ['description'], // enums don't have params/returns
+  namespace: ['description'], // namespaces document their purpose
+  module: ['description'],
+  reference: ['description'],
+  external: ['description'],
+};
+
+// Legacy constant for backward compatibility
 const DOC_SECTIONS: SpecDocSignal[] = ['description', 'params', 'returns', 'examples'];
-const SECTION_WEIGHT = 100 / DOC_SECTIONS.length;
+
+/**
+ * Get the documentation signals that apply to an export based on its kind.
+ */
+function getApplicableSignals(entry: SpecExport): SpecDocSignal[] {
+  const kind = (entry.kind ?? 'variable') as ExportKind;
+  return SIGNALS_BY_KIND[kind] ?? SIGNALS_BY_KIND.variable;
+}
 
 export function computeDocsCoverage(spec: OpenPkgSpec): DocsCoverageResult {
   const coverageByExport = new Map<string, SpecDocsMetadata>();
@@ -72,24 +100,30 @@ function evaluateExport(entry: SpecExport, exportRegistry?: Set<string>): Export
     ...detectPropertyTypeDrift(entry),
   ];
 
-  if (!hasDescription(entry)) {
+  // Get applicable signals for this export kind
+  const applicableSignals = getApplicableSignals(entry);
+
+  // Only check signals that apply to this export kind
+  if (applicableSignals.includes('description') && !hasDescription(entry)) {
     missing.push('description');
   }
 
-  if (!paramsDocumented(entry)) {
+  if (applicableSignals.includes('params') && !paramsDocumented(entry)) {
     missing.push('params');
   }
 
-  if (!returnsDocumented(entry)) {
+  if (applicableSignals.includes('returns') && !returnsDocumented(entry)) {
     missing.push('returns');
   }
 
-  if (!hasExamples(entry)) {
+  if (applicableSignals.includes('examples') && !hasExamples(entry)) {
     missing.push('examples');
   }
 
-  const satisfied = DOC_SECTIONS.length - missing.length;
-  const coverageScore = Math.max(0, Math.round(satisfied * SECTION_WEIGHT));
+  // Calculate score based on applicable signals, not all signals
+  const totalSignals = applicableSignals.length;
+  const satisfiedSignals = totalSignals - missing.length;
+  const coverageScore = totalSignals === 0 ? 100 : Math.max(0, Math.round((satisfiedSignals / totalSignals) * 100));
 
   return {
     id: entry.id,
@@ -983,13 +1017,21 @@ function detectExampleDrift(entry: SpecExport, exportRegistry?: Set<string>): Sp
     const referencedIdentifiers = new Set<string>();
 
     // Walk AST to find local declarations and identifier references
+    // No longer restricted to PascalCase - check all identifiers
     function visit(node: ts.Node) {
-      if (ts.isIdentifier(node) && isPascalCase(node.text)) {
+      if (ts.isIdentifier(node)) {
+        const text = node.text;
+        // Skip very short identifiers (single letters are usually local vars)
+        if (text.length <= 1) {
+          ts.forEachChild(node, visit);
+          return;
+        }
+
         if (isLocalDeclaration(node)) {
           // Track locally declared identifiers so we don't flag them as missing
-          localDeclarations.add(node.text);
-        } else if (isIdentifierReference(node) && !isBuiltInIdentifier(node.text)) {
-          referencedIdentifiers.add(node.text);
+          localDeclarations.add(text);
+        } else if (isIdentifierReference(node) && !isBuiltInIdentifier(text)) {
+          referencedIdentifiers.add(text);
         }
       }
       ts.forEachChild(node, visit);
@@ -1006,12 +1048,17 @@ function detectExampleDrift(entry: SpecExport, exportRegistry?: Set<string>): Sp
       if (!exportRegistry.has(identifier)) {
         const suggestion = findClosestMatch(identifier, Array.from(exportRegistry));
 
-        if (suggestion && suggestion.distance <= 3) {
+        // Only report drift if there's a close match (likely typo)
+        // or if the identifier looks like a type/class name (PascalCase)
+        const isPascal = /^[A-Z]/.test(identifier);
+        const hasCloseMatch = suggestion && suggestion.distance <= 3;
+
+        if (hasCloseMatch || isPascal) {
           drifts.push({
             type: 'example-drift',
             target: identifier,
             issue: `@example references "${identifier}" which does not exist in this package.`,
-            suggestion: `Did you mean "${suggestion.value}"?`,
+            suggestion: hasCloseMatch ? `Did you mean "${suggestion.value}"?` : undefined,
           });
         }
       }
@@ -1019,74 +1066,6 @@ function detectExampleDrift(entry: SpecExport, exportRegistry?: Set<string>): Sp
   }
 
   return drifts;
-}
-
-function isBuiltInIdentifier(identifier: string): boolean {
-  const builtIns = new Set([
-    // JS built-ins
-    'Array',
-    'Object',
-    'String',
-    'Number',
-    'Boolean',
-    'Function',
-    'Symbol',
-    'BigInt',
-    'Date',
-    'RegExp',
-    'Error',
-    'TypeError',
-    'ReferenceError',
-    'SyntaxError',
-    'Map',
-    'Set',
-    'WeakMap',
-    'WeakSet',
-    'Promise',
-    'Proxy',
-    'Reflect',
-    'JSON',
-    'Math',
-    'Intl',
-    'ArrayBuffer',
-    'DataView',
-    'URL',
-    // TS/common patterns
-    'Record',
-    'Partial',
-    'Required',
-    'Readonly',
-    'Pick',
-    'Omit',
-    'Exclude',
-    'Extract',
-    'NonNullable',
-    'ReturnType',
-    'InstanceType',
-    'Parameters',
-    'ConstructorParameters',
-    // Common test utilities
-    'Console',
-    'Event',
-    'Element',
-    'Document',
-    'Window',
-    'Node',
-    // Common framework types
-    'React',
-    'Component',
-    'Props',
-    'State',
-  ]);
-
-  return builtIns.has(identifier);
-}
-
-/**
- * Check if a string is PascalCase (starts with uppercase, alphanumeric).
- */
-function isPascalCase(text: string): boolean {
-  return /^[A-Z][a-zA-Z0-9]*$/.test(text);
 }
 
 /**
@@ -1134,38 +1113,63 @@ function detectBrokenLinks(entry: SpecExport, exportRegistry?: Set<string>): Spe
 
   const drifts: SpecDocDrift[] = [];
 
-  // Check tags for {@link Target} patterns
-  const linkPattern = /\{@link\s+([^}\s]+)\s*\}/g;
+  // Patterns for various link/reference syntaxes in TSDoc/JSDoc
+  const patterns: Array<{ pattern: RegExp; type: string }> = [
+    // TSDoc: {@link Target}, {@link Target | label}
+    { pattern: /\{@link\s+([^}\s|]+)(?:\s*\|[^}]*)?\}/g, type: '@link' },
+    // TSDoc: {@see Target}
+    { pattern: /\{@see\s+([^}\s]+)\}/g, type: '@see' },
+    // TSDoc: {@inheritDoc Target}
+    { pattern: /\{@inheritDoc\s+([^}\s]+)\}/g, type: '@inheritDoc' },
+  ];
 
+  // Collect all text that might contain links
+  // Skip code blocks to avoid false positives
   const allText = [
     entry.description ?? '',
-    ...(entry.tags ?? []).map((tag) => tag.text),
-    ...(entry.examples ?? []),
+    ...(entry.tags ?? [])
+      .filter((tag) => tag.name !== 'example') // examples checked separately
+      .map((tag) => tag.text),
   ].join(' ');
 
-  const matches = allText.matchAll(linkPattern);
+  // Remove code blocks from text to avoid false positives
+  const textWithoutCode = allText
+    .replace(/```[\s\S]*?```/g, '') // fenced code blocks
+    .replace(/`[^`]+`/g, ''); // inline code
 
-  for (const match of matches) {
-    const target = match[1];
-    if (!target) {
-      continue;
-    }
+  for (const { pattern, type } of patterns) {
+    const matches = textWithoutCode.matchAll(pattern);
 
-    // Handle qualified names (e.g., "Foo.bar" -> check "Foo")
-    const rootName = target.split('.')[0] ?? target;
+    for (const match of matches) {
+      const target = match[1];
+      if (!target) continue;
 
-    if (!exportRegistry.has(rootName) && !exportRegistry.has(target)) {
-      const suggestion = findClosestMatch(rootName, Array.from(exportRegistry));
+      // Skip URLs
+      if (target.startsWith('http://') || target.startsWith('https://')) {
+        continue;
+      }
 
-      drifts.push({
-        type: 'broken-link',
-        target,
-        issue: `{@link ${target}} references a symbol that does not exist.`,
-        suggestion:
-          suggestion && suggestion.distance <= 3
-            ? `Did you mean "${suggestion.value}"?`
-            : undefined,
-      });
+      // Handle qualified names (e.g., "Foo.bar" -> check "Foo")
+      const rootName = target.split('.')[0] ?? target;
+
+      // Skip external references (module specifiers)
+      if (target.includes('/') || target.includes('@')) {
+        continue;
+      }
+
+      if (!exportRegistry.has(rootName) && !exportRegistry.has(target)) {
+        const suggestion = findClosestMatch(rootName, Array.from(exportRegistry));
+
+        drifts.push({
+          type: 'broken-link',
+          target,
+          issue: `{${type} ${target}} references a symbol that does not exist.`,
+          suggestion:
+            suggestion && suggestion.distance <= 3
+              ? `Did you mean "${suggestion.value}"?`
+              : undefined,
+        });
+      }
     }
   }
 

@@ -44,21 +44,58 @@ function findNearestPackageJson(startDir: string): string | undefined {
   }
 }
 
-function hasNodeModulesDirectory(directories: Iterable<string>): boolean {
-  for (const dir of directories) {
-    let current = dir;
-    while (true) {
-      const candidate = path.join(current, 'node_modules');
-      if (fs.existsSync(candidate)) {
-        return true;
-      }
+/**
+ * Check if external modules can be resolved via the TypeScript program.
+ * This works with pnpm, Yarn PnP, and other non-standard module layouts.
+ *
+ * @param program - The TypeScript program
+ * @param baseDir - The base directory of the project
+ * @returns true if external modules appear to be resolvable
+ */
+function canResolveExternalModules(program: TS.Program, baseDir: string): boolean {
+  const sourceFiles = program.getSourceFiles();
 
-      const parent = path.dirname(current);
-      if (parent === current) {
-        break;
+  for (const sourceFile of sourceFiles) {
+    // Skip files outside the project
+    if (!sourceFile.fileName.startsWith(baseDir)) continue;
+
+    // Check if any external imports were successfully resolved
+    const resolvedModules = (sourceFile as { resolvedModules?: Map<string, unknown> })
+      .resolvedModules;
+    if (resolvedModules) {
+      for (const [moduleName, resolution] of resolvedModules.entries()) {
+        // External module (not relative)
+        if (!moduleName.startsWith('.') && !moduleName.startsWith('/')) {
+          // If any external module resolved successfully, we have module resolution working
+          if (resolution) {
+            return true;
+          }
+        }
       }
-      current = parent;
     }
+  }
+
+  // Fallback: check for node_modules directory (for legacy compatibility)
+  return hasNodeModulesDirectoryFallback(baseDir);
+}
+
+/**
+ * Fallback check for node_modules directory.
+ * Only used when TypeScript module resolution can't determine availability.
+ */
+function hasNodeModulesDirectoryFallback(startDir: string): boolean {
+  let current = startDir;
+  while (true) {
+    const candidate = path.join(current, 'node_modules');
+    if (fs.existsSync(candidate)) {
+      return true;
+    }
+
+    const parent = path.dirname(current);
+    if (parent === current) {
+      break;
+    }
+    current = parent;
   }
   return false;
 }
@@ -101,9 +138,7 @@ function collectDanglingRefs(spec: OpenPkgSpec): string[] {
   collectAllRefs(spec.types, referencedTypes);
 
   // Filter out built-in and library internal types
-  return Array.from(referencedTypes).filter(
-    (ref) => !definedTypes.has(ref) && !isBuiltInType(ref),
-  );
+  return Array.from(referencedTypes).filter((ref) => !definedTypes.has(ref) && !isBuiltInType(ref));
 }
 
 /**
@@ -139,15 +174,13 @@ function hasExternalImports(sourceFile: TS.SourceFile): boolean {
 
 export function runAnalysis(input: AnalysisContextInput): RunAnalysisResult {
   const context = createAnalysisContext(input);
-  const { baseDir, options } = context;
+  const { baseDir, options, program } = context;
 
   const packageJsonPath = findNearestPackageJson(baseDir);
-  const searchDirs = new Set<string>([baseDir]);
-  if (packageJsonPath) {
-    searchDirs.add(path.dirname(packageJsonPath));
-  }
 
-  const hasNodeModules = hasNodeModulesDirectory(searchDirs);
+  // Use TypeScript's module resolution to detect if external modules are available
+  // This works with pnpm, Yarn PnP, and other non-standard layouts
+  const hasNodeModules = canResolveExternalModules(program, baseDir);
   const resolveExternalTypes =
     options.resolveExternalTypes !== undefined ? options.resolveExternalTypes : hasNodeModules;
 

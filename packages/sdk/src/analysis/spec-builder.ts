@@ -276,14 +276,89 @@ function applyPresentationDefaults<
   };
 }
 
-function createSlug(name: string): string {
-  const normalized = name
+/**
+ * Create a URL-safe slug from an export name.
+ * Handles unicode identifiers and avoids collisions.
+ *
+ * @param name - The export name
+ * @param existingSlugs - Set of already-used slugs for collision detection
+ * @returns A unique, URL-safe slug
+ */
+function createSlug(name: string, existingSlugs?: Set<string>): string {
+  // Transliterate common unicode chars to ASCII equivalents
+  let normalized = name
+    // Common unicode replacements
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
+    // Greek letters (commonly used in math/science)
+    .replace(/α/g, 'alpha')
+    .replace(/β/g, 'beta')
+    .replace(/γ/g, 'gamma')
+    .replace(/δ/g, 'delta')
+    .replace(/λ/g, 'lambda')
+    .replace(/μ/g, 'mu')
+    .replace(/π/g, 'pi')
+    .replace(/σ/g, 'sigma')
+    .replace(/Σ/g, 'sigma')
+    // Convert camelCase/PascalCase to kebab-case
     .replace(/([a-z\d])([A-Z])/g, '$1-$2')
+    // Replace spaces and underscores with hyphens
     .replace(/[\s_]+/g, '-')
-    .replace(/[^a-zA-Z0-9-]/g, '-')
+    // Remove any remaining non-alphanumeric chars (except hyphen)
+    .replace(/[^a-zA-Z0-9-]/g, '')
+    // Collapse multiple hyphens
     .replace(/--+/g, '-')
+    // Remove leading/trailing hyphens
+    .replace(/^-+|-+$/g, '')
     .toLowerCase();
-  return normalized || name.toLowerCase();
+
+  // Fallback for empty result
+  if (!normalized) {
+    normalized = 'export';
+  }
+
+  // Handle collisions by appending a suffix
+  if (existingSlugs) {
+    let finalSlug = normalized;
+    let counter = 1;
+    while (existingSlugs.has(finalSlug)) {
+      finalSlug = `${normalized}-${counter}`;
+      counter++;
+    }
+    existingSlugs.add(finalSlug);
+    return finalSlug;
+  }
+
+  return normalized;
+}
+
+/**
+ * Strip TypeScript/JavaScript file extensions from a path.
+ * Handles multi-dot extensions like .d.ts, .d.mts, .d.cts properly.
+ */
+function stripExtensions(filePath: string): string {
+  // Order matters: check multi-part extensions first
+  const extensions = [
+    '.d.ts',
+    '.d.mts',
+    '.d.cts',
+    '.tsx',
+    '.ts',
+    '.jsx',
+    '.js',
+    '.mts',
+    '.cts',
+    '.mjs',
+    '.cjs',
+  ];
+
+  for (const ext of extensions) {
+    if (filePath.endsWith(ext)) {
+      return filePath.slice(0, -ext.length);
+    }
+  }
+
+  return filePath;
 }
 
 function deriveImportPath(sourceFile: string | undefined, baseDir: string): string | undefined {
@@ -297,7 +372,7 @@ function deriveImportPath(sourceFile: string | undefined, baseDir: string): stri
   }
 
   const normalized = relative.replace(/\\/g, '/');
-  const withoutExt = normalized.replace(/\.[^.]+$/, '');
+  const withoutExt = stripExtensions(normalized);
   if (!withoutExt) {
     return undefined;
   }

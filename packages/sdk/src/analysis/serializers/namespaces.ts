@@ -165,4 +165,3 @@ function extractNamespaceMembers(
 
   return members;
 }
-

@@ -99,16 +99,14 @@ export function serializeCallSignatures(
 
     // Check for type predicates (x is string) and assertion signatures (asserts x is T)
     const typePredicate = checker.getTypePredicateOfSignature(signature);
-    let typePredicateInfo:
-      | { parameterName: string; type: string; asserts?: boolean }
-      | undefined;
+    let typePredicateInfo: { parameterName: string; type: string; asserts?: boolean } | undefined;
 
     if (typePredicate) {
       const paramName =
         typePredicate.kind === ts.TypePredicateKind.This ||
         typePredicate.kind === ts.TypePredicateKind.AssertsThis
           ? 'this'
-          : typePredicate.parameterName ?? '';
+          : (typePredicate.parameterName ?? '');
 
       const predicateType = typePredicate.type
         ? checker.typeToString(typePredicate.type)
