@@ -1,4 +1,8 @@
 import { ts } from '../ts-module';
+import { isBuiltInTypeName } from './builtin-detection';
+
+// Re-export for backward compatibility
+export { isBuiltInTypeName as isBuiltInType } from './builtin-detection';
 
 /**
  * Check if a parameter is using object destructuring
@@ -74,7 +78,7 @@ export function collectReferencedTypes(
     const symbolName = symbol.getName();
 
     // Skip anonymous types (starts with __) and built-ins
-    if (!symbolName.startsWith('__') && !isBuiltInType(symbolName)) {
+    if (!symbolName.startsWith('__') && !isBuiltInTypeName(symbolName)) {
       referencedTypes.add(symbolName);
     }
   }
@@ -121,7 +125,7 @@ export function collectReferencedTypesFromNode(
     const typeNameText = node.typeName.getText();
     const symbol = typeChecker.getSymbolAtLocation(node.typeName);
     const name = symbol?.getName() ?? typeNameText;
-    if (!isBuiltInType(name)) {
+    if (!isBuiltInTypeName(name)) {
       referencedTypes.add(name);
     }
     node.typeArguments?.forEach((arg) =>
@@ -134,7 +138,7 @@ export function collectReferencedTypesFromNode(
     const expressionText = node.expression.getText();
     const symbol = typeChecker.getSymbolAtLocation(node.expression);
     const name = symbol?.getName() ?? expressionText;
-    if (!isBuiltInType(name)) {
+    if (!isBuiltInTypeName(name)) {
       referencedTypes.add(name);
     }
     node.typeArguments?.forEach((arg) =>
@@ -211,128 +215,3 @@ export function collectReferencedTypesFromNode(
   });
 }
 
-export function isBuiltInType(name: string): boolean {
-  // Skip generic type parameters (single uppercase letters like T, K, V)
-  if (name.length === 1 && /^[A-Z]$/.test(name)) {
-    return true;
-  }
-
-  // Skip TypeBox internal types (T* prefix convention: TObject, TString, TUnion, etc.)
-  // These are schema type constructors, not user-facing types
-  if (/^T[A-Z][a-zA-Z]*$/.test(name)) {
-    return true;
-  }
-
-  // Skip common library internal utility types
-  const libraryInternals = [
-    // TypeBox internals
-    'UnionStatic',
-    'IntersectStatic',
-    'ObjectStatic',
-    'ArrayStatic',
-    'StaticDecode',
-    'StaticEncode',
-    // Zod internals (future-proofing)
-    'ZodType',
-    'ZodObject',
-    'ZodString',
-    'ZodNumber',
-    'ZodArray',
-    'ZodUnion',
-    'ZodIntersection',
-  ];
-  if (libraryInternals.includes(name)) {
-    return true;
-  }
-
-  const builtIns = [
-    // Primitive types
-    'string',
-    'number',
-    'boolean',
-    'bigint',
-    'symbol',
-    'undefined',
-    'null',
-    'true',
-    'false',
-
-    // Special types
-    'any',
-    'unknown',
-    'never',
-    'void',
-    'object',
-
-    // Built-in objects and constructors
-    'Array',
-    'Promise',
-    'Map',
-    'Set',
-    'WeakMap',
-    'WeakSet',
-    'Date',
-    'RegExp',
-    'Error',
-    'Function',
-    'Object',
-    'String',
-    'Number',
-    'Boolean',
-    'BigInt',
-    'Symbol',
-
-    // Typed arrays
-    'Uint8Array',
-    'Int8Array',
-    'Uint16Array',
-    'Int16Array',
-    'Uint32Array',
-    'Int32Array',
-    'Float32Array',
-    'Float64Array',
-    'BigInt64Array',
-    'BigUint64Array',
-    'Uint8ClampedArray',
-
-    // Array buffer related
-    'ArrayBuffer',
-    'ArrayBufferLike',
-    'DataView',
-    'Uint8ArrayConstructor',
-    'ArrayBufferConstructor',
-
-    // Other built-ins
-    'JSON',
-    'Math',
-    'Reflect',
-    'Proxy',
-    'Intl',
-    'globalThis',
-
-    // TypeScript utility types
-    'Record',
-    'Partial',
-    'Required',
-    'Readonly',
-    'Pick',
-    'Omit',
-    'Exclude',
-    'Extract',
-    'NonNullable',
-    'ReturnType',
-    'Parameters',
-    'InstanceType',
-    'ConstructorParameters',
-    'Awaited',
-    'ThisType',
-    'Uppercase',
-    'Lowercase',
-    'Capitalize',
-    'Uncapitalize',
-
-    // Special internal types
-    '__type', // Anonymous types
-  ];
-  return builtIns.includes(name);
-}

@@ -63,6 +63,41 @@ function isTypeBoxSchemaType(symbolName: string): boolean {
 }
 
 /**
+ * Check if a property name matches TypeBox internal symbol pattern (starts with __@)
+ */
+function isInternalProperty(name: string): boolean {
+  return name.startsWith('__@');
+}
+
+/**
+ * Check if a type is a TypeBox OptionalKind marker object
+ * These have a single property matching __@OptionalKind@XX
+ */
+function isTypeBoxOptionalMarker(type: TS.Type): boolean {
+  const props = type.getProperties();
+  if (props.length !== 1) return false;
+  return isInternalProperty(props[0].getName());
+}
+
+/**
+ * Unwrap TypeBox optional intersection and detect optionality
+ * Returns { innerTypes, isOptional } where innerTypes excludes OptionalKind marker
+ */
+function unwrapTypeBoxOptional(
+  type: TS.Type,
+): { innerTypes: TS.Type[]; isOptional: boolean } {
+  if (!type.isIntersection()) {
+    return { innerTypes: [type], isOptional: false };
+  }
+
+  const intersectionType = type as TS.IntersectionType;
+  const filtered = intersectionType.types.filter((t) => !isTypeBoxOptionalMarker(t));
+  const hadMarker = filtered.length < intersectionType.types.length;
+
+  return { innerTypes: filtered, isOptional: hadMarker };
+}
+
+/**
  * Extract JSON Schema from TypeBox schema types (TObject, TArray, TUnion, etc.)
  * Returns null if the type cannot be converted.
  */
@@ -104,6 +139,11 @@ function formatTypeBoxSchema(
 
       for (const prop of propsType.getProperties()) {
         const propName = prop.getName();
+
+        if (isInternalProperty(propName)) {
+          continue;
+        }
+
         const propType = getPropertyType(prop, propsType, typeChecker);
         const propSymbol = propType.getSymbol();
         const propSymbolName = propSymbol?.getName();
@@ -113,15 +153,28 @@ function formatTypeBoxSchema(
           properties[propName] = { $ref: `#/types/${propSymbolName}` };
         } else if (propSymbolName && isTypeBoxSchemaType(propSymbolName)) {
           // Recursively format nested TypeBox schemas
-          const nested = formatTypeBoxSchema(propType, typeChecker, typeRefs, referencedTypes, visited);
+          const nested = formatTypeBoxSchema(
+            propType,
+            typeChecker,
+            typeRefs,
+            referencedTypes,
+            visited,
+          );
           properties[propName] = nested ?? { type: 'object' };
         } else {
           // Use standard formatTypeReference for non-TypeBox types
-          properties[propName] = formatTypeReference(propType, typeChecker, typeRefs, referencedTypes, visited);
+          properties[propName] = formatTypeReference(
+            propType,
+            typeChecker,
+            typeRefs,
+            referencedTypes,
+            visited,
+          );
         }
 
-        // Check if property is optional (wrapped in TOptional)
-        if (propSymbolName !== 'TOptional') {
+        // Check if property is optional (wrapped in TOptional or intersection with OptionalKind)
+        const { isOptional } = unwrapTypeBoxOptional(propType);
+        if (propSymbolName !== 'TOptional' && !isOptional) {
           required.push(propName);
         }
       }
@@ -146,7 +199,9 @@ function formatTypeBoxSchema(
       if (itemSymbolName && typeRefs.has(itemSymbolName)) {
         items = { $ref: `#/types/${itemSymbolName}` };
       } else if (itemSymbolName && isTypeBoxSchemaType(itemSymbolName)) {
-        items = formatTypeBoxSchema(itemType, typeChecker, typeRefs, referencedTypes, visited) ?? { type: 'object' };
+        items = formatTypeBoxSchema(itemType, typeChecker, typeRefs, referencedTypes, visited) ?? {
+          type: 'object',
+        };
       } else {
         items = formatTypeReference(itemType, typeChecker, typeRefs, referencedTypes, visited);
       }
@@ -170,9 +225,15 @@ function formatTypeBoxSchema(
           if (memberSymbolName && typeRefs.has(memberSymbolName)) {
             members.push({ $ref: `#/types/${memberSymbolName}` });
           } else if (memberSymbolName && isTypeBoxSchemaType(memberSymbolName)) {
-            members.push(formatTypeBoxSchema(memberType, typeChecker, typeRefs, referencedTypes, visited) ?? { type: 'object' });
+            members.push(
+              formatTypeBoxSchema(memberType, typeChecker, typeRefs, referencedTypes, visited) ?? {
+                type: 'object',
+              },
+            );
           } else {
-            members.push(formatTypeReference(memberType, typeChecker, typeRefs, referencedTypes, visited));
+            members.push(
+              formatTypeReference(memberType, typeChecker, typeRefs, referencedTypes, visited),
+            );
           }
         }
       } else if ((tupleType as TS.TypeReference).typeArguments) {
@@ -184,9 +245,15 @@ function formatTypeBoxSchema(
           if (memberSymbolName && typeRefs.has(memberSymbolName)) {
             members.push({ $ref: `#/types/${memberSymbolName}` });
           } else if (memberSymbolName && isTypeBoxSchemaType(memberSymbolName)) {
-            members.push(formatTypeBoxSchema(memberType, typeChecker, typeRefs, referencedTypes, visited) ?? { type: 'object' });
+            members.push(
+              formatTypeBoxSchema(memberType, typeChecker, typeRefs, referencedTypes, visited) ?? {
+                type: 'object',
+              },
+            );
           } else {
-            members.push(formatTypeReference(memberType, typeChecker, typeRefs, referencedTypes, visited));
+            members.push(
+              formatTypeReference(memberType, typeChecker, typeRefs, referencedTypes, visited),
+            );
           }
         }
       }
@@ -210,9 +277,15 @@ function formatTypeBoxSchema(
           if (memberSymbolName && typeRefs.has(memberSymbolName)) {
             members.push({ $ref: `#/types/${memberSymbolName}` });
           } else if (memberSymbolName && isTypeBoxSchemaType(memberSymbolName)) {
-            members.push(formatTypeBoxSchema(memberType, typeChecker, typeRefs, referencedTypes, visited) ?? { type: 'object' });
+            members.push(
+              formatTypeBoxSchema(memberType, typeChecker, typeRefs, referencedTypes, visited) ?? {
+                type: 'object',
+              },
+            );
           } else {
-            members.push(formatTypeReference(memberType, typeChecker, typeRefs, referencedTypes, visited));
+            members.push(
+              formatTypeReference(memberType, typeChecker, typeRefs, referencedTypes, visited),
+            );
           }
         }
       }
@@ -232,9 +305,19 @@ function formatTypeBoxSchema(
       if (innerSymbolName && typeRefs.has(innerSymbolName)) {
         return { $ref: `#/types/${innerSymbolName}` };
       } else if (innerSymbolName && isTypeBoxSchemaType(innerSymbolName)) {
-        return formatTypeBoxSchema(innerType, typeChecker, typeRefs, referencedTypes, visited) ?? { type: 'object' };
+        return (
+          formatTypeBoxSchema(innerType, typeChecker, typeRefs, referencedTypes, visited) ?? {
+            type: 'object',
+          }
+        );
       }
-      return formatTypeReference(innerType, typeChecker, typeRefs, referencedTypes, visited) as Record<string, unknown>;
+      return formatTypeReference(
+        innerType,
+        typeChecker,
+        typeRefs,
+        referencedTypes,
+        visited,
+      ) as Record<string, unknown>;
     }
 
     case 'TLiteral': {
@@ -268,9 +351,16 @@ function formatTypeBoxSchema(
       if (valueSymbolName && typeRefs.has(valueSymbolName)) {
         additionalProperties = { $ref: `#/types/${valueSymbolName}` };
       } else if (valueSymbolName && isTypeBoxSchemaType(valueSymbolName)) {
-        additionalProperties = formatTypeBoxSchema(valueType, typeChecker, typeRefs, referencedTypes, visited) ?? true;
+        additionalProperties =
+          formatTypeBoxSchema(valueType, typeChecker, typeRefs, referencedTypes, visited) ?? true;
       } else {
-        additionalProperties = formatTypeReference(valueType, typeChecker, typeRefs, referencedTypes, visited);
+        additionalProperties = formatTypeReference(
+          valueType,
+          typeChecker,
+          typeRefs,
+          referencedTypes,
+          visited,
+        );
       }
 
       return { type: 'object', additionalProperties };
@@ -627,7 +717,7 @@ function getDocDescriptionForProperty(
   }
 
   // Try multiple matching strategies for destructured param TSDoc
-  let match = functionDoc.params.find(
+  const match = functionDoc.params.find(
     (p) =>
       // Exact match with original param name
       p.name === `${parentParamName}.${propName}` ||
@@ -678,10 +768,7 @@ function findDiscriminatorProperty(
         } else if (propType.isNumberLiteral()) {
           propValues.set(prop.getName(), propType.value);
         }
-      } catch {
-        // Skip if we can't get the type
-        continue;
-      }
+      } catch {}
     }
 
     memberProps.push(propValues);
@@ -899,7 +986,28 @@ export function formatTypeReference(
 
     if (type.isIntersection()) {
       const intersectionType = type as TS.IntersectionType;
-      const parts = intersectionType.types.map((t) =>
+
+      // Filter out TypeBox OptionalKind marker types
+      const filteredTypes = intersectionType.types.filter(
+        (t) => !isTypeBoxOptionalMarker(t),
+      );
+
+      // If only one type remains after filtering, unwrap
+      if (filteredTypes.length === 1) {
+        return formatTypeReference(
+          filteredTypes[0],
+          typeChecker,
+          typeRefs,
+          referencedTypes,
+          visited,
+        );
+      }
+
+      if (filteredTypes.length === 0) {
+        return { type: 'object' };
+      }
+
+      const parts = filteredTypes.map((t) =>
         formatTypeReference(t, typeChecker, typeRefs, referencedTypes, visited),
       );
 
@@ -947,8 +1055,14 @@ export function formatTypeReference(
             const required: string[] = [];
 
             for (const prop of properties) {
-              const propType = getPropertyType(prop, type, typeChecker);
               const propName = prop.getName();
+
+              if (isInternalProperty(propName)) {
+                continue;
+              }
+
+              const propType = getPropertyType(prop, type, typeChecker);
+              // const propName = prop.getName(); // Already defined above
 
               objSchema.properties[propName] = formatTypeReference(
                 propType,
@@ -989,7 +1103,13 @@ export function formatTypeReference(
 
       // Check for TypeBox schema types and extract their structure
       if (isTypeBoxSchemaType(symbolName)) {
-        const typeBoxSchema = formatTypeBoxSchema(type, typeChecker, typeRefs, referencedTypes, visited);
+        const typeBoxSchema = formatTypeBoxSchema(
+          type,
+          typeChecker,
+          typeRefs,
+          referencedTypes,
+          visited,
+        );
         if (typeBoxSchema) {
           return typeBoxSchema;
         }
@@ -1096,14 +1216,20 @@ export function structureParameter(
       if (isAnonymousObject) {
         // This is an object literal - extract its properties
         for (const prop of subType.getProperties()) {
+          const propName = prop.getName();
+
+          if (isInternalProperty(propName)) {
+            continue;
+          }
+
           const propType = getPropertyType(prop, subType, typeChecker);
 
           // Find TSDoc description for this property
           let description = '';
           if (functionDoc) {
-            const propName = prop.getName();
+            // const propName = prop.getName(); // Already defined
             // Try multiple matching strategies for destructured param TSDoc
-            let docParam = functionDoc.params.find(
+            const docParam = functionDoc.params.find(
               (p) =>
                 // Exact match with original param name
                 p.name === `${paramName}.${propName}` ||
@@ -1132,10 +1258,16 @@ export function structureParameter(
         // Get the properties from this type and add them to our properties array
         if (!isBuiltInType(_symbolName)) {
           for (const prop of subType.getProperties()) {
+            const propName = prop.getName();
+
+            if (isInternalProperty(propName)) {
+              continue;
+            }
+
             const propType = getPropertyType(prop, subType, typeChecker);
 
             properties.push({
-              name: prop.getName(),
+              name: propName,
               type: formatTypeReference(propType, typeChecker, typeRefs, referencedTypes),
               description: '',
               optional: !!(prop.flags & ts.SymbolFlags.Optional),
@@ -1173,10 +1305,16 @@ export function structureParameter(
 
         // Extract properties from the object literal
         for (const prop of subType.getProperties()) {
+          const propName = prop.getName();
+
+          if (isInternalProperty(propName)) {
+            continue;
+          }
+
           const propType = getPropertyType(prop, subType, typeChecker);
 
           properties.push({
-            name: prop.getName(),
+            name: propName,
             type: formatTypeReference(propType, typeChecker, typeRefs, referencedTypes),
             description: '',
             optional: !!(prop.flags & ts.SymbolFlags.Optional),
@@ -1219,10 +1357,16 @@ export function structureParameter(
     const properties: StructuredProperty[] = [];
 
     for (const prop of paramType.getProperties()) {
+      const propName = prop.getName();
+
+      if (isInternalProperty(propName)) {
+        continue;
+      }
+
       const propType = getPropertyType(prop, paramType, typeChecker);
 
       properties.push({
-        name: prop.getName(),
+        name: propName,
         type: formatTypeReference(propType, typeChecker, typeRefs, referencedTypes),
         description: '',
         optional: !!(prop.flags & ts.SymbolFlags.Optional),

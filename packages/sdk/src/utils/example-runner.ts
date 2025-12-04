@@ -161,9 +161,12 @@ export async function runExamples(
 /**
  * Detect package manager from lockfiles in the given directory.
  */
-function detectPackageManager(cwd: string): 'npm' | 'pnpm' | 'bun' {
+function detectPackageManager(cwd: string): 'npm' | 'pnpm' | 'bun' | 'yarn' {
   if (fs.existsSync(path.join(cwd, 'bun.lockb'))) return 'bun';
+  if (fs.existsSync(path.join(cwd, 'bun.lock'))) return 'bun';
   if (fs.existsSync(path.join(cwd, 'pnpm-lock.yaml'))) return 'pnpm';
+  if (fs.existsSync(path.join(cwd, 'yarn.lock'))) return 'yarn';
+  if (fs.existsSync(path.join(cwd, 'package-lock.json'))) return 'npm';
   return 'npm';
 }
 
@@ -171,7 +174,7 @@ function detectPackageManager(cwd: string): 'npm' | 'pnpm' | 'bun' {
  * Get the install command and args for a package manager.
  */
 function getInstallCommand(
-  pm: 'npm' | 'pnpm' | 'bun',
+  pm: 'npm' | 'pnpm' | 'bun' | 'yarn',
   packagePath: string,
 ): { cmd: string; args: string[] } {
   switch (pm) {
@@ -179,6 +182,8 @@ function getInstallCommand(
       return { cmd: 'bun', args: ['add', packagePath] };
     case 'pnpm':
       return { cmd: 'pnpm', args: ['add', packagePath] };
+    case 'yarn':
+      return { cmd: 'yarn', args: ['add', packagePath] };
     default:
       return { cmd: 'npm', args: ['install', packagePath, '--legacy-peer-deps'] };
   }

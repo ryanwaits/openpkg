@@ -1,5 +1,12 @@
 import type * as TS from 'typescript';
 import { ts } from '../ts-module';
+import {
+  parseJSDocBlock,
+  parseParamContent,
+  parseReturnContent,
+  type ParsedJSDocInfo,
+  type ParsedParamInfo,
+} from './tsdoc-parser';
 
 export interface ParsedParam {
   name: string;
@@ -21,6 +28,9 @@ export interface ParsedJSDoc {
   tags?: ParsedTag[];
   rawParamNames?: string[];
 }
+
+// Re-export for convenience
+export { parseParamContent, parseReturnContent } from './tsdoc-parser';
 
 /**
  * Find the last JSDoc block comment (starts with /**) in a list of comment ranges,
@@ -118,195 +128,32 @@ export function findNodeInSourceFile(
 }
 
 /**
- * Parse JSDoc text to extract structured information
+ * Parse JSDoc text to extract structured information.
+ * Uses the improved brace-depth-aware parser from tsdoc-parser.ts.
  */
 export function parseJSDocText(commentText: string): ParsedJSDoc {
-  const tags: ParsedTag[] = [];
+  const parsed = parseJSDocBlock(commentText);
+
+  // Convert to legacy format
   const result: ParsedJSDoc = {
-    description: '',
-    params: [],
-    examples: [],
-    rawParamNames: [],
+    description: parsed.description,
+    params: parsed.params.map((p) => ({
+      name: p.name,
+      description: p.description,
+      type: p.type,
+    })),
+    examples: parsed.examples.length > 0 ? parsed.examples : undefined,
+    tags: parsed.tags.length > 0 ? parsed.tags : undefined,
+    rawParamNames: parsed.rawParamNames,
   };
 
-  // Remove comment delimiters
-  const cleanedText = commentText
-    .replace(/^\/\*\*\s*/, '')
-    .replace(/\s*\*\/$/, '')
-    .replace(/^\s*\* ?/gm, '')
-    .replace(/\n\/\s*$/, '');
-
-  const lines = cleanedText.split(/\n/);
-  let currentTag = '';
-  let currentContent: string[] = [];
-
-  const pushDescription = (line: string) => {
-    const processed = replaceInlineLinks(line, tags).trimEnd();
-    if (processed.trim()) {
-      result.description = result.description ? `${result.description}\n${processed}` : processed;
-    }
-  };
-
-  for (const line of lines) {
-    const tagMatch = line.match(/^@(\w+)(?:\s+(.*))?$/);
-
-    if (tagMatch) {
-      if (currentTag) {
-        processTag(result, tags, currentTag, currentContent.join(String.fromCharCode(10)));
-      }
-
-      currentTag = tagMatch[1];
-      currentContent = tagMatch[2] ? [tagMatch[2]] : [];
-    } else if (currentTag) {
-      currentContent.push(line);
-    } else {
-      if (line.trim()) {
-        pushDescription(line);
-      }
-    }
-  }
-
-  if (currentTag) {
-    processTag(result, tags, currentTag, currentContent.join(String.fromCharCode(10)));
-  }
-
-  if (result.examples && result.examples.length === 0) {
-    delete result.examples;
-  }
-
-  if (tags.length > 0) {
-    result.tags = tags;
+  // Extract returns info
+  if (parsed.returns) {
+    result.returns = parsed.returns.description;
+    result.returnsType = parsed.returns.type;
   }
 
   return result;
-}
-
-function processTag(result: ParsedJSDoc, tags: ParsedTag[], tag: string, content: string) {
-  switch (tag) {
-    case 'param':
-    case 'parameter': {
-      const paramMatch = content.match(/^(?:\{([^}]+)\}\s+)?(\S+)(?:\s+-\s+)?(.*)$/);
-      if (paramMatch) {
-        const [, type, name, description] = paramMatch;
-        const processedDescription = replaceInlineLinks(description || '', tags);
-        const normalizedName = name || '';
-        result.rawParamNames?.push(normalizedName);
-        result.params.push({
-          name: normalizedName,
-          description: processedDescription || '',
-          type: type,
-        });
-      }
-      // Fix: Add param tag to the generic tags list so it's available for drift detection
-      tags.push({ name: 'param', text: content });
-      break;
-    }
-    case 'returns':
-    case 'return': {
-      const returnMatch = content.match(/^(?:\{([^}]+)\}\s*)?(.*)$/s);
-      const typeText = returnMatch?.[1]?.trim();
-      const descriptionText = replaceInlineLinks(returnMatch?.[2] ?? '', tags).trim();
-
-      if (typeText) {
-        result.returnsType = typeText;
-      }
-
-      if (descriptionText) {
-        result.returns = descriptionText;
-      } else if (!result.returns) {
-        result.returns = '';
-      }
-
-      tags.push({ name: 'returns', text: content });
-      break;
-    }
-    case 'example': {
-      const example = replaceInlineLinks(content.trim(), tags).trim();
-      if (example) {
-        if (!result.examples) {
-          result.examples = [];
-        }
-        result.examples.push(example);
-      }
-      break;
-    }
-    case 'see': {
-      const parts = content
-        .split(',')
-        .map((part) => part.trim())
-        .filter(Boolean);
-      for (const part of parts) {
-        const linkTargets = extractLinkTargets(part);
-        if (linkTargets.length > 0) {
-          for (const target of linkTargets) {
-            tags.push({ name: 'link', text: target });
-            tags.push({ name: 'see', text: target });
-          }
-        } else {
-          tags.push({ name: 'see', text: part });
-        }
-      }
-      break;
-    }
-    case 'link': {
-      const { target } = parseLinkBody(content.trim());
-      if (target) {
-        tags.push({ name: 'link', text: target });
-      }
-      break;
-    }
-    default: {
-      const text = replaceInlineLinks(content, tags).trim();
-      if (text) {
-        tags.push({ name: tag, text });
-      }
-    }
-  }
-}
-
-function replaceInlineLinks(
-  text: string,
-  tags: ParsedTag[],
-  tagName: 'link' | 'see' = 'link',
-): string {
-  return text.replace(/\{@link\s+([^}]+)\}/g, (_match, body) => {
-    const { target, label } = parseLinkBody(body);
-    if (target) {
-      tags.push({ name: tagName, text: target });
-    }
-    return label || target || '';
-  });
-}
-
-function extractLinkTargets(text: string): string[] {
-  const targets: string[] = [];
-  text.replace(/\{@link\s+([^}]+)\}/g, (_match, body) => {
-    const { target } = parseLinkBody(body);
-    if (target) {
-      targets.push(target);
-    }
-    return '';
-  });
-  return targets;
-}
-
-function parseLinkBody(raw: string): { target: string; label?: string } {
-  const trimmed = raw.trim();
-  if (!trimmed) {
-    return { target: '' };
-  }
-
-  const pipeIndex = trimmed.indexOf('|');
-  if (pipeIndex >= 0) {
-    const target = trimmed.slice(0, pipeIndex).trim();
-    const label = trimmed.slice(pipeIndex + 1).trim();
-    return { target, label };
-  }
-
-  const parts = trimmed.split(/\s+/);
-  const target = parts.shift() ?? '';
-  const label = parts.join(' ').trim();
-  return { target, label: label || undefined };
 }
 
 /**
