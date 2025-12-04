@@ -2,8 +2,46 @@
  * Build script and exotic project detection.
  */
 
-import type { FileSystem, BuildInfo } from './types';
+import type { BuildInfo, FileSystem } from './types';
 import { readPackageJson } from './utils';
+
+/**
+ * Script name patterns that indicate build scripts.
+ */
+const BUILD_SCRIPT_NAMES = new Set([
+  'build',
+  'compile',
+  'tsc',
+  'bundle',
+  'prepare',
+  'prepublish',
+  'prepublishOnly',
+]);
+
+/**
+ * Script name prefixes that indicate build scripts.
+ */
+const BUILD_SCRIPT_PREFIXES = ['build:', 'compile:', 'bundle:'];
+
+/**
+ * Tools that indicate a build script (when found in script contents).
+ */
+const BUILD_TOOL_PATTERNS = [
+  'tsc',
+  'esbuild',
+  'rollup',
+  'webpack',
+  'vite build',
+  'parcel build',
+  'swc',
+  'tsup',
+  'unbuild',
+  'bunup',
+  'pkgroll',
+  'microbundle',
+  'babel',
+  'ncc build',
+];
 
 /**
  * Detect build configuration and exotic project indicators.
@@ -17,15 +55,22 @@ export async function detectBuildInfo(fs: FileSystem, packagePath = '.'): Promis
   const scripts = pkgJson?.scripts ?? {};
   const scriptNames = Object.keys(scripts);
 
-  // Find build-related scripts
-  const buildScripts = scriptNames.filter(
+  // Find build-related scripts by name
+  const buildScriptsByName = scriptNames.filter(
     (name) =>
-      name === 'build' ||
-      name === 'compile' ||
-      name === 'tsc' ||
-      name.startsWith('build:') ||
-      name.startsWith('compile:'),
+      BUILD_SCRIPT_NAMES.has(name) || BUILD_SCRIPT_PREFIXES.some((prefix) => name.startsWith(prefix)),
   );
+
+  // Also check script contents for build tool invocations
+  const buildScriptsByContent = scriptNames.filter((name) => {
+    if (buildScriptsByName.includes(name)) return false; // Already found by name
+    const content = scripts[name] ?? '';
+    return BUILD_TOOL_PATTERNS.some(
+      (tool) => content.includes(tool) && !content.includes(`${tool}-`)
+    );
+  });
+
+  const buildScripts = [...new Set([...buildScriptsByName, ...buildScriptsByContent])];
 
   // Check for TypeScript
   const tsconfigPath = packagePath === '.' ? 'tsconfig.json' : `${packagePath}/tsconfig.json`;
@@ -36,7 +81,7 @@ export async function detectBuildInfo(fs: FileSystem, packagePath = '.'): Promis
   const hasTypeScript = hasTsConfig || hasTsDep;
 
   // Detect exotic indicators
-  const wasm = await detectWasmProject(fs, packagePath, scripts);
+  const wasm = await detectWasmProject(fs, packagePath, pkgJson);
   const napi = detectNapiProject(pkgJson);
 
   return {
@@ -47,13 +92,26 @@ export async function detectBuildInfo(fs: FileSystem, packagePath = '.'): Promis
   };
 }
 
+/** Known WASM-related packages */
+const WASM_PACKAGES = new Set([
+  'wasm-pack',
+  '@aspect/wasm-pack',
+  '@aspect-build/wasm-pack',
+  '@aspect/rules_js',
+  'wasm-bindgen',
+  '@aspect/aspect-cli',
+]);
+
 /**
  * Detect if this is a WASM project (Rust/wasm-pack).
  */
 async function detectWasmProject(
   fs: FileSystem,
   packagePath: string,
-  scripts: Record<string, string>,
+  pkgJson: {
+    dependencies?: Record<string, string>;
+    devDependencies?: Record<string, string>;
+  } | null,
 ): Promise<boolean> {
   // Check for Cargo.toml in package directory
   const pkgCargoPath = packagePath === '.' ? 'Cargo.toml' : `${packagePath}/Cargo.toml`;
@@ -62,25 +120,49 @@ async function detectWasmProject(
   // Check for Cargo.toml at repo root (common for WASM packages)
   if (packagePath !== '.' && (await fs.exists('Cargo.toml'))) return true;
 
-  // Check for wasm-pack in scripts
-  const allScripts = Object.values(scripts).join(' ');
-  return allScripts.includes('wasm-pack') || allScripts.includes('wasm');
+  // Check for WASM-related packages in dependencies
+  if (pkgJson) {
+    const deps = Object.keys({
+      ...(pkgJson.dependencies ?? {}),
+      ...(pkgJson.devDependencies ?? {}),
+    });
+
+    if (deps.some((dep) => WASM_PACKAGES.has(dep))) {
+      return true;
+    }
+  }
+
+  return false;
 }
+
+/** Known napi-rs packages */
+const NAPI_PACKAGES = new Set([
+  '@napi-rs/cli',
+  '@aspect/napi-cli',
+  'napi',
+  'napi-build',
+  'napi-rs',
+  'neon',
+  '@aspect/neon-cli',
+]);
 
 /**
  * Detect if this is a napi-rs native addon project.
  */
 function detectNapiProject(
-  pkgJson: { dependencies?: Record<string, string>; devDependencies?: Record<string, string> } | null,
+  pkgJson: {
+    dependencies?: Record<string, string>;
+    devDependencies?: Record<string, string>;
+  } | null,
 ): boolean {
   if (!pkgJson) return false;
 
-  const deps = {
+  const deps = Object.keys({
     ...(pkgJson.dependencies ?? {}),
     ...(pkgJson.devDependencies ?? {}),
-  };
+  });
 
-  return Object.keys(deps).some((dep) => dep.includes('napi'));
+  return deps.some((dep) => NAPI_PACKAGES.has(dep) || dep.includes('@aspect/napi'));
 }
 
 /**

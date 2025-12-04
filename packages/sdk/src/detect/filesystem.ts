@@ -56,6 +56,19 @@ function createCaptureStream(): { stream: Writable; getOutput: () => string } {
 }
 
 /**
+ * Error thrown when a file cannot be read in the sandbox.
+ */
+export class FileNotFoundError extends Error {
+  constructor(
+    public readonly path: string,
+    message?: string,
+  ) {
+    super(message ?? `File not found: ${path}`);
+    this.name = 'FileNotFoundError';
+  }
+}
+
+/**
  * Vercel Sandbox filesystem implementation for API usage.
  * Uses sandbox.runCommand() with shell commands.
  */
@@ -71,22 +84,38 @@ export class SandboxFileSystem implements FileSystem {
   }
 
   async readFile(path: string): Promise<string> {
+    // Check if file exists first to throw typed error
+    const exists = await this.exists(path);
+    if (!exists) {
+      throw new FileNotFoundError(path);
+    }
+
     const capture = createCaptureStream();
-    await this.sandbox.runCommand({
+    const result = await this.sandbox.runCommand({
       cmd: 'cat',
       args: [path],
       stdout: capture.stream,
     });
+
+    if (result.exitCode !== 0) {
+      throw new FileNotFoundError(path, `Failed to read file: ${path}`);
+    }
+
     return capture.getOutput();
   }
 
   async readDir(path: string): Promise<string[]> {
     const capture = createCaptureStream();
-    await this.sandbox.runCommand({
+    const result = await this.sandbox.runCommand({
       cmd: 'ls',
       args: ['-1', path],
       stdout: capture.stream,
     });
+
+    if (result.exitCode !== 0) {
+      return [];
+    }
+
     return capture.getOutput().split('\n').filter(Boolean);
   }
 

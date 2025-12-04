@@ -125,3 +125,15 @@ export interface AnalyzeProjectOptions {
   /** Target package name for monorepos */
   targetPackage?: string;
 }
+
+/** Parsed tsconfig.json information relevant to source resolution */
+export interface TsConfigInfo {
+  /** Output directory (where compiled files go) */
+  outDir?: string;
+  /** Root directory (where source files live) */
+  rootDir?: string;
+  /** Base URL for module resolution */
+  baseUrl?: string;
+  /** Path aliases */
+  paths?: Record<string, string[]>;
+}

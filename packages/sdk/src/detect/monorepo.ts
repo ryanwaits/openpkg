@@ -75,27 +75,88 @@ function extractWorkspacePatterns(workspaces: string[] | { packages: string[] })
 
 /**
  * Parse pnpm-workspace.yaml to extract package patterns.
- * Simple YAML parsing for the packages: array.
+ *
+ * Handles common YAML formats:
+ * - packages:
+ *     - "packages/*"
+ *     - 'apps/*'
+ *     - libs/*
+ * - packages: ["packages/*", "apps/*"]
+ * - packages: ['packages/*']
  */
 function parsePnpmWorkspace(content: string): string[] {
-  const lines = content.split('\n');
   const patterns: string[] = [];
-  let inPackages = false;
 
-  for (const line of lines) {
-    if (line.match(/^packages:/i)) {
-      inPackages = true;
+  // Try to find packages section
+  const packagesMatch = content.match(/^packages:\s*(.*)$/m);
+  if (!packagesMatch) {
+    return ['packages/*'];
+  }
+
+  const inlineContent = packagesMatch[1]?.trim() ?? '';
+
+  // Check for inline array format: packages: ["a", "b"] or packages: ['a', 'b']
+  if (inlineContent.startsWith('[')) {
+    const arrayMatch = inlineContent.match(/\[([^\]]*)\]/);
+    if (arrayMatch) {
+      const items = arrayMatch[1]
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean)
+        .map((item) => item.replace(/^['"]|['"]$/g, ''));
+      if (items.length > 0) {
+        return items;
+      }
+    }
+  }
+
+  // Parse multi-line format with proper indentation tracking
+  const lines = content.split('\n');
+  let inPackages = false;
+  let baseIndent = -1;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    // Skip empty lines and comments
+    if (!trimmed || trimmed.startsWith('#')) {
       continue;
     }
+
+    // Check for packages: key
+    if (/^packages:/i.test(trimmed)) {
+      inPackages = true;
+      baseIndent = -1; // Will be set by first list item
+      continue;
+    }
+
     if (inPackages) {
-      // Stop if we hit another top-level key
-      if (line.match(/^\w+:/) && !line.startsWith(' ') && !line.startsWith('\t')) {
+      // Check current line indentation
+      const indentMatch = line.match(/^(\s*)/);
+      const currentIndent = indentMatch?.[1]?.length ?? 0;
+
+      // If we hit a top-level key (no indentation and ends with :), stop
+      if (currentIndent === 0 && trimmed.endsWith(':') && !trimmed.startsWith('-')) {
         break;
       }
-      // Extract pattern from "- pattern" format
-      const match = line.match(/^\s*-\s*['"]?([^'"]+)['"]?\s*$/);
-      if (match) {
-        patterns.push(match[1].trim());
+
+      // Set base indent from first list item
+      if (baseIndent === -1 && trimmed.startsWith('-')) {
+        baseIndent = currentIndent;
+      }
+
+      // Only process items at the expected indent level
+      if (currentIndent >= baseIndent || trimmed.startsWith('-')) {
+        // Extract pattern from "- pattern" format
+        // Handles: - pattern, - "pattern", - 'pattern'
+        const match = trimmed.match(/^-\s*(['"]?)([^'"#]+)\1\s*(?:#.*)?$/);
+        if (match && match[2]) {
+          const pattern = match[2].trim();
+          if (pattern) {
+            patterns.push(pattern);
+          }
+        }
       }
     }
   }
@@ -154,9 +215,6 @@ async function resolveWorkspacePackages(
 
       try {
         const content = await fs.readFile(pkgJsonPath);
-        // Skip if content indicates file not found (sandbox edge case)
-        if (content.includes('No such file')) continue;
-
         const pkg = JSON.parse(content) as { name?: string; private?: boolean };
 
         if (pkg.name && !seen.has(pkg.name)) {
@@ -168,7 +226,8 @@ async function resolveWorkspacePackages(
           });
         }
       } catch {
-        // Skip packages with invalid package.json
+        // Skip packages with invalid/missing package.json
+        // fs.readFile may throw for missing files, or JSON.parse may fail
       }
     }
   }

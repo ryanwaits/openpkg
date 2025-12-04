@@ -51,10 +51,7 @@ export type PackageExports =
 /**
  * Read and parse package.json from a directory.
  */
-export async function readPackageJson(
-  fs: FileSystem,
-  dir: string,
-): Promise<PackageJson | null> {
+export async function readPackageJson(fs: FileSystem, dir: string): Promise<PackageJson | null> {
   const path = dir === '.' ? 'package.json' : `${dir}/package.json`;
   return safeParseJson<PackageJson>(fs, path);
 }

@@ -18,46 +18,41 @@
  * ```
  */
 
-// Types
-export type {
-  FileSystem,
-  PackageManager,
-  PackageManagerInfo,
-  MonorepoType,
-  MonorepoInfo,
-  WorkspacePackage,
-  EntryPointSource,
-  EntryPointInfo,
-  BuildInfo,
-  ProjectInfo,
-  AnalyzeProjectOptions,
-} from './types';
-
+// Build info detection
+export { detectBuildInfo, getPrimaryBuildScript } from './build';
+// Entry point detection
+export { detectEntryPoint } from './entry-point';
 // FileSystem implementations
 export { NodeFileSystem, SandboxFileSystem } from './filesystem';
 
-// Package manager detection
-export { detectPackageManager, getInstallCommand, getRunCommand } from './package-manager';
-
 // Monorepo detection
 export { detectMonorepo, findPackageByName, formatPackageList } from './monorepo';
-
-// Entry point detection
-export { detectEntryPoint } from './entry-point';
-
-// Build info detection
-export { detectBuildInfo, getPrimaryBuildScript } from './build';
-
+// Package manager detection
+export { detectPackageManager, getInstallCommand, getRunCommand } from './package-manager';
+// Types
+export type {
+  AnalyzeProjectOptions,
+  BuildInfo,
+  EntryPointInfo,
+  EntryPointSource,
+  FileSystem,
+  MonorepoInfo,
+  MonorepoType,
+  PackageManager,
+  PackageManagerInfo,
+  ProjectInfo,
+  WorkspacePackage,
+} from './types';
+export type { PackageExports, PackageJson } from './utils';
 // Utilities
-export { safeParseJson, readPackageJson } from './utils';
-export type { PackageJson, PackageExports } from './utils';
+export { readPackageJson, safeParseJson } from './utils';
 
-// High-level API
-import type { FileSystem, ProjectInfo, AnalyzeProjectOptions } from './types';
-import { detectPackageManager } from './package-manager';
-import { detectMonorepo, findPackageByName } from './monorepo';
-import { detectEntryPoint } from './entry-point';
 import { detectBuildInfo } from './build';
+import { detectEntryPoint } from './entry-point';
+import { detectMonorepo, findPackageByName } from './monorepo';
+import { detectPackageManager } from './package-manager';
+// High-level API
+import type { AnalyzeProjectOptions, FileSystem, ProjectInfo } from './types';
 
 /**
  * Analyze a project's structure for scanning.
