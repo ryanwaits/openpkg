@@ -18,22 +18,22 @@ afterEach(() => {
 });
 
 describe('init command', () => {
-  it('creates openpkg.config.mjs by default', async () => {
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'openpkg-ts-cli-init-default-'));
+  it('creates doccov.config.mjs by default', async () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'doccov-cli-init-default-'));
     tmpDirs.push(tmpDir);
 
     const program = new Command();
     registerInitCommand(program);
 
-    await program.parseAsync(['node', 'openpkg', 'init', '--cwd', tmpDir]);
+    await program.parseAsync(['node', 'doccov', 'init', '--cwd', tmpDir]);
 
-    const configPath = path.join(tmpDir, 'openpkg.config.mjs');
+    const configPath = path.join(tmpDir, 'doccov.config.mjs');
     expect(fs.existsSync(configPath)).toBe(true);
 
     const contents = fs.readFileSync(configPath, 'utf8');
     expect(contents).toBe(
       [
-        "import { defineConfig } from '@openpkg-ts/cli/config';",
+        "import { defineConfig } from '@doccov/cli/config';",
         '',
         'export default defineConfig({',
         '  include: [],',
@@ -44,8 +44,8 @@ describe('init command', () => {
     );
   });
 
-  it('creates openpkg.config.js when package type is module', async () => {
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'openpkg-ts-cli-init-module-'));
+  it('creates doccov.config.js when package type is module', async () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'doccov-cli-init-module-'));
     tmpDirs.push(tmpDir);
 
     fs.writeFileSync(
@@ -56,17 +56,17 @@ describe('init command', () => {
     const program = new Command();
     registerInitCommand(program);
 
-    await program.parseAsync(['node', 'openpkg', 'init', '--cwd', tmpDir]);
+    await program.parseAsync(['node', 'doccov', 'init', '--cwd', tmpDir]);
 
-    const configPath = path.join(tmpDir, 'openpkg.config.js');
+    const configPath = path.join(tmpDir, 'doccov.config.js');
     expect(fs.existsSync(configPath)).toBe(true);
   });
 
   it('fails when a config file already exists in the tree', async () => {
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'openpkg-ts-cli-init-existing-'));
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'doccov-cli-init-existing-'));
     tmpDirs.push(tmpDir);
 
-    fs.writeFileSync(path.join(tmpDir, 'openpkg.config.mjs'), 'export default {};\n');
+    fs.writeFileSync(path.join(tmpDir, 'doccov.config.mjs'), 'export default {};\n');
 
     const errors: string[] = [];
     const program = new Command();
@@ -77,7 +77,7 @@ describe('init command', () => {
       },
     });
 
-    await program.parseAsync(['node', 'openpkg', 'init', '--cwd', tmpDir]);
+    await program.parseAsync(['node', 'doccov', 'init', '--cwd', tmpDir]);
 
     expect(errors.length).toBeGreaterThan(0);
     expect(errors[0]).toContain('config already exists');

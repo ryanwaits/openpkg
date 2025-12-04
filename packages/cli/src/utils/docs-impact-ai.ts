@@ -6,9 +6,9 @@
 
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { createOpenAI } from '@ai-sdk/openai';
+import type { DocsImpactReference, MarkdownCodeBlock } from '@doccov/sdk';
 import { generateObject, generateText } from 'ai';
 import { z } from 'zod';
-import type { MarkdownCodeBlock, DocsImpactReference } from '@doccov/sdk';
 
 /**
  * Schema for code block usage analysis
@@ -19,13 +19,8 @@ export const CodeBlockUsageSchema = z.object({
   usageType: z
     .enum(['direct-call', 'import-only', 'indirect', 'not-used'])
     .describe('How the export is used in this code block'),
-  suggestedFix: z
-    .string()
-    .optional()
-    .describe('If impacted, the suggested code change'),
-  confidence: z
-    .enum(['high', 'medium', 'low'])
-    .describe('Confidence level of the analysis'),
+  suggestedFix: z.string().optional().describe('If impacted, the suggested code change'),
+  confidence: z.enum(['high', 'medium', 'low']).describe('Confidence level of the analysis'),
 });
 
 export type CodeBlockUsageResult = z.infer<typeof CodeBlockUsageSchema>;
@@ -296,7 +291,10 @@ export async function generateDocFileFixes(
   for (const impact of impacts) {
     // Find the block containing this impact
     const block = blocks.find(
-      (b) => b.lineStart <= impact.line && b.lineEnd >= impact.line && b.code.includes(impact.exportName),
+      (b) =>
+        b.lineStart <= impact.line &&
+        b.lineEnd >= impact.line &&
+        b.code.includes(impact.exportName),
     );
 
     if (!block) continue;
@@ -362,4 +360,3 @@ Keep it concise and developer-friendly.`,
     return null;
   }
 }
-
