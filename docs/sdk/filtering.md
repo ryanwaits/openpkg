@@ -129,7 +129,7 @@ doccov check --include "create*,update*"
 Persistent filters in `doccov.config.ts`:
 
 ```typescript
-import { defineConfig } from '@doccov/cli/config';
+import { defineConfig } from '@doccov/sdk';
 
 export default defineConfig({
   include: ['create*', 'update*', 'delete*'],

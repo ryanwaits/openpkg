@@ -20,7 +20,7 @@ Or manually create any of:
 ## Schema
 
 ```typescript
-import { defineConfig } from '@doccov/cli/config';
+import { defineConfig } from '@doccov/sdk';
 
 export default defineConfig({
   // Include only these exports (glob patterns)
@@ -174,7 +174,7 @@ doccov generate --include "specificExport"
 Using `defineConfig` provides type hints:
 
 ```typescript
-import { defineConfig } from '@doccov/cli/config';
+import { defineConfig } from '@doccov/sdk';
 
 export default defineConfig({
   include: ['*'],  // Autocomplete available

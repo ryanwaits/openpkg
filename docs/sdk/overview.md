@@ -28,6 +28,24 @@ import {
   // Extractor
   extractPackageSpec,
   
+  // Project detection
+  detectMonorepo,
+  detectPackageManager,
+  detectEntryPoint,
+  resolveTarget,
+  NodeFileSystem,
+  SandboxFileSystem,
+  
+  // GitHub utilities
+  parseGitHubUrl,
+  fetchSpecFromGitHub,
+  
+  // Scan utilities
+  extractSpecSummary,
+  
+  // Config
+  defineConfig,
+  
   // Types
   type DocCovOptions,
   type OpenPkgOptions,
@@ -35,6 +53,8 @@ import {
   type AnalyzeOptions,
   type Diagnostic,
   type FilterOptions,
+  type ScanResult,
+  type DocCovConfig,
   type RunExampleOptions,
   type ExampleRunResult,
   type OpenPkgSpec,
