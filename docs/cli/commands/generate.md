@@ -1,6 +1,6 @@
 # doccov generate
 
-Generate an OpenPkg specification file from TypeScript source.
+Generate an OpenPkg specification file or coverage report from TypeScript source.
 
 ## Usage
 
@@ -19,6 +19,8 @@ doccov generate [entry] [options]
 | Option | Default | Description |
 |--------|---------|-------------|
 | `-o, --output <file>` | `openpkg.json` | Output file path |
+| `--format <format>` | `json` | Output format: `json`, `markdown`, `html` |
+| `--limit <n>` | `20` | Max exports to show in report tables (for markdown/html) |
 | `--include <ids>` | - | Filter exports by identifier (comma-separated) |
 | `--exclude <ids>` | - | Exclude exports by identifier (comma-separated) |
 | `--show-diagnostics` | `false` | Print TypeScript diagnostics |
@@ -78,6 +80,21 @@ doccov generate --skip-resolve
 doccov generate --show-diagnostics
 ```
 
+### Generate Coverage Report
+
+Output human-readable coverage reports instead of JSON:
+
+```bash
+# Markdown report
+doccov generate --format markdown -o COVERAGE.md
+
+# HTML report
+doccov generate --format html -o coverage.html
+
+# Limit exports shown in tables
+doccov generate --format markdown --limit 50 -o COVERAGE.md
+```
+
 ## Output Format
 
 The generated `openpkg.json` contains:
@@ -131,6 +148,6 @@ cat /tmp/spec.json | jq '.docs'
 ## See Also
 
 - [check](./check.md) - Validate generated spec
-- [report](./report.md) - Generate coverage report
+- [diff](./diff.md) - Compare two specs
 - [Configuration](../configuration.md) - Persistent settings
 

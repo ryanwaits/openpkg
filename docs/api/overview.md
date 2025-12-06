@@ -19,9 +19,7 @@ https://api.doccov.com
 | Endpoint | Description |
 |----------|-------------|
 | [GET /badge/:owner/:repo](./endpoints/badge.md) | Coverage badge SVG |
-| [GET /widget/:owner/:repo](./endpoints/widget.md) | Signal breakdown widget |
-| [GET /leaderboard](./endpoints/leaderboard.md) | Public rankings |
-| [GET /scan-stream](./endpoints/scan-stream.md) | SSE streaming scan |
+| [POST /scan](./endpoints/scan-stream.md) | Scan a GitHub repository |
 | [GET /spec/:owner/:repo](./endpoints/spec.md) | Fetch spec from GitHub |
 | [POST /api/examples/run](./endpoints/examples-run.md) | Execute code |
 
@@ -47,11 +45,9 @@ curl https://api.doccov.com/
 ```json
 {
   "name": "DocCov API",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "endpoints": {
     "badge": "/badge/:owner/:repo",
-    "widget": "/widget/:owner/:repo",
-    "leaderboard": "/leaderboard",
     "scan": "/scan",
     "health": "/health"
   }
@@ -70,8 +66,8 @@ Currently no rate limits. May be introduced for scan/examples endpoints.
 
 | Type | Endpoints | Runtime |
 |------|-----------|---------|
-| Edge | badge, widget, spec, leaderboard | Vercel Edge |
-| Node.js | scan-stream, examples/run | Node.js 22 |
+| Edge | badge, spec | Vercel Edge |
+| Node.js | scan, examples/run | Node.js 22 |
 
 Edge functions are faster but can't use Node.js APIs. Scan and example execution require Node.js for Vercel Sandbox.
 

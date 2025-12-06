@@ -65,18 +65,6 @@ function collectDriftsFromExports(
 }
 
 /**
- * Filter drifts by type
- */
-function filterDriftsByType(
-  drifts: Array<{ export: SpecExport; drift: SpecDocDrift }>,
-  onlyTypes?: string,
-): Array<{ export: SpecExport; drift: SpecDocDrift }> {
-  if (!onlyTypes) return drifts;
-  const allowedTypes = new Set(onlyTypes.split(',').map((t) => t.trim()));
-  return drifts.filter((d) => allowedTypes.has(d.drift.type));
-}
-
-/**
  * Group drifts by export
  */
 function groupByExport(
@@ -116,7 +104,6 @@ export function registerCheckCommand(
     .option('--skip-resolve', 'Skip external type resolution from node_modules')
     .option('--fix', 'Auto-fix drift and lint issues')
     .option('--write', 'Alias for --fix')
-    .option('--only <types>', 'Only fix specific drift types (comma-separated)')
     .option('--dry-run', 'Preview fixes without writing (requires --fix)')
     .action(async (entry, options) => {
       try {
@@ -383,12 +370,9 @@ export function registerCheckCommand(
         const fixedDriftKeys = new Set<string>();
         if (shouldFix && driftExports.length > 0) {
           const allDrifts = collectDriftsFromExports(spec.exports ?? []);
-          const filteredDrifts = filterDriftsByType(allDrifts, options.only);
 
-          if (filteredDrifts.length === 0 && options.only) {
-            log(chalk.yellow('No matching drift issues for the specified types.'));
-          } else if (filteredDrifts.length > 0) {
-            const { fixable, nonFixable } = categorizeDrifts(filteredDrifts.map((d) => d.drift));
+          if (allDrifts.length > 0) {
+            const { fixable, nonFixable } = categorizeDrifts(allDrifts.map((d) => d.drift));
 
             if (fixable.length === 0) {
               log(
@@ -406,7 +390,7 @@ export function registerCheckCommand(
 
               // Group by export and generate fixes
               const groupedDrifts = groupByExport(
-                filteredDrifts.filter((d) => fixable.includes(d.drift)),
+                allDrifts.filter((d) => fixable.includes(d.drift)),
               );
 
               const edits: JSDocEdit[] = [];

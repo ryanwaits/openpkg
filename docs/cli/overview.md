@@ -12,10 +12,9 @@ npm install -g @doccov/cli
 
 | Command | Description |
 |---------|-------------|
-| [generate](./commands/generate.md) | Generate OpenPkg spec from TypeScript |
+| [generate](./commands/generate.md) | Generate OpenPkg spec or coverage reports |
 | [check](./commands/check.md) | Validate coverage thresholds, auto-fix drift |
 | [diff](./commands/diff.md) | Compare two specs |
-| [report](./commands/report.md) | Generate coverage reports |
 | [scan](./commands/scan.md) | Analyze remote GitHub repos |
 | [init](./commands/init.md) | Create config file |
 
@@ -72,7 +71,7 @@ DocCov auto-detects monorepo structure from:
 doccov check
 
 # Auto-fix documentation drift
-doccov check --write --dry-run
+doccov check --fix --dry-run
 
 # Generate spec
 doccov generate -o openpkg.json
@@ -81,7 +80,7 @@ doccov generate -o openpkg.json
 doccov diff old.json new.json
 
 # Generate markdown report
-doccov report --output markdown
+doccov generate --format markdown -o COVERAGE.md
 
 # Scan GitHub repo
 doccov scan https://github.com/tanstack/query

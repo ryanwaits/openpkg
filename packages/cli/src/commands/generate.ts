@@ -9,11 +9,14 @@ import { normalize, type OpenPkg as OpenPkgSpec, validateSpec } from '@openpkg-t
 import chalk from 'chalk';
 import type { Command } from 'commander';
 import { type LoadedDocCovConfig, loadDocCovConfig } from '../config';
+import { computeStats, renderHtml, renderMarkdown } from '../reports';
 import {
   type FilterOptions as CliFilterOptions,
   mergeFilterOptions,
   parseListFlag,
 } from '../utils/filter-options';
+
+type OutputFormat = 'json' | 'markdown' | 'html';
 
 export interface GenerateCommandDependencies {
   createDocCov?: (
@@ -78,6 +81,7 @@ export function registerGenerateCommand(
     .command('generate [entry]')
     .description('Generate OpenPkg specification for documentation coverage analysis')
     .option('-o, --output <file>', 'Output file', 'openpkg.json')
+    .option('--format <format>', 'Output format: json, markdown, html', 'json')
     .option('-p, --package <name>', 'Target package name (for monorepos)')
     .option('--cwd <dir>', 'Working directory', process.cwd())
     .option('--skip-resolve', 'Skip external type resolution from node_modules')
@@ -85,6 +89,7 @@ export function registerGenerateCommand(
     .option('--exclude <ids>', 'Exclude exports by identifier (comma-separated or repeated)')
     .option('--show-diagnostics', 'Print TypeScript diagnostics from analysis')
     .option('--no-docs', 'Omit docs coverage fields from output (pure structural spec)')
+    .option('--limit <n>', 'Max exports to show in report tables (for markdown/html)', '20')
     .option('-y, --yes', 'Skip all prompts and use defaults')
     .action(async (entry, options) => {
       try {
@@ -162,7 +167,6 @@ export function registerGenerateCommand(
           throw new Error('Failed to produce an OpenPkg spec.');
         }
 
-        const outputPath = path.resolve(process.cwd(), options.output);
         let normalized = normalize(result.spec as OpenPkgSpec);
 
         if (options.docs === false) {
@@ -172,18 +176,35 @@ export function registerGenerateCommand(
         const validation = validateSpec(normalized);
 
         if (!validation.ok) {
-          spinnerInstance.fail('Spec failed schema validation');
+          error(chalk.red('Spec failed schema validation'));
           for (const err of validation.errors) {
             error(chalk.red(`schema: ${err.instancePath || '/'} ${err.message}`));
           }
           process.exit(1);
         }
 
-        writeFileSync(outputPath, JSON.stringify(normalized, null, 2));
+        const format = (options.format ?? 'json') as OutputFormat;
+        const outputPath = path.resolve(process.cwd(), options.output);
 
-        log(chalk.green(`✓ Generated ${options.output}`));
-        log(chalk.gray(`  ${getArrayLength(normalized.exports)} exports`));
-        log(chalk.gray(`  ${getArrayLength(normalized.types)} types`));
+        if (format === 'markdown' || format === 'html') {
+          // Generate human-readable report
+          const stats = computeStats(normalized);
+          const limit = parseInt(options.limit, 10) || 20;
+          const reportOutput = format === 'html' 
+            ? renderHtml(stats, { limit }) 
+            : renderMarkdown(stats, { limit });
+          
+          writeFileSync(outputPath, reportOutput);
+          log(chalk.green(`✓ Generated ${format} report: ${options.output}`));
+          log(chalk.gray(`  Coverage: ${stats.coverageScore}%`));
+          log(chalk.gray(`  ${stats.totalExports} exports, ${stats.driftCount} drift issues`));
+        } else {
+          // Output JSON spec
+          writeFileSync(outputPath, JSON.stringify(normalized, null, 2));
+          log(chalk.green(`✓ Generated ${options.output}`));
+          log(chalk.gray(`  ${getArrayLength(normalized.exports)} exports`));
+          log(chalk.gray(`  ${getArrayLength(normalized.types)} types`));
+        }
 
         if (options.showDiagnostics && result.diagnostics.length > 0) {
           log('');

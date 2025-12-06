@@ -8,10 +8,7 @@ import { registerCheckCommand } from './commands/check';
 import { registerDiffCommand } from './commands/diff';
 import { registerGenerateCommand } from './commands/generate';
 import { registerInitCommand } from './commands/init';
-import { registerLintCommand } from './commands/lint';
-import { registerReportCommand } from './commands/report';
 import { registerScanCommand } from './commands/scan';
-import { registerTypecheckCommand } from './commands/typecheck';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -29,10 +26,7 @@ registerGenerateCommand(program);
 registerCheckCommand(program);
 registerDiffCommand(program);
 registerInitCommand(program);
-registerLintCommand(program);
-registerReportCommand(program);
 registerScanCommand(program);
-registerTypecheckCommand(program);
 
 program.command('*', { hidden: true }).action(() => {
   program.outputHelp();

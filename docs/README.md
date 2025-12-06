@@ -32,10 +32,9 @@ DocCov uses two naming conventions:
 
 - [Overview](./cli/overview.md) - Command list and global options
 - [Commands](./cli/commands/) - Detailed command reference
-  - [generate](./cli/commands/generate.md) - Generate OpenPkg spec
+  - [generate](./cli/commands/generate.md) - Generate OpenPkg spec or coverage reports
   - [check](./cli/commands/check.md) - Validate coverage thresholds, auto-fix drift
   - [diff](./cli/commands/diff.md) - Compare two specs
-  - [report](./cli/commands/report.md) - Generate coverage reports
   - [scan](./cli/commands/scan.md) - Analyze remote GitHub repos
   - [init](./cli/commands/init.md) - Create config file
 - [Configuration](./cli/configuration.md) - `doccov.config.ts` options
@@ -45,9 +44,7 @@ DocCov uses two naming conventions:
 - [Overview](./api/overview.md) - Hono API, Vercel deployment
 - [Endpoints](./api/endpoints/)
   - [Badge](./api/endpoints/badge.md) - Coverage badge SVG
-  - [Widget](./api/endpoints/widget.md) - Signal breakdown widget
-  - [Leaderboard](./api/endpoints/leaderboard.md) - Public rankings
-  - [Scan Stream](./api/endpoints/scan-stream.md) - SSE scanning
+  - [Scan](./api/endpoints/scan-stream.md) - Scan GitHub repositories
   - [Spec](./api/endpoints/spec.md) - Fetch specs from GitHub
   - [Examples Run](./api/endpoints/examples-run.md) - Execute code
 - [Self-Hosting](./api/self-hosting.md) - Deploy your own instance
