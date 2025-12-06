@@ -42,6 +42,8 @@ export {
 } from './detect';
 export { extractPackageSpec } from './extractor';
 export type { FilterOptions } from './filtering/types';
+export type { FilterSource, ResolvedFilters } from './filtering/merge';
+export { mergeFilters, parseListFlag } from './filtering/merge';
 // Fix utilities
 export {
   type ApplyEditsResult,
@@ -131,3 +133,40 @@ export type {
   RunExamplesWithPackageResult,
 } from './utils/example-runner';
 export { runExample, runExamples, runExamplesWithPackage } from './utils/example-runner';
+// Scan types and utilities
+export type {
+  DriftIssue,
+  ProgressCallback,
+  ProgressEvent,
+  ProgressStage,
+  ScanContext,
+  ScanOptions,
+  ScanOrchestratorOptions,
+  ScanResult,
+  SpecSummary,
+} from './scan';
+export { extractSpecSummary, MonorepoRequiresPackageError, ScanOrchestrator } from './scan';
+// GitHub utilities
+export type { ParsedGitHubUrl } from './github';
+export {
+  buildCloneUrl,
+  buildDisplayUrl,
+  buildRawUrl,
+  fetchSpec,
+  fetchSpecFromGitHub,
+  parseGitHubUrl,
+} from './github';
+// Project resolution
+export type { ResolvedTarget, ResolveTargetOptions } from './resolve';
+export { resolveTarget } from './resolve';
+// Dependency installation
+export type { CommandResult, CommandRunner, InstallOptions, InstallResult } from './install';
+export { createNodeCommandRunner, installDependencies } from './install';
+// Configuration types
+export type {
+  CheckConfig,
+  DocCovConfig,
+  DocsConfig,
+  LintRulesConfig,
+} from './config';
+export { defineConfig } from './config';

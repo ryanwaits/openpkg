@@ -66,31 +66,15 @@ export const docCovConfigSchema: z.ZodObject<{
   lint: lintConfigSchema.optional(),
 });
 
+import type { CheckConfig, DocCovConfig, DocsConfig, LintRulesConfig } from '@doccov/sdk';
+
 export type DocCovConfigInput = z.infer<typeof docCovConfigSchema>;
 
-export interface DocsConfig {
-  include?: string[];
-  exclude?: string[];
-}
+// Re-export types from SDK for backwards compatibility
+export type { CheckConfig, DocsConfig, LintRulesConfig };
 
-export interface CheckConfig {
-  lint?: boolean;
-  typecheck?: boolean;
-  exec?: boolean;
-}
-
-export interface LintRulesConfig {
-  rules?: Record<string, 'error' | 'warn' | 'off'>;
-}
-
-export interface NormalizedDocCovConfig {
-  include?: string[];
-  exclude?: string[];
-  plugins?: unknown[];
-  docs?: DocsConfig;
-  check?: CheckConfig;
-  lint?: LintRulesConfig;
-}
+// NormalizedDocCovConfig is the same as DocCovConfig from SDK
+export type NormalizedDocCovConfig = DocCovConfig;
 
 const normalizeList = (value?: string | string[]): string[] | undefined => {
   if (!value) {

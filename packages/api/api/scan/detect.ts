@@ -1,4 +1,13 @@
-import { Writable } from 'node:stream';
+/**
+ * Detect endpoint - uses SDK detection via SandboxFileSystem.
+ * Detects monorepo structure and package manager for a GitHub repository.
+ */
+
+import {
+  detectMonorepo as sdkDetectMonorepo,
+  detectPackageManager,
+  SandboxFileSystem,
+} from '@doccov/sdk';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Sandbox } from '@vercel/sandbox';
 
@@ -26,18 +35,6 @@ interface DetectResponse {
   error?: string;
 }
 
-// Helper to capture stream output
-function createCaptureStream(): { stream: Writable; getOutput: () => string } {
-  let output = '';
-  const stream = new Writable({
-    write(chunk, _encoding, callback) {
-      output += chunk.toString();
-      callback();
-    },
-  });
-  return { stream, getOutput: () => output };
-}
-
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -59,7 +56,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const result = await detectMonorepo(body.url, body.ref ?? 'main');
+    const result = await detectRepoStructure(body.url);
     return res.status(200).json(result);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -71,7 +68,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 }
 
-async function detectMonorepo(url: string, _ref: string): Promise<DetectResponse> {
+/**
+ * Detect repository structure using SDK utilities via SandboxFileSystem.
+ */
+async function detectRepoStructure(url: string): Promise<DetectResponse> {
   const sandbox = await Sandbox.create({
     source: {
       url,
@@ -83,131 +83,35 @@ async function detectMonorepo(url: string, _ref: string): Promise<DetectResponse
   });
 
   try {
-    // List root files
-    const lsCapture = createCaptureStream();
-    await sandbox.runCommand({
-      cmd: 'ls',
-      args: ['-1'],
-      stdout: lsCapture.stream,
-    });
-    const files = lsCapture.getOutput();
+    // Create SDK FileSystem abstraction for sandbox
+    const fs = new SandboxFileSystem(sandbox);
 
-    // Detect package manager
-    let packageManager: DetectResponse['packageManager'] = 'npm';
-    if (files.includes('pnpm-lock.yaml')) {
-      packageManager = 'pnpm';
-    } else if (files.includes('bun.lock') || files.includes('bun.lockb')) {
-      packageManager = 'bun';
-    } else if (files.includes('yarn.lock')) {
-      packageManager = 'yarn';
-    }
+    // Use SDK detection functions
+    const [monoInfo, pmInfo] = await Promise.all([
+      sdkDetectMonorepo(fs),
+      detectPackageManager(fs),
+    ]);
 
-    // Read root package.json
-    const pkgCapture = createCaptureStream();
-    await sandbox.runCommand({
-      cmd: 'cat',
-      args: ['package.json'],
-      stdout: pkgCapture.stream,
-    });
-
-    let rootPkg: { workspaces?: string[] | { packages?: string[] }; name?: string } = {};
-    try {
-      rootPkg = JSON.parse(pkgCapture.getOutput());
-    } catch {
-      // Not a valid package.json
-    }
-
-    // Check for workspaces (npm/yarn/bun) or pnpm-workspace.yaml
-    let workspacePatterns: string[] = [];
-
-    if (rootPkg.workspaces) {
-      if (Array.isArray(rootPkg.workspaces)) {
-        workspacePatterns = rootPkg.workspaces;
-      } else if (rootPkg.workspaces.packages) {
-        workspacePatterns = rootPkg.workspaces.packages;
-      }
-    }
-
-    // Check pnpm-workspace.yaml
-    if (files.includes('pnpm-workspace.yaml')) {
-      const wsCapture = createCaptureStream();
-      await sandbox.runCommand({
-        cmd: 'cat',
-        args: ['pnpm-workspace.yaml'],
-        stdout: wsCapture.stream,
-      });
-      const wsContent = wsCapture.getOutput();
-      // Simple YAML parsing for packages array
-      const packagesMatch = wsContent.match(/packages:\s*\n((?:\s+-\s*.+\n?)+)/);
-      if (packagesMatch) {
-        const lines = packagesMatch[1].split('\n');
-        for (const line of lines) {
-          const match = line.match(/^\s+-\s*['"]?([^'"]+)['"]?\s*$/);
-          if (match) {
-            workspacePatterns.push(match[1]);
-          }
-        }
-      }
-    }
-
-    // Not a monorepo
-    if (workspacePatterns.length === 0) {
+    if (!monoInfo.isMonorepo) {
       return {
         isMonorepo: false,
-        packageManager,
+        packageManager: pmInfo.name,
       };
     }
 
-    // Find all packages
-    const packages: PackageInfo[] = [];
-
-    // Use find to locate package.json files in workspace dirs
-    const findCapture = createCaptureStream();
-    await sandbox.runCommand({
-      cmd: 'find',
-      args: ['.', '-name', 'package.json', '-maxdepth', '3', '-type', 'f'],
-      stdout: findCapture.stream,
-    });
-
-    const packagePaths = findCapture
-      .getOutput()
-      .trim()
-      .split('\n')
-      .filter((p) => p && p !== './package.json');
-
-    for (const pkgPath of packagePaths.slice(0, 30)) {
-      // Limit to 30 packages
-      const catCapture = createCaptureStream();
-      await sandbox.runCommand({
-        cmd: 'cat',
-        args: [pkgPath],
-        stdout: catCapture.stream,
-      });
-
-      try {
-        const pkg = JSON.parse(catCapture.getOutput()) as {
-          name?: string;
-          description?: string;
-          private?: boolean;
-        };
-        if (pkg.name && !pkg.private) {
-          packages.push({
-            name: pkg.name,
-            path: pkgPath.replace('./package.json', '.').replace('/package.json', ''),
-            description: pkg.description,
-          });
-        }
-      } catch {
-        // Skip invalid package.json
-      }
-    }
-
-    // Sort by name
-    packages.sort((a, b) => a.name.localeCompare(b.name));
+    // Map SDK package info to API response format
+    const packages: PackageInfo[] = monoInfo.packages
+      .filter((p) => !p.private)
+      .map((p) => ({
+        name: p.name,
+        path: p.path,
+        description: p.description,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
 
     return {
       isMonorepo: true,
-      packageManager,
+      packageManager: pmInfo.name,
       packages,
       defaultPackage: packages[0]?.name,
     };

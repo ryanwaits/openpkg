@@ -1,5 +1,5 @@
+import { buildCloneUrl, buildDisplayUrl, parseGitHubUrl } from '@doccov/sdk';
 import { describe, expect, it } from 'bun:test';
-import { buildCloneUrl, buildDisplayUrl, parseGitHubUrl } from '../src/utils/github-url';
 
 describe('parseGitHubUrl', () => {
   describe('full URLs', () => {

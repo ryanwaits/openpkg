@@ -4,19 +4,23 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import {
   DocCov,
+  buildCloneUrl,
+  buildDisplayUrl,
   detectBuildInfo,
   detectEntryPoint,
   detectMonorepo,
   detectPackageManager,
+  extractSpecSummary,
   findPackageByName,
   formatPackageList,
   getInstallCommand,
   NodeFileSystem,
+  parseGitHubUrl,
+  type ScanResult,
 } from '@doccov/sdk';
 import chalk from 'chalk';
 import type { Command } from 'commander';
 import { simpleGit } from 'simple-git';
-import { buildCloneUrl, buildDisplayUrl, parseGitHubUrl } from '../utils/github-url';
 import { generateBuildPlan } from '../utils/llm-build-plan';
 
 export interface ScanCommandDependencies {
@@ -32,23 +36,6 @@ const defaultDependencies: Required<ScanCommandDependencies> = {
   log: console.log,
   error: console.error,
 };
-
-interface ScanResult {
-  owner: string;
-  repo: string;
-  ref: string;
-  packageName?: string;
-  coverage: number;
-  exportCount: number;
-  typeCount: number;
-  driftCount: number;
-  undocumented: string[];
-  drift: Array<{
-    export: string;
-    type: string;
-    issue: string;
-  }>;
-}
 
 export function registerScanCommand(
   program: Command,
@@ -398,7 +385,6 @@ export function registerScanCommand(
         }
 
         const spec = result.spec;
-        const coverageScore = spec.docs?.coverageScore ?? 0;
 
         // Save full spec if requested
         if (options.saveSpec) {
@@ -407,38 +393,20 @@ export function registerScanCommand(
           log(chalk.green(`✓ Saved spec to ${options.saveSpec}`));
         }
 
-        // Collect results
-        const undocumented: string[] = [];
-        const driftIssues: ScanResult['drift'] = [];
-
-        for (const exp of spec.exports ?? []) {
-          const expDocs = exp.docs;
-          if (!expDocs) continue;
-
-          if ((expDocs.missing?.length ?? 0) > 0 || (expDocs.coverageScore ?? 0) < 100) {
-            undocumented.push(exp.name);
-          }
-
-          for (const d of expDocs.drift ?? []) {
-            driftIssues.push({
-              export: exp.name,
-              type: d.type,
-              issue: d.issue,
-            });
-          }
-        }
+        // Extract summary using SDK utility
+        const summary = extractSpecSummary(spec);
 
         const scanResult: ScanResult = {
           owner: parsed.owner,
           repo: parsed.repo,
           ref: parsed.ref,
           packageName,
-          coverage: coverageScore,
-          exportCount: spec.exports?.length ?? 0,
-          typeCount: spec.types?.length ?? 0,
-          driftCount: driftIssues.length,
-          undocumented,
-          drift: driftIssues,
+          coverage: summary.coverage,
+          exportCount: summary.exportCount,
+          typeCount: summary.typeCount,
+          driftCount: summary.driftCount,
+          undocumented: summary.undocumented,
+          drift: summary.drift,
         };
 
         // Output results

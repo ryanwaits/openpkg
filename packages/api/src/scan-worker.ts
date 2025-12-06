@@ -2,24 +2,11 @@
  * Scan job store and caching layer
  */
 
+import type { ScanResult } from '@doccov/sdk';
 import type { JobStore } from './stores/job-store.interface';
 
-export interface ScanResult {
-  owner: string;
-  repo: string;
-  ref: string;
-  packageName?: string;
-  coverage: number;
-  exportCount: number;
-  typeCount: number;
-  driftCount: number;
-  undocumented: string[];
-  drift: Array<{
-    export: string;
-    type: string;
-    issue: string;
-  }>;
-}
+// Re-export ScanResult for backwards compatibility
+export type { ScanResult } from '@doccov/sdk';
 
 export interface ScanJob {
   id: string;

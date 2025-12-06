@@ -1,3 +1,4 @@
+import { fetchSpec } from '@doccov/sdk';
 import type { OpenPkg } from '@openpkg-ts/spec';
 import { Hono } from 'hono';
 
@@ -32,32 +33,12 @@ const TRACKED_REPOS = [
   { owner: 'tailwindlabs', repo: 'headlessui' },
 ];
 
-async function fetchSpecFromGitHub(owner: string, repo: string): Promise<OpenPkg | null> {
-  const urls = [
-    `https://raw.githubusercontent.com/${owner}/${repo}/main/openpkg.json`,
-    `https://raw.githubusercontent.com/${owner}/${repo}/master/openpkg.json`,
-  ];
-
-  for (const url of urls) {
-    try {
-      const response = await fetch(url);
-      if (response.ok) {
-        return (await response.json()) as OpenPkg;
-      }
-    } catch {
-      // Try next URL
-    }
-  }
-
-  return null;
-}
-
 async function buildLeaderboard(_category?: string): Promise<LeaderboardEntry[]> {
   const entries: LeaderboardEntry[] = [];
 
   // Fetch specs for all tracked repos
   const fetchPromises = TRACKED_REPOS.map(async ({ owner, repo }) => {
-    const spec = await fetchSpecFromGitHub(owner, repo);
+    const spec = await fetchSpec(owner, repo);
     if (spec) {
       const driftCount = spec.exports.reduce((count, exp) => {
         return count + (exp.docs?.drift?.length ?? 0);
@@ -128,7 +109,7 @@ leaderboardRoute.get('/:owner/:repo', async (c) => {
   const { owner, repo } = c.req.param();
 
   try {
-    const spec = await fetchSpecFromGitHub(owner, repo);
+    const spec = await fetchSpec(owner, repo);
 
     if (!spec) {
       return c.json(
@@ -185,7 +166,7 @@ leaderboardRoute.post('/submit', async (c) => {
       return c.json({ error: 'Missing owner or repo' }, 400);
     }
 
-    const spec = await fetchSpecFromGitHub(owner, repo);
+    const spec = await fetchSpec(owner, repo);
 
     if (!spec) {
       return c.json(

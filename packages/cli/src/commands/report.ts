@@ -2,10 +2,8 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import {
   DocCov,
-  detectEntryPoint,
-  detectMonorepo,
-  findPackageByName,
   NodeFileSystem,
+  resolveTarget,
 } from '@doccov/sdk';
 import type { OpenPkg } from '@openpkg-ts/spec';
 import chalk from 'chalk';
@@ -33,32 +31,15 @@ export function registerReportCommand(program: Command): void {
           const specPath = path.resolve(options.cwd, options.spec);
           spec = JSON.parse(fs.readFileSync(specPath, 'utf-8'));
         } else {
-          let targetDir = options.cwd;
-          let entryFile = entry as string | undefined;
-
-          // Create filesystem abstraction for detection
+          // Resolve target directory and entry point
           const fileSystem = new NodeFileSystem(options.cwd);
+          const resolved = await resolveTarget(fileSystem, {
+            cwd: options.cwd,
+            package: options.package,
+            entry: entry as string | undefined,
+          });
 
-          if (options.package) {
-            const mono = await detectMonorepo(fileSystem);
-            if (!mono.isMonorepo) {
-              throw new Error(`Not a monorepo. Remove --package flag for single-package repos.`);
-            }
-            const pkg = findPackageByName(mono.packages, options.package);
-            if (!pkg) {
-              const available = mono.packages.map((p) => p.name).join(', ');
-              throw new Error(`Package "${options.package}" not found. Available: ${available}`);
-            }
-            targetDir = path.join(options.cwd, pkg.path);
-          }
-
-          if (!entryFile) {
-            const targetFs = new NodeFileSystem(targetDir);
-            const detected = await detectEntryPoint(targetFs);
-            entryFile = path.join(targetDir, detected.path);
-          } else {
-            entryFile = path.resolve(targetDir, entryFile);
-          }
+          const { entryFile } = resolved;
 
           // Use simple text indicator for CPU-intensive analysis (ora can't animate during blocking operations)
           process.stdout.write(chalk.cyan('> Analyzing...\n'));

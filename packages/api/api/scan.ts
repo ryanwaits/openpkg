@@ -1,3 +1,4 @@
+import { parseGitHubUrl } from '@doccov/sdk';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 export const config = {
@@ -31,15 +32,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: 'url is required' });
   }
 
-  // Parse GitHub URL
-  const urlMatch = body.url.match(/github\.com\/([^/]+)\/([^/]+)/);
-  if (!urlMatch) {
+  // Parse GitHub URL using SDK
+  let parsed;
+  try {
+    parsed = parseGitHubUrl(body.url, body.ref ?? 'main');
+  } catch {
     return res.status(400).json({ error: 'Invalid GitHub URL' });
   }
-
-  const [, owner, repoWithExt] = urlMatch;
-  const repo = repoWithExt.replace(/\.git$/, '');
-  const ref = body.ref ?? 'main';
 
   // Generate a job ID
   const jobId = `scan-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -47,9 +46,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Build stream URL with params encoded
   const params = new URLSearchParams({
     url: body.url,
-    ref,
-    owner,
-    repo,
+    ref: parsed.ref,
+    owner: parsed.owner,
+    repo: parsed.repo,
   });
   if (body.package) {
     params.set('package', body.package);

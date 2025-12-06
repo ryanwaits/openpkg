@@ -2,9 +2,9 @@
  * Vercel Sandbox runner for isolated repo scanning
  */
 
+import type { ScanResult } from '@doccov/sdk';
 import { Sandbox } from '@vercel/sandbox';
 import ms from 'ms';
-import type { ScanResult } from './scan-worker';
 
 export interface ScanOptions {
   url: string;

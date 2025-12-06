@@ -4,10 +4,7 @@ import {
   applyEdits,
   createSourceFile,
   DocCov,
-  detectEntryPoint,
-  detectMonorepo,
   findJSDocLocation,
-  findPackageByName,
   getDefaultConfig,
   getRule,
   type JSDocEdit,
@@ -16,6 +13,7 @@ import {
   type LintViolation,
   lintExport,
   NodeFileSystem,
+  resolveTarget,
   serializeJSDoc,
 } from '@doccov/sdk';
 import type { SpecExport } from '@openpkg-ts/spec';
@@ -80,39 +78,21 @@ export function registerLintCommand(
     .option('--skip-resolve', 'Skip external type resolution')
     .action(async (entry, options) => {
       try {
-        let targetDir = options.cwd;
-        let entryFile = entry as string | undefined;
-
+        // Resolve target directory and entry point
         const fileSystem = new NodeFileSystem(options.cwd);
+        const resolved = await resolveTarget(fileSystem, {
+          cwd: options.cwd,
+          package: options.package,
+          entry: entry as string | undefined,
+        });
 
-        if (options.package) {
-          const mono = await detectMonorepo(fileSystem);
-          if (!mono.isMonorepo) {
-            throw new Error('Not a monorepo. Remove --package flag.');
-          }
-          const pkg = findPackageByName(mono.packages, options.package);
-          if (!pkg) {
-            const available = mono.packages.map((p) => p.name).join(', ');
-            throw new Error(`Package "${options.package}" not found. Available: ${available}`);
-          }
-          targetDir = path.join(options.cwd, pkg.path);
-          log(chalk.gray(`Found package at ${pkg.path}`));
+        const { targetDir, entryFile, packageInfo, entryPointInfo } = resolved;
+
+        if (packageInfo) {
+          log(chalk.gray(`Found package at ${packageInfo.path}`));
         }
-
-        if (!entryFile) {
-          const targetFs = new NodeFileSystem(targetDir);
-          const detected = await detectEntryPoint(targetFs);
-          entryFile = path.join(targetDir, detected.path);
-          log(chalk.gray(`Auto-detected entry point: ${detected.path}`));
-        } else {
-          entryFile = path.resolve(targetDir, entryFile);
-          if (fs.existsSync(entryFile) && fs.statSync(entryFile).isDirectory()) {
-            targetDir = entryFile;
-            const dirFs = new NodeFileSystem(entryFile);
-            const detected = await detectEntryPoint(dirFs);
-            entryFile = path.join(entryFile, detected.path);
-            log(chalk.gray(`Auto-detected entry point: ${detected.path}`));
-          }
+        if (!entry) {
+          log(chalk.gray(`Auto-detected entry point: ${entryPointInfo.path}`));
         }
 
         const resolveExternalTypes = !options.skipResolve;

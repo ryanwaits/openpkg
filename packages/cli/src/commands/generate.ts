@@ -2,10 +2,8 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import {
   DocCov,
-  detectEntryPoint,
-  detectMonorepo,
-  findPackageByName,
   NodeFileSystem,
+  resolveTarget,
 } from '@doccov/sdk';
 import { normalize, type OpenPkg as OpenPkgSpec, validateSpec } from '@openpkg-ts/spec';
 import chalk from 'chalk';
@@ -90,42 +88,21 @@ export function registerGenerateCommand(
     .option('-y, --yes', 'Skip all prompts and use defaults')
     .action(async (entry, options) => {
       try {
-        let targetDir = options.cwd;
-        let entryFile = entry;
-
-        // Create filesystem abstraction for detection
+        // Resolve target directory and entry point
         const fileSystem = new NodeFileSystem(options.cwd);
+        const resolved = await resolveTarget(fileSystem, {
+          cwd: options.cwd,
+          package: options.package,
+          entry: entry as string | undefined,
+        });
 
-        if (options.package) {
-          const mono = await detectMonorepo(fileSystem);
-          if (!mono.isMonorepo) {
-            throw new Error(`Not a monorepo. Remove --package flag for single-package repos.`);
-          }
-          const pkg = findPackageByName(mono.packages, options.package);
-          if (!pkg) {
-            const available = mono.packages.map((p) => p.name).join(', ');
-            throw new Error(`Package "${options.package}" not found. Available: ${available}`);
-          }
-          targetDir = path.join(options.cwd, pkg.path);
-          log(chalk.gray(`Found package at ${pkg.path}`));
+        const { targetDir, entryFile, packageInfo, entryPointInfo } = resolved;
+
+        if (packageInfo) {
+          log(chalk.gray(`Found package at ${packageInfo.path}`));
         }
-
-        if (!entryFile) {
-          const targetFs = new NodeFileSystem(targetDir);
-          const detected = await detectEntryPoint(targetFs);
-          entryFile = path.join(targetDir, detected.path);
-          log(chalk.gray(`Auto-detected entry point: ${detected.path} (from ${detected.source})`));
-        } else {
-          entryFile = path.resolve(targetDir, entryFile);
-          // If path is a directory, find entry point within it
-          if (fs.existsSync(entryFile) && fs.statSync(entryFile).isDirectory()) {
-            const dirFs = new NodeFileSystem(entryFile);
-            const detected = await detectEntryPoint(dirFs);
-            entryFile = path.join(entryFile, detected.path);
-            log(
-              chalk.gray(`Auto-detected entry point: ${detected.path} (from ${detected.source})`),
-            );
-          }
+        if (!entry) {
+          log(chalk.gray(`Auto-detected entry point: ${entryPointInfo.path} (from ${entryPointInfo.source})`));
         }
 
         const resolveExternalTypes = !options.skipResolve;

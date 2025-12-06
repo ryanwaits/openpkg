@@ -6,6 +6,7 @@ import {
   getInstallCommand,
   getPrimaryBuildScript,
   SandboxFileSystem,
+  type ScanResult,
 } from '@doccov/sdk';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Sandbox } from '@vercel/sandbox';
@@ -22,23 +23,6 @@ interface JobEvent {
   progress?: number;
   result?: ScanResult;
   availablePackages?: string[];
-}
-
-interface ScanResult {
-  owner: string;
-  repo: string;
-  ref: string;
-  packageName?: string;
-  coverage: number;
-  exportCount: number;
-  typeCount: number;
-  driftCount: number;
-  undocumented: string[];
-  drift: Array<{
-    export: string;
-    type: string;
-    issue: string;
-  }>;
 }
 
 // Helper to capture stream output
