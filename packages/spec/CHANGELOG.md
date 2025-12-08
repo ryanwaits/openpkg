@@ -1,5 +1,11 @@
 # @openpkg-ts/spec
 
+## 0.5.0
+
+### Minor Changes
+
+- added openpkg schema v0.3.0 with support for function/method overloads, structured jsdoc tag fields
+
 ## 0.4.1
 
 ### Patch Changes

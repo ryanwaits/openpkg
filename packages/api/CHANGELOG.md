@@ -1,5 +1,13 @@
 # @doccov/api
 
+## 0.3.1
+
+### Patch Changes
+
+- consolidate api routes to use unified SDK modules.
+- Updated dependencies
+  - @openpkg-ts/spec@0.5.0
+
 ## 0.3.0
 
 ### Minor Changes

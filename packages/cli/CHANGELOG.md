@@ -1,5 +1,18 @@
 # @doccov/cli
 
+## 0.7.0
+
+### Minor Changes
+
+- consolidate cli by removing lint, report, and typecheck commands (now in SDK). simplify check, generate, and scan commands to use unified SDK modules.
+
+### Patch Changes
+
+- Updated dependencies
+- Updated dependencies
+  - @openpkg-ts/spec@0.5.0
+  - @doccov/sdk@0.7.0
+
 ## 0.6.0
 
 ### Patch Changes

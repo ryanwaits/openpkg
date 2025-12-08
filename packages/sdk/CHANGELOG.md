@@ -1,5 +1,16 @@
 # @doccov/sdk
 
+## 0.7.0
+
+### Minor Changes
+
+- fixed serialization of overloaded methods in classes and interfaces and enhanced jsdoc tag parsing to extract structured fields
+
+### Patch Changes
+
+- Updated dependencies
+  - @openpkg-ts/spec@0.5.0
+
 ## 0.6.0
 
 ### Minor Changes
