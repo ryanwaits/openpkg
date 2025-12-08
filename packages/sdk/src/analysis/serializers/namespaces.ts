@@ -27,6 +27,11 @@ export function serializeNamespace(
 
   const members = extractNamespaceMembers(declaration, checker);
 
+  // Detect module augmentation: declare module "name" { ... }
+  // Module augmentations have a string literal as the name
+  const isAugmentation = ts.isStringLiteral(declaration.name);
+  const augmentedModule = isAugmentation ? declaration.name.text : undefined;
+
   return {
     id: symbol.getName(),
     name: symbol.getName(),
@@ -38,6 +43,8 @@ export function serializeNamespace(
     members: members.length > 0 ? members : undefined,
     tags: parsedDoc?.tags,
     examples: parsedDoc?.examples,
+    isAugmentation: isAugmentation || undefined,
+    augmentedModule,
   };
 }
 
