@@ -1,5 +1,17 @@
 # @openpkg-ts/spec
 
+## 0.7.0
+
+### Minor Changes
+
+- feat: spec enhancements
+
+  - Add SpecSchema DSL with discriminated union types for type schemas (primitives, composites, combinators, refs)
+  - Add SpecExample structured type with title, description, language, runnable, and expectedOutput fields
+  - Add SpecRelation type for expressing relationships between exports (extends, implements, returns, see-also, companion)
+  - Add related field to SpecExport and SpecType definitions
+  - Update JSON schema with all new definitions
+
 ## 0.6.0
 
 ### Minor Changes

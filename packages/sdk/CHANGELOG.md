@@ -1,5 +1,22 @@
 # @doccov/sdk
 
+## 0.9.0
+
+### Minor Changes
+
+- feat: sdk enhancments
+
+  - Parse @see JSDoc tags and extract see-also relations
+  - Extract structured example metadata (title, description, language) from @example blocks
+  - Emit related field on classes (extends/implements), functions (returns), and interfaces (extends)
+  - Update TypeReference to use SpecSchema type from spec package
+  - Fix deterministic-fixes and jsdoc-writer to handle SpecExample objects
+
+### Patch Changes
+
+- Updated dependencies
+  - @openpkg-ts/spec@0.7.0
+
 ## 0.8.0
 
 ### Minor Changes

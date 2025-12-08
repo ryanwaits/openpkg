@@ -7,7 +7,7 @@
     "apps/*"
   ],
   "scripts": {
-    "build": "bun run build:spec && bun run build:sdk && bun run build:cli && bun run build:fumadocs-adapter && bun run build:site",
+    "build": "bun run build:spec && bun run build:sdk && bun run build:cli && bun run build:fumadocs-adapter",
     "build:spec": "cd packages/spec && bun run build",
     "build:sdk": "cd packages/sdk && bun run build",
     "build:cli": "cd packages/cli && bun run build",
