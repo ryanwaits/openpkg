@@ -325,7 +325,7 @@ export function serializeJSDoc(patch: JSDocPatch, indent = ''): string {
   }
 
   // Deprecated (only if truthy string, not false)
-  if (patch.deprecated && patch.deprecated !== false) {
+  if (patch.deprecated && typeof patch.deprecated === 'string') {
     lines.push(`@deprecated ${patch.deprecated}`);
   }
 

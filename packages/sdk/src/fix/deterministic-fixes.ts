@@ -464,11 +464,18 @@ function generateAssertionFix(drift: SpecDocDrift, exportEntry: SpecExport): Fix
 
   if (!oldValue) return null;
 
+  // Handle both string and SpecExample formats
+  const oldExampleCode = typeof oldExample === 'string' ? oldExample : oldExample.code;
+
   // Replace the assertion comment
-  const updatedExample = oldExample.replace(
+  const updatedCode = oldExampleCode.replace(
     new RegExp(`//\\s*=>\\s*${escapeRegex(oldValue)}`, 'g'),
     `// => ${newValue}`,
   );
+
+  // Preserve the example format (string or SpecExample object)
+  const updatedExample =
+    typeof oldExample === 'string' ? updatedCode : { ...oldExample, code: updatedCode };
 
   const updatedExamples = [...examples];
   updatedExamples[exampleIndex] = updatedExample;
@@ -478,7 +485,7 @@ function generateAssertionFix(drift: SpecDocDrift, exportEntry: SpecExport): Fix
     driftType: drift.type,
     target: `example[${exampleIndex}]`,
     description: `Update assertion from "${oldValue}" to "${newValue}"`,
-    patch: { examples: updatedExamples },
+    patch: { examples: updatedExamples as string[] },
   };
 }
 
