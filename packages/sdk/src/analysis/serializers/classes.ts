@@ -15,6 +15,43 @@ interface HeritageInfo {
   implements?: string[];
 }
 
+interface Relation {
+  type: 'uses' | 'returns' | 'implements' | 'extends' | 'see-also' | 'companion';
+  target: string;
+  description?: string;
+}
+
+/**
+ * Extract relations from class heritage (extends/implements) and @see tags.
+ */
+function extractClassRelations(
+  heritage: HeritageInfo,
+  parsedDoc: ReturnType<typeof parseJSDocComment>,
+): Relation[] {
+  const relations: Relation[] = [];
+
+  // Add extends relation
+  if (heritage.extends) {
+    relations.push({ type: 'extends', target: heritage.extends });
+  }
+
+  // Add implements relations
+  if (heritage.implements) {
+    for (const impl of heritage.implements) {
+      relations.push({ type: 'implements', target: impl });
+    }
+  }
+
+  // Add @see references
+  if (parsedDoc?.seeAlso) {
+    for (const ref of parsedDoc.seeAlso) {
+      relations.push({ type: 'see-also', target: ref });
+    }
+  }
+
+  return relations;
+}
+
 export interface ClassSerializationResult {
   exportEntry: ExportDefinition;
   typeDefinition?: TypeDefinition;
@@ -41,6 +78,9 @@ export function serializeClass(
   const metadata = extractPresentationMetadata(parsedDoc);
   const decorators = extractDecorators(declaration);
 
+  // Extract relations from heritage and @see tags
+  const relations = extractClassRelations(heritage, parsedDoc);
+
   const exportEntry: ExportDefinition = {
     id: symbol.getName(),
     name: symbol.getName(),
@@ -58,6 +98,7 @@ export function serializeClass(
     tags: parsedDoc?.tags,
     examples: parsedDoc?.examples,
     decorators,
+    related: relations.length > 0 ? relations : undefined,
   };
 
   const typeDefinition: TypeDefinition = {
@@ -73,6 +114,7 @@ export function serializeClass(
       ? { implements: heritage.implements }
       : {}),
     tags: parsedDoc?.tags,
+    related: relations.length > 0 ? relations : undefined,
   };
 
   return {

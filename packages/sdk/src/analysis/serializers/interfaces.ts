@@ -147,6 +147,43 @@ export interface InterfaceSerializationResult {
   typeDefinition?: TypeDefinition;
 }
 
+interface Relation {
+  type: 'uses' | 'returns' | 'implements' | 'extends' | 'see-also' | 'companion';
+  target: string;
+  description?: string;
+}
+
+/**
+ * Extract relations from interface heritage (extends) and @see tags.
+ */
+function extractInterfaceRelations(
+  declaration: TS.InterfaceDeclaration,
+  parsedDoc: ReturnType<typeof parseJSDocComment>,
+): Relation[] {
+  const relations: Relation[] = [];
+
+  // Extract 'extends' relations from heritage clauses
+  if (declaration.heritageClauses) {
+    for (const clause of declaration.heritageClauses) {
+      if (clause.token === ts.SyntaxKind.ExtendsKeyword) {
+        for (const type of clause.types) {
+          const typeName = type.expression.getText();
+          relations.push({ type: 'extends', target: typeName });
+        }
+      }
+    }
+  }
+
+  // Add @see references
+  if (parsedDoc?.seeAlso) {
+    for (const ref of parsedDoc.seeAlso) {
+      relations.push({ type: 'see-also', target: ref });
+    }
+  }
+
+  return relations;
+}
+
 export function serializeInterface(
   declaration: TS.InterfaceDeclaration,
   symbol: TS.Symbol,
@@ -166,6 +203,9 @@ export function serializeInterface(
 
   const members = serializeInterfaceMembers(declaration, checker, typeRefs, referencedTypes);
 
+  // Extract relations from heritage and @see tags
+  const relations = extractInterfaceRelations(declaration, parsedDoc);
+
   const exportEntry: ExportDefinition = {
     id: symbol.getName(),
     name: symbol.getName(),
@@ -178,6 +218,7 @@ export function serializeInterface(
     typeParameters,
     tags: parsedDoc?.tags,
     examples: parsedDoc?.examples,
+    related: relations.length > 0 ? relations : undefined,
   };
 
   const schema = interfaceToSchema(declaration, checker, typeRefs, referencedTypes);
@@ -192,6 +233,7 @@ export function serializeInterface(
     description,
     source: getSourceLocation(declaration),
     tags: parsedDoc?.tags,
+    related: relations.length > 0 ? relations : undefined,
   };
 
   return {

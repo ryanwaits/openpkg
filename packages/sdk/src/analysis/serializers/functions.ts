@@ -147,6 +147,42 @@ export function serializeCallSignatures(
   });
 }
 
+interface Relation {
+  type: 'uses' | 'returns' | 'implements' | 'extends' | 'see-also' | 'companion';
+  target: string;
+  description?: string;
+}
+
+/**
+ * Extract relations from function return type and @see tags.
+ */
+function extractFunctionRelations(
+  declaration: TS.FunctionDeclaration,
+  checker: TS.TypeChecker,
+  parsedDoc: ReturnType<typeof parseJSDocComment>,
+): Relation[] {
+  const relations: Relation[] = [];
+
+  // Extract 'returns' relation from return type annotation
+  if (declaration.type && ts.isTypeReferenceNode(declaration.type)) {
+    const typeName = declaration.type.typeName.getText();
+    // Skip built-in types like Promise, Array, etc.
+    const builtIns = ['Promise', 'Array', 'Map', 'Set', 'Record', 'Partial', 'Required', 'Pick', 'Omit'];
+    if (!builtIns.includes(typeName)) {
+      relations.push({ type: 'returns', target: typeName });
+    }
+  }
+
+  // Add @see references
+  if (parsedDoc?.seeAlso) {
+    for (const ref of parsedDoc.seeAlso) {
+      relations.push({ type: 'see-also', target: ref });
+    }
+  }
+
+  return relations;
+}
+
 export function serializeFunctionExport(
   declaration: TS.FunctionDeclaration,
   symbol: TS.Symbol,
@@ -162,6 +198,9 @@ export function serializeFunctionExport(
   const type = checker.getTypeAtLocation(declaration.name || declaration);
   const callSignatures = type.getCallSignatures();
 
+  // Extract relations from return type and @see tags
+  const relations = extractFunctionRelations(declaration, checker, parsedDoc);
+
   return {
     id: symbol.getName(),
     name: symbol.getName(),
@@ -176,5 +215,6 @@ export function serializeFunctionExport(
     source: getSourceLocation(declaration),
     examples: parsedDoc?.examples,
     tags: parsedDoc?.tags,
+    related: relations.length > 0 ? relations : undefined,
   };
 }
