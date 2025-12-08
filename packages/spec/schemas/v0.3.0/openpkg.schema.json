@@ -192,7 +192,7 @@
           "type": "array",
           "description": "Usage examples from documentation",
           "items": {
-            "type": "string"
+            "$ref": "#/$defs/example"
           }
         },
         "signatures": {
@@ -258,6 +258,13 @@
         "augmentedModule": {
           "type": "string",
           "description": "The module being augmented (e.g., 'express')"
+        },
+        "related": {
+          "type": "array",
+          "description": "Related exports/types (auto-detected + @see tags)",
+          "items": {
+            "$ref": "#/$defs/relation"
+          }
         }
       }
     },
@@ -344,6 +351,13 @@
         "mappedType": {
           "$ref": "#/$defs/mappedType",
           "description": "Structural details for mapped types"
+        },
+        "related": {
+          "type": "array",
+          "description": "Related exports/types (auto-detected + @see tags)",
+          "items": {
+            "$ref": "#/$defs/relation"
+          }
         }
       }
     },
@@ -490,28 +504,39 @@
       }
     },
     "schema": {
-      "anyOf": [
-        {
-          "type": "boolean"
-        },
+      "description": "Flexible JSON Schema for type representation",
+      "oneOf": [
+        { "type": "string" },
+        { "type": "boolean" },
         {
           "type": "object",
           "properties": {
-            "$ref": {
-              "type": "string",
-              "description": "Reference to another type",
-              "pattern": "^#/types/[A-Za-z0-9_.-]+$"
-            }
-          },
-          "required": ["$ref"],
-          "additionalProperties": false
-        },
-        {
-          "type": "object",
-          "not": {
-            "required": ["$ref"]
-          },
-          "additionalProperties": true
+            "type": { "type": "string" },
+            "format": { "type": "string" },
+            "enum": { "type": "array" },
+            "items": { "$ref": "#/$defs/schema" },
+            "properties": {
+              "type": "object",
+              "additionalProperties": { "$ref": "#/$defs/schema" }
+            },
+            "required": { "type": "array", "items": { "type": "string" } },
+            "additionalProperties": {
+              "oneOf": [{ "type": "boolean" }, { "$ref": "#/$defs/schema" }]
+            },
+            "anyOf": { "type": "array", "items": { "$ref": "#/$defs/schema" } },
+            "allOf": { "type": "array", "items": { "$ref": "#/$defs/schema" } },
+            "oneOf": { "type": "array", "items": { "$ref": "#/$defs/schema" } },
+            "$ref": { "type": "string" },
+            "discriminator": {
+              "type": "object",
+              "properties": { "propertyName": { "type": "string" } }
+            },
+            "tsType": { "type": "string" },
+            "description": { "type": "string" },
+            "minItems": { "type": "integer" },
+            "maxItems": { "type": "integer" },
+            "signatures": { "type": "array" }
+          }
         }
       ]
     },
@@ -619,6 +644,76 @@
         "description": {
           "type": "string",
           "description": "When/why the exception is thrown"
+        }
+      },
+      "additionalProperties": false
+    },
+    "exampleLanguage": {
+      "type": "string",
+      "description": "Programming language for an example",
+      "enum": ["ts", "js", "tsx", "jsx", "shell", "json"]
+    },
+    "example": {
+      "description": "Usage example - can be a simple string or structured object",
+      "oneOf": [
+        { "type": "string" },
+        {
+          "type": "object",
+          "required": ["code"],
+          "properties": {
+            "code": {
+              "type": "string",
+              "description": "The example code"
+            },
+            "title": {
+              "type": "string",
+              "description": "Short title for the example"
+            },
+            "description": {
+              "type": "string",
+              "description": "Longer description of what the example demonstrates"
+            },
+            "language": {
+              "$ref": "#/$defs/exampleLanguage"
+            },
+            "runnable": {
+              "type": "boolean",
+              "description": "Whether this example can be run/tested automatically"
+            },
+            "expectedOutput": {
+              "type": "string",
+              "description": "Expected output when the example is run"
+            },
+            "tags": {
+              "type": "array",
+              "description": "Categorization tags (e.g., 'basic', 'advanced', 'error-handling')",
+              "items": { "type": "string" }
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "relationType": {
+      "type": "string",
+      "description": "Type of relationship between exports",
+      "enum": ["uses", "returns", "implements", "extends", "see-also", "companion"]
+    },
+    "relation": {
+      "type": "object",
+      "description": "Relationship to another export or type",
+      "required": ["type", "target"],
+      "properties": {
+        "type": {
+          "$ref": "#/$defs/relationType"
+        },
+        "target": {
+          "type": "string",
+          "description": "Target export/type ID or reference"
+        },
+        "description": {
+          "type": "string",
+          "description": "Optional description of the relationship"
         }
       },
       "additionalProperties": false

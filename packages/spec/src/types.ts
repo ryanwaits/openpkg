@@ -47,9 +47,88 @@ export type SpecSource = {
   url?: string;
 };
 
-export type SpecSchema = unknown;
+// Priority 3: SpecSchema DSL - Proper discriminated union for type schemas
 
-export type SpecExample = Record<string, unknown>;
+// Primitive types
+export type SpecSchemaPrimitive =
+  | { type: 'string'; format?: string; enum?: string[] }
+  | { type: 'number'; enum?: number[] }
+  | { type: 'boolean'; enum?: boolean[] }
+  | { type: 'integer'; format?: string }
+  | { type: 'null' }
+  | { type: 'undefined' }
+  | { type: 'any' }
+  | { type: 'unknown' }
+  | { type: 'never' }
+  | { type: 'void' };
+
+// Composite types
+export type SpecSchemaComposite =
+  | { type: 'array'; items?: SpecSchema }
+  | { type: 'tuple'; items: SpecSchema[]; minItems?: number; maxItems?: number }
+  | {
+      type: 'object';
+      properties?: Record<string, SpecSchema>;
+      required?: string[];
+      additionalProperties?: boolean | SpecSchema;
+      description?: string;
+    }
+  | { type: 'function'; signatures?: SpecSignature[] };
+
+// Combinators
+export type SpecSchemaCombinator =
+  | { anyOf: SpecSchema[]; discriminator?: { propertyName: string } }
+  | { allOf: SpecSchema[] }
+  | { oneOf: SpecSchema[] };
+
+// Reference
+export type SpecSchemaRef = { $ref: string };
+
+// Fallback for complex TS types
+export type SpecSchemaFallback = { type: string; tsType?: string };
+
+// Generic object for SDK compatibility (allows Record<string, unknown> produced at runtime)
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export type SpecSchemaGeneric = Record<string, unknown>;
+
+// Main union - flexible JSON Schema patterns
+// Note: SpecSchemaGeneric is last to allow type inference for the more specific variants first
+export type SpecSchema =
+  | string // Shorthand: "string", "number", etc.
+  | SpecSchemaPrimitive
+  | SpecSchemaComposite
+  | SpecSchemaCombinator
+  | SpecSchemaRef
+  | SpecSchemaFallback
+  | SpecSchemaGeneric;
+
+// Priority 3: Structured example metadata
+export type SpecExampleLanguage = 'ts' | 'js' | 'tsx' | 'jsx' | 'shell' | 'json';
+
+export type SpecExample = {
+  code: string;
+  title?: string;
+  description?: string;
+  language?: SpecExampleLanguage;
+  runnable?: boolean;
+  expectedOutput?: string;
+  tags?: string[];
+};
+
+// Priority 3: Related exports linking
+export type SpecRelationType =
+  | 'uses'
+  | 'returns'
+  | 'implements'
+  | 'extends'
+  | 'see-also'
+  | 'companion';
+
+export type SpecRelation = {
+  type: SpecRelationType;
+  target: string;
+  description?: string;
+};
 
 export type SpecExtension = Record<string, unknown>;
 
@@ -158,7 +237,7 @@ export type SpecExport = {
   type?: string | SpecSchema;
   schema?: SpecSchema;
   description?: string;
-  examples?: string[];
+  examples?: (string | SpecExample)[];
   docs?: SpecDocsMetadata;
   source?: SpecSource;
   deprecated?: boolean;
@@ -175,6 +254,8 @@ export type SpecExport = {
   // Priority 2: Module augmentation
   isAugmentation?: boolean;
   augmentedModule?: string;
+  // Priority 3: Related exports linking
+  related?: SpecRelation[];
 };
 
 export type SpecType = {
@@ -199,6 +280,8 @@ export type SpecType = {
   typeAliasKind?: SpecTypeAliasKind;
   conditionalType?: SpecConditionalType;
   mappedType?: SpecMappedType;
+  // Priority 3: Related exports linking
+  related?: SpecRelation[];
 };
 
 export type OpenPkgMeta = {
