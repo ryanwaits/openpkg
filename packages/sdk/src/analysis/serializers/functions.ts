@@ -123,6 +123,12 @@ export function serializeCallSignatures(
       };
     }
 
+    // Extract throws information from JSDoc
+    const throws = functionDoc?.throws?.map((t) => ({
+      type: t.type,
+      description: t.description,
+    }));
+
     return {
       parameters,
       returns: {
@@ -136,6 +142,7 @@ export function serializeCallSignatures(
       description: functionDoc?.description || undefined,
       typeParameters,
       overloadIndex: signatures.length > 1 ? index : undefined,
+      throws: throws && throws.length > 0 ? throws : undefined,
     };
   });
 }
