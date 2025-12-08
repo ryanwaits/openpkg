@@ -233,6 +233,31 @@
         "docs": {
           "$ref": "#/$defs/docsMetadata",
           "description": "Documentation coverage metadata for this export"
+        },
+        "typeAliasKind": {
+          "$ref": "#/$defs/typeAliasKind",
+          "description": "Kind of type alias (for type exports)"
+        },
+        "conditionalType": {
+          "$ref": "#/$defs/conditionalType",
+          "description": "Structural details for conditional types"
+        },
+        "mappedType": {
+          "$ref": "#/$defs/mappedType",
+          "description": "Structural details for mapped types"
+        },
+        "decorators": {
+          "type": "array",
+          "description": "Decorators applied to this export (class/function)",
+          "items": { "$ref": "#/$defs/decorator" }
+        },
+        "isAugmentation": {
+          "type": "boolean",
+          "description": "True if this is a module augmentation (declare module)"
+        },
+        "augmentedModule": {
+          "type": "string",
+          "description": "The module being augmented (e.g., 'express')"
         }
       }
     },
@@ -307,6 +332,18 @@
         },
         "source": {
           "$ref": "#/$defs/sourceLocation"
+        },
+        "typeAliasKind": {
+          "$ref": "#/$defs/typeAliasKind",
+          "description": "Kind of type alias"
+        },
+        "conditionalType": {
+          "$ref": "#/$defs/conditionalType",
+          "description": "Structural details for conditional types"
+        },
+        "mappedType": {
+          "$ref": "#/$defs/mappedType",
+          "description": "Structural details for mapped types"
         }
       }
     },
@@ -381,6 +418,11 @@
         "isImplementation": {
           "type": "boolean",
           "description": "True if this is the implementation signature (not user-callable)"
+        },
+        "throws": {
+          "type": "array",
+          "description": "Exceptions that can be thrown by this signature",
+          "items": { "$ref": "#/$defs/throwsInfo" }
         }
       }
     },
@@ -427,6 +469,11 @@
         "rest": {
           "type": "boolean",
           "description": "Whether this is a rest parameter (...args)"
+        },
+        "decorators": {
+          "type": "array",
+          "description": "Decorators applied to this parameter",
+          "items": { "$ref": "#/$defs/decorator" }
         }
       }
     },
@@ -482,6 +529,99 @@
           "minimum": 1
         }
       }
+    },
+    "typeAliasKind": {
+      "type": "string",
+      "description": "Kind of type alias",
+      "enum": ["alias", "conditional", "mapped", "template-literal", "infer"]
+    },
+    "conditionalType": {
+      "type": "object",
+      "description": "Structural representation of a conditional type (T extends X ? Y : Z)",
+      "required": ["checkType", "extendsType", "trueType", "falseType"],
+      "properties": {
+        "checkType": {
+          "type": "string",
+          "description": "The type being checked (T)"
+        },
+        "extendsType": {
+          "type": "string",
+          "description": "The constraint type (X)"
+        },
+        "trueType": {
+          "type": "string",
+          "description": "The type when condition is true (Y)"
+        },
+        "falseType": {
+          "type": "string",
+          "description": "The type when condition is false (Z)"
+        }
+      },
+      "additionalProperties": false
+    },
+    "mappedType": {
+      "type": "object",
+      "description": "Structural representation of a mapped type ({ [K in keyof T]: ... })",
+      "required": ["typeParameter"],
+      "properties": {
+        "typeParameter": {
+          "type": "string",
+          "description": "The type parameter clause (e.g., 'K in keyof T')"
+        },
+        "nameType": {
+          "type": "string",
+          "description": "The 'as' clause for key remapping (TS 4.1+)"
+        },
+        "valueType": {
+          "type": "string",
+          "description": "The mapped value type"
+        },
+        "readonly": {
+          "description": "Readonly modifier (+, -, or true for present)",
+          "oneOf": [{ "type": "boolean" }, { "enum": ["+", "-"] }]
+        },
+        "optional": {
+          "description": "Optional modifier (+, -, or true for present)",
+          "oneOf": [{ "type": "boolean" }, { "enum": ["+", "-"] }]
+        }
+      },
+      "additionalProperties": false
+    },
+    "decorator": {
+      "type": "object",
+      "description": "Decorator applied to a class, member, or parameter",
+      "required": ["name"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Decorator name (e.g., 'Injectable', 'Component')"
+        },
+        "arguments": {
+          "type": "array",
+          "description": "Evaluated decorator arguments (if possible)"
+        },
+        "argumentsText": {
+          "type": "array",
+          "description": "Raw text of decorator arguments",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "throwsInfo": {
+      "type": "object",
+      "description": "Information about an exception that can be thrown",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Exception type (e.g., 'ValidationError', 'Error')"
+        },
+        "description": {
+          "type": "string",
+          "description": "When/why the exception is thrown"
+        }
+      },
+      "additionalProperties": false
     }
   }
 }

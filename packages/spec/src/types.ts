@@ -10,6 +10,37 @@ export type SpecTag = {
   reason?: string;
 };
 
+// Priority 2: Type alias structural representation
+export type SpecTypeAliasKind = 'alias' | 'conditional' | 'mapped' | 'template-literal' | 'infer';
+
+export type SpecConditionalType = {
+  checkType: string;
+  extendsType: string;
+  trueType: string;
+  falseType: string;
+};
+
+export type SpecMappedType = {
+  typeParameter: string;
+  nameType?: string;
+  valueType?: string;
+  readonly?: '+' | '-' | true;
+  optional?: '+' | '-' | true;
+};
+
+// Priority 2: Decorator representation
+export type SpecDecorator = {
+  name: string;
+  arguments?: unknown[];
+  argumentsText?: string[];
+};
+
+// Priority 2: Throws documentation
+export type SpecThrows = {
+  type?: string;
+  description?: string;
+};
+
 export type SpecSource = {
   file?: string;
   line?: number;
@@ -66,6 +97,7 @@ export type SpecSignatureParameter = {
   schema: SpecSchema;
   default?: unknown;
   rest?: boolean;
+  decorators?: SpecDecorator[];
 };
 
 export type SpecSignatureReturn = {
@@ -81,6 +113,7 @@ export type SpecSignature = {
   typeParameters?: SpecTypeParameter[];
   overloadIndex?: number;
   isImplementation?: boolean;
+  throws?: SpecThrows[];
 };
 
 export type SpecMember = {
@@ -93,6 +126,7 @@ export type SpecMember = {
   flags?: Record<string, unknown>;
   schema?: SpecSchema;
   signatures?: SpecSignature[];
+  decorators?: SpecDecorator[];
 };
 
 export type SpecExportKind =
@@ -132,6 +166,15 @@ export type SpecExport = {
   tags?: SpecTag[];
   extends?: string;
   implements?: string[];
+  // Priority 2: Type alias structural fields
+  typeAliasKind?: SpecTypeAliasKind;
+  conditionalType?: SpecConditionalType;
+  mappedType?: SpecMappedType;
+  // Priority 2: Decorators
+  decorators?: SpecDecorator[];
+  // Priority 2: Module augmentation
+  isAugmentation?: boolean;
+  augmentedModule?: string;
 };
 
 export type SpecType = {
@@ -152,6 +195,10 @@ export type SpecType = {
   rawComments?: string;
   extends?: string;
   implements?: string[];
+  // Priority 2: Type alias structural fields
+  typeAliasKind?: SpecTypeAliasKind;
+  conditionalType?: SpecConditionalType;
+  mappedType?: SpecMappedType;
 };
 
 export type OpenPkgMeta = {
