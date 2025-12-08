@@ -4,6 +4,7 @@ import {
   parseJSDocBlock,
   parseParamContent,
   parseReturnContent,
+  type ParsedExampleInfo,
   type ParsedJSDocInfo,
   type ParsedParamInfo,
 } from './tsdoc-parser';
@@ -38,6 +39,8 @@ export interface ParsedJSDoc {
   returnsType?: string;
   throws?: ParsedThrows[];
   examples?: string[];
+  structuredExamples?: ParsedExampleInfo[];
+  seeAlso?: string[];
   tags?: ParsedTag[];
   rawParamNames?: string[];
 }
@@ -156,6 +159,8 @@ export function parseJSDocText(commentText: string): ParsedJSDoc {
       type: p.type,
     })),
     examples: parsed.examples.length > 0 ? parsed.examples : undefined,
+    structuredExamples: parsed.structuredExamples.length > 0 ? parsed.structuredExamples : undefined,
+    seeAlso: parsed.seeAlso.length > 0 ? parsed.seeAlso : undefined,
     tags: parsed.tags.length > 0 ? parsed.tags : undefined,
     rawParamNames: parsed.rawParamNames,
   };

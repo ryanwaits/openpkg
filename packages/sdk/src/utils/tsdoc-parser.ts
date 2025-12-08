@@ -59,6 +59,17 @@ export interface ParsedTagInfo {
   reason?: string;
 }
 
+export interface ParsedExampleInfo {
+  /** The example code */
+  code: string;
+  /** Short title for the example */
+  title?: string;
+  /** Longer description of what the example demonstrates */
+  description?: string;
+  /** Programming language (from fenced code block) */
+  language?: string;
+}
+
 export interface ParsedJSDocInfo {
   /** Main description text */
   description: string;
@@ -68,8 +79,12 @@ export interface ParsedJSDocInfo {
   returns?: ParsedReturnInfo;
   /** Parsed @throws/@throw/@exception tags */
   throws: ParsedThrowsInfo[];
-  /** @example blocks */
+  /** @example blocks (raw strings for backwards compatibility) */
   examples: string[];
+  /** Structured @example blocks with metadata */
+  structuredExamples: ParsedExampleInfo[];
+  /** @see references (symbol/type names extracted from tags) */
+  seeAlso: string[];
   /** All other tags */
   tags: ParsedTagInfo[];
   /** Original raw @param names for compatibility */
@@ -88,6 +103,8 @@ export function parseJSDocBlock(commentText: string): ParsedJSDocInfo {
     params: [],
     throws: [],
     examples: [],
+    structuredExamples: [],
+    seeAlso: [],
     tags: [],
     rawParamNames: [],
   };
@@ -265,6 +282,68 @@ export function parseThrowsContent(content: string): ParsedThrowsInfo {
 }
 
 /**
+ * Parse an @example tag content into structured metadata.
+ *
+ * Supports formats:
+ * - Plain code (no fences)
+ * - Fenced code: ```language\ncode\n```
+ * - Title on first line followed by fenced code
+ * - Title, description text, then fenced code
+ */
+export function parseExampleContent(content: string): ParsedExampleInfo | null {
+  const trimmed = content.trim();
+  if (!trimmed) return null;
+
+  const lines = trimmed.split('\n');
+  let title: string | undefined;
+  let description: string | undefined;
+  let language: string | undefined;
+  let codeStartIndex = 0;
+
+  // Check first line for title (non-code line before code block)
+  // Skip if it's a code fence or looks like code
+  const firstLine = lines[0]?.trim() ?? '';
+  const looksLikeCode = /^(import|const|let|var|function|class|export|async|await|if|for|while|return|\/\/|\/\*|\{|\[)/.test(firstLine);
+
+  if (firstLine && !firstLine.startsWith('```') && !looksLikeCode) {
+    title = firstLine;
+    codeStartIndex = 1;
+  }
+
+  // Find code block
+  const codeBlockStart = lines.findIndex((l, i) => i >= codeStartIndex && l.trim().startsWith('```'));
+
+  if (codeBlockStart !== -1) {
+    // Extract language from ``` fence
+    const fenceMatch = lines[codeBlockStart].match(/```(\w+)?/);
+    language = fenceMatch?.[1];
+
+    // Description is lines between title and code block
+    if (codeBlockStart > codeStartIndex) {
+      const descLines = lines.slice(codeStartIndex, codeBlockStart).filter(l => l.trim());
+      if (descLines.length > 0) {
+        description = descLines.join('\n').trim();
+      }
+    }
+
+    // Extract code (between ``` fences)
+    const codeBlockEnd = lines.findIndex((l, i) => i > codeBlockStart && l.trim() === '```');
+    const codeLines = codeBlockEnd === -1
+      ? lines.slice(codeBlockStart + 1)
+      : lines.slice(codeBlockStart + 1, codeBlockEnd);
+    const code = codeLines.join('\n');
+
+    return { code, title, description, language };
+  }
+
+  // No code block - treat remaining content as code
+  const code = lines.slice(codeStartIndex).join('\n').trim();
+
+  // Default to typescript if no language specified
+  return { code, title, language: 'ts' };
+}
+
+/**
  * Find the index of the closing brace matching the opening brace at startIndex.
  * Handles nested braces and angle brackets.
  */
@@ -387,12 +466,15 @@ function processTagContent(result: ParsedJSDocInfo, tag: string, content: string
       if (example) {
         result.examples.push(example);
       }
-      // Extract language from fenced code blocks
-      const langMatch = trimmedContent.match(/^```(\w+)/);
+      // Parse structured example with title, description, language
+      const structuredExample = parseExampleContent(trimmedContent);
+      if (structuredExample) {
+        result.structuredExamples.push(structuredExample);
+      }
       result.tags.push({
         name: 'example',
         text: example,
-        language: langMatch?.[1],
+        language: structuredExample?.language,
       });
       break;
     }
@@ -401,11 +483,17 @@ function processTagContent(result: ParsedJSDocInfo, tag: string, content: string
       // Handle @see tags, extracting any link targets
       const linkTargets = extractAllLinkTargets(trimmedContent);
       for (const target of linkTargets) {
+        result.seeAlso.push(target);
         result.tags.push({ name: 'link', text: target, reference: target });
         result.tags.push({ name: 'see', text: target, reference: target });
       }
       if (linkTargets.length === 0) {
-        result.tags.push({ name: 'see', text: trimmedContent, reference: trimmedContent });
+        // Plain text @see without {@link} - treat as reference
+        const plainRef = trimmedContent.trim().split(/\s+/)[0];
+        if (plainRef) {
+          result.seeAlso.push(plainRef);
+        }
+        result.tags.push({ name: 'see', text: trimmedContent, reference: plainRef || trimmedContent });
       }
       break;
     }
