@@ -204,20 +204,20 @@ function serializeClassMembers(
       const memberName = member.name?.getText() ?? 'method';
       const memberSymbol = member.name ? checker.getSymbolAtLocation(member.name) : undefined;
       const methodDoc = memberSymbol ? parseJSDocComment(memberSymbol, checker) : null;
-      const signature = checker.getSignatureFromDeclaration(member);
 
-      const signatures = signature
-        ? [
-            serializeSignature(
-              signature,
-              checker,
-              typeRefs,
-              referencedTypes,
-              methodDoc,
-              memberSymbol,
-            ),
-          ]
-        : undefined;
+      // Get all overload signatures for the method
+      const methodType = memberSymbol
+        ? checker.getTypeOfSymbolAtLocation(memberSymbol, member)
+        : checker.getTypeAtLocation(member);
+      const callSignatures = methodType.getCallSignatures();
+
+      const signatures =
+        callSignatures.length > 0
+          ? callSignatures.map((sig, index) => ({
+              ...serializeSignature(sig, checker, typeRefs, referencedTypes, methodDoc, memberSymbol),
+              overloadIndex: callSignatures.length > 1 ? index : undefined,
+            }))
+          : undefined;
 
       members.push({
         id: memberName,
@@ -237,11 +237,18 @@ function serializeClassMembers(
     if (ts.isConstructorDeclaration(member)) {
       const ctorSymbol = checker.getSymbolAtLocation(member); // may be undefined
       const ctorDoc = ctorSymbol ? parseJSDocComment(ctorSymbol, checker) : null;
-      const signature = checker.getSignatureFromDeclaration(member);
 
-      const signatures = signature
-        ? [serializeSignature(signature, checker, typeRefs, referencedTypes, ctorDoc, ctorSymbol)]
-        : undefined;
+      // Get all constructor signatures (for overloaded constructors)
+      const classType = checker.getTypeAtLocation(declaration);
+      const constructSignatures = classType.getConstructSignatures();
+
+      const signatures =
+        constructSignatures.length > 0
+          ? constructSignatures.map((sig, index) => ({
+              ...serializeSignature(sig, checker, typeRefs, referencedTypes, ctorDoc, ctorSymbol),
+              overloadIndex: constructSignatures.length > 1 ? index : undefined,
+            }))
+          : undefined;
 
       members.push({
         id: 'constructor',

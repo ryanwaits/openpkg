@@ -36,7 +36,7 @@ export function serializeCallSignatures(
   const referencedTypes = typeRegistry.getReferencedTypes();
   const functionDoc = parsedDoc ?? (symbol ? parseJSDocComment(symbol, checker) : null);
 
-  return signatures.map((signature) => {
+  return signatures.map((signature, index) => {
     const parameters = signature.getParameters().map((param) => {
       const paramDecl = param.declarations?.find(ts.isParameter) as
         | TS.ParameterDeclaration
@@ -135,6 +135,7 @@ export function serializeCallSignatures(
       },
       description: functionDoc?.description || undefined,
       typeParameters,
+      overloadIndex: signatures.length > 1 ? index : undefined,
     };
   });
 }

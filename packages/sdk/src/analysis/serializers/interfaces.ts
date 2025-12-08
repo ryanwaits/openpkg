@@ -62,44 +62,62 @@ function serializeInterfaceMembers(
 
       const memberSymbol = member.name ? checker.getSymbolAtLocation(member.name) : undefined;
       const methodDoc = memberSymbol ? parseJSDocComment(memberSymbol, checker) : null;
-      const signature = checker.getSignatureFromDeclaration(member);
 
-      if (signature) {
-        const parameters = signature.getParameters().map((param) => {
-          const paramDecl = param.declarations?.find(ts.isParameter) as
-            | TS.ParameterDeclaration
-            | undefined;
-          const paramType = paramDecl
-            ? checker.getTypeAtLocation(paramDecl)
-            : checker.getTypeOfSymbolAtLocation(param, member);
+      // Get all overload signatures for the method
+      const methodType = memberSymbol
+        ? checker.getTypeOfSymbolAtLocation(memberSymbol, member)
+        : checker.getTypeAtLocation(member);
+      const callSignatures = methodType.getCallSignatures();
 
-          collectReferencedTypes(paramType, checker, referencedTypes);
+      if (callSignatures.length > 0) {
+        const signatures = callSignatures.map((signature, index) => {
+          const parameters = signature.getParameters().map((param) => {
+            const paramDecl = param.declarations?.find(ts.isParameter) as
+              | TS.ParameterDeclaration
+              | undefined;
+            const paramType = paramDecl
+              ? checker.getTypeAtLocation(paramDecl)
+              : checker.getTypeOfSymbolAtLocation(param, member);
 
-          if (paramDecl) {
-            const paramDoc = getParameterDocumentation(param, paramDecl, checker);
-            return structureParameter(
-              param,
-              paramDecl,
-              paramType,
-              checker,
-              typeRefs,
-              null,
-              paramDoc,
-              referencedTypes,
-            );
+            collectReferencedTypes(paramType, checker, referencedTypes);
+
+            if (paramDecl) {
+              const paramDoc = getParameterDocumentation(param, paramDecl, checker);
+              return structureParameter(
+                param,
+                paramDecl,
+                paramType,
+                checker,
+                typeRefs,
+                null,
+                paramDoc,
+                referencedTypes,
+              );
+            }
+
+            return {
+              name: param.getName(),
+              required: !(param.flags & ts.SymbolFlags.Optional),
+              schema: formatTypeReference(paramType, checker, typeRefs, referencedTypes),
+            };
+          });
+
+          const returnType = signature.getReturnType();
+          if (returnType) {
+            collectReferencedTypes(returnType, checker, referencedTypes);
           }
 
           return {
-            name: param.getName(),
-            required: !(param.flags & ts.SymbolFlags.Optional),
-            schema: formatTypeReference(paramType, checker, typeRefs, referencedTypes),
+            parameters,
+            returns: {
+              schema: returnType
+                ? formatTypeReference(returnType, checker, typeRefs, referencedTypes)
+                : { type: 'void' },
+            },
+            description: methodDoc?.description,
+            overloadIndex: callSignatures.length > 1 ? index : undefined,
           };
         });
-
-        const returnType = signature.getReturnType();
-        if (returnType) {
-          collectReferencedTypes(returnType, checker, referencedTypes);
-        }
 
         const flags: Record<string, boolean> = {};
         if (member.questionToken) {
@@ -110,17 +128,7 @@ function serializeInterfaceMembers(
           id: methodName,
           name: methodName,
           kind: 'method',
-          signatures: [
-            {
-              parameters,
-              returns: {
-                schema: returnType
-                  ? formatTypeReference(returnType, checker, typeRefs, referencedTypes)
-                  : { type: 'void' },
-              },
-              description: methodDoc?.description,
-            },
-          ],
+          signatures,
           description:
             methodDoc?.description ??
             (memberSymbol ? getJSDocComment(memberSymbol, checker) : undefined),

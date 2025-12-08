@@ -1,6 +1,13 @@
 export type SpecTag = {
   name: string;
   text: string;
+  // Structured fields for known JSDoc tags
+  paramName?: string;
+  typeAnnotation?: string;
+  reference?: string;
+  language?: string;
+  version?: string;
+  reason?: string;
 };
 
 export type SpecSource = {
@@ -57,6 +64,8 @@ export type SpecSignatureParameter = {
   required?: boolean;
   description?: string;
   schema: SpecSchema;
+  default?: unknown;
+  rest?: boolean;
 };
 
 export type SpecSignatureReturn = {
@@ -70,6 +79,8 @@ export type SpecSignature = {
   returns?: SpecSignatureReturn;
   description?: string;
   typeParameters?: SpecTypeParameter[];
+  overloadIndex?: number;
+  isImplementation?: boolean;
 };
 
 export type SpecMember = {
@@ -152,9 +163,12 @@ export type OpenPkgMeta = {
   ecosystem?: string;
 };
 
+/** Supported OpenPkg spec versions */
+export type OpenPkgVersion = '0.2.0' | '0.3.0';
+
 export type OpenPkg = {
   $schema?: string;
-  openpkg: '0.2.0';
+  openpkg: OpenPkgVersion;
   meta: OpenPkgMeta;
   exports: SpecExport[];
   types?: SpecType[];

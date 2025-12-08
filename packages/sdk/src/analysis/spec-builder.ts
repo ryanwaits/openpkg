@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { SCHEMA_URL } from '@openpkg-ts/spec';
+import { SCHEMA_URL, SCHEMA_VERSION } from '@openpkg-ts/spec';
 import type * as TS from 'typescript';
 import { ts } from '../ts-module';
 
@@ -29,7 +29,7 @@ export function buildOpenPkgSpec(
 
   const spec: OpenPkgSpec = {
     $schema: SCHEMA_URL,
-    openpkg: '0.2.0',
+    openpkg: SCHEMA_VERSION,
     meta: {
       name: packageJson.name || 'unknown',
       version: packageJson.version || '1.0.0',

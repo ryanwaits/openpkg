@@ -17,6 +17,13 @@ export interface ParsedParam {
 export interface ParsedTag {
   name: string;
   text: string;
+  // Structured fields for known JSDoc tags
+  paramName?: string;
+  typeAnnotation?: string;
+  reference?: string;
+  language?: string;
+  version?: string;
+  reason?: string;
 }
 
 export interface ParsedJSDoc {

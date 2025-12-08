@@ -37,6 +37,19 @@ export interface ParsedTagInfo {
   name: string;
   /** Full tag content */
   text: string;
+  // Structured fields for known JSDoc tags
+  /** Parameter name for @param tags */
+  paramName?: string;
+  /** Type annotation from {type} syntax */
+  typeAnnotation?: string;
+  /** Reference target for @see, @link tags */
+  reference?: string;
+  /** Language identifier from fenced code blocks */
+  language?: string;
+  /** Version string for @since, @deprecated tags */
+  version?: string;
+  /** Reason/message for @deprecated tags */
+  reason?: string;
 }
 
 export interface ParsedJSDocInfo {
@@ -296,8 +309,13 @@ function processTagContent(result: ParsedJSDocInfo, tag: string, content: string
         result.rawParamNames.push(parsed.name);
         result.params.push(parsed);
       }
-      // Also add to generic tags for drift detection
-      result.tags.push({ name: 'param', text: trimmedContent });
+      // Add to generic tags with structured fields for drift detection
+      result.tags.push({
+        name: 'param',
+        text: trimmedContent,
+        paramName: parsed?.name,
+        typeAnnotation: parsed?.type,
+      });
       break;
     }
 
@@ -305,7 +323,11 @@ function processTagContent(result: ParsedJSDocInfo, tag: string, content: string
     case 'return': {
       const parsed = parseReturnContent(trimmedContent);
       result.returns = parsed;
-      result.tags.push({ name: 'returns', text: trimmedContent });
+      result.tags.push({
+        name: 'returns',
+        text: trimmedContent,
+        typeAnnotation: parsed.type,
+      });
       break;
     }
 
@@ -314,6 +336,13 @@ function processTagContent(result: ParsedJSDocInfo, tag: string, content: string
       if (example) {
         result.examples.push(example);
       }
+      // Extract language from fenced code blocks
+      const langMatch = trimmedContent.match(/^```(\w+)/);
+      result.tags.push({
+        name: 'example',
+        text: example,
+        language: langMatch?.[1],
+      });
       break;
     }
 
@@ -321,11 +350,11 @@ function processTagContent(result: ParsedJSDocInfo, tag: string, content: string
       // Handle @see tags, extracting any link targets
       const linkTargets = extractAllLinkTargets(trimmedContent);
       for (const target of linkTargets) {
-        result.tags.push({ name: 'link', text: target });
-        result.tags.push({ name: 'see', text: target });
+        result.tags.push({ name: 'link', text: target, reference: target });
+        result.tags.push({ name: 'see', text: target, reference: target });
       }
       if (linkTargets.length === 0) {
-        result.tags.push({ name: 'see', text: trimmedContent });
+        result.tags.push({ name: 'see', text: trimmedContent, reference: trimmedContent });
       }
       break;
     }
@@ -333,8 +362,52 @@ function processTagContent(result: ParsedJSDocInfo, tag: string, content: string
     case 'link': {
       const target = extractLinkTarget(trimmedContent);
       if (target) {
-        result.tags.push({ name: 'link', text: target });
+        result.tags.push({ name: 'link', text: target, reference: target });
       }
+      break;
+    }
+
+    case 'since': {
+      // @since version - extract version string
+      result.tags.push({ name: 'since', text: trimmedContent, version: trimmedContent });
+      break;
+    }
+
+    case 'deprecated': {
+      // @deprecated [version] [reason] - extract version and reason
+      const versionMatch = trimmedContent.match(/^(\d+\.\d+(?:\.\d+)?)\s*(.*)?$/);
+      if (versionMatch) {
+        result.tags.push({
+          name: 'deprecated',
+          text: trimmedContent,
+          version: versionMatch[1],
+          reason: versionMatch[2]?.trim() || undefined,
+        });
+      } else {
+        result.tags.push({
+          name: 'deprecated',
+          text: trimmedContent,
+          reason: trimmedContent || undefined,
+        });
+      }
+      break;
+    }
+
+    case 'type':
+    case 'typedef': {
+      // @type {TypeName} - extract type annotation
+      let typeAnnotation: string | undefined;
+      if (trimmedContent.startsWith('{')) {
+        const typeEnd = findMatchingBrace(trimmedContent, 0);
+        if (typeEnd > 0) {
+          typeAnnotation = trimmedContent.slice(1, typeEnd).trim();
+        }
+      }
+      result.tags.push({
+        name: tag,
+        text: trimmedContent,
+        typeAnnotation,
+      });
       break;
     }
 
