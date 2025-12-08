@@ -26,11 +26,17 @@ export interface ParsedTag {
   reason?: string;
 }
 
+export interface ParsedThrows {
+  type?: string;
+  description: string;
+}
+
 export interface ParsedJSDoc {
   description: string;
   params: ParsedParam[];
   returns?: string;
   returnsType?: string;
+  throws?: ParsedThrows[];
   examples?: string[];
   tags?: ParsedTag[];
   rawParamNames?: string[];
@@ -158,6 +164,11 @@ export function parseJSDocText(commentText: string): ParsedJSDoc {
   if (parsed.returns) {
     result.returns = parsed.returns.description;
     result.returnsType = parsed.returns.type;
+  }
+
+  // Extract throws info
+  if (parsed.throws.length > 0) {
+    result.throws = parsed.throws;
   }
 
   return result;

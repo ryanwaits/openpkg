@@ -32,6 +32,13 @@ export interface ParsedReturnInfo {
   description: string;
 }
 
+export interface ParsedThrowsInfo {
+  /** Exception type from {type} syntax */
+  type?: string;
+  /** Description of when/why thrown */
+  description: string;
+}
+
 export interface ParsedTagInfo {
   /** Tag name without @ */
   name: string;
@@ -59,6 +66,8 @@ export interface ParsedJSDocInfo {
   params: ParsedParamInfo[];
   /** Parsed @returns/@return tag */
   returns?: ParsedReturnInfo;
+  /** Parsed @throws/@throw/@exception tags */
+  throws: ParsedThrowsInfo[];
   /** @example blocks */
   examples: string[];
   /** All other tags */
@@ -77,6 +86,7 @@ export function parseJSDocBlock(commentText: string): ParsedJSDocInfo {
   const result: ParsedJSDocInfo = {
     description: '',
     params: [],
+    throws: [],
     examples: [],
     tags: [],
     rawParamNames: [],
@@ -227,6 +237,34 @@ export function parseReturnContent(content: string): ParsedReturnInfo {
 }
 
 /**
+ * Parse a @throws/@throw/@exception tag content.
+ *
+ * Formats supported:
+ * - description
+ * - {ErrorType} description
+ * - ErrorType description (legacy)
+ */
+export function parseThrowsContent(content: string): ParsedThrowsInfo {
+  const trimmed = content.trim();
+  let remaining = trimmed;
+  let type: string | undefined;
+
+  // Extract type if present: {type}
+  if (remaining.startsWith('{')) {
+    const typeEnd = findMatchingBrace(remaining, 0);
+    if (typeEnd > 0) {
+      type = remaining.slice(1, typeEnd).trim();
+      remaining = remaining.slice(typeEnd + 1).trim();
+    }
+  }
+
+  return {
+    type,
+    description: processInlineLinks(remaining),
+  };
+}
+
+/**
  * Find the index of the closing brace matching the opening brace at startIndex.
  * Handles nested braces and angle brackets.
  */
@@ -325,6 +363,19 @@ function processTagContent(result: ParsedJSDocInfo, tag: string, content: string
       result.returns = parsed;
       result.tags.push({
         name: 'returns',
+        text: trimmedContent,
+        typeAnnotation: parsed.type,
+      });
+      break;
+    }
+
+    case 'throws':
+    case 'throw':
+    case 'exception': {
+      const parsed = parseThrowsContent(trimmedContent);
+      result.throws.push(parsed);
+      result.tags.push({
+        name: 'throws',
         text: trimmedContent,
         typeAnnotation: parsed.type,
       });
