@@ -1,6 +1,7 @@
 import type * as TS from 'typescript';
 import { ts } from '../ts-module';
 
+import { extractParameterDecorators, type DecoratorInfo } from '../analysis/decorator-utils';
 import type { ParameterDocumentation, ParsedJSDoc } from './tsdoc-utils';
 import { isBuiltInType } from './type-utils';
 
@@ -12,6 +13,7 @@ export interface StructuredParameter {
   required?: boolean;
   default?: unknown;
   rest?: boolean;
+  decorators?: DecoratorInfo[];
 }
 
 const BUILTIN_TYPE_SCHEMAS: Record<string, Record<string, unknown>> = {
@@ -1500,6 +1502,12 @@ export function structureParameter(
   // Mark rest parameters (...args)
   if (paramDecl.dotDotDotToken) {
     out.rest = true;
+  }
+
+  // Extract parameter decorators
+  const decorators = extractParameterDecorators(paramDecl);
+  if (decorators) {
+    out.decorators = decorators;
   }
 
   return out;

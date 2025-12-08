@@ -5,6 +5,7 @@ import { getParameterDocumentation, parseJSDocComment } from '../../utils/tsdoc-
 import { serializeTypeParameterDeclarations } from '../../utils/type-parameter-utils';
 import { collectReferencedTypes, collectReferencedTypesFromNode } from '../../utils/type-utils';
 import { getJSDocComment, getSourceLocation, isSymbolDeprecated } from '../ast-utils';
+import { extractDecorators } from '../decorator-utils';
 import type { ExportDefinition, TypeDefinition } from '../spec-types';
 import type { SerializerContext } from './functions';
 import { extractPresentationMetadata } from './presentation';
@@ -38,6 +39,7 @@ export function serializeClass(
   const parsedDoc = parseJSDocComment(symbol, context.checker);
   const description = parsedDoc?.description ?? getJSDocComment(symbol, context.checker);
   const metadata = extractPresentationMetadata(parsedDoc);
+  const decorators = extractDecorators(declaration);
 
   const exportEntry: ExportDefinition = {
     id: symbol.getName(),
@@ -55,6 +57,7 @@ export function serializeClass(
       : {}),
     tags: parsedDoc?.tags,
     examples: parsedDoc?.examples,
+    decorators,
   };
 
   const typeDefinition: TypeDefinition = {
@@ -196,6 +199,7 @@ function serializeClassMembers(
           (memberSymbol ? getJSDocComment(memberSymbol, checker) : undefined),
         flags: Object.keys(flags).length > 0 ? flags : undefined,
         tags: memberDoc?.tags,
+        decorators: extractDecorators(member),
       });
       continue;
     }
@@ -230,6 +234,7 @@ function serializeClassMembers(
           (memberSymbol ? getJSDocComment(memberSymbol, checker) : undefined),
         flags: getMethodFlags(member),
         tags: methodDoc?.tags,
+        decorators: extractDecorators(member),
       });
       continue;
     }
@@ -259,6 +264,7 @@ function serializeClassMembers(
         description:
           ctorDoc?.description ?? (ctorSymbol ? getJSDocComment(ctorSymbol, checker) : undefined),
         tags: ctorDoc?.tags,
+        decorators: extractDecorators(member),
       });
       continue;
     }
@@ -305,6 +311,7 @@ function serializeClassMembers(
           (memberSymbol ? getJSDocComment(memberSymbol, checker) : undefined),
         flags: Object.keys(flags).length > 0 ? flags : undefined,
         tags: memberDoc?.tags,
+        decorators: extractDecorators(primaryMember),
       });
     }
   }
@@ -324,12 +331,19 @@ function serializeSignature(
   returns?: { schema: ReturnType<typeof formatTypeReference>; description?: string };
   description?: string;
   typeParameters?: ReturnType<typeof serializeTypeParameterDeclarations>;
+  throws?: Array<{ type?: string; description?: string }>;
 } {
   const typeParameters = serializeTypeParameterDeclarations(
     signature.declaration?.typeParameters,
     checker,
     referencedTypes,
   );
+
+  // Extract throws information from JSDoc
+  const throws = doc?.throws?.map((t) => ({
+    type: t.type,
+    description: t.description,
+  }));
 
   return {
     parameters: signature.getParameters().map((param) => {
@@ -360,6 +374,7 @@ function serializeSignature(
     },
     description: doc?.description || (symbol ? getJSDocComment(symbol, checker) : undefined),
     typeParameters,
+    throws: throws && throws.length > 0 ? throws : undefined,
   };
 }
 
