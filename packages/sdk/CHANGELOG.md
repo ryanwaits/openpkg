@@ -1,5 +1,21 @@
 # @doccov/sdk
 
+## 0.8.0
+
+### Minor Changes
+
+- add extraction features:
+
+  - **@throws parsing**: Parse and structure @throws/@throw/@exception JSDoc tags
+  - **Decorator extraction**: Extract decorators from classes, members, and parameters
+  - **Module augmentation detection**: Detect and mark `declare module "..."` augmentations
+  - **Conditional/mapped type analysis**: Extract structural information from conditional and mapped types
+
+### Patch Changes
+
+- Updated dependencies
+  - @openpkg-ts/spec@0.6.0
+
 ## 0.7.0
 
 ### Minor Changes

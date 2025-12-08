@@ -1,5 +1,16 @@
 # @openpkg-ts/spec
 
+## 0.6.0
+
+### Minor Changes
+
+- add schema definitions to v0.3.0:
+
+  - **Conditional/Mapped Types**: `typeAliasKind`, `conditionalType`, `mappedType` fields with full structural representation
+  - **Decorators**: `decorator` definition with name and argumentsText
+  - **Module Augmentation**: `isAugmentation` and `augmentedModule` fields
+  - **Throws Documentation**: `throwsInfo` definition for @throws JSDoc tags
+
 ## 0.5.0
 
 ### Minor Changes
