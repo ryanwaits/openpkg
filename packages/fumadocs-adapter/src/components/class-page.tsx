@@ -63,7 +63,7 @@ function PropertyItem({ member }: { member: SpecMember }) {
   );
 }
 
-export function ClassPage({ export: exp, spec }: ClassPageProps) {
+export function ClassPage({ export: exp, spec }: ClassPageProps): React.ReactNode {
   const hasExamples = exp.examples && exp.examples.length > 0;
 
   // Group members

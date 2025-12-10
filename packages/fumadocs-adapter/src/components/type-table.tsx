@@ -30,7 +30,7 @@ function isParameter(item: SpecSignatureParameter | SpecMember): item is SpecSig
   return 'required' in item;
 }
 
-export function TypeTable({ items, showRequired = true }: TypeTableProps) {
+export function TypeTable({ items, showRequired = true }: TypeTableProps): React.ReactNode {
   if (!items?.length) return null;
 
   return (

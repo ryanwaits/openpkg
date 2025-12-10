@@ -29,7 +29,7 @@ export function CodeExample({
   code,
   filename = 'example.ts',
   language = 'typescript',
-}: CodeExampleProps) {
+}: CodeExampleProps): React.ReactNode {
   const cleaned = cleanCode(code);
 
   // Build RawCode object for ClientDocsKitCode

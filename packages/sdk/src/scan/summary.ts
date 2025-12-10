@@ -2,7 +2,7 @@
  * Utilities for extracting summary statistics from OpenPkg specs.
  */
 
-import type { OpenPkg } from '@openpkg-ts/spec';
+import type { EnrichedOpenPkg } from '../analysis/enrich';
 import type { DriftIssue } from './types';
 
 /**
@@ -25,26 +25,27 @@ export interface SpecSummary {
 }
 
 /**
- * Extract a summary from an OpenPkg spec.
- * 
+ * Extract a summary from an enriched OpenPkg spec.
+ *
  * This consolidates the logic previously duplicated in:
  * - CLI scan.ts (drift collection)
  * - CLI reports/stats.ts (computeStats)
  * - API scan-stream.ts (inline extraction script)
- * 
- * @param spec - The OpenPkg spec to summarize
+ *
+ * @param spec - The enriched OpenPkg spec to summarize (must be enriched via enrichSpec())
  * @returns Summary of documentation coverage
- * 
+ *
  * @example
  * ```typescript
- * import { extractSpecSummary } from '@doccov/sdk';
- * 
- * const summary = extractSpecSummary(spec);
+ * import { enrichSpec, extractSpecSummary } from '@doccov/sdk';
+ *
+ * const enriched = enrichSpec(spec);
+ * const summary = extractSpecSummary(enriched);
  * console.log(`Coverage: ${summary.coverage}%`);
  * console.log(`Undocumented: ${summary.undocumented.length}`);
  * ```
  */
-export function extractSpecSummary(spec: OpenPkg): SpecSummary {
+export function extractSpecSummary(spec: EnrichedOpenPkg): SpecSummary {
   const exports = spec.exports ?? [];
   const undocumented: string[] = [];
   const drift: DriftIssue[] = [];

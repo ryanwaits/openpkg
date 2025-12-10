@@ -85,7 +85,7 @@ function buildSignatureString(exp: SpecExport, sigIndex = 0): string {
   }
 }
 
-export function Signature({ export: exp, signatureIndex = 0 }: SignatureProps) {
+export function Signature({ export: exp, signatureIndex = 0 }: SignatureProps): React.ReactNode {
   const signature = buildSignatureString(exp, signatureIndex);
 
   // Build RawCode for syntax highlighting

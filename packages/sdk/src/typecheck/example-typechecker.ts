@@ -111,17 +111,18 @@ export function typecheckExample(
 
   // Get package name for imports
   const packageName = options.packageName ?? getPackageName(packagePath);
+  const exportNames = options.exportNames;
 
   // Find tsconfig
   const tsconfigPath = options.tsconfig ?? findTsConfig(packagePath);
   const compilerOptions = getCompilerOptions(tsconfigPath);
 
-  // Create virtual file content
-  const virtualSource = createVirtualSource(cleanCode, packageName);
+  // Create virtual file content with export names for imports
+  const virtualSource = createVirtualSource(cleanCode, packageName, exportNames);
   const virtualFileName = path.join(packagePath, '__doccov_example__.ts');
 
   // Calculate line offset (for import statement)
-  const hasImport = packageName !== undefined;
+  const hasImport = packageName !== undefined && exportNames && exportNames.length > 0;
   const lineOffset = hasImport ? 2 : 0; // import + blank line
 
   // Create a custom compiler host

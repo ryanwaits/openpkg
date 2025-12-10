@@ -1,4 +1,5 @@
-import type { OpenPkg, SpecExportKind } from '@openpkg-ts/spec';
+import type { EnrichedOpenPkg } from '@doccov/sdk';
+import type { SpecExportKind } from '@openpkg-ts/spec';
 
 export type SignalStats = { covered: number; total: number; pct: number };
 
@@ -17,7 +18,11 @@ export type ReportStats = {
   driftIssues: Array<{ exportName: string; type: string; issue: string; suggestion?: string }>;
 };
 
-export function computeStats(spec: OpenPkg): ReportStats {
+/**
+ * Compute report statistics from an enriched OpenPkg spec.
+ * The spec must be enriched with coverage data via enrichSpec() first.
+ */
+export function computeStats(spec: EnrichedOpenPkg): ReportStats {
   const exports = spec.exports ?? [];
   const signals = {
     description: { covered: 0, total: 0 },

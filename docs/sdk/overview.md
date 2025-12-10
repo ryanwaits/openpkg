@@ -15,19 +15,26 @@ import {
   // Main class
   DocCov,
   OpenPkg,  // Alias for DocCov
-  
+
   // Analysis functions
   analyze,
   analyzeFile,
-  
+
+  // Coverage enrichment (new in 0.3.0)
+  enrichSpec,
+  generateReport,
+  type EnrichedOpenPkg,
+  type EnrichedExport,
+  type DocCovReport,
+
   // Example execution
   runExample,
   runExamples,
   detectExampleRuntimeErrors,
-  
+
   // Extractor
   extractPackageSpec,
-  
+
   // Project detection
   detectMonorepo,
   detectPackageManager,
@@ -35,17 +42,17 @@ import {
   resolveTarget,
   NodeFileSystem,
   SandboxFileSystem,
-  
+
   // GitHub utilities
   parseGitHubUrl,
   fetchSpecFromGitHub,
-  
+
   // Scan utilities
   extractSpecSummary,
-  
+
   // Config
   defineConfig,
-  
+
   // Types
   type DocCovOptions,
   type OpenPkgOptions,
@@ -64,14 +71,18 @@ import {
 ## Quick Start
 
 ```typescript
-import { DocCov } from '@doccov/sdk';
+import { DocCov, enrichSpec } from '@doccov/sdk';
 
 const doccov = new DocCov();
 const { spec, diagnostics } = await doccov.analyzeFileWithDiagnostics('src/index.ts');
 
+// spec is a pure structural OpenPkg (no coverage data)
 console.log(`Package: ${spec.meta.name}`);
-console.log(`Coverage: ${spec.docs?.coverageScore}%`);
 console.log(`Exports: ${spec.exports.length}`);
+
+// Enrich with coverage data
+const enriched = enrichSpec(spec);
+console.log(`Coverage: ${enriched.docs?.coverageScore}%`);
 ```
 
 ## Core Components
@@ -120,27 +131,47 @@ See [Filtering](./filtering.md).
 
 ```typescript
 interface AnalysisResult {
-  spec: OpenPkg;           // Full OpenPkg spec
+  spec: OpenPkg;           // Pure structural spec (no coverage data)
   diagnostics: Diagnostic[]; // TypeScript diagnostics
 }
 ```
 
-### Spec Structure
+### Pure Spec Structure
+
+The analyzed `spec` is a pure structural format without coverage metadata:
 
 ```typescript
 spec.meta.name        // Package name
 spec.meta.version     // Package version
 spec.exports          // Array of exported items
 spec.types            // Array of type definitions
-spec.docs.coverageScore // Overall coverage %
+// Note: spec.docs does NOT exist on pure OpenPkg
 ```
 
-### Accessing Exports
+### Enriching with Coverage Data
+
+Use `enrichSpec()` to add coverage scores, missing signals, and drift detection:
 
 ```typescript
-for (const exp of spec.exports) {
+import { enrichSpec } from '@doccov/sdk';
+
+const enriched = enrichSpec(spec);
+
+// Now you have coverage data
+enriched.docs?.coverageScore  // Overall coverage %
+enriched.exports[0].docs?.coverageScore  // Per-export coverage
+enriched.exports[0].docs?.missing  // ['description', 'examples']
+enriched.exports[0].docs?.drift  // Drift issues array
+```
+
+### Accessing Enriched Exports
+
+```typescript
+const enriched = enrichSpec(spec);
+
+for (const exp of enriched.exports) {
   console.log(`${exp.name} (${exp.kind}): ${exp.docs?.coverageScore}%`);
-  
+
   if (exp.docs?.drift?.length) {
     console.log(`  Drift issues: ${exp.docs.drift.length}`);
   }
@@ -150,18 +181,33 @@ for (const exp of spec.exports) {
 ### Checking Drift
 
 ```typescript
-const driftExports = spec.exports.filter(e => 
+const enriched = enrichSpec(spec);
+const driftExports = enriched.exports.filter(e =>
   e.docs?.drift && e.docs.drift.length > 0
 );
 
 for (const exp of driftExports) {
-  for (const drift of exp.docs.drift) {
+  for (const drift of exp.docs!.drift!) {
     console.log(`${exp.name}: ${drift.issue}`);
     if (drift.suggestion) {
       console.log(`  Suggestion: ${drift.suggestion}`);
     }
   }
 }
+```
+
+### Generating Reports
+
+Generate a persistable coverage report:
+
+```typescript
+import { generateReport, saveReport } from '@doccov/sdk';
+
+const report = generateReport(spec);
+saveReport(report);  // Saves to .doccov/report.json
+
+console.log(`Coverage: ${report.coverage.score}%`);
+console.log(`Documented: ${report.coverage.documentedExports}/${report.coverage.totalExports}`);
 ```
 
 ## Standalone Functions
@@ -193,15 +239,13 @@ DocCov reads `tsconfig.json` from the analyzed file's directory.
 ## Local Testing
 
 ```bash
-# Run SDK tests
-bun test packages/sdk/test/
-
 # Quick analysis
 bun run -e "
-  import { DocCov } from './packages/sdk/src';
+  import { DocCov, enrichSpec } from './packages/sdk/src';
   const dc = new DocCov();
-  const r = await dc.analyzeFileWithDiagnostics('tests/fixtures/simple-math.ts');
-  console.log(r.spec.docs);
+  const r = await dc.analyzeFileWithDiagnostics('src/index.ts');
+  const enriched = enrichSpec(r.spec);
+  console.log(enriched.docs);
 "
 ```
 

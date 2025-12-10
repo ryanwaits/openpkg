@@ -1,8 +1,0 @@
-{
-  "name": "example-runner-fixture",
-  "version": "1.0.0",
-  "description": "Test fixture for example runner with happy/sad path scenarios",
-  "type": "module",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts"
-}

@@ -10,7 +10,7 @@ export interface EnumPageProps {
   spec: OpenPkg;
 }
 
-export function EnumPage({ export: exp, spec }: EnumPageProps) {
+export function EnumPage({ export: exp, spec }: EnumPageProps): React.ReactNode {
   const members = exp.members ?? [];
 
   return (

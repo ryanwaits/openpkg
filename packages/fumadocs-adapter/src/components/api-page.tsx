@@ -47,7 +47,7 @@ function NotFound({ id }: { id: string }) {
  * <APIPage instance={openpkg} id="createClient" />
  * ```
  */
-export function APIPage({ spec, instance, id }: APIPageProps) {
+export function APIPage({ spec, instance, id }: APIPageProps): React.ReactNode {
   const resolvedSpec = spec ?? instance?.spec;
 
   if (!resolvedSpec) {

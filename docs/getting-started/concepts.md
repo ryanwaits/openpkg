@@ -81,38 +81,79 @@ When a param is misnamed, DocCov suggests corrections:
   Suggestion: Did you mean "id"?
 ```
 
-## OpenPkg Spec
+## OpenPkg vs DocCov
 
-The `openpkg.json` file follows the OpenPkg 0.2.0 schema:
+DocCov separates two concerns:
+
+| Concept | Description |
+|---------|-------------|
+| **OpenPkg** | Pure structural API specification - exports, types, signatures |
+| **DocCov** | Quality analysis layer - coverage scores, drift detection, linting |
+
+### OpenPkg (Pure Structural)
+
+The `openpkg.json` file follows the OpenPkg 0.3.0 schema - a pure structural format:
 
 ```json
 {
-  "$schema": "https://openpkg.dev/schemas/v0.2.0/openpkg.schema.json",
-  "openpkg": "0.2.0",
+  "$schema": "https://openpkg.dev/schemas/v0.3.0/openpkg.schema.json",
+  "openpkg": "0.3.0",
   "meta": {
     "name": "my-package",
-    "version": "1.0.0"
+    "version": "1.0.0",
+    "ecosystem": "js/ts"
   },
   "exports": [...],
-  "types": [...],
-  "docs": {
-    "coverageScore": 85
-  }
+  "types": [...]
 }
+```
+
+No coverage data here - OpenPkg is intentionally pure.
+
+### Enriched OpenPkg (With Coverage)
+
+Coverage data is computed on-demand using `enrichSpec()` from the SDK:
+
+```typescript
+import { DocCov, enrichSpec } from '@doccov/sdk';
+
+const doccov = new DocCov();
+const { spec } = await doccov.analyzeFileWithDiagnostics('src/index.ts');
+
+// Pure spec - no coverage
+const enriched = enrichSpec(spec);
+
+// Now has coverage data
+console.log(enriched.docs?.coverageScore); // 85
+console.log(enriched.exports[0].docs?.missing); // ['examples']
 ```
 
 ### Structure
 
 | Field | Description |
 |-------|-------------|
-| `meta` | Package name, version, description |
+| `meta` | Package name, version, ecosystem |
 | `exports` | All exported functions, classes, variables |
 | `types` | Type definitions referenced by exports |
-| `docs` | Package-wide coverage metadata |
 
-### Export Entry
+### Export Entry (Pure)
 
-Each export includes:
+Each export in the pure OpenPkg:
+
+```json
+{
+  "id": "createUser",
+  "name": "createUser",
+  "kind": "function",
+  "signatures": [...],
+  "description": "Creates a new user",
+  "examples": ["createUser('Alice')"]
+}
+```
+
+### Export Entry (Enriched)
+
+After calling `enrichSpec()`:
 
 ```json
 {

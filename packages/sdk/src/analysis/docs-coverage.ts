@@ -724,13 +724,15 @@ function extractReturnTypeFromTag(text: string): string | undefined {
     return undefined;
   }
 
+  // Only extract type if it's explicitly in braces {type}
+  // Don't treat the first word of a description as a type
   const braceMatch = trimmed.match(/^\{([^}]+)\}/);
   if (braceMatch) {
     return braceMatch[1]?.trim();
   }
 
-  const [first] = trimmed.split(/\s+/);
-  return first?.trim();
+  // No braces means no explicit type - just a description
+  return undefined;
 }
 
 function extractTypeFromSchema(schema: SpecSchema | undefined): string | undefined {

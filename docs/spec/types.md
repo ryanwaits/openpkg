@@ -4,17 +4,16 @@ Complete type definitions from `@openpkg-ts/spec`.
 
 ## OpenPkg (Root)
 
-The root spec object:
+The root spec object. Note: OpenPkg is a **pure structural format** - coverage metadata (`docs`) is added via `enrichSpec()` from the SDK.
 
 ```typescript
 type OpenPkg = {
   $schema?: string;
-  openpkg: '0.2.0';
+  openpkg: '0.3.0';
   meta: OpenPkgMeta;
   exports: SpecExport[];
   types?: SpecType[];
   examples?: SpecExample[];
-  docs?: SpecDocsMetadata;
   extensions?: SpecExtension;
 };
 ```
@@ -30,7 +29,7 @@ type OpenPkgMeta = {
   description?: string;
   license?: string;
   repository?: string;
-  ecosystem?: string;
+  ecosystem?: string;  // e.g., 'js/ts'
 };
 ```
 
@@ -54,13 +53,14 @@ type SpecExport = {
   schema?: SpecSchema;
   description?: string;
   examples?: string[];
-  docs?: SpecDocsMetadata;
   source?: SpecSource;
   deprecated?: boolean;
   flags?: Record<string, unknown>;
   tags?: SpecTag[];
 };
 ```
+
+> **Note:** The `docs` field is not part of `SpecExport`. Coverage metadata is computed on-demand by the SDK's `enrichSpec()` function, which returns an `EnrichedExport` with the `docs` field.
 
 ## SpecExportKind
 
@@ -164,7 +164,7 @@ type SpecVisibility = 'public' | 'protected' | 'private';
 
 ## SpecDocsMetadata
 
-Documentation coverage info:
+Documentation coverage info. This type is used by the SDK's enriched types (`EnrichedExport`, `EnrichedOpenPkg`):
 
 ```typescript
 type SpecDocsMetadata = {
@@ -174,6 +174,28 @@ type SpecDocsMetadata = {
 };
 
 type SpecDocSignal = 'description' | 'params' | 'returns' | 'examples';
+```
+
+## Enriched Types (DocCov SDK)
+
+The SDK provides enriched versions of the spec types with coverage metadata:
+
+```typescript
+// From @doccov/sdk
+import { enrichSpec, type EnrichedOpenPkg, type EnrichedExport } from '@doccov/sdk';
+
+type EnrichedExport = SpecExport & {
+  docs?: SpecDocsMetadata;
+};
+
+type EnrichedOpenPkg = Omit<OpenPkg, 'exports'> & {
+  exports: EnrichedExport[];
+  docs?: SpecDocsMetadata;
+};
+
+// Usage
+const enriched = enrichSpec(spec);
+console.log(enriched.docs?.coverageScore);
 ```
 
 ## SpecDocDrift

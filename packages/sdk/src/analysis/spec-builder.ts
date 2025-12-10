@@ -46,6 +46,7 @@ export function buildOpenPkgSpec(
   const serializerContext: SerializerContext = {
     checker: typeChecker,
     typeRegistry,
+    maxTypeDepth: context.options.maxDepth,
   };
 
   const moduleSymbol = typeChecker.getSymbolAtLocation(sourceFile);

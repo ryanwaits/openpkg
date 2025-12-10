@@ -24,7 +24,7 @@ function formatSchema(schema: unknown): string {
   return 'unknown';
 }
 
-export function FunctionPage({ export: exp, spec }: FunctionPageProps) {
+export function FunctionPage({ export: exp, spec }: FunctionPageProps): React.ReactNode {
   const sig = exp.signatures?.[0];
   const hasExamples = exp.examples && exp.examples.length > 0;
   const hasParams = sig?.parameters && sig.parameters.length > 0;

@@ -16,6 +16,8 @@ import { extractPresentationMetadata } from './presentation';
 export interface SerializerContext {
   checker: TS.TypeChecker;
   typeRegistry: TypeRegistry;
+  /** Maximum depth for type conversion to prevent infinite recursion */
+  maxTypeDepth: number;
 }
 
 export function serializeCallSignatures(

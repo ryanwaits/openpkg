@@ -1,4 +1,11 @@
-import type { OpenPkg, SpecExport, SpecExportKind } from './types';
+import type { OpenPkg, SpecDocsMetadata, SpecExport, SpecExportKind } from './types';
+
+/**
+ * Export with optional docs metadata for diff comparison.
+ * Pure OpenPkg specs won't have docs; enriched specs will.
+ */
+type ExportWithDocs = SpecExport & { docs?: SpecDocsMetadata };
+type SpecWithDocs = OpenPkg & { docs?: SpecDocsMetadata; exports: ExportWithDocs[] };
 
 export type BreakingSeverity = 'high' | 'medium' | 'low';
 
@@ -35,7 +42,12 @@ export type SpecDiff = {
   driftResolved: number;
 };
 
-export function diffSpec(oldSpec: OpenPkg, newSpec: OpenPkg): SpecDiff {
+/**
+ * Compare two OpenPkg specs and compute differences.
+ * If specs are enriched (have docs metadata), coverage changes are tracked.
+ * For pure structural specs, coverage fields will be 0.
+ */
+export function diffSpec(oldSpec: SpecWithDocs, newSpec: SpecWithDocs): SpecDiff {
   const result: SpecDiff = {
     breaking: [],
     nonBreaking: [],
@@ -97,8 +109,8 @@ export function diffSpec(oldSpec: OpenPkg, newSpec: OpenPkg): SpecDiff {
   return result;
 }
 
-function toExportMap(exports: SpecExport[]): Map<string, SpecExport> {
-  const map = new Map<string, SpecExport>();
+function toExportMap(exports: ExportWithDocs[]): Map<string, ExportWithDocs> {
+  const map = new Map<string, ExportWithDocs>();
   for (const exp of exports) {
     if (exp && typeof exp.id === 'string') {
       map.set(exp.id, exp);
@@ -247,8 +259,8 @@ function sortKeys(value: unknown): unknown {
  */
 export function categorizeBreakingChanges(
   breaking: string[],
-  oldSpec: OpenPkg,
-  newSpec: OpenPkg,
+  oldSpec: SpecWithDocs,
+  newSpec: SpecWithDocs,
   memberChanges?: MemberChangeInfo[],
 ): CategorizedBreaking[] {
   const oldExportMap = toExportMap(oldSpec.exports);

@@ -1,6 +1,8 @@
 # Spec Overview
 
-The `@openpkg-ts/spec` package provides the OpenPkg 0.2.0 schema, TypeScript types, validation, and diffing utilities.
+The `@openpkg-ts/spec` package provides the OpenPkg 0.3.0 schema, TypeScript types, validation, and diffing utilities.
+
+OpenPkg is a **pure structural format** - it describes the API shape without coverage or quality metadata. Coverage analysis is handled separately by the DocCov SDK via `enrichSpec()`.
 
 ## Installation
 
@@ -19,17 +21,17 @@ import {
   type SpecSignature,
   type SpecDocsMetadata,
   type SpecDocDrift,
-  
+
   // Validation
   validateSpec,
   assertSpec,
   getValidationErrors,
-  
+
   // Utilities
   normalize,
   dereference,
   diffSpec,
-  
+
   // Constants
   CURRENT_VERSION,
 } from '@openpkg-ts/spec';
@@ -37,20 +39,23 @@ import {
 
 ## Schema Version
 
-Current version: `0.2.0`
+Current version: `0.3.0`
 
-JSON Schema: `packages/spec/schemas/v0.2.0/openpkg.schema.json`
+JSON Schema: `packages/spec/schemas/v0.3.0/openpkg.schema.json`
 
 ## OpenPkg Structure
 
+OpenPkg is a pure structural format - no coverage data at this level:
+
 ```json
 {
-  "$schema": "https://openpkg.dev/schemas/v0.2.0/openpkg.schema.json",
-  "openpkg": "0.2.0",
+  "$schema": "https://openpkg.dev/schemas/v0.3.0/openpkg.schema.json",
+  "openpkg": "0.3.0",
   "meta": {
     "name": "my-package",
     "version": "1.0.0",
-    "description": "Package description"
+    "description": "Package description",
+    "ecosystem": "js/ts"
   },
   "exports": [
     {
@@ -58,12 +63,7 @@ JSON Schema: `packages/spec/schemas/v0.2.0/openpkg.schema.json`
       "name": "createUser",
       "kind": "function",
       "description": "Creates a user",
-      "signatures": [...],
-      "docs": {
-        "coverageScore": 100,
-        "missing": [],
-        "drift": []
-      }
+      "signatures": [...]
     }
   ],
   "types": [
@@ -73,12 +73,11 @@ JSON Schema: `packages/spec/schemas/v0.2.0/openpkg.schema.json`
       "kind": "interface",
       "members": [...]
     }
-  ],
-  "docs": {
-    "coverageScore": 85
-  }
+  ]
 }
 ```
+
+For coverage analysis, use the DocCov SDK's `enrichSpec()` function - see [SDK Overview](../sdk/overview.md).
 
 ## Validation
 

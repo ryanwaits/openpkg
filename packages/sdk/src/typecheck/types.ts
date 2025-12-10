@@ -25,4 +25,6 @@ export interface TypecheckOptions {
   tsconfig?: string;
   /** Package name for imports (auto-detected from package.json if not provided) */
   packageName?: string;
+  /** Export names to include in the virtual import statement */
+  exportNames?: string[];
 }

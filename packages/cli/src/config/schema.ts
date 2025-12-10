@@ -28,6 +28,7 @@ const checkConfigSchema: z.ZodObject<{
   lint: z.ZodOptional<z.ZodBoolean>;
   typecheck: z.ZodOptional<z.ZodBoolean>;
   exec: z.ZodOptional<z.ZodBoolean>;
+  minCoverage: z.ZodOptional<z.ZodNumber>;
 }> = z.object({
   /** Enable lint checks (default: true) */
   lint: z.boolean().optional(),
@@ -35,6 +36,8 @@ const checkConfigSchema: z.ZodObject<{
   typecheck: z.boolean().optional(),
   /** Enable runtime execution of examples (default: false) */
   exec: z.boolean().optional(),
+  /** Minimum coverage percentage required (0-100) */
+  minCoverage: z.number().min(0).max(100).optional(),
 });
 
 /**
@@ -109,6 +112,7 @@ export const normalizeConfig = (input: DocCovConfigInput): NormalizedDocCovConfi
       lint: input.check.lint,
       typecheck: input.check.typecheck,
       exec: input.check.exec,
+      minCoverage: input.check.minCoverage,
     };
   }
 

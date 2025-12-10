@@ -68,7 +68,7 @@ function formatParamPreview(params: { name?: string }[] | undefined): string {
  * Collapsible method section with expand/collapse behavior
  * Shows compact signature when collapsed, full details when expanded
  */
-export function CollapsibleMethod({ member, defaultExpanded = false }: CollapsibleMethodProps) {
+export function CollapsibleMethod({ member, defaultExpanded = false }: CollapsibleMethodProps): React.ReactNode {
   const [expanded, setExpanded] = useState(defaultExpanded);
 
   const sig = member.signatures?.[0];

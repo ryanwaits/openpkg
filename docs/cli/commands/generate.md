@@ -1,6 +1,8 @@
 # doccov generate
 
-Generate an OpenPkg specification file or coverage report from TypeScript source.
+Generate a pure OpenPkg structural specification from TypeScript source.
+
+> **Note:** This command outputs pure structural JSON only. For coverage reports, use [`doccov check --format`](./check.md).
 
 ## Usage
 
@@ -19,8 +21,6 @@ doccov generate [entry] [options]
 | Option | Default | Description |
 |--------|---------|-------------|
 | `-o, --output <file>` | `openpkg.json` | Output file path |
-| `--format <format>` | `json` | Output format: `json`, `markdown`, `html` |
-| `--limit <n>` | `20` | Max exports to show in report tables (for markdown/html) |
 | `--include <ids>` | - | Filter exports by identifier (comma-separated) |
 | `--exclude <ids>` | - | Exclude exports by identifier (comma-separated) |
 | `--show-diagnostics` | `false` | Print TypeScript diagnostics |
@@ -80,32 +80,18 @@ doccov generate --skip-resolve
 doccov generate --show-diagnostics
 ```
 
-### Generate Coverage Report
-
-Output human-readable coverage reports instead of JSON:
-
-```bash
-# Markdown report
-doccov generate --format markdown -o COVERAGE.md
-
-# HTML report
-doccov generate --format html -o coverage.html
-
-# Limit exports shown in tables
-doccov generate --format markdown --limit 50 -o COVERAGE.md
-```
-
 ## Output Format
 
-The generated `openpkg.json` contains:
+The generated `openpkg.json` is a **pure structural format** (no coverage data):
 
 ```json
 {
-  "$schema": "https://openpkg.dev/schemas/v0.2.0/openpkg.schema.json",
-  "openpkg": "0.2.0",
+  "$schema": "https://openpkg.dev/schemas/v0.3.0/openpkg.schema.json",
+  "openpkg": "0.3.0",
   "meta": {
     "name": "my-package",
-    "version": "1.0.0"
+    "version": "1.0.0",
+    "ecosystem": "js/ts"
   },
   "exports": [
     {
@@ -113,20 +99,29 @@ The generated `openpkg.json` contains:
       "name": "createUser",
       "kind": "function",
       "description": "Creates a new user",
-      "signatures": [...],
-      "docs": {
-        "coverageScore": 100,
-        "missing": [],
-        "drift": []
-      }
+      "signatures": [...]
     }
   ],
-  "types": [...],
-  "docs": {
-    "coverageScore": 85
-  }
+  "types": [...]
 }
 ```
+
+## Coverage Reports
+
+For coverage reports with scores, missing signals, and drift issues, use the `check` command:
+
+```bash
+# Markdown report
+doccov check --format markdown -o COVERAGE.md
+
+# HTML report
+doccov check --format html -o coverage.html
+
+# JSON report with coverage data
+doccov check --format json -o coverage.json
+```
+
+See [`doccov check`](./check.md) for details.
 
 ## Exit Codes
 
@@ -135,19 +130,9 @@ The generated `openpkg.json` contains:
 | 0 | Success |
 | 1 | TypeScript or generation error |
 
-## Local Testing
-
-```bash
-# From repo root
-bun run packages/cli/src/cli.ts generate tests/fixtures/simple-math.ts -o /tmp/spec.json
-
-# View output
-cat /tmp/spec.json | jq '.docs'
-```
-
 ## See Also
 
-- [check](./check.md) - Validate generated spec
+- [check](./check.md) - Coverage validation and reports
 - [diff](./diff.md) - Compare two specs
 - [Configuration](../configuration.md) - Persistent settings
 

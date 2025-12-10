@@ -1,11 +1,13 @@
 # OpenPkg Schema
 
-The OpenPkg 0.2.0 JSON Schema specification.
+The OpenPkg 0.3.0 JSON Schema specification.
+
+> **Note**: OpenPkg is a pure structural format. Coverage data (`coverageScore`, `missing`, `drift`) is computed by DocCov's `enrichSpec()` and is not part of this schema.
 
 ## Schema URL
 
 ```
-https://openpkg.dev/schemas/v0.2.0/openpkg.schema.json
+https://openpkg.dev/schemas/v0.3.0/openpkg.schema.json
 ```
 
 ## Using the Schema
@@ -14,8 +16,8 @@ Add `$schema` to your `openpkg.json`:
 
 ```json
 {
-  "$schema": "https://openpkg.dev/schemas/v0.2.0/openpkg.schema.json",
-  "openpkg": "0.2.0",
+  "$schema": "https://openpkg.dev/schemas/v0.3.0/openpkg.schema.json",
+  "openpkg": "0.3.0",
   "meta": {
     "name": "my-package"
   },
@@ -90,11 +92,10 @@ if (errors.length > 0) {
 ```json
 {
   "$schema": "string (optional)",
-  "openpkg": "0.2.0",
+  "openpkg": "0.3.0",
   "meta": { ... },
   "exports": [ ... ],
   "types": [ ... ],
-  "docs": { ... },
   "examples": [ ... ],
   "extensions": { ... }
 }
@@ -104,7 +105,7 @@ if (errors.length > 0) {
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `openpkg` | `"0.2.0"` | Schema version |
+| `openpkg` | `"0.3.0"` | Schema version |
 | `meta` | `object` | Package metadata |
 | `exports` | `array` | Exported items |
 
@@ -114,7 +115,6 @@ if (errors.length > 0) {
 |-------|------|-------------|
 | `$schema` | `string` | JSON Schema URL |
 | `types` | `array` | Type definitions |
-| `docs` | `object` | Coverage metadata |
 | `examples` | `array` | Package examples |
 | `extensions` | `object` | Custom extensions |
 
@@ -155,14 +155,11 @@ if (errors.length > 0) {
   "kind": "function",
   "description": "Creates a user",
   "signatures": [...],
-  "examples": ["createUser('Alice')"],
-  "docs": {
-    "coverageScore": 100,
-    "missing": [],
-    "drift": []
-  }
+  "examples": ["createUser('Alice')"]
 }
 ```
+
+> **Note**: The `docs` field with `coverageScore`, `missing`, and `drift` only appears on `EnrichedExport` types returned by `enrichSpec()`, not in the pure OpenPkg format.
 
 ### Required
 
@@ -212,20 +209,24 @@ type SpecExportKind =
 }
 ```
 
-## Docs Metadata
+## Enriched Specs (DocCov Layer)
+
+Coverage metadata is computed by DocCov's `enrichSpec()` function and is NOT part of the OpenPkg schema. When you call `enrichSpec()` or use `doccov check --format json`, the output includes:
 
 ```json
 {
-  "coverageScore": 75,
-  "missing": ["examples"],
-  "drift": [
-    {
-      "type": "param-mismatch",
-      "target": "userId",
-      "issue": "@param userId not in signature",
-      "suggestion": "id"
-    }
-  ]
+  "docs": {
+    "coverageScore": 75,
+    "missing": ["examples"],
+    "drift": [
+      {
+        "type": "param-mismatch",
+        "target": "userId",
+        "issue": "@param userId not in signature",
+        "suggestion": "id"
+      }
+    ]
+  }
 }
 ```
 
@@ -256,6 +257,8 @@ type SpecDocDrift = {
 };
 ```
 
+For coverage analysis, use the SDK's `enrichSpec()` or the CLI's `doccov check --format json`.
+
 ## Type References
 
 Use `$ref` for type references:
@@ -278,8 +281,15 @@ Primitives are inline:
 
 | Version | Status |
 |---------|--------|
-| 0.2.0 | Current |
+| 0.3.0 | Current |
+| 0.2.0 | Deprecated |
 | 0.1.0 | Deprecated |
+
+### 0.3.0 Changes
+
+- Removed `docs` field from pure OpenPkg (moved to enriched layer)
+- Coverage data now computed on-demand via `enrichSpec()`
+- OpenPkg is now a pure structural format
 
 ### 0.2.0 Changes
 

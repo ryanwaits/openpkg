@@ -2,8 +2,27 @@ import type * as TS from 'typescript';
 import { ts } from '../ts-module';
 
 import { extractParameterDecorators, type DecoratorInfo } from '../analysis/decorator-utils';
+import { DEFAULT_MAX_TYPE_DEPTH } from '../options';
 import type { ParameterDocumentation, ParsedJSDoc } from './tsdoc-utils';
 import { isBuiltInType } from './type-utils';
+
+/**
+ * Default maximum recursion depth for type formatting to prevent stack overflow
+ * on circular/recursive types. Configurable via DocCovOptions.maxDepth.
+ * @deprecated Use DEFAULT_MAX_TYPE_DEPTH from options.ts instead
+ */
+const MAX_TYPE_DEPTH = DEFAULT_MAX_TYPE_DEPTH;
+
+/**
+ * Safely convert a type to string, catching any stack overflow errors.
+ */
+function safeTypeToString(typeChecker: TS.TypeChecker, type: TS.Type): string {
+  try {
+    return typeChecker.typeToString(type);
+  } catch {
+    return 'unknown';
+  }
+}
 
 export interface StructuredParameter {
   name: string;
@@ -109,7 +128,14 @@ function formatTypeBoxSchema(
   typeRefs: Map<string, string>,
   referencedTypes: Set<string> | undefined,
   visited: Set<string>,
+  depth = 0,
+  maxDepth: number = MAX_TYPE_DEPTH,
+  typeIds?: Set<number>,
 ): Record<string, unknown> | null {
+  // Guard against infinite recursion
+  if (depth > maxDepth) {
+    return { type: 'unknown' };
+  }
   const symbol = type.getSymbol();
   if (!symbol) return null;
 
@@ -161,6 +187,9 @@ function formatTypeBoxSchema(
             typeRefs,
             referencedTypes,
             visited,
+            depth + 1,
+            maxDepth,
+            typeIds,
           );
           properties[propName] = nested ?? { type: 'object' };
         } else {
@@ -171,6 +200,9 @@ function formatTypeBoxSchema(
             typeRefs,
             referencedTypes,
             visited,
+            depth + 1,
+            maxDepth,
+            typeIds,
           );
         }
 
@@ -201,11 +233,11 @@ function formatTypeBoxSchema(
       if (itemSymbolName && typeRefs.has(itemSymbolName)) {
         items = { $ref: `#/types/${itemSymbolName}` };
       } else if (itemSymbolName && isTypeBoxSchemaType(itemSymbolName)) {
-        items = formatTypeBoxSchema(itemType, typeChecker, typeRefs, referencedTypes, visited) ?? {
+        items = formatTypeBoxSchema(itemType, typeChecker, typeRefs, referencedTypes, visited, depth + 1, maxDepth, typeIds) ?? {
           type: 'object',
         };
       } else {
-        items = formatTypeReference(itemType, typeChecker, typeRefs, referencedTypes, visited);
+        items = formatTypeReference(itemType, typeChecker, typeRefs, referencedTypes, visited, depth + 1, maxDepth, typeIds);
       }
 
       return { type: 'array', items };
@@ -228,13 +260,13 @@ function formatTypeBoxSchema(
             members.push({ $ref: `#/types/${memberSymbolName}` });
           } else if (memberSymbolName && isTypeBoxSchemaType(memberSymbolName)) {
             members.push(
-              formatTypeBoxSchema(memberType, typeChecker, typeRefs, referencedTypes, visited) ?? {
+              formatTypeBoxSchema(memberType, typeChecker, typeRefs, referencedTypes, visited, depth + 1, maxDepth, typeIds) ?? {
                 type: 'object',
               },
             );
           } else {
             members.push(
-              formatTypeReference(memberType, typeChecker, typeRefs, referencedTypes, visited),
+              formatTypeReference(memberType, typeChecker, typeRefs, referencedTypes, visited, depth + 1, maxDepth, typeIds),
             );
           }
         }
@@ -248,13 +280,13 @@ function formatTypeBoxSchema(
             members.push({ $ref: `#/types/${memberSymbolName}` });
           } else if (memberSymbolName && isTypeBoxSchemaType(memberSymbolName)) {
             members.push(
-              formatTypeBoxSchema(memberType, typeChecker, typeRefs, referencedTypes, visited) ?? {
+              formatTypeBoxSchema(memberType, typeChecker, typeRefs, referencedTypes, visited, depth + 1, maxDepth, typeIds) ?? {
                 type: 'object',
               },
             );
           } else {
             members.push(
-              formatTypeReference(memberType, typeChecker, typeRefs, referencedTypes, visited),
+              formatTypeReference(memberType, typeChecker, typeRefs, referencedTypes, visited, depth + 1, maxDepth, typeIds),
             );
           }
         }
@@ -280,13 +312,13 @@ function formatTypeBoxSchema(
             members.push({ $ref: `#/types/${memberSymbolName}` });
           } else if (memberSymbolName && isTypeBoxSchemaType(memberSymbolName)) {
             members.push(
-              formatTypeBoxSchema(memberType, typeChecker, typeRefs, referencedTypes, visited) ?? {
+              formatTypeBoxSchema(memberType, typeChecker, typeRefs, referencedTypes, visited, depth + 1, maxDepth, typeIds) ?? {
                 type: 'object',
               },
             );
           } else {
             members.push(
-              formatTypeReference(memberType, typeChecker, typeRefs, referencedTypes, visited),
+              formatTypeReference(memberType, typeChecker, typeRefs, referencedTypes, visited, depth + 1, maxDepth, typeIds),
             );
           }
         }
@@ -308,7 +340,7 @@ function formatTypeBoxSchema(
         return { $ref: `#/types/${innerSymbolName}` };
       } else if (innerSymbolName && isTypeBoxSchemaType(innerSymbolName)) {
         return (
-          formatTypeBoxSchema(innerType, typeChecker, typeRefs, referencedTypes, visited) ?? {
+          formatTypeBoxSchema(innerType, typeChecker, typeRefs, referencedTypes, visited, depth + 1, maxDepth, typeIds) ?? {
             type: 'object',
           }
         );
@@ -319,6 +351,9 @@ function formatTypeBoxSchema(
         typeRefs,
         referencedTypes,
         visited,
+        depth + 1,
+        maxDepth,
+        typeIds,
       ) as Record<string, unknown>;
     }
 
@@ -354,7 +389,7 @@ function formatTypeBoxSchema(
         additionalProperties = { $ref: `#/types/${valueSymbolName}` };
       } else if (valueSymbolName && isTypeBoxSchemaType(valueSymbolName)) {
         additionalProperties =
-          formatTypeBoxSchema(valueType, typeChecker, typeRefs, referencedTypes, visited) ?? true;
+          formatTypeBoxSchema(valueType, typeChecker, typeRefs, referencedTypes, visited, depth + 1, maxDepth, typeIds) ?? true;
       } else {
         additionalProperties = formatTypeReference(
           valueType,
@@ -362,6 +397,9 @@ function formatTypeBoxSchema(
           typeRefs,
           referencedTypes,
           visited,
+          depth + 1,
+          maxDepth,
+          typeIds,
         );
       }
 
@@ -875,6 +913,15 @@ function deduplicateSchemas(
 /**
  * Format a type as either a string or a reference object
  * Following OpenAPI standards: use $ref for all named types
+ *
+ * @param type - The TypeScript type to format
+ * @param typeChecker - The TypeScript type checker
+ * @param typeRefs - Map of known type references
+ * @param referencedTypes - Set to collect referenced type names
+ * @param visitedAliases - Set of visited alias names to prevent cycles
+ * @param depth - Current recursion depth
+ * @param maxDepth - Maximum recursion depth (configurable, default 20)
+ * @param visitedTypeIds - Set of visited type IDs to prevent cycles (TypeDoc pattern)
  */
 export function formatTypeReference(
   type: TS.Type,
@@ -882,8 +929,27 @@ export function formatTypeReference(
   typeRefs: Map<string, string>,
   referencedTypes?: Set<string>,
   visitedAliases?: Set<string>,
+  depth = 0,
+  maxDepth: number = MAX_TYPE_DEPTH,
+  visitedTypeIds?: Set<number>,
 ): string | Record<string, unknown> {
+  // Guard against infinite recursion via depth limit
+  if (depth > maxDepth) {
+    return { type: 'unknown' };
+  }
+
   const visited = visitedAliases ?? new Set<string>();
+  const typeIds = visitedTypeIds ?? new Set<number>();
+
+  // TypeDoc pattern: track by type.id to catch anonymous recursive types
+  const typeId = (type as any).id as number | undefined;
+  if (typeId !== undefined) {
+    if (typeIds.has(typeId)) {
+      // Already processing this exact type instance - break cycle
+      return { type: 'unknown' };
+    }
+    typeIds.add(typeId);
+  }
 
   const aliasSymbol = type.aliasSymbol;
   let aliasName: string | undefined;
@@ -910,7 +976,7 @@ export function formatTypeReference(
   }
 
   try {
-    const typeString = typeChecker.typeToString(type);
+    const typeString = safeTypeToString(typeChecker, type);
 
     // Check if this is a primitive type
     const primitives = [
@@ -959,7 +1025,7 @@ export function formatTypeReference(
     if (type.isUnion()) {
       const unionType = type as TS.UnionType;
       const parts = unionType.types.map((t) =>
-        formatTypeReference(t, typeChecker, typeRefs, referencedTypes, visited),
+        formatTypeReference(t, typeChecker, typeRefs, referencedTypes, visited, depth + 1, maxDepth, typeIds),
       );
 
       // Deduplicate (e.g., null and undefined both become { type: 'null' })
@@ -1002,6 +1068,9 @@ export function formatTypeReference(
           typeRefs,
           referencedTypes,
           visited,
+          depth + 1,
+          maxDepth,
+          typeIds,
         );
       }
 
@@ -1010,7 +1079,7 @@ export function formatTypeReference(
       }
 
       const parts = filteredTypes.map((t) =>
-        formatTypeReference(t, typeChecker, typeRefs, referencedTypes, visited),
+        formatTypeReference(t, typeChecker, typeRefs, referencedTypes, visited, depth + 1, maxDepth, typeIds),
       );
 
       const normalized = parts.flatMap((part) => {
@@ -1072,6 +1141,9 @@ export function formatTypeReference(
                 typeRefs,
                 referencedTypes,
                 visited,
+                depth + 1,
+                maxDepth,
+                typeIds,
               );
 
               if (!(prop.flags & ts.SymbolFlags.Optional)) {
@@ -1111,6 +1183,7 @@ export function formatTypeReference(
           typeRefs,
           referencedTypes,
           visited,
+          depth + 1,
         );
         if (typeBoxSchema) {
           return typeBoxSchema;
@@ -1163,6 +1236,10 @@ export function formatTypeReference(
   } finally {
     if (aliasAdded && aliasName) {
       visited.delete(aliasName);
+    }
+    // Clean up type ID tracking (like TypeDoc does)
+    if (typeId !== undefined) {
+      typeIds.delete(typeId);
     }
   }
 }
@@ -1350,8 +1427,11 @@ export function structureParameter(
   }
 
   // Check if this is an inline object type
+  // Skip inline expansion if the type has a named alias - use $ref instead
   const symbol = paramType.getSymbol();
+  const hasNamedAlias = paramType.aliasSymbol && !paramType.aliasSymbol.getName().startsWith('__');
   if (
+    !hasNamedAlias &&
     (symbol?.getName().startsWith('__') || isObjectLiteralType(paramType)) &&
     paramType.getProperties().length > 0
   ) {

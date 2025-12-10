@@ -11,7 +11,7 @@ export interface InterfacePageProps {
   spec: OpenPkg;
 }
 
-export function InterfacePage({ export: exp, spec }: InterfacePageProps) {
+export function InterfacePage({ export: exp, spec }: InterfacePageProps): React.ReactNode {
   // For interfaces/types, members are the properties
   const properties = exp.members?.filter(
     (m) => m.kind === 'property' || m.kind === 'field' || !m.kind,

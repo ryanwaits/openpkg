@@ -7,11 +7,15 @@ import {
   DocCov,
   detectExampleAssertionFailures,
   detectExampleRuntimeErrors,
+  enrichSpec,
+  type EnrichedExport,
+  type EnrichedOpenPkg,
   type ExampleRunResult,
   type ExampleTypeError,
   type FixSuggestion,
   findJSDocLocation,
   generateFixesForExport,
+  generateReport,
   getDefaultConfig as getLintDefaultConfig,
   hasNonAssertionComments,
   type JSDocEdit,
@@ -24,16 +28,21 @@ import {
   parseJSDocToPatch,
   resolveTarget,
   runExamplesWithPackage,
+  saveReport,
   serializeJSDoc,
   typecheckExamples,
 } from '@doccov/sdk';
 import type { SpecDocDrift, SpecExport } from '@openpkg-ts/spec';
 import chalk from 'chalk';
 import type { Command } from 'commander';
+import { loadDocCovConfig } from '../config';
+import { computeStats, renderHtml, renderMarkdown } from '../reports';
 import {
   isLLMAssertionParsingAvailable,
   parseAssertionsWithLLM,
 } from '../utils/llm-assertion-parser';
+
+type OutputFormat = 'text' | 'json' | 'markdown' | 'html' | 'github';
 
 interface CheckCommandDependencies {
   createDocCov?: (
@@ -50,12 +59,12 @@ const defaultDependencies: Required<CheckCommandDependencies> = {
 };
 
 /**
- * Collect all drift issues from exports
+ * Collect all drift issues from enriched exports
  */
 function collectDriftsFromExports(
-  exports: SpecExport[],
-): Array<{ export: SpecExport; drift: SpecDocDrift }> {
-  const results: Array<{ export: SpecExport; drift: SpecDocDrift }> = [];
+  exports: EnrichedExport[],
+): Array<{ export: EnrichedExport; drift: SpecDocDrift }> {
+  const results: Array<{ export: EnrichedExport; drift: SpecDocDrift }> = [];
   for (const exp of exports) {
     for (const drift of exp.docs?.drift ?? []) {
       results.push({ export: exp, drift });
@@ -68,9 +77,9 @@ function collectDriftsFromExports(
  * Group drifts by export
  */
 function groupByExport(
-  drifts: Array<{ export: SpecExport; drift: SpecDocDrift }>,
-): Map<SpecExport, SpecDocDrift[]> {
-  const map = new Map<SpecExport, SpecDocDrift[]>();
+  drifts: Array<{ export: EnrichedExport; drift: SpecDocDrift }>,
+): Map<EnrichedExport, SpecDocDrift[]> {
+  const map = new Map<EnrichedExport, SpecDocDrift[]>();
   for (const { export: exp, drift } of drifts) {
     const existing = map.get(exp) ?? [];
     existing.push(drift);
@@ -90,7 +99,7 @@ export function registerCheckCommand(
 
   program
     .command('check [entry]')
-    .description('Fail if documentation coverage falls below a threshold')
+    .description('Check documentation coverage and output reports')
     .option('--cwd <dir>', 'Working directory', process.cwd())
     .option('--package <name>', 'Target package name (for monorepos)')
     .option('--min-coverage <percentage>', 'Minimum docs coverage percentage (0-100)', (value) =>
@@ -105,6 +114,11 @@ export function registerCheckCommand(
     .option('--fix', 'Auto-fix drift and lint issues')
     .option('--write', 'Alias for --fix')
     .option('--dry-run', 'Preview fixes without writing (requires --fix)')
+    .option('--format <format>', 'Output format: text, json, markdown, html, github', 'text')
+    .option('-o, --output <file>', 'Output file for non-text formats')
+    .option('--update-snapshot', 'Force regenerate .doccov/report.json')
+    .option('--limit <n>', 'Max exports to show in report tables', '20')
+    .option('--max-type-depth <number>', 'Maximum depth for type conversion (default: 20)')
     .action(async (entry, options) => {
       try {
         // Resolve target directory and entry point
@@ -124,7 +138,13 @@ export function registerCheckCommand(
           log(chalk.gray(`Auto-detected entry point: ${entryPointInfo.path} (from ${entryPointInfo.source})`));
         }
 
-        const minCoverage = clampCoverage(options.minCoverage ?? 80);
+        // Load config to get default minCoverage
+        const config = await loadDocCovConfig(targetDir);
+
+        // CLI option takes precedence, then config, then default (80)
+        const minCoverage = clampCoverage(
+          options.minCoverage ?? config?.normalized.check?.minCoverage ?? 80
+        );
         const resolveExternalTypes = !options.skipResolve;
 
         // Use simple text indicator for CPU-intensive analysis (ora can't animate during blocking operations)
@@ -133,7 +153,10 @@ export function registerCheckCommand(
         let specResult: Awaited<ReturnType<DocCov['analyzeFileWithDiagnostics']>> | undefined;
 
         try {
-          const doccov = createDocCov({ resolveExternalTypes });
+          const doccov = createDocCov({
+            resolveExternalTypes,
+            maxDepth: options.maxTypeDepth ? parseInt(options.maxTypeDepth, 10) : undefined,
+          });
           specResult = await doccov.analyzeFileWithDiagnostics(entryFile);
           process.stdout.write(chalk.green('✓ Documentation analysis complete\n'));
         } catch (analysisError) {
@@ -145,7 +168,9 @@ export function registerCheckCommand(
           throw new Error('Failed to analyze documentation coverage.');
         }
 
-        const spec = specResult.spec;
+        // Enrich the spec with coverage data
+        const spec = enrichSpec(specResult.spec);
+        const format = (options.format ?? 'text') as OutputFormat;
 
         // Display spec diagnostics (warnings/info)
         const warnings = specResult.diagnostics.filter((d) => d.severity === 'warning');
@@ -210,11 +235,14 @@ export function registerCheckCommand(
             }
           }
 
+          // Collect all export names for import statements in virtual source files
+          const allExportNames = (spec.exports ?? []).map((e) => e.name);
+
           if (allExamplesForTypecheck.length > 0) {
             process.stdout.write(chalk.cyan('> Type-checking examples...\n'));
 
             for (const { exportName, examples } of allExamplesForTypecheck) {
-              const result = typecheckExamples(examples, targetDir);
+              const result = typecheckExamples(examples, targetDir, { exportNames: allExportNames });
               for (const err of result.errors) {
                 typecheckErrors.push({ exportName, error: err });
               }
@@ -397,7 +425,7 @@ export function registerCheckCommand(
               const editsByFile = new Map<
                 string,
                 Array<{
-                  export: SpecExport;
+                  export: EnrichedExport;
                   edit: JSDocEdit;
                   fixes: FixSuggestion[];
                   existingPatch: JSDocPatch;
@@ -535,6 +563,65 @@ export function registerCheckCommand(
           if (!options.dryRun) {
             driftExports = driftExports.filter((d) => !fixedDriftKeys.has(`${d.name}:${d.issue}`));
           }
+        }
+
+        // Handle --format output for non-text formats
+        if (format !== 'text') {
+          const limit = parseInt(options.limit, 10) || 20;
+
+          // Always update .doccov/report.json
+          if (options.updateSnapshot || format === 'json') {
+            const report = generateReport(specResult.spec);
+            saveReport(report);
+            log(chalk.gray('Updated .doccov/report.json'));
+          }
+
+          let output: string;
+          const stats = computeStats(spec);
+
+          switch (format) {
+            case 'json': {
+              const report = generateReport(specResult.spec);
+              output = JSON.stringify(report, null, 2);
+              break;
+            }
+            case 'markdown':
+              output = renderMarkdown(stats, { limit });
+              break;
+            case 'html':
+              output = renderHtml(stats, { limit });
+              break;
+            case 'github':
+              // GitHub Actions summary format
+              output = `## Documentation Coverage: ${coverageScore}%\n\n`;
+              output += `| Metric | Value |\n|--------|-------|\n`;
+              output += `| Coverage Score | ${coverageScore}% |\n`;
+              output += `| Total Exports | ${spec.exports.length} |\n`;
+              output += `| Drift Issues | ${driftExports.length} |\n`;
+              output += `| Lint Issues | ${lintViolations.length} |\n`;
+              break;
+            default:
+              throw new Error(`Unknown format: ${format}`);
+          }
+
+          if (options.output) {
+            const outputPath = path.resolve(process.cwd(), options.output);
+            fs.writeFileSync(outputPath, output);
+            log(chalk.green(`✓ Wrote ${format} report to ${options.output}`));
+          } else {
+            log(output);
+          }
+
+          // Still exit with error if thresholds not met
+          const coverageFailed = coverageScore < minCoverage;
+          const hasDrift = !options.ignoreDrift && driftExports.length > 0;
+          const hasLintErrors = lintViolations.filter((v) => v.violation.severity === 'error').length > 0;
+          const hasTypecheckErrors = typecheckErrors.length > 0;
+
+          if (coverageFailed || hasDrift || hasLintErrors || hasTypecheckErrors) {
+            process.exit(1);
+          }
+          return;
         }
 
         const coverageFailed = coverageScore < minCoverage;

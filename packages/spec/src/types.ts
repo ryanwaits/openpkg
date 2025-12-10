@@ -238,7 +238,6 @@ export type SpecExport = {
   schema?: SpecSchema;
   description?: string;
   examples?: (string | SpecExample)[];
-  docs?: SpecDocsMetadata;
   source?: SpecSource;
   deprecated?: boolean;
   flags?: Record<string, unknown>;
@@ -303,6 +302,5 @@ export type OpenPkg = {
   exports: SpecExport[];
   types?: SpecType[];
   examples?: SpecExample[];
-  docs?: SpecDocsMetadata;
   extensions?: SpecExtension;
 };

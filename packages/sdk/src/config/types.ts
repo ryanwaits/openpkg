@@ -23,6 +23,8 @@ export interface CheckConfig {
   typecheck?: boolean;
   /** Enable runtime execution of examples (default: false) */
   exec?: boolean;
+  /** Minimum coverage percentage required (0-100) */
+  minCoverage?: number;
 }
 
 /**

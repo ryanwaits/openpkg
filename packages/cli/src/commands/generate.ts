@@ -9,14 +9,11 @@ import { normalize, type OpenPkg as OpenPkgSpec, validateSpec } from '@openpkg-t
 import chalk from 'chalk';
 import type { Command } from 'commander';
 import { type LoadedDocCovConfig, loadDocCovConfig } from '../config';
-import { computeStats, renderHtml, renderMarkdown } from '../reports';
 import {
   type FilterOptions as CliFilterOptions,
   mergeFilterOptions,
   parseListFlag,
 } from '../utils/filter-options';
-
-type OutputFormat = 'json' | 'markdown' | 'html';
 
 export interface GenerateCommandDependencies {
   createDocCov?: (
@@ -40,16 +37,6 @@ function getArrayLength(value: unknown): number {
   return Array.isArray(value) ? value.length : 0;
 }
 
-function stripDocsFields(spec: OpenPkgSpec): OpenPkgSpec {
-  const { docs: _rootDocs, ...rest } = spec;
-  return {
-    ...rest,
-    exports: spec.exports?.map((exp) => {
-      const { docs: _expDocs, ...expRest } = exp;
-      return expRest;
-    }),
-  };
-}
 
 function formatDiagnosticOutput(
   prefix: string,
@@ -79,17 +66,15 @@ export function registerGenerateCommand(
 
   program
     .command('generate [entry]')
-    .description('Generate OpenPkg specification for documentation coverage analysis')
+    .description('Generate pure OpenPkg structural specification (JSON)')
     .option('-o, --output <file>', 'Output file', 'openpkg.json')
-    .option('--format <format>', 'Output format: json, markdown, html', 'json')
     .option('-p, --package <name>', 'Target package name (for monorepos)')
     .option('--cwd <dir>', 'Working directory', process.cwd())
     .option('--skip-resolve', 'Skip external type resolution from node_modules')
     .option('--include <ids>', 'Filter exports by identifier (comma-separated or repeated)')
     .option('--exclude <ids>', 'Exclude exports by identifier (comma-separated or repeated)')
     .option('--show-diagnostics', 'Print TypeScript diagnostics from analysis')
-    .option('--no-docs', 'Omit docs coverage fields from output (pure structural spec)')
-    .option('--limit <n>', 'Max exports to show in report tables (for markdown/html)', '20')
+    .option('--max-type-depth <number>', 'Maximum depth for type conversion (default: 20)')
     .option('-y, --yes', 'Skip all prompts and use defaults')
     .action(async (entry, options) => {
       try {
@@ -145,6 +130,7 @@ export function registerGenerateCommand(
         try {
           const doccov = createDocCov({
             resolveExternalTypes,
+            maxDepth: options.maxTypeDepth ? parseInt(options.maxTypeDepth, 10) : undefined,
           });
           const analyzeOptions =
             resolvedFilters.include || resolvedFilters.exclude
@@ -167,11 +153,7 @@ export function registerGenerateCommand(
           throw new Error('Failed to produce an OpenPkg spec.');
         }
 
-        let normalized = normalize(result.spec as OpenPkgSpec);
-
-        if (options.docs === false) {
-          normalized = stripDocsFields(normalized);
-        }
+        const normalized = normalize(result.spec as OpenPkgSpec);
 
         const validation = validateSpec(normalized);
 
@@ -183,28 +165,14 @@ export function registerGenerateCommand(
           process.exit(1);
         }
 
-        const format = (options.format ?? 'json') as OutputFormat;
         const outputPath = path.resolve(process.cwd(), options.output);
 
-        if (format === 'markdown' || format === 'html') {
-          // Generate human-readable report
-          const stats = computeStats(normalized);
-          const limit = parseInt(options.limit, 10) || 20;
-          const reportOutput = format === 'html' 
-            ? renderHtml(stats, { limit }) 
-            : renderMarkdown(stats, { limit });
-          
-          writeFileSync(outputPath, reportOutput);
-          log(chalk.green(`✓ Generated ${format} report: ${options.output}`));
-          log(chalk.gray(`  Coverage: ${stats.coverageScore}%`));
-          log(chalk.gray(`  ${stats.totalExports} exports, ${stats.driftCount} drift issues`));
-        } else {
-          // Output JSON spec
-          writeFileSync(outputPath, JSON.stringify(normalized, null, 2));
-          log(chalk.green(`✓ Generated ${options.output}`));
-          log(chalk.gray(`  ${getArrayLength(normalized.exports)} exports`));
-          log(chalk.gray(`  ${getArrayLength(normalized.types)} types`));
-        }
+        // Output pure JSON spec (no coverage data - use `doccov check --format` for coverage reports)
+        writeFileSync(outputPath, JSON.stringify(normalized, null, 2));
+        log(chalk.green(`✓ Generated ${options.output}`));
+        log(chalk.gray(`  ${getArrayLength(normalized.exports)} exports`));
+        log(chalk.gray(`  ${getArrayLength(normalized.types)} types`));
+        log(chalk.gray(`  For coverage reports, use: doccov check --format <json|markdown|html>`))
 
         if (options.showDiagnostics && result.diagnostics.length > 0) {
           log('');

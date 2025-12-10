@@ -154,7 +154,10 @@ export function serializeTypeAlias(
     typeRefs.delete(aliasName);
   }
 
-  const aliasSchema = formatTypeReference(aliasType, checker, typeRefs, undefined);
+  // Pass a visited set containing this type to prevent infinite recursion
+  // on recursive type aliases (e.g., type A = B | { items: A })
+  const visited = new Set<string>([aliasName]);
+  const aliasSchema = formatTypeReference(aliasType, checker, typeRefs, referencedTypes, visited);
 
   if (existingRef) {
     typeRefs.set(aliasName, existingRef);

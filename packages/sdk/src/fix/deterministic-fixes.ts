@@ -142,15 +142,27 @@ function mergePatches(base: JSDocPatch, update: Partial<JSDocPatch>): JSDocPatch
   }
 
   if (update.params !== undefined) {
-    // Check if this is a "replace all" update (like remove-param which filters the list)
-    // vs a "modify specific params" update
-    // We detect this by seeing if the update has fewer params than result
+    // Detect the type of param update:
+    // 1. Removal: fewer params in update than in base
+    // 2. Rename/structural change: same count but different names
+    // 3. Addition/modification: same or more params, preserving names
+    const baseNames = new Set(result.params?.map((p) => p.name) ?? []);
+    const updateNames = new Set(update.params.map((p) => p.name));
+
+    // Check if this is a structural change (rename) - names differ but count same or similar
+    const hasStructuralChange = result.params &&
+      update.params.length === result.params.length &&
+      ![...updateNames].every((name) => baseNames.has(name));
+
+    // Check if this is a removal - fewer params in update
     const isRemoval = result.params && update.params.length < result.params.length;
 
-    if (isRemoval) {
+    if (isRemoval || hasStructuralChange) {
       // Replace params entirely - the update.params represents the complete desired state
-      const existingByName = new Map(result.params?.map((p) => [p.name, p]) ?? []);
+      // This handles both removals and renames
       result.params = update.params.map((updatedParam) => {
+        // For structural changes, try to preserve descriptions from params with same name
+        const existingByName = new Map(result.params?.map((p) => [p.name, p]) ?? []);
         const existing = existingByName.get(updatedParam.name);
         return {
           ...existing,
@@ -279,12 +291,22 @@ function generateParamMismatchFix(
   }
 
   // Case: Renamed parameter (suggestion contains the new name)
-  if (drift.suggestion && issue.includes('rename')) {
+  // Or: documented param doesn't match actual param name (suggest rename)
+  if (drift.suggestion) {
     const oldName = extractParamName(target, drift.issue);
-    const newNameMatch = drift.suggestion.match(/`(\w+)`/);
-    const newName = newNameMatch?.[1];
+    // Try multiple patterns to extract the suggested new name:
+    // 1. backticks: `newName`
+    // 2. double quotes: "newName"
+    // 3. single quotes: 'newName'
+    // 4. just the word itself if it looks like a param name (no special chars)
+    const newNameMatch = drift.suggestion.match(/[`'"](\w+)[`'"]/) ??
+                         drift.suggestion.match(/(?:to|use|should be)\s+[`'"]?(\w+)[`'"]?/i);
+    const newName = newNameMatch?.[1] ?? (
+      // Fallback: if suggestion is a simple word, use it directly
+      /^\s*\w+\s*$/.test(drift.suggestion) ? drift.suggestion.trim() : null
+    );
 
-    if (oldName && newName) {
+    if (oldName && newName && oldName !== newName) {
       const updatedParams = existingParams.map((p) =>
         p.name === oldName ? { ...p, name: newName } : p,
       );

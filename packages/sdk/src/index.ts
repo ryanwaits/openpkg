@@ -5,6 +5,29 @@ export {
   parseAssertions,
 } from './analysis/docs-coverage';
 export type { OpenPkgSpec } from './analysis/spec-types';
+// Enrichment and coverage analysis
+export {
+  enrichSpec,
+  type EnrichedExport,
+  type EnrichedOpenPkg,
+  type EnrichOptions,
+} from './analysis/enrich';
+// Report generation
+export {
+  generateReport,
+  generateReportFromEnriched,
+  loadCachedReport,
+  saveReport,
+  isCachedReportValid,
+} from './analysis/report';
+// Report types
+export {
+  type DocCovReport,
+  type CoverageSummary,
+  type ExportCoverageData,
+  REPORT_VERSION,
+  DEFAULT_REPORT_PATH,
+} from './types/report';
 // Project detection (for CLI and API)
 export {
   type AnalyzeProjectOptions,

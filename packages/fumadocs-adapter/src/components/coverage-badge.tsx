@@ -19,7 +19,7 @@ function formatSignal(signal: string): string {
   return signal.charAt(0).toUpperCase() + signal.slice(1);
 }
 
-export function CoverageBadge({ docs, showMissing = true, showDrift = true }: CoverageBadgeProps) {
+export function CoverageBadge({ docs, showMissing = true, showDrift = true }: CoverageBadgeProps): React.ReactNode {
   const score = docs.coverageScore;
   const hasMissing = showMissing && docs.missing && docs.missing.length > 0;
   const hasDrift = showDrift && docs.drift && docs.drift.length > 0;

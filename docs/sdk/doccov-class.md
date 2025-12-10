@@ -83,12 +83,14 @@ interface Diagnostic {
 ### Basic Analysis
 
 ```typescript
-import { DocCov } from '@doccov/sdk';
+import { DocCov, enrichSpec } from '@doccov/sdk';
 
 const doccov = new DocCov();
 const { spec } = await doccov.analyzeFileWithDiagnostics('src/index.ts');
 
-console.log(`Coverage: ${spec.docs?.coverageScore}%`);
+// spec is pure structural - enrich to get coverage data
+const enriched = enrichSpec(spec);
+console.log(`Coverage: ${enriched.docs?.coverageScore}%`);
 ```
 
 ### With Filters
@@ -128,19 +130,25 @@ if (errors.length > 0) {
 ### Iterate Exports
 
 ```typescript
-for (const exp of spec.exports) {
+import { DocCov, enrichSpec } from '@doccov/sdk';
+
+const doccov = new DocCov();
+const { spec } = await doccov.analyzeFileWithDiagnostics('src/index.ts');
+const enriched = enrichSpec(spec);
+
+for (const exp of enriched.exports) {
   const coverage = exp.docs?.coverageScore ?? 0;
   const missing = exp.docs?.missing ?? [];
   const drift = exp.docs?.drift ?? [];
-  
+
   console.log(`${exp.name}:`);
   console.log(`  Kind: ${exp.kind}`);
   console.log(`  Coverage: ${coverage}%`);
-  
+
   if (missing.length > 0) {
     console.log(`  Missing: ${missing.join(', ')}`);
   }
-  
+
   if (drift.length > 0) {
     console.log(`  Drift: ${drift.map(d => d.type).join(', ')}`);
   }
@@ -162,7 +170,8 @@ console.log(`Interfaces: ${interfaces.length}`);
 ### Find Undocumented Exports
 
 ```typescript
-const undocumented = spec.exports.filter(e => 
+const enriched = enrichSpec(spec);
+const undocumented = enriched.exports.filter(e =>
   (e.docs?.coverageScore ?? 0) < 100
 );
 
@@ -175,13 +184,14 @@ for (const exp of undocumented) {
 ### Find Drift Issues
 
 ```typescript
-const withDrift = spec.exports.filter(e => 
+const enriched = enrichSpec(spec);
+const withDrift = enriched.exports.filter(e =>
   e.docs?.drift && e.docs.drift.length > 0
 );
 
 console.log('Has drift:');
 for (const exp of withDrift) {
-  for (const d of exp.docs.drift) {
+  for (const d of exp.docs!.drift!) {
     console.log(`  ${exp.name}: ${d.issue}`);
     if (d.suggestion) {
       console.log(`    Suggestion: ${d.suggestion}`);
@@ -222,10 +232,11 @@ Common errors:
 ```bash
 # Quick test
 bun run -e "
-  import { DocCov } from './packages/sdk/src';
+  import { DocCov, enrichSpec } from './packages/sdk/src';
   const dc = new DocCov();
-  const r = await dc.analyzeFileWithDiagnostics('tests/fixtures/simple-math.ts');
-  console.log(JSON.stringify(r.spec.docs, null, 2));
+  const r = await dc.analyzeFileWithDiagnostics('src/index.ts');
+  const enriched = enrichSpec(r.spec);
+  console.log(JSON.stringify(enriched.docs, null, 2));
 "
 ```
 

@@ -108,7 +108,7 @@ function countProperties(schema: SpecSchema): number {
 /**
  * Nested property row with expandable nested objects
  */
-export function NestedProperty({ name, schema, required = false, depth = 0 }: NestedPropertyProps) {
+export function NestedProperty({ name, schema, required = false, depth = 0 }: NestedPropertyProps): React.ReactNode {
   const [expanded, setExpanded] = useState(false);
   const type = formatType(schema);
   const nestedProps = getNestedProperties(schema);
@@ -175,7 +175,7 @@ export function NestedProperty({ name, schema, required = false, depth = 0 }: Ne
  * Top-level expandable property for method parameters
  * Entry point for rendering a parameter with progressive disclosure
  */
-export function ExpandableProperty({ param, depth = 0 }: ExpandablePropertyProps) {
+export function ExpandableProperty({ param, depth = 0 }: ExpandablePropertyProps): React.ReactNode {
   const [expanded, setExpanded] = useState(false);
   const type = formatType(param.schema);
   const isOptional = param.required === false;

@@ -13,6 +13,6 @@ export interface MethodSectionProps {
  * Method display section with collapsible behavior
  * @deprecated Use CollapsibleMethod directly for more control
  */
-export function MethodSection({ member, defaultExpanded = false }: MethodSectionProps) {
+export function MethodSection({ member, defaultExpanded = false }: MethodSectionProps): React.ReactNode {
   return <CollapsibleMethod member={member} defaultExpanded={defaultExpanded} />;
 }

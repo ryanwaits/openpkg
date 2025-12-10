@@ -1,0 +1,17 @@
+{
+  "$schema": "https://unpkg.com/@openpkg-ts/spec/schemas/v0.3.0/openpkg.schema.json",
+  "openpkg": "0.3.0",
+  "meta": {
+    "ecosystem": "js/ts",
+    "name": "@doccov/cli",
+    "version": "0.9.0",
+    "description": "DocCov CLI - Documentation coverage and drift detection for TypeScript",
+    "license": "MIT",
+    "repository": "git+https://github.com/doccov/doccov.git"
+  },
+  "exports": [],
+  "types": [],
+  "docs": {
+    "coverageScore": 100
+  }
+}

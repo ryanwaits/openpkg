@@ -40,7 +40,7 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
-export function ExamplesSection({ examples }: ExamplesSectionProps) {
+export function ExamplesSection({ examples }: ExamplesSectionProps): React.ReactNode {
   const [activeIndex, setActiveIndex] = useState(0);
 
   if (!examples?.length) return null;
