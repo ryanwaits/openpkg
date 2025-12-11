@@ -1,6 +1,11 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import type * as TS from 'typescript';
+import type {
+  EntryPointDetectionMethod,
+  GenerationIssue,
+  SpecGenerationInfo,
+} from '@openpkg-ts/spec';
 import { ts } from '../ts-module';
 import { isBuiltInType } from '../utils/type-utils';
 import type { AnalysisContextInput } from './context';
@@ -22,6 +27,28 @@ export interface SpecDiagnostic {
   message: string;
   severity: 'error' | 'warning' | 'info';
   suggestion?: string;
+}
+
+/**
+ * Input for generation metadata that comes from the caller (CLI, API, etc.)
+ */
+export interface GenerationInput {
+  /** Entry point file path (relative to package root) */
+  entryPoint: string;
+  /** How the entry point was detected */
+  entryPointSource: EntryPointDetectionMethod;
+  /** Whether this is a declaration-only analysis (.d.ts file) */
+  isDeclarationOnly?: boolean;
+  /** Generator tool name */
+  generatorName: string;
+  /** Generator tool version */
+  generatorVersion: string;
+  /** Detected package manager */
+  packageManager?: string;
+  /** Whether this is a monorepo */
+  isMonorepo?: boolean;
+  /** Target package name (for monorepos) */
+  targetPackage?: string;
 }
 
 export interface RunAnalysisResult {
@@ -174,7 +201,10 @@ function hasExternalImports(sourceFile: TS.SourceFile): boolean {
   return found;
 }
 
-export function runAnalysis(input: AnalysisContextInput): RunAnalysisResult {
+export function runAnalysis(
+  input: AnalysisContextInput,
+  generationInput?: GenerationInput,
+): RunAnalysisResult {
   const context = createAnalysisContext(input);
   const { baseDir, options, program } = context;
 
@@ -193,42 +223,81 @@ export function runAnalysis(input: AnalysisContextInput): RunAnalysisResult {
     return !/allowJs/i.test(msg);
   });
 
-  const spec = buildOpenPkgSpec(context, resolveExternalTypes);
-
-  // Collect spec-level diagnostics
+  // Collect spec-level diagnostics and generation issues
   const specDiagnostics: SpecDiagnostic[] = [];
+  const generationIssues: GenerationIssue[] = [];
 
   // Check if external imports exist but no node_modules found
   if (!hasNodeModules && hasExternalImports(context.sourceFile)) {
-    specDiagnostics.push({
+    const issue = {
+      code: 'NO_NODE_MODULES',
       message: 'External imports detected but node_modules not found.',
-      severity: 'info',
+      severity: 'info' as const,
       suggestion: 'Run npm install or bun install for complete type resolution.',
-    });
+    };
+    specDiagnostics.push(issue);
+    generationIssues.push(issue);
   }
+
+  // Build generation info if provided
+  const generation: SpecGenerationInfo | undefined = generationInput
+    ? {
+        timestamp: new Date().toISOString(),
+        generator: {
+          name: generationInput.generatorName,
+          version: generationInput.generatorVersion,
+        },
+        analysis: {
+          entryPoint: generationInput.entryPoint,
+          entryPointSource: generationInput.entryPointSource,
+          isDeclarationOnly: generationInput.isDeclarationOnly ?? false,
+          resolvedExternalTypes: resolveExternalTypes,
+          maxTypeDepth: options.maxDepth,
+        },
+        environment: {
+          packageManager: generationInput.packageManager,
+          hasNodeModules,
+          isMonorepo: generationInput.isMonorepo,
+          targetPackage: generationInput.targetPackage,
+        },
+        issues: generationIssues,
+      }
+    : undefined;
+
+  const spec = buildOpenPkgSpec(context, resolveExternalTypes, generation);
 
   // Check for dangling $refs (refs to types that don't exist at all)
   const danglingRefs = collectDanglingRefs(spec);
   for (const ref of danglingRefs) {
-    specDiagnostics.push({
+    const issue = {
+      code: 'DANGLING_REF',
       message: `Type '${ref}' is referenced but not defined in types[].`,
-      severity: 'warning',
+      severity: 'warning' as const,
       suggestion: hasNodeModules
         ? 'The type may be from an external package. Check import paths.'
         : 'Run npm/bun install to resolve external types.',
-    });
+    };
+    specDiagnostics.push(issue);
+    if (generation) {
+      generation.issues.push(issue);
+    }
   }
 
   // Check for external type stubs (types that couldn't be resolved)
   const externalTypes = collectExternalTypes(spec);
   if (externalTypes.length > 0) {
-    specDiagnostics.push({
+    const issue = {
+      code: 'EXTERNAL_TYPE_STUBS',
       message: `${externalTypes.length} external type(s) could not be fully resolved: ${externalTypes.slice(0, 5).join(', ')}${externalTypes.length > 5 ? '...' : ''}`,
-      severity: 'warning',
+      severity: 'warning' as const,
       suggestion: hasNodeModules
         ? 'Types are from external packages. Full resolution requires type declarations.'
         : 'Run npm/bun install to resolve external type definitions.',
-    });
+    };
+    specDiagnostics.push(issue);
+    if (generation) {
+      generation.issues.push(issue);
+    }
   }
 
   // Collect source files from the program (for caching)

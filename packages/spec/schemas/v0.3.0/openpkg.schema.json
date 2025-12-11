@@ -4,7 +4,7 @@
   "title": "OpenPkg Specification",
   "description": "Schema for OpenPkg specification files",
   "type": "object",
-  "required": ["openpkg", "meta", "exports"],
+  "required": ["openpkg", "meta", "exports", "generation"],
   "properties": {
     "$schema": {
       "type": "string",
@@ -65,9 +65,137 @@
     "docs": {
       "$ref": "#/$defs/docsMetadata",
       "description": "Aggregate documentation coverage metadata"
+    },
+    "generation": {
+      "$ref": "#/$defs/generationInfo",
+      "description": "Required metadata about how this spec was generated"
     }
   },
   "$defs": {
+    "entryPointDetectionMethod": {
+      "type": "string",
+      "description": "Method used to detect the entry point for analysis",
+      "enum": ["types", "exports", "main", "module", "fallback", "explicit", "llm"]
+    },
+    "generationIssueSeverity": {
+      "type": "string",
+      "description": "Severity level for issues encountered during spec generation",
+      "enum": ["error", "warning", "info"]
+    },
+    "generationIssue": {
+      "type": "object",
+      "description": "An issue encountered during spec generation",
+      "required": ["code", "message", "severity"],
+      "properties": {
+        "code": {
+          "type": "string",
+          "description": "Machine-readable issue code"
+        },
+        "message": {
+          "type": "string",
+          "description": "Human-readable issue message"
+        },
+        "severity": {
+          "$ref": "#/$defs/generationIssueSeverity"
+        },
+        "suggestion": {
+          "type": "string",
+          "description": "Suggested resolution"
+        }
+      },
+      "additionalProperties": false
+    },
+    "generationInfo": {
+      "type": "object",
+      "description": "Metadata about how the spec was generated",
+      "required": ["timestamp", "generator", "analysis", "environment", "issues"],
+      "properties": {
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of when the spec was generated"
+        },
+        "generator": {
+          "type": "object",
+          "description": "Information about the tool that generated the spec",
+          "required": ["name", "version"],
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Tool name (e.g., '@doccov/cli', '@doccov/api')"
+            },
+            "version": {
+              "type": "string",
+              "description": "Tool version"
+            }
+          },
+          "additionalProperties": false
+        },
+        "analysis": {
+          "type": "object",
+          "description": "Details about the analysis process",
+          "required": ["entryPoint", "entryPointSource", "isDeclarationOnly", "resolvedExternalTypes"],
+          "properties": {
+            "entryPoint": {
+              "type": "string",
+              "description": "Entry point file that was analyzed (relative path)"
+            },
+            "entryPointSource": {
+              "$ref": "#/$defs/entryPointDetectionMethod"
+            },
+            "isDeclarationOnly": {
+              "type": "boolean",
+              "description": "Whether this was a declaration-only analysis (.d.ts file)"
+            },
+            "resolvedExternalTypes": {
+              "type": "boolean",
+              "description": "Whether external types from node_modules were resolved"
+            },
+            "maxTypeDepth": {
+              "type": "integer",
+              "description": "Maximum type depth used for nested type resolution"
+            }
+          },
+          "additionalProperties": false
+        },
+        "environment": {
+          "type": "object",
+          "description": "Environment information during generation",
+          "required": ["hasNodeModules"],
+          "properties": {
+            "packageManager": {
+              "type": "string",
+              "description": "Detected package manager"
+            },
+            "hasNodeModules": {
+              "type": "boolean",
+              "description": "Whether node_modules was available for type resolution"
+            },
+            "isMonorepo": {
+              "type": "boolean",
+              "description": "Whether this is a monorepo"
+            },
+            "targetPackage": {
+              "type": "string",
+              "description": "Target package name (for monorepos)"
+            }
+          },
+          "additionalProperties": false
+        },
+        "issues": {
+          "type": "array",
+          "description": "Issues encountered during generation",
+          "items": {
+            "$ref": "#/$defs/generationIssue"
+          }
+        },
+        "fromCache": {
+          "type": "boolean",
+          "description": "Whether the result came from cache"
+        }
+      },
+      "additionalProperties": false
+    },
     "docSignal": {
       "type": "string",
       "enum": ["description", "params", "returns", "examples"]

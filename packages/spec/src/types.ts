@@ -348,6 +348,90 @@ export type OpenPkgMeta = {
   ecosystem?: string;
 };
 
+// ============================================================================
+// Spec Generation Metadata
+// ============================================================================
+
+/**
+ * Method used to detect the entry point for analysis.
+ */
+export type EntryPointDetectionMethod =
+  | 'types'     // package.json types/typings field
+  | 'exports'   // package.json exports field
+  | 'main'      // package.json main field
+  | 'module'    // package.json module field
+  | 'fallback'  // Convention-based (src/index.ts, etc.)
+  | 'explicit'  // User-specified entry point
+  | 'llm';      // LLM-detected entry point
+
+/**
+ * Severity level for issues encountered during spec generation.
+ */
+export type GenerationIssueSeverity = 'error' | 'warning' | 'info';
+
+/**
+ * An issue encountered during spec generation.
+ */
+export type GenerationIssue = {
+  /** Machine-readable issue code */
+  code: string;
+  /** Human-readable issue message */
+  message: string;
+  /** Severity level */
+  severity: GenerationIssueSeverity;
+  /** Suggested resolution */
+  suggestion?: string;
+};
+
+/**
+ * Metadata about how a spec was generated.
+ * Provides transparency about the analysis process and any limitations.
+ */
+export type SpecGenerationInfo = {
+  /** ISO 8601 timestamp of when the spec was generated */
+  timestamp: string;
+
+  /** Information about the tool that generated the spec */
+  generator: {
+    /** Tool name (e.g., '@doccov/cli', '@doccov/api') */
+    name: string;
+    /** Tool version */
+    version: string;
+  };
+
+  /** Details about the analysis process */
+  analysis: {
+    /** Entry point file that was analyzed (relative path) */
+    entryPoint: string;
+    /** How the entry point was detected */
+    entryPointSource: EntryPointDetectionMethod;
+    /** Whether this was a declaration-only analysis (.d.ts file) */
+    isDeclarationOnly: boolean;
+    /** Whether external types from node_modules were resolved */
+    resolvedExternalTypes: boolean;
+    /** Maximum type depth used for nested type resolution */
+    maxTypeDepth?: number;
+  };
+
+  /** Environment information during generation */
+  environment: {
+    /** Detected package manager */
+    packageManager?: string;
+    /** Whether node_modules was available for type resolution */
+    hasNodeModules: boolean;
+    /** Whether this is a monorepo */
+    isMonorepo?: boolean;
+    /** Target package name (for monorepos) */
+    targetPackage?: string;
+  };
+
+  /** Issues encountered during generation */
+  issues: GenerationIssue[];
+
+  /** Whether the result came from cache */
+  fromCache?: boolean;
+};
+
 /** Supported OpenPkg spec versions */
 export type OpenPkgVersion = '0.2.0' | '0.3.0';
 
@@ -359,4 +443,6 @@ export type OpenPkg = {
   types?: SpecType[];
   examples?: SpecExample[];
   extensions?: SpecExtension;
+  /** Required metadata about how this spec was generated */
+  generation: SpecGenerationInfo;
 };

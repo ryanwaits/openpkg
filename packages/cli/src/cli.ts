@@ -8,7 +8,6 @@ import { registerCheckCommand } from './commands/check';
 import { registerDiffCommand } from './commands/diff';
 import { registerInfoCommand } from './commands/info';
 import { registerInitCommand } from './commands/init';
-import { registerScanCommand } from './commands/scan';
 import { registerSpecCommand } from './commands/spec';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -31,7 +30,6 @@ registerSpecCommand(program);
 // Utility commands
 registerDiffCommand(program);
 registerInitCommand(program);
-registerScanCommand(program);
 
 program.command('*', { hidden: true }).action(() => {
   program.outputHelp();

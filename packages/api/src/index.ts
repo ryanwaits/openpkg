@@ -2,20 +2,20 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { rateLimit } from './middleware/rate-limit';
 import { badgeRoute } from './routes/badge';
-import { scanRoute } from './routes/scan';
+import { planRoute } from './routes/plan';
 
 const app = new Hono();
 
 // Middleware
 app.use('*', cors());
 
-// Rate limit /scan endpoint: 10 requests per minute per IP
+// Rate limit /plan endpoint: 10 requests per minute per IP
 app.use(
-  '/scan/*',
+  '/plan',
   rateLimit({
     windowMs: 60 * 1000,
     max: 10,
-    message: 'Too many scan requests. Please try again in a minute.',
+    message: 'Too many plan requests. Please try again in a minute.',
   }),
 );
 
@@ -23,10 +23,12 @@ app.use(
 app.get('/', (c) => {
   return c.json({
     name: 'DocCov API',
-    version: '0.3.0',
+    version: '0.4.0',
     endpoints: {
       badge: '/badge/:owner/:repo',
-      scan: '/scan',
+      plan: '/plan',
+      execute: '/execute',
+      'execute-stream': '/execute-stream',
       health: '/health',
     },
   });
@@ -38,7 +40,7 @@ app.get('/health', (c) => {
 
 // Routes
 app.route('/badge', badgeRoute);
-app.route('/scan', scanRoute);
+app.route('/plan', planRoute);
 
 // Vercel serverless handler + Bun auto-serves this export
 export default app;

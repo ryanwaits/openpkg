@@ -10,6 +10,6 @@
     "isolatedModules": true,
     "noEmit": true
   },
-  "include": ["api/**/*", "src/**/*"],
-  "exclude": ["node_modules"]
+  "include": ["api/**/*", "functions/**/*", "lib/**/*", "src/**/*"],
+  "exclude": ["node_modules", "dist"]
 }

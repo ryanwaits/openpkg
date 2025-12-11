@@ -1,16 +1,27 @@
 /**
- * Scan module - types and utilities for documentation coverage scanning.
+ * Scan module - AI-powered build plan generation and execution.
  */
 
-export type { ScanContext, ScanOrchestratorOptions } from './orchestrator';
-export { MonorepoRequiresPackageError, ScanOrchestrator } from './orchestrator';
-export type { SpecSummary } from './summary';
+// Summary utilities
+export type { SpecSummary, SummaryDriftIssue } from './summary';
 export { extractSpecSummary } from './summary';
+
+// Build plan types
 export type {
-  DriftIssue,
-  ProgressCallback,
-  ProgressEvent,
-  ProgressStage,
-  ScanOptions,
-  ScanResult,
+  BuildPlan,
+  BuildPlanEnvironment,
+  BuildPlanExecutionResult,
+  BuildPlanStep,
+  BuildPlanStepResult,
+  BuildPlanTarget,
 } from './types';
+
+// GitHub context fetcher
+export type {
+  BuildHints,
+  DetectedPackageManager,
+  GitHubProjectContext,
+  GitHubRepoMetadata,
+  WorkspaceConfig,
+} from './github-context';
+export { fetchGitHubContext, listWorkspacePackages, parseGitHubUrl } from './github-context';

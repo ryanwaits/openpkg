@@ -3,7 +3,20 @@
  */
 
 import type { EnrichedOpenPkg } from '../analysis/enrich';
-import type { DriftIssue } from './types';
+
+/**
+ * A documentation drift issue in a spec summary.
+ */
+export interface SummaryDriftIssue {
+  /** Name of the export with drift */
+  export: string;
+  /** Type of drift (e.g., 'param-mismatch', 'return-type') */
+  type: string;
+  /** Human-readable description of the issue */
+  issue: string;
+  /** Optional suggestion for fixing the issue */
+  suggestion?: string;
+}
 
 /**
  * Summary of a spec's documentation coverage.
@@ -21,7 +34,7 @@ export interface SpecSummary {
   /** Names of undocumented or partially documented exports */
   undocumented: string[];
   /** Drift issues */
-  drift: DriftIssue[];
+  drift: SummaryDriftIssue[];
 }
 
 /**
@@ -48,7 +61,7 @@ export interface SpecSummary {
 export function extractSpecSummary(spec: EnrichedOpenPkg): SpecSummary {
   const exports = spec.exports ?? [];
   const undocumented: string[] = [];
-  const drift: DriftIssue[] = [];
+  const drift: SummaryDriftIssue[] = [];
 
   for (const exp of exports) {
     const docs = exp.docs;

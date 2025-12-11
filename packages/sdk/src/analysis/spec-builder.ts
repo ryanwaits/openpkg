@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { SCHEMA_URL, SCHEMA_VERSION } from '@openpkg-ts/spec';
+import { SCHEMA_URL, SCHEMA_VERSION, type SpecGenerationInfo } from '@openpkg-ts/spec';
 import type * as TS from 'typescript';
 import { ts } from '../ts-module';
 
@@ -15,16 +15,46 @@ import { serializeVariable } from './serializers/variables';
 import type { OpenPkgSpec } from './spec-types';
 import { TypeRegistry } from './type-registry';
 
+/**
+ * Create a default generation info for cases where it's not provided.
+ * This ensures the spec always has valid generation metadata.
+ */
+function createDefaultGenerationInfo(entryFile: string): SpecGenerationInfo {
+  return {
+    timestamp: new Date().toISOString(),
+    generator: {
+      name: '@doccov/sdk',
+      version: '0.0.0', // Will be replaced by actual version at runtime
+    },
+    analysis: {
+      entryPoint: entryFile,
+      entryPointSource: 'explicit',
+      isDeclarationOnly: entryFile.endsWith('.d.ts'),
+      resolvedExternalTypes: false,
+    },
+    environment: {
+      hasNodeModules: false,
+    },
+    issues: [],
+  };
+}
+
 export function buildOpenPkgSpec(
   context: AnalysisContext,
   resolveExternalTypes: boolean,
+  generation?: SpecGenerationInfo,
 ): OpenPkgSpec {
-  const { baseDir, checker: typeChecker, sourceFile, program } = context;
+  const { baseDir, checker: typeChecker, sourceFile, program, entryFile } = context;
 
   const packageJsonPath = path.join(baseDir, 'package.json');
   const packageJson = fs.existsSync(packageJsonPath)
     ? JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'))
     : {};
+
+  // Use provided generation info or create a default
+  const generationInfo = generation ?? createDefaultGenerationInfo(
+    path.relative(baseDir, entryFile),
+  );
 
   const spec: OpenPkgSpec = {
     $schema: SCHEMA_URL,
@@ -39,6 +69,7 @@ export function buildOpenPkgSpec(
     },
     exports: [],
     types: [],
+    generation: generationInfo,
   };
 
   const typeRegistry = new TypeRegistry();

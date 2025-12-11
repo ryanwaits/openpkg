@@ -5,7 +5,23 @@
 
 import { detectPackageManager, getInstallCommand } from '../detect/package-manager';
 import type { FileSystem, PackageManager } from '../detect/types';
-import type { ProgressCallback } from '../scan/types';
+
+/**
+ * Progress event for installation status updates.
+ */
+export interface InstallProgressEvent {
+  /** Current stage */
+  stage: 'installing';
+  /** Human-readable message */
+  message: string;
+  /** Progress percentage (0-100), if known */
+  progress?: number;
+}
+
+/**
+ * Callback for receiving installation progress events.
+ */
+export type InstallProgressCallback = (event: InstallProgressEvent) => void;
 
 /**
  * Result of running a command.
@@ -54,7 +70,7 @@ export interface InstallOptions {
   /** Order of fallback package managers to try */
   fallbackOrder?: PackageManager[];
   /** Progress callback for status updates */
-  onProgress?: ProgressCallback;
+  onProgress?: InstallProgressCallback;
 }
 
 /**

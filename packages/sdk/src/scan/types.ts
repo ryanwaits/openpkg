@@ -1,89 +1,110 @@
 /**
- * Scan types for CLI, API, and SDK consumers.
- * Single source of truth for scan-related interfaces.
+ * Build Plan types for AI-powered repository scanning.
  */
 
 /**
- * Result of scanning a repository for documentation coverage.
- * Used by CLI scan command, API endpoints, and SDK consumers.
+ * Target repository information for a build plan.
  */
-export interface ScanResult {
-  /** GitHub repository owner */
-  owner: string;
-  /** GitHub repository name */
-  repo: string;
-  /** Git ref (branch/tag) that was scanned */
+export interface BuildPlanTarget {
+  /** Target type (currently only GitHub is supported) */
+  type: 'github';
+  /** Full GitHub repository URL */
+  repoUrl: string;
+  /** Git ref (branch, tag, or commit) */
   ref: string;
-  /** Package name if scanning a monorepo package */
-  packageName?: string;
-  /** Overall documentation coverage percentage (0-100) */
-  coverage: number;
-  /** Number of public exports analyzed */
-  exportCount: number;
-  /** Number of types analyzed */
-  typeCount: number;
-  /** Number of documentation drift issues found */
-  driftCount: number;
-  /** Names of exports missing documentation */
-  undocumented: string[];
-  /** Drift issues found during analysis */
-  drift: DriftIssue[];
+  /** Root path within the repository (for monorepos) */
+  rootPath?: string;
+  /** Entry point files to analyze */
+  entryPoints: string[];
 }
 
 /**
- * A documentation drift issue.
+ * Runtime environment configuration for executing a build plan.
  */
-export interface DriftIssue {
-  /** Name of the export with drift */
-  export: string;
-  /** Type of drift (e.g., 'param-mismatch', 'return-type') */
-  type: string;
-  /** Human-readable description of the issue */
-  issue: string;
-  /** Optional suggestion for fixing the issue */
-  suggestion?: string;
+export interface BuildPlanEnvironment {
+  /** Node.js or Bun runtime */
+  runtime: 'node20' | 'node22' | 'bun';
+  /** Package manager to use */
+  packageManager: 'npm' | 'yarn' | 'pnpm' | 'bun';
+  /** Additional tools required (e.g., 'wasm-pack', 'cargo') */
+  requiredTools?: string[];
 }
 
 /**
- * Options for running a scan.
+ * A single step in the build plan.
  */
-export interface ScanOptions {
-  /** GitHub URL or owner/repo shorthand */
-  url: string;
-  /** Git ref (branch/tag) to scan */
-  ref?: string;
-  /** Target package name for monorepos */
-  package?: string;
-  /** Skip dependency installation */
-  skipInstall?: boolean;
-  /** Skip external type resolution */
-  skipResolve?: boolean;
+export interface BuildPlanStep {
+  /** Unique identifier for this step */
+  id: string;
+  /** Human-readable step name */
+  name: string;
+  /** Command to execute */
+  command: string;
+  /** Command arguments */
+  args: string[];
+  /** Working directory (relative to repo root) */
+  cwd?: string;
+  /** Timeout in milliseconds */
+  timeout?: number;
+  /** If true, failure won't stop the plan execution */
+  optional?: boolean;
 }
 
 /**
- * Stages of the scan pipeline.
+ * AI-generated build plan for analyzing a repository.
  */
-export type ProgressStage =
-  | 'cloning'
-  | 'detecting'
-  | 'installing'
-  | 'building'
-  | 'analyzing'
-  | 'complete';
-
-/**
- * Progress event emitted during scan operations.
- */
-export interface ProgressEvent {
-  /** Current stage of the scan */
-  stage: ProgressStage;
-  /** Human-readable message */
-  message: string;
-  /** Progress percentage (0-100), if known */
-  progress?: number;
+export interface BuildPlan {
+  /** Build plan schema version */
+  version: '1.0.0';
+  /** When the plan was generated */
+  generatedAt: string;
+  /** Target repository information */
+  target: BuildPlanTarget;
+  /** Environment configuration */
+  environment: BuildPlanEnvironment;
+  /** Ordered list of steps to execute */
+  steps: BuildPlanStep[];
+  /** AI reasoning about the plan */
+  reasoning: {
+    /** Brief summary of the approach */
+    summary: string;
+    /** Why this approach was chosen */
+    rationale: string;
+    /** Potential issues or concerns */
+    concerns: string[];
+  };
+  /** AI confidence in the plan */
+  confidence: 'high' | 'medium' | 'low';
 }
 
 /**
- * Callback for receiving progress events.
+ * Result of executing a single build plan step.
  */
-export type ProgressCallback = (event: ProgressEvent) => void;
+export interface BuildPlanStepResult {
+  /** Step ID that was executed */
+  stepId: string;
+  /** Whether the step succeeded */
+  success: boolean;
+  /** Duration in milliseconds */
+  duration: number;
+  /** Command output (stdout) */
+  output?: string;
+  /** Error message if failed */
+  error?: string;
+}
+
+/**
+ * Result of executing a complete build plan.
+ */
+export interface BuildPlanExecutionResult {
+  /** Whether all required steps succeeded */
+  success: boolean;
+  /** Generated OpenPkg spec (if successful) */
+  spec?: import('@openpkg-ts/spec').OpenPkg;
+  /** Results for each step */
+  stepResults: BuildPlanStepResult[];
+  /** Total execution time in milliseconds */
+  totalDuration: number;
+  /** Overall error message if failed */
+  error?: string;
+}

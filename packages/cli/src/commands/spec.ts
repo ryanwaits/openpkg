@@ -1,7 +1,8 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { DocCov, NodeFileSystem, resolveTarget } from '@doccov/sdk';
+import { DocCov, type GenerationInput, NodeFileSystem, resolveTarget } from '@doccov/sdk';
 import { normalize, type OpenPkg as OpenPkgSpec, validateSpec } from '@openpkg-ts/spec';
+import { version as cliVersion } from '../../package.json';
 import chalk from 'chalk';
 import type { Command } from 'commander';
 import { type LoadedDocCovConfig, loadDocCovConfig } from '../config';
@@ -32,6 +33,9 @@ export interface SpecOptions {
 
   // Diagnostics
   showDiagnostics?: boolean;
+
+  // Verbose output
+  verbose?: boolean;
 }
 
 export interface SpecCommandDependencies {
@@ -107,6 +111,9 @@ export function registerSpecCommand(
     // === Diagnostics ===
     .option('--show-diagnostics', 'Show TypeScript compiler diagnostics')
 
+    // === Verbose ===
+    .option('--verbose', 'Show detailed generation metadata')
+
     .action(async (entry: string | undefined, options: SpecOptions) => {
       try {
         // Resolve target directory and entry point
@@ -171,6 +178,18 @@ export function registerSpecCommand(
             cwd: options.cwd,
           });
 
+          // Build generation input for spec metadata
+          const generationInput: GenerationInput = {
+            entryPoint: path.relative(targetDir, entryFile),
+            entryPointSource: entryPointInfo.source,
+            isDeclarationOnly: entryPointInfo.isDeclarationOnly ?? false,
+            generatorName: '@doccov/cli',
+            generatorVersion: cliVersion,
+            packageManager: packageInfo?.packageManager,
+            isMonorepo: resolved.isMonorepo,
+            targetPackage: packageInfo?.name,
+          };
+
           const analyzeOptions =
             resolvedFilters.include || resolvedFilters.exclude
               ? {
@@ -178,8 +197,9 @@ export function registerSpecCommand(
                     include: resolvedFilters.include,
                     exclude: resolvedFilters.exclude,
                   },
+                  generationInput,
                 }
-              : {};
+              : { generationInput };
 
           result = await doccov.analyzeFileWithDiagnostics(entryFile, analyzeOptions);
 
@@ -216,6 +236,59 @@ export function registerSpecCommand(
         log(chalk.green(`> Wrote ${options.output}`));
         log(chalk.gray(`  ${getArrayLength(normalized.exports)} exports`));
         log(chalk.gray(`  ${getArrayLength(normalized.types)} types`));
+
+        // Show verbose generation metadata if requested
+        if (options.verbose && normalized.generation) {
+          const gen = normalized.generation;
+          log('');
+          log(chalk.bold('Generation Info'));
+          log(chalk.gray(`  Timestamp:        ${gen.timestamp}`));
+          log(chalk.gray(`  Generator:        ${gen.generator.name}@${gen.generator.version}`));
+          log(chalk.gray(`  Entry point:      ${gen.analysis.entryPoint}`));
+          log(chalk.gray(`  Detected via:     ${gen.analysis.entryPointSource}`));
+          log(
+            chalk.gray(
+              `  Declaration only: ${gen.analysis.isDeclarationOnly ? 'yes' : 'no'}`,
+            ),
+          );
+          log(
+            chalk.gray(
+              `  External types:   ${gen.analysis.resolvedExternalTypes ? 'resolved' : 'skipped'}`,
+            ),
+          );
+          if (gen.analysis.maxTypeDepth) {
+            log(chalk.gray(`  Max type depth:   ${gen.analysis.maxTypeDepth}`));
+          }
+          log('');
+          log(chalk.bold('Environment'));
+          log(chalk.gray(`  node_modules:     ${gen.environment.hasNodeModules ? 'found' : 'not found'}`));
+          if (gen.environment.packageManager) {
+            log(chalk.gray(`  Package manager:  ${gen.environment.packageManager}`));
+          }
+          if (gen.environment.isMonorepo) {
+            log(chalk.gray(`  Monorepo:         yes`));
+          }
+          if (gen.environment.targetPackage) {
+            log(chalk.gray(`  Target package:   ${gen.environment.targetPackage}`));
+          }
+
+          if (gen.issues.length > 0) {
+            log('');
+            log(chalk.bold('Issues'));
+            for (const issue of gen.issues) {
+              const prefix =
+                issue.severity === 'error'
+                  ? chalk.red('>')
+                  : issue.severity === 'warning'
+                    ? chalk.yellow('>')
+                    : chalk.cyan('>');
+              log(`${prefix} [${issue.code}] ${issue.message}`);
+              if (issue.suggestion) {
+                log(chalk.gray(`    ${issue.suggestion}`));
+              }
+            }
+          }
+        }
 
         // Show diagnostics if requested
         if (options.showDiagnostics && result.diagnostics.length > 0) {

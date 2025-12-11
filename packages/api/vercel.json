@@ -1,10 +1,12 @@
 {
+  "installCommand": "bun install",
+  "buildCommand": "bun run build",
   "rewrites": [
     { "source": "/badge/:path*", "destination": "/api" },
     { "source": "/spec/:path*", "destination": "/api" },
-    { "source": "/scan-stream", "destination": "/api/scan-stream" },
-    { "source": "/scan/detect", "destination": "/api/scan/detect" },
-    { "source": "/scan", "destination": "/api/scan" },
+    { "source": "/plan", "destination": "/api/plan" },
+    { "source": "/execute", "destination": "/api/execute" },
+    { "source": "/execute-stream", "destination": "/api/execute-stream" },
     { "source": "/(.*)", "destination": "/api" }
   ]
 }

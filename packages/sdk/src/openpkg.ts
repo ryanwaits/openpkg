@@ -2,7 +2,7 @@ import * as fsSync from 'node:fs';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import type * as TS from 'typescript';
-import type { AnalysisMetadataInternal } from './analysis/run-analysis';
+import type { AnalysisMetadataInternal, GenerationInput } from './analysis/run-analysis';
 import { runAnalysis } from './analysis/run-analysis';
 import type { OpenPkgSpec } from './analysis/spec-types';
 import {
@@ -18,6 +18,9 @@ import type { FilterOptions } from './filtering/types';
 import type { DocCovOptions, NormalizedDocCovOptions } from './options';
 import { normalizeDocCovOptions } from './options';
 import { ts } from './ts-module';
+
+// Re-export GenerationInput for CLI/API consumers
+export type { GenerationInput } from './analysis/run-analysis';
 
 export interface Diagnostic {
   message: string;
@@ -52,6 +55,8 @@ export interface AnalysisMetadata {
 
 export interface AnalyzeOptions {
   filters?: FilterOptions;
+  /** Generation metadata input (entry point info, tool version, etc.) */
+  generationInput?: GenerationInput;
 }
 
 export class DocCov {
@@ -94,12 +99,15 @@ export class DocCov {
   ): Promise<AnalysisResult> {
     const resolvedFileName = path.resolve(fileName ?? 'temp.ts');
     const packageDir = resolvePackageDir(resolvedFileName);
-    const analysis = runAnalysis({
-      entryFile: resolvedFileName,
-      packageDir,
-      content: code,
-      options: this.options,
-    });
+    const analysis = runAnalysis(
+      {
+        entryFile: resolvedFileName,
+        packageDir,
+        content: code,
+        options: this.options,
+      },
+      analyzeOptions.generationInput,
+    );
 
     const filterOutcome = this.applySpecFilters(analysis.spec, analyzeOptions.filters);
 
@@ -140,12 +148,15 @@ export class DocCov {
 
     // Run full analysis
     const content = await fs.readFile(resolvedPath, 'utf-8');
-    const analysis = runAnalysis({
-      entryFile: resolvedPath,
-      packageDir,
-      content,
-      options: this.options,
-    });
+    const analysis = runAnalysis(
+      {
+        entryFile: resolvedPath,
+        packageDir,
+        content,
+        options: this.options,
+      },
+      analyzeOptions.generationInput,
+    );
 
     const filterOutcome = this.applySpecFilters(analysis.spec, analyzeOptions.filters);
     const metadata = this.normalizeMetadata(analysis.metadata);

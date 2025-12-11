@@ -213,17 +213,29 @@ export type { ResolvedTarget, ResolveTargetOptions } from './resolve';
 export { resolveTarget } from './resolve';
 // Scan types and utilities
 export type {
-  DriftIssue,
-  ProgressCallback,
-  ProgressEvent,
-  ProgressStage,
-  ScanContext,
-  ScanOptions,
-  ScanOrchestratorOptions,
-  ScanResult,
+  // Build plan types
+  BuildPlan,
+  BuildPlanEnvironment,
+  BuildPlanExecutionResult,
+  BuildPlanStep,
+  BuildPlanStepResult,
+  BuildPlanTarget,
+  // GitHub context types
+  BuildHints,
+  DetectedPackageManager,
+  GitHubProjectContext,
+  GitHubRepoMetadata,
+  WorkspaceConfig,
+  // Summary
   SpecSummary,
+  SummaryDriftIssue,
 } from './scan';
-export { extractSpecSummary, MonorepoRequiresPackageError, ScanOrchestrator } from './scan';
+export {
+  extractSpecSummary,
+  fetchGitHubContext,
+  listWorkspacePackages,
+  parseGitHubUrl as parseScanGitHubUrl,
+} from './scan';
 // Example typechecker
 export {
   type ExampleTypeError,

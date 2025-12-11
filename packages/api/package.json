@@ -18,17 +18,20 @@
   "license": "MIT",
   "author": "Ryan Waits",
   "type": "module",
-  "main": "./src/index.ts",
   "scripts": {
+    "build": "bunup",
     "dev": "bun run --hot src/index.ts",
     "start": "bun run src/index.ts",
-    "lint": "biome check src/",
-    "lint:fix": "biome check --write src/",
-    "format": "biome format --write src/"
+    "lint": "biome check src/ functions/ lib/",
+    "lint:fix": "biome check --write src/ functions/ lib/",
+    "format": "biome format --write src/ functions/ lib/"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "^2.0.55",
+    "@doccov/sdk": "^0.12.0",
     "@openpkg-ts/spec": "^0.8.0",
     "@vercel/sandbox": "^1.0.3",
+    "ai": "^5.0.111",
     "hono": "^4.0.0",
     "ms": "^2.1.3",
     "zod": "^3.25.0"
@@ -38,6 +41,7 @@
     "@types/ms": "^0.7.34",
     "@types/node": "^20.0.0",
     "@vercel/node": "^3.0.0",
+    "bunup": "latest",
     "typescript": "^5.0.0"
   }
 }
