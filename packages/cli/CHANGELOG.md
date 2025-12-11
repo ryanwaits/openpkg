@@ -1,5 +1,37 @@
 # @doccov/cli
 
+## 0.12.0
+
+### Minor Changes
+
+- ### `diff` command improvements
+
+  **New features:**
+
+  - Hash-based report caching - repeated diffs with same specs are instant
+  - `--no-cache` flag to bypass cache and force regeneration
+  - `--strict` presets (`ci`, `release`, `quality`) for streamlined CI configuration
+  - Support for both positional and explicit `--base`/`--head` arguments
+  - `--min-coverage` and `--max-drift` threshold flags (same as `check` command)
+  - Config file support for thresholds via `doccov.config.ts`
+  - Simplified terminal output with detailed reports written to `.doccov/`
+
+  **SDK additions:**
+
+  - `calculateAggregateCoverage(spec)` - lightweight coverage calculation from exports
+  - `ensureSpecCoverage(spec)` - ensures spec has top-level coverage score
+  - `getDiffReportPath()` - hash-based diff report path generation
+
+  **Fixes:**
+
+  - Coverage now correctly calculated for raw specs (was showing 0% → 0%)
+  - Shared validation utilities extracted to avoid duplication between `check` and `diff`
+
+### Patch Changes
+
+- Updated dependencies
+  - @doccov/sdk@0.12.0
+
 ## 0.11.0
 
 ### Minor Changes
