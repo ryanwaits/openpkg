@@ -1,5 +1,16 @@
 # @doccov/cli
 
+## 0.11.0
+
+### Minor Changes
+
+- Version sync release
+
+### Patch Changes
+
+- Updated dependencies
+  - @doccov/sdk@0.11.0
+
 ## 0.10.2
 
 ### Patch Changes
