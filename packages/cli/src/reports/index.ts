@@ -1,3 +1,6 @@
+export { renderDiffHtml } from './diff-html';
+// Diff report renderers
+export { type DiffReportData, renderDiffMarkdown } from './diff-markdown';
 export { renderGithubSummary } from './github';
 export { renderHtml } from './html';
 export { renderMarkdown } from './markdown';

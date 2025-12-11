@@ -45,6 +45,34 @@ export function getReportPath(format: string, dir: string = DEFAULT_REPORT_DIR):
 }
 
 /**
+ * Get the report path for a diff comparison.
+ *
+ * Uses truncated hashes from both specs to create a unique, deterministic filename.
+ *
+ * @param baseHash - Hash of the base (before) spec
+ * @param headHash - Hash of the head (after) spec
+ * @param format - The report format (json, markdown, html, github)
+ * @param dir - The output directory (defaults to .doccov)
+ * @returns The full path to the diff report file
+ *
+ * @example
+ * ```ts
+ * getDiffReportPath('abc123def456', 'xyz789uvw012', 'markdown');
+ * // '.doccov/diff-abc123de-xyz789uv.md'
+ * ```
+ */
+export function getDiffReportPath(
+  baseHash: string,
+  headHash: string,
+  format: string,
+  dir: string = DEFAULT_REPORT_DIR,
+): string {
+  const ext = REPORT_EXTENSIONS[format] ?? format;
+  const hash = `${baseHash.slice(0, 8)}-${headHash.slice(0, 8)}`;
+  return `${dir}/diff-${hash}.${ext}`;
+}
+
+/**
  * Drift summary with category breakdown.
  */
 export interface DriftReportSummary {

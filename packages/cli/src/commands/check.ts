@@ -45,6 +45,7 @@ import {
   isLLMAssertionParsingAvailable,
   parseAssertionsWithLLM,
 } from '../utils/llm-assertion-parser';
+import { clampPercentage } from '../utils/validation';
 
 type OutputFormat = 'text' | 'json' | 'markdown' | 'html' | 'github';
 
@@ -156,10 +157,10 @@ export function registerCheckCommand(
         // CLI option takes precedence, then config, then undefined (no threshold)
         const minCoverageRaw = options.minCoverage ?? config?.check?.minCoverage;
         const minCoverage =
-          minCoverageRaw !== undefined ? clampCoverage(minCoverageRaw) : undefined;
+          minCoverageRaw !== undefined ? clampPercentage(minCoverageRaw) : undefined;
 
         const maxDriftRaw = options.maxDrift ?? config?.check?.maxDrift;
-        const maxDrift = maxDriftRaw !== undefined ? clampCoverage(maxDriftRaw) : undefined;
+        const maxDrift = maxDriftRaw !== undefined ? clampPercentage(maxDriftRaw) : undefined;
 
         const resolveExternalTypes = !options.skipResolve;
 
@@ -614,13 +615,6 @@ export function registerCheckCommand(
         process.exit(1);
       }
     });
-}
-
-function clampCoverage(value: number): number {
-  if (Number.isNaN(value)) {
-    return 80;
-  }
-  return Math.min(100, Math.max(0, Math.round(value)));
 }
 
 type CollectedDrift = {

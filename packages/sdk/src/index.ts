@@ -4,6 +4,7 @@
 export {
   buildExportRegistry,
   type CategorizedDrift,
+  calculateAggregateCoverage,
   categorizeDrift,
   computeDrift,
   computeExportDrift,
@@ -12,6 +13,7 @@ export {
   detectExampleAssertionFailures,
   detectExampleRuntimeErrors,
   type ExportDriftResult,
+  ensureSpecCoverage,
   formatDriftSummaryLine,
   getDriftSummary,
   groupDriftsByCategory,
@@ -239,6 +241,7 @@ export {
   type DriftReport,
   type DriftReportSummary,
   type ExportCoverageData,
+  getDiffReportPath,
   getReportPath,
   REPORT_EXTENSIONS,
   REPORT_VERSION,
