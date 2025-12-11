@@ -18,6 +18,12 @@ import {
   parseGitHubUrl,
   type ScanResult,
 } from '@doccov/sdk';
+import {
+  DRIFT_CATEGORIES,
+  DRIFT_CATEGORY_LABELS,
+  type DriftCategory,
+  type DriftType,
+} from '@openpkg-ts/spec';
 import chalk from 'chalk';
 import type { Command } from 'commander';
 import { simpleGit } from 'simple-git';
@@ -434,6 +440,62 @@ export function registerScanCommand(
     });
 }
 
+/**
+ * Categorize drift issues and return a summary with grouped issues.
+ */
+function categorizeDriftIssues(drift: ScanResult['drift']): {
+  summary: { total: number; byCategory: Record<DriftCategory, number> };
+  byCategory: Record<DriftCategory, ScanResult['drift']>;
+} {
+  const byCategory: Record<DriftCategory, ScanResult['drift']> = {
+    structural: [],
+    semantic: [],
+    example: [],
+  };
+
+  for (const d of drift) {
+    const category = DRIFT_CATEGORIES[d.type as DriftType] ?? 'semantic';
+    byCategory[category].push(d);
+  }
+
+  return {
+    summary: {
+      total: drift.length,
+      byCategory: {
+        structural: byCategory.structural.length,
+        semantic: byCategory.semantic.length,
+        example: byCategory.example.length,
+      },
+    },
+    byCategory,
+  };
+}
+
+/**
+ * Format drift summary as a single line.
+ */
+function formatDriftSummary(summary: {
+  total: number;
+  byCategory: Record<DriftCategory, number>;
+}): string {
+  if (summary.total === 0) {
+    return 'No drift detected';
+  }
+
+  const parts: string[] = [];
+  if (summary.byCategory.structural > 0) {
+    parts.push(`${summary.byCategory.structural} structural`);
+  }
+  if (summary.byCategory.semantic > 0) {
+    parts.push(`${summary.byCategory.semantic} semantic`);
+  }
+  if (summary.byCategory.example > 0) {
+    parts.push(`${summary.byCategory.example} example`);
+  }
+
+  return `${summary.total} issues (${parts.join(', ')})`;
+}
+
 function printTextResult(result: ScanResult, log: typeof console.log): void {
   log('');
   log(chalk.bold('DocCov Scan Results'));
@@ -459,7 +521,11 @@ function printTextResult(result: ScanResult, log: typeof console.log): void {
   log(`  ${result.exportCount} exports`);
   log(`  ${result.typeCount} types`);
   log(`  ${result.undocumented.length} undocumented`);
-  log(`  ${result.driftCount} drift issues`);
+
+  // Drift summary (progressive disclosure - level 1)
+  const categorized = categorizeDriftIssues(result.drift);
+  const driftColor = result.driftCount > 0 ? chalk.yellow : chalk.green;
+  log(`  ${driftColor(formatDriftSummary(categorized.summary))}`);
 
   // Undocumented
   if (result.undocumented.length > 0) {
@@ -473,15 +539,28 @@ function printTextResult(result: ScanResult, log: typeof console.log): void {
     }
   }
 
-  // Drift
+  // Drift by category (progressive disclosure - level 2)
   if (result.drift.length > 0) {
     log('');
     log(chalk.bold('Drift Issues'));
-    for (const d of result.drift.slice(0, 5)) {
-      log(chalk.red(`  • ${d.export}: ${d.issue}`));
-    }
-    if (result.drift.length > 5) {
-      log(chalk.gray(`  ... and ${result.drift.length - 5} more`));
+
+    // Show each non-empty category
+    const categories: DriftCategory[] = ['structural', 'semantic', 'example'];
+    for (const category of categories) {
+      const issues = categorized.byCategory[category];
+      if (issues.length === 0) continue;
+
+      const label = DRIFT_CATEGORY_LABELS[category];
+      log('');
+      log(chalk.dim(`  ${label} (${issues.length})`));
+
+      // Show up to 3 issues per category (progressive disclosure - level 3)
+      for (const d of issues.slice(0, 3)) {
+        log(chalk.red(`    • ${d.export}: ${d.issue}`));
+      }
+      if (issues.length > 3) {
+        log(chalk.gray(`    ... and ${issues.length - 3} more`));
+      }
     }
   }
 

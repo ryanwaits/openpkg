@@ -1,14 +1,15 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import type { OpenPkg, SpecDocSignal } from '@openpkg-ts/spec';
+import type { OpenPkg } from '@openpkg-ts/spec';
 import {
   type CoverageSummary,
   DEFAULT_REPORT_PATH,
   type DocCovReport,
   type ExportCoverageData,
   REPORT_VERSION,
-} from '../types/report.js';
-import { type EnrichedOpenPkg, enrichSpec } from './enrich.js';
+} from '../types/report';
+import { getDriftSummary } from './docs-coverage';
+import { type EnrichedOpenPkg, enrichSpec } from './enrich';
 
 /**
  * Generate a DocCov report from an OpenPkg spec.
@@ -44,12 +45,7 @@ export function generateReport(spec: OpenPkg): DocCovReport {
 export function generateReportFromEnriched(enriched: EnrichedOpenPkg): DocCovReport {
   // Build per-export coverage data
   const exportsData: Record<string, ExportCoverageData> = {};
-  const missingBySignal: Record<SpecDocSignal, number> = {
-    description: 0,
-    params: 0,
-    returns: 0,
-    examples: 0,
-  };
+  const missingByRule: Record<string, number> = {};
 
   let documentedExports = 0;
   let totalDrift = 0;
@@ -63,8 +59,8 @@ export function generateReportFromEnriched(enriched: EnrichedOpenPkg): DocCovRep
 
     if (exp.docs?.missing && exp.docs.missing.length > 0) {
       data.missing = exp.docs.missing;
-      for (const signal of exp.docs.missing) {
-        missingBySignal[signal]++;
+      for (const ruleId of exp.docs.missing) {
+        missingByRule[ruleId] = (missingByRule[ruleId] ?? 0) + 1;
       }
     } else {
       documentedExports++;
@@ -78,12 +74,17 @@ export function generateReportFromEnriched(enriched: EnrichedOpenPkg): DocCovRep
     exportsData[exp.id] = data;
   }
 
+  // Compute drift summary with category breakdown
+  const allDrifts = enriched.exports.flatMap((exp) => exp.docs?.drift ?? []);
+  const driftSummary = allDrifts.length > 0 ? getDriftSummary(allDrifts) : undefined;
+
   const coverage: CoverageSummary = {
     score: enriched.docs?.coverageScore ?? 100,
     totalExports: enriched.exports.length,
     documentedExports,
-    missingBySignal,
+    missingByRule,
     driftCount: totalDrift,
+    driftSummary,
   };
 
   return {

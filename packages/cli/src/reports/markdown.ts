@@ -1,3 +1,4 @@
+import { DRIFT_CATEGORY_LABELS, type DriftCategory } from '@openpkg-ts/spec';
 import type { ReportStats } from './stats';
 
 function bar(pct: number, width = 10): string {
@@ -60,16 +61,46 @@ export function renderMarkdown(stats: ReportStats, options: { limit?: number } =
     }
   }
 
-  // Drift issues
+  // Drift issues grouped by category
   if (stats.driftIssues.length > 0) {
     lines.push('');
     lines.push('## Drift Issues');
     lines.push('');
-    lines.push('| Export | Type | Issue |');
-    lines.push('|--------|------|-------|');
-    for (const d of stats.driftIssues.slice(0, limit)) {
-      const hint = d.suggestion ? ` → ${d.suggestion}` : '';
-      lines.push(`| \`${d.exportName}\` | ${d.type} | ${d.issue}${hint} |`);
+
+    // Summary line
+    const { driftSummary } = stats;
+    const summaryParts: string[] = [];
+    if (driftSummary.byCategory.structural > 0) {
+      summaryParts.push(`${driftSummary.byCategory.structural} structural`);
+    }
+    if (driftSummary.byCategory.semantic > 0) {
+      summaryParts.push(`${driftSummary.byCategory.semantic} semantic`);
+    }
+    if (driftSummary.byCategory.example > 0) {
+      summaryParts.push(`${driftSummary.byCategory.example} example`);
+    }
+    const fixableNote = driftSummary.fixable > 0 ? ` (${driftSummary.fixable} auto-fixable)` : '';
+    lines.push(`**${driftSummary.total} issues** (${summaryParts.join(', ')})${fixableNote}`);
+    lines.push('');
+
+    // Category sections
+    const categories: DriftCategory[] = ['structural', 'semantic', 'example'];
+    for (const category of categories) {
+      const issues = stats.driftByCategory[category];
+      if (issues.length === 0) continue;
+
+      lines.push(`### ${DRIFT_CATEGORY_LABELS[category]}`);
+      lines.push('');
+      lines.push('| Export | Issue |');
+      lines.push('|--------|-------|');
+      for (const d of issues.slice(0, Math.min(limit, 10))) {
+        const hint = d.suggestion ? ` → ${d.suggestion}` : '';
+        lines.push(`| \`${d.exportName}\` | ${d.issue}${hint} |`);
+      }
+      if (issues.length > 10) {
+        lines.push(`| ... | ${issues.length - 10} more ${category} issues |`);
+      }
+      lines.push('');
     }
   }
 

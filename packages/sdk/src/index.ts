@@ -1,11 +1,26 @@
+// Cache utilities
+
+// Drift categorization utilities
 export {
+  buildExportRegistry,
+  type CategorizedDrift,
+  categorizeDrift,
+  computeDrift,
+  computeExportDrift,
+  type DriftResult,
+  type DriftSummary,
   detectExampleAssertionFailures,
   detectExampleRuntimeErrors,
+  type ExportDriftResult,
+  formatDriftSummaryLine,
+  getDriftSummary,
+  groupDriftsByCategory,
   hasNonAssertionComments,
   parseAssertions,
 } from './analysis/docs-coverage';
 // Enrichment and coverage analysis
 export {
+  type EnrichedDocsMetadata,
   type EnrichedExport,
   type EnrichedOpenPkg,
   type EnrichOptions,
@@ -20,12 +35,31 @@ export {
   saveReport,
 } from './analysis/report';
 export type { OpenPkgSpec } from './analysis/spec-types';
+export {
+  CACHE_VERSION,
+  type CacheContext,
+  type CacheValidationResult,
+  clearSpecCache,
+  diffHashes,
+  getSpecCachePath,
+  hashFile,
+  hashFiles,
+  hashString,
+  loadSpecCache,
+  SPEC_CACHE_FILE,
+  type SpecCache,
+  type SpecCacheConfig,
+  saveSpecCache,
+  validateSpecCache,
+} from './cache';
 // Configuration types
 export type {
   CheckConfig,
   DocCovConfig,
   DocsConfig,
-  LintRulesConfig,
+  ExampleValidationMode,
+  QualityRulesConfig,
+  QualitySeverity,
 } from './config';
 export { defineConfig } from './config';
 // Project detection (for CLI and API)
@@ -63,6 +97,23 @@ export {
   safeParseJson,
   type WorkspacePackage,
 } from './detect';
+// Unified example validation
+export {
+  ALL_VALIDATIONS,
+  type ExampleValidation,
+  type ExampleValidationOptions,
+  type ExampleValidationResult,
+  type ExampleValidationTypeError,
+  type LLMAssertion,
+  type PresenceResult,
+  parseExamplesFlag,
+  type RuntimeDrift,
+  type RunValidationResult,
+  shouldValidate,
+  type TypecheckValidationResult,
+  VALIDATION_INFO,
+  validateExamples,
+} from './examples';
 export { extractPackageSpec } from './extractor';
 export type { FilterSource, ResolvedFilters } from './filtering/merge';
 export { mergeFilters, parseListFlag } from './filtering/merge';
@@ -102,24 +153,6 @@ export {
 // Dependency installation
 export type { CommandResult, CommandRunner, InstallOptions, InstallResult } from './install';
 export { createNodeCommandRunner, installDependencies } from './install';
-// Lint engine
-export {
-  allRules,
-  consistentParamStyle,
-  getDefaultConfig,
-  getRule,
-  type LintConfig,
-  type LintResult,
-  type LintRule,
-  type LintSeverity,
-  type LintViolation,
-  lintExport,
-  lintExports,
-  mergeConfig,
-  noEmptyReturns,
-  requireDescription,
-  requireExample,
-} from './lint';
 // Markdown/MDX analysis
 export type {
   DiffWithDocsOptions,
@@ -154,6 +187,25 @@ export {
 export type { AnalysisResult, AnalyzeOptions, Diagnostic } from './openpkg';
 export { analyze, analyzeFile, DocCov, OpenPkg } from './openpkg';
 export type { DocCovOptions, OpenPkgOptions } from './options';
+// Quality rules engine
+export {
+  type AggregateQualityResult,
+  BUILTIN_RULES,
+  CORE_RULES,
+  evaluateExportQuality,
+  evaluateQuality,
+  getCoverageRules,
+  getDefaultConfig,
+  getRule,
+  getRulesForKind,
+  mergeConfig,
+  type QualityConfig,
+  type QualityResult,
+  type QualityRule,
+  type QualityViolation,
+  type RuleContext,
+  STYLE_RULES,
+} from './quality';
 // Project resolution
 export type { ResolvedTarget, ResolveTargetOptions } from './resolve';
 export { resolveTarget } from './resolve';
@@ -181,9 +233,14 @@ export {
 // Report types
 export {
   type CoverageSummary,
+  DEFAULT_REPORT_DIR,
   DEFAULT_REPORT_PATH,
   type DocCovReport,
+  type DriftReport,
+  type DriftReportSummary,
   type ExportCoverageData,
+  getReportPath,
+  REPORT_EXTENSIONS,
   REPORT_VERSION,
 } from './types/report';
 export type {

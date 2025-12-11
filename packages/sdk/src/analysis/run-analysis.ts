@@ -14,6 +14,8 @@ export interface AnalysisMetadataInternal {
   packageJsonPath?: string;
   hasNodeModules: boolean;
   resolveExternalTypes: boolean;
+  /** Source files included in analysis (for caching) */
+  sourceFiles: string[];
 }
 
 export interface SpecDiagnostic {
@@ -229,6 +231,12 @@ export function runAnalysis(input: AnalysisContextInput): RunAnalysisResult {
     });
   }
 
+  // Collect source files from the program (for caching)
+  const sourceFiles = program
+    .getSourceFiles()
+    .filter((sf) => !sf.isDeclarationFile && sf.fileName.startsWith(baseDir))
+    .map((sf) => sf.fileName);
+
   return {
     spec,
     metadata: {
@@ -237,6 +245,7 @@ export function runAnalysis(input: AnalysisContextInput): RunAnalysisResult {
       packageJsonPath,
       hasNodeModules,
       resolveExternalTypes,
+      sourceFiles,
     },
     diagnostics,
     specDiagnostics,

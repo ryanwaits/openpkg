@@ -5,7 +5,6 @@ import type * as TS from 'typescript';
 import { ts } from '../ts-module';
 
 import type { AnalysisContext } from './context';
-import { computeDocsCoverage } from './docs-coverage';
 import { serializeClass } from './serializers/classes';
 import { serializeEnum } from './serializers/enums';
 import { type SerializerContext, serializeFunctionExport } from './serializers/functions';
@@ -197,15 +196,7 @@ export function buildOpenPkgSpec(
     }
   }
 
-  const coverage = computeDocsCoverage(spec);
-  spec.docs = coverage.spec;
-  spec.exports.forEach((entry) => {
-    const exportCoverage = coverage.exports.get(entry.id);
-    if (exportCoverage) {
-      entry.docs = exportCoverage;
-    }
-  });
-
+  // Note: Coverage is computed during enrichment via enrichSpec(), not during spec building
   return spec;
 }
 

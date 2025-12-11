@@ -1,4 +1,3 @@
-import { computeDocsCoverage } from '../analysis/docs-coverage';
 import type { OpenPkgSpec } from '../analysis/spec-types';
 import type { FilterDiagnostic, FilterOptions, FilterResult } from './types';
 
@@ -220,10 +219,8 @@ export const applyFilters = (
     types: filteredTypes.length > 0 ? filteredTypes : spec.types ? [] : undefined,
   };
 
-  // Fix: Recompute docs coverage if present, as filtering exports changes the aggregate score
-  const filteredSpec: OpenPkgSpec = spec.docs
-    ? { ...baseSpec, docs: computeDocsCoverage(baseSpec).spec }
-    : baseSpec;
+  // Note: Coverage is computed during enrichment via enrichSpec(), not during filtering
+  const filteredSpec: OpenPkgSpec = baseSpec;
 
   const changed =
     keptExports.length !== exportsList.length || filteredTypes.length !== typesList.length;

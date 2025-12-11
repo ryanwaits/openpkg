@@ -27,6 +27,9 @@ export interface SpecOptions {
   skipResolve?: boolean;
   maxTypeDepth?: string;
 
+  // Caching
+  cache?: boolean;
+
   // Diagnostics
   showDiagnostics?: boolean;
 }
@@ -98,6 +101,9 @@ export function registerSpecCommand(
     .option('--skip-resolve', 'Skip external type resolution from node_modules')
     .option('--max-type-depth <n>', 'Maximum depth for type conversion', '20')
 
+    // === Caching ===
+    .option('--no-cache', 'Bypass spec cache and force regeneration')
+
     // === Diagnostics ===
     .option('--show-diagnostics', 'Show TypeScript compiler diagnostics')
 
@@ -161,6 +167,8 @@ export function registerSpecCommand(
           const doccov = createDocCov({
             resolveExternalTypes,
             maxDepth: options.maxTypeDepth ? parseInt(options.maxTypeDepth, 10) : undefined,
+            useCache: options.cache !== false,
+            cwd: options.cwd,
           });
 
           const analyzeOptions =
@@ -174,7 +182,12 @@ export function registerSpecCommand(
               : {};
 
           result = await doccov.analyzeFileWithDiagnostics(entryFile, analyzeOptions);
-          process.stdout.write(chalk.green('> Generated OpenPkg spec\n'));
+
+          if (result.fromCache) {
+            process.stdout.write(chalk.gray('> Using cached spec\n'));
+          } else {
+            process.stdout.write(chalk.green('> Generated OpenPkg spec\n'));
+          }
         } catch (generationError) {
           process.stdout.write(chalk.red('> Failed to generate spec\n'));
           throw generationError;

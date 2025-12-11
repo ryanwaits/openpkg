@@ -18,48 +18,52 @@ const docsConfigSchema: z.ZodObject<{
   exclude: stringList.optional(),
 });
 
-/** Lint severity levels */
-const lintSeveritySchema: z.ZodEnum<['error', 'warn', 'off']> = z.enum(['error', 'warn', 'off']);
+/** Quality rule severity levels */
+const severitySchema: z.ZodEnum<['error', 'warn', 'off']> = z.enum(['error', 'warn', 'off']);
 
 /** Example validation mode */
-const exampleModeSchema: z.ZodEnum<['exist', 'types', 'run']> = z.enum(['exist', 'types', 'run']);
+const exampleModeSchema: z.ZodEnum<['presence', 'typecheck', 'run']> = z.enum([
+  'presence',
+  'typecheck',
+  'run',
+]);
+
+/** Example validation modes - can be single, array, or comma-separated */
+const exampleModesSchema: z.ZodUnion<
+  [typeof exampleModeSchema, z.ZodArray<typeof exampleModeSchema>, z.ZodString]
+> = z.union([
+  exampleModeSchema,
+  z.array(exampleModeSchema),
+  z.string(), // For comma-separated values like "presence,typecheck"
+]);
 
 /**
- * Check command configuration schema (unified config)
- * Supports both 'check' (preferred) and 'analyze' (deprecated) for backwards compatibility
+ * Check command configuration schema.
  */
 const checkConfigSchema: z.ZodObject<{
-  lint: z.ZodOptional<z.ZodBoolean>;
-  examples: z.ZodOptional<typeof exampleModeSchema>;
+  examples: z.ZodOptional<typeof exampleModesSchema>;
   minCoverage: z.ZodOptional<z.ZodNumber>;
-  // Legacy options for backwards compatibility
-  typecheck: z.ZodOptional<z.ZodBoolean>;
-  exec: z.ZodOptional<z.ZodBoolean>;
+  maxDrift: z.ZodOptional<z.ZodNumber>;
 }> = z.object({
-  /** Enable lint checks (default: true) */
-  lint: z.boolean().optional(),
-  /** Example validation mode: exist | types | run (default: types) */
-  examples: exampleModeSchema.optional(),
+  /**
+   * Example validation modes: presence | typecheck | run
+   * Can be single value, array, or comma-separated string
+   */
+  examples: exampleModesSchema.optional(),
   /** Minimum coverage percentage required (0-100) */
   minCoverage: z.number().min(0).max(100).optional(),
-  // Legacy options - will be converted to examples mode
-  /** @deprecated Use examples: 'types' instead */
-  typecheck: z.boolean().optional(),
-  /** @deprecated Use examples: 'run' instead */
-  exec: z.boolean().optional(),
+  /** Maximum drift percentage allowed (0-100) */
+  maxDrift: z.number().min(0).max(100).optional(),
 });
 
-// Alias for backwards compatibility
-const analyzeConfigSchema = checkConfigSchema;
-
 /**
- * Lint configuration schema
+ * Quality rules configuration schema
  */
-const lintConfigSchema: z.ZodObject<{
-  rules: z.ZodOptional<z.ZodRecord<z.ZodString, typeof lintSeveritySchema>>;
+const qualityConfigSchema: z.ZodObject<{
+  rules: z.ZodOptional<z.ZodRecord<z.ZodString, typeof severitySchema>>;
 }> = z.object({
   /** Rule severity overrides */
-  rules: z.record(lintSeveritySchema).optional(),
+  rules: z.record(severitySchema).optional(),
 });
 
 export const docCovConfigSchema: z.ZodObject<{
@@ -68,28 +72,25 @@ export const docCovConfigSchema: z.ZodObject<{
   plugins: z.ZodOptional<z.ZodArray<z.ZodUnknown>>;
   docs: z.ZodOptional<typeof docsConfigSchema>;
   check: z.ZodOptional<typeof checkConfigSchema>;
-  analyze: z.ZodOptional<typeof analyzeConfigSchema>;
-  lint: z.ZodOptional<typeof lintConfigSchema>;
+  quality: z.ZodOptional<typeof qualityConfigSchema>;
 }> = z.object({
   include: stringList.optional(),
   exclude: stringList.optional(),
   plugins: z.array(z.unknown()).optional(),
   /** Markdown documentation configuration */
   docs: docsConfigSchema.optional(),
-  /** Check command configuration (preferred) */
+  /** Check command configuration */
   check: checkConfigSchema.optional(),
-  /** @deprecated Use check instead. Analyze is a backwards compatible alias */
-  analyze: analyzeConfigSchema.optional(),
-  /** Lint configuration */
-  lint: lintConfigSchema.optional(),
+  /** Quality rules configuration */
+  quality: qualityConfigSchema.optional(),
 });
 
-import type { CheckConfig, DocCovConfig, DocsConfig, LintRulesConfig } from '@doccov/sdk';
+import type { CheckConfig, DocCovConfig, DocsConfig, QualityRulesConfig } from '@doccov/sdk';
 
 export type DocCovConfigInput = z.infer<typeof docCovConfigSchema>;
 
-// Re-export types from SDK for backwards compatibility
-export type { CheckConfig, DocsConfig, LintRulesConfig };
+// Re-export types from SDK
+export type { CheckConfig, DocsConfig, QualityRulesConfig };
 
 // NormalizedDocCovConfig is the same as DocCovConfig from SDK
 export type NormalizedDocCovConfig = DocCovConfig;
@@ -121,24 +122,19 @@ export const normalizeConfig = (input: DocCovConfigInput): NormalizedDocCovConfi
     }
   }
 
-  // Support both check (preferred) and analyze (deprecated) config sections
-  // check takes precedence if both are provided
-  const checkInput = input.check ?? input.analyze;
   let check: CheckConfig | undefined;
-  if (checkInput) {
+  if (input.check) {
     check = {
-      lint: checkInput.lint,
-      // Convert new examples mode to legacy typecheck/exec for SDK compatibility
-      typecheck: checkInput.examples === 'exist' ? false : checkInput.typecheck,
-      exec: checkInput.examples === 'run' ? true : checkInput.exec,
-      minCoverage: checkInput.minCoverage,
+      examples: input.check.examples,
+      minCoverage: input.check.minCoverage,
+      maxDrift: input.check.maxDrift,
     };
   }
 
-  let lint: LintRulesConfig | undefined;
-  if (input.lint) {
-    lint = {
-      rules: input.lint.rules,
+  let quality: QualityRulesConfig | undefined;
+  if (input.quality) {
+    quality = {
+      rules: input.quality.rules,
     };
   }
 
@@ -148,6 +144,6 @@ export const normalizeConfig = (input: DocCovConfigInput): NormalizedDocCovConfi
     plugins: input.plugins,
     docs,
     check,
-    lint,
+    quality,
   };
 };

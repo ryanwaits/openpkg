@@ -3,15 +3,2122 @@
   "openpkg": "0.3.0",
   "meta": {
     "ecosystem": "js/ts",
-    "name": "@doccov/cli",
-    "version": "0.9.0",
-    "description": "DocCov CLI - Documentation coverage and drift detection for TypeScript",
-    "license": "MIT",
-    "repository": "git+https://github.com/doccov/doccov.git"
+    "name": "chainhooks-client",
+    "version": "1.0.0",
+    "description": "A wrapper library for the Hiro Chainhooks API",
+    "license": "",
+    "repository": ""
   },
-  "exports": [],
-  "types": [],
-  "docs": {
-    "coverageScore": 100
-  }
+  "exports": [
+    {
+      "id": "Chainhook",
+      "name": "Chainhook",
+      "kind": "type",
+      "deprecated": false,
+      "type": {
+        "type": "object",
+        "tsType": "{ uuid: string; definition: { options?: { enable_on_registration?: boolean | undefined; expire_after_evaluations?: number | undefined; expire_after_occurrences?: number | undefined; ... 6 more ...; include_block_metadata?: boolean | undefined; } | null | undefined; ... 5 more ...; action: { ...; }; }; status: { ...;..."
+      },
+      "description": "",
+      "source": {
+        "file": "/private/tmp/chainhooks-client/node_modules/@hirosystems/chainhooks-client/dist/src/schemas/chainhook/index.d.ts",
+        "line": 318
+      },
+      "slug": "chainhook",
+      "displayName": "Chainhook",
+      "category": "type",
+      "signatures": [],
+      "members": [],
+      "examples": [],
+      "tags": []
+    },
+    {
+      "id": "CHAINHOOK_URLS",
+      "name": "CHAINHOOK_URLS",
+      "kind": "variable",
+      "deprecated": false,
+      "type": {
+        "type": "object",
+        "properties": {
+          "mainnet": {
+            "enum": ["https://api.mainnet.hiro.so"]
+          },
+          "testnet": {
+            "enum": ["https://api.testnet.hiro.so"]
+          }
+        },
+        "required": ["mainnet", "testnet"]
+      },
+      "description": "Constants for the Chainhooks API base URLs",
+      "source": {
+        "file": "/tmp/chainhooks-client/index.ts",
+        "line": 335
+      },
+      "slug": "chainhook-urls",
+      "displayName": "CHAINHOOK_URLS",
+      "category": "variable",
+      "importPath": "./index",
+      "signatures": [],
+      "members": [],
+      "examples": [],
+      "tags": []
+    },
+    {
+      "id": "ChainhookDefinition",
+      "name": "ChainhookDefinition",
+      "kind": "type",
+      "deprecated": false,
+      "type": {
+        "type": "object",
+        "tsType": "{ options?: { enable_on_registration?: boolean | undefined; expire_after_evaluations?: number | undefined; expire_after_occurrences?: number | undefined; decode_clarity_values?: boolean | undefined; ... 5 more ...; include_block_metadata?: boolean | undefined; } | null | undefined; ... 5 more ...; action: { ...; }; }"
+      },
+      "description": "",
+      "source": {
+        "file": "/private/tmp/chainhooks-client/node_modules/@hirosystems/chainhooks-client/dist/src/schemas/chainhook/index.d.ts",
+        "line": 195
+      },
+      "slug": "chainhook-definition",
+      "displayName": "ChainhookDefinition",
+      "category": "type",
+      "signatures": [],
+      "members": [],
+      "examples": [],
+      "tags": []
+    },
+    {
+      "id": "ChainhookEvent",
+      "name": "ChainhookEvent",
+      "kind": "type",
+      "deprecated": false,
+      "type": {
+        "type": "object",
+        "tsType": "{ chainhook: { name?: string | undefined; uuid: string; }; event: { chain: \"stacks\" | \"bitcoin\"; network: \"mainnet\" | \"testnet\"; apply: { metadata?: { signatures?: { signer_bitvec: string | null; signer_signatures: string[] | null; } | undefined; ... 7 more ...; tx_count: number; } | undefined; block_identifier: { ...."
+      },
+      "description": "",
+      "source": {
+        "file": "/private/tmp/chainhooks-client/node_modules/@hirosystems/chainhooks-client/dist/src/schemas/chainhook-event/index.d.ts",
+        "line": 730
+      },
+      "slug": "chainhook-event",
+      "displayName": "ChainhookEvent",
+      "category": "type",
+      "signatures": [],
+      "members": [],
+      "examples": [],
+      "tags": []
+    },
+    {
+      "id": "ChainhooksService",
+      "name": "ChainhooksService",
+      "slug": "chainhooks-service",
+      "displayName": "ChainhooksService",
+      "category": "class",
+      "importPath": "./index",
+      "kind": "class",
+      "deprecated": false,
+      "description": "A service wrapper for interacting with the Hiro Chainhooks API.\nProvides convenient methods for common chainhook operations.",
+      "source": {
+        "file": "/tmp/chainhooks-client/index.ts",
+        "line": 105
+      },
+      "members": [
+        {
+          "id": "client",
+          "name": "client",
+          "kind": "property",
+          "visibility": "private",
+          "schema": {
+            "$ref": "#/types/ChainhooksClient"
+          },
+          "description": ""
+        },
+        {
+          "id": "network",
+          "name": "network",
+          "kind": "property",
+          "visibility": "private",
+          "schema": {
+            "$ref": "#/types/Network"
+          },
+          "description": ""
+        },
+        {
+          "id": "constructor",
+          "name": "constructor",
+          "kind": "constructor"
+        },
+        {
+          "id": "getClient",
+          "name": "getClient",
+          "kind": "method",
+          "signatures": [
+            {
+              "parameters": [],
+              "returns": {
+                "schema": {
+                  "$ref": "#/types/ChainhooksClient"
+                },
+                "description": "The raw ChainhooksClient instance"
+              },
+              "description": "Returns the underlying ChainhooksClient for advanced operations"
+            }
+          ],
+          "description": "Returns the underlying ChainhooksClient for advanced operations",
+          "tags": [
+            {
+              "name": "returns",
+              "text": "The raw ChainhooksClient instance"
+            }
+          ]
+        },
+        {
+          "id": "createStxTransferMonitor",
+          "name": "createStxTransferMonitor",
+          "kind": "method",
+          "signatures": [
+            {
+              "parameters": [
+                {
+                  "name": "options",
+                  "required": true,
+                  "schema": {
+                    "$ref": "#/types/StxTransferMonitorOptions"
+                  }
+                }
+              ],
+              "returns": {
+                "schema": {
+                  "type": "object"
+                },
+                "description": "The created chainhook with its UUID and status"
+              },
+              "description": "Creates a chainhook that monitors STX token transfers"
+            }
+          ],
+          "description": "Creates a chainhook that monitors STX token transfers",
+          "tags": [
+            {
+              "name": "param",
+              "text": "options - Configuration for the STX transfer monitor",
+              "paramName": "options"
+            },
+            {
+              "name": "returns",
+              "text": "The created chainhook with its UUID and status"
+            },
+            {
+              "name": "example",
+              "text": "```typescript\nconst hook = await service.createStxTransferMonitor({\n  name: \"whale-watcher\",\n  webhookUrl: \"https://myapp.com/webhooks/stx\",\n  sender: \"SP1234...\", // optional: only watch this sender\n});\nconsole.log(\"Created hook:\", hook.uuid);\n```",
+              "language": "typescript"
+            }
+          ]
+        },
+        {
+          "id": "createContractCallMonitor",
+          "name": "createContractCallMonitor",
+          "kind": "method",
+          "signatures": [
+            {
+              "parameters": [
+                {
+                  "name": "options",
+                  "required": true,
+                  "schema": {
+                    "$ref": "#/types/ContractCallMonitorOptions"
+                  }
+                }
+              ],
+              "returns": {
+                "schema": {
+                  "type": "object"
+                },
+                "description": "The created chainhook with its UUID and status"
+              },
+              "description": "Creates a chainhook that monitors calls to a specific smart contract"
+            }
+          ],
+          "description": "Creates a chainhook that monitors calls to a specific smart contract",
+          "tags": [
+            {
+              "name": "param",
+              "text": "options - Configuration for the contract call monitor",
+              "paramName": "options"
+            },
+            {
+              "name": "returns",
+              "text": "The created chainhook with its UUID and status"
+            },
+            {
+              "name": "example",
+              "text": "```typescript\nconst hook = await service.createContractCallMonitor({\n  name: \"nft-sales\",\n  webhookUrl: \"https://myapp.com/webhooks/nft\",\n  contractIdentifier: \"SP123.my-nft-contract\",\n  functionName: \"transfer\", // optional: only watch this function\n});\n```",
+              "language": "typescript"
+            }
+          ]
+        },
+        {
+          "id": "listChainhooks",
+          "name": "listChainhooks",
+          "kind": "method",
+          "signatures": [
+            {
+              "parameters": [
+                {
+                  "name": "limit",
+                  "required": false,
+                  "schema": {
+                    "type": "number"
+                  },
+                  "default": 50
+                },
+                {
+                  "name": "offset",
+                  "required": false,
+                  "schema": {
+                    "type": "number"
+                  },
+                  "default": 0
+                }
+              ],
+              "returns": {
+                "schema": {
+                  "type": "object"
+                },
+                "description": "Paginated list of chainhooks"
+              },
+              "description": "Lists all chainhooks registered to this account"
+            }
+          ],
+          "description": "Lists all chainhooks registered to this account",
+          "tags": [
+            {
+              "name": "param",
+              "text": "limit - Maximum number of results to return (default: 50)",
+              "paramName": "limit"
+            },
+            {
+              "name": "param",
+              "text": "offset - Number of results to skip for pagination (default: 0)",
+              "paramName": "offset"
+            },
+            {
+              "name": "returns",
+              "text": "Paginated list of chainhooks"
+            }
+          ]
+        },
+        {
+          "id": "getChainhook",
+          "name": "getChainhook",
+          "kind": "method",
+          "signatures": [
+            {
+              "parameters": [
+                {
+                  "name": "uuid",
+                  "required": true,
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              ],
+              "returns": {
+                "schema": {
+                  "type": "object"
+                },
+                "description": "The chainhook definition and status"
+              },
+              "description": "Retrieves a specific chainhook by its UUID"
+            }
+          ],
+          "description": "Retrieves a specific chainhook by its UUID",
+          "tags": [
+            {
+              "name": "param",
+              "text": "uuid - The unique identifier of the chainhook",
+              "paramName": "uuid"
+            },
+            {
+              "name": "returns",
+              "text": "The chainhook definition and status"
+            }
+          ]
+        },
+        {
+          "id": "setEnabled",
+          "name": "setEnabled",
+          "kind": "method",
+          "signatures": [
+            {
+              "parameters": [
+                {
+                  "name": "uuid",
+                  "required": true,
+                  "schema": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "name": "enabled",
+                  "required": true,
+                  "schema": {
+                    "type": "boolean"
+                  }
+                }
+              ],
+              "returns": {
+                "schema": {
+                  "type": "object"
+                },
+                "description": ""
+              },
+              "description": "Enables or disables a chainhook"
+            }
+          ],
+          "description": "Enables or disables a chainhook",
+          "tags": [
+            {
+              "name": "param",
+              "text": "uuid - The unique identifier of the chainhook",
+              "paramName": "uuid"
+            },
+            {
+              "name": "param",
+              "text": "enabled - Whether the chainhook should be enabled",
+              "paramName": "enabled"
+            }
+          ]
+        },
+        {
+          "id": "deleteChainhook",
+          "name": "deleteChainhook",
+          "kind": "method",
+          "signatures": [
+            {
+              "parameters": [
+                {
+                  "name": "uuid",
+                  "required": true,
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              ],
+              "returns": {
+                "schema": {
+                  "type": "object"
+                },
+                "description": ""
+              },
+              "description": "Permanently deletes a chainhook"
+            }
+          ],
+          "description": "Permanently deletes a chainhook",
+          "tags": [
+            {
+              "name": "param",
+              "text": "uuid - The unique identifier of the chainhook to delete",
+              "paramName": "uuid"
+            }
+          ]
+        },
+        {
+          "id": "checkStatus",
+          "name": "checkStatus",
+          "kind": "method",
+          "signatures": [
+            {
+              "parameters": [],
+              "returns": {
+                "schema": {
+                  "type": "object"
+                },
+                "description": "API status information"
+              },
+              "description": "Checks the API status and connectivity"
+            }
+          ],
+          "description": "Checks the API status and connectivity",
+          "tags": [
+            {
+              "name": "returns",
+              "text": "API status information"
+            }
+          ]
+        }
+      ],
+      "tags": [
+        {
+          "name": "example",
+          "text": "```typescript\nconst service = new ChainhooksService({\n  network: \"testnet\",\n  apiKey: process.env.HIRO_API_KEY!,\n});\n\nconst hook = await service.createStxTransferMonitor({\n  name: \"my-monitor\",\n  webhookUrl: \"https://example.com/webhook\",\n});\n```",
+          "language": "typescript"
+        }
+      ],
+      "examples": [
+        "```typescript\nconst service = new ChainhooksService({\n  network: \"testnet\",\n  apiKey: process.env.HIRO_API_KEY!,\n});\n\nconst hook = await service.createStxTransferMonitor({\n  name: \"my-monitor\",\n  webhookUrl: \"https://example.com/webhook\",\n});\n```"
+      ],
+      "signatures": []
+    },
+    {
+      "id": "ChainhooksServiceConfig",
+      "name": "ChainhooksServiceConfig",
+      "kind": "interface",
+      "deprecated": false,
+      "description": "Configuration options for creating a ChainhooksService instance",
+      "source": {
+        "file": "/tmp/chainhooks-client/index.ts",
+        "line": 22
+      },
+      "members": [
+        {
+          "id": "network",
+          "name": "network",
+          "kind": "property",
+          "schema": {
+            "$ref": "#/types/Network"
+          },
+          "description": "The network to connect to (mainnet or testnet)"
+        },
+        {
+          "id": "apiKey",
+          "name": "apiKey",
+          "kind": "property",
+          "schema": {
+            "type": "string"
+          },
+          "description": "Your Hiro API key from platform.hiro.so"
+        }
+      ],
+      "slug": "chainhooks-service-config",
+      "displayName": "ChainhooksServiceConfig",
+      "category": "interface",
+      "importPath": "./index",
+      "signatures": [],
+      "examples": [],
+      "tags": []
+    },
+    {
+      "id": "ContractCallMonitorOptions",
+      "name": "ContractCallMonitorOptions",
+      "kind": "interface",
+      "deprecated": false,
+      "description": "Options for creating a contract call monitor chainhook",
+      "source": {
+        "file": "/tmp/chainhooks-client/index.ts",
+        "line": 73
+      },
+      "members": [
+        {
+          "id": "name",
+          "name": "name",
+          "kind": "property",
+          "schema": {
+            "type": "string"
+          },
+          "description": "Human-readable name for the chainhook"
+        },
+        {
+          "id": "webhookUrl",
+          "name": "webhookUrl",
+          "kind": "property",
+          "schema": {
+            "type": "string"
+          },
+          "description": "URL where events will be POSTed"
+        },
+        {
+          "id": "contractIdentifier",
+          "name": "contractIdentifier",
+          "kind": "property",
+          "schema": {
+            "type": "string"
+          },
+          "description": "The contract identifier (e.g., SP123.contract-name)"
+        },
+        {
+          "id": "functionName",
+          "name": "functionName",
+          "kind": "property",
+          "schema": {
+            "type": "string"
+          },
+          "description": "Optional: filter by specific function name",
+          "flags": {
+            "optional": true
+          }
+        },
+        {
+          "id": "decodeClarityValues",
+          "name": "decodeClarityValues",
+          "kind": "property",
+          "schema": {
+            "type": "boolean"
+          },
+          "description": "Whether to decode Clarity values in the payload (default: true)",
+          "flags": {
+            "optional": true
+          }
+        },
+        {
+          "id": "enableOnRegistration",
+          "name": "enableOnRegistration",
+          "kind": "property",
+          "schema": {
+            "type": "boolean"
+          },
+          "description": "Whether to enable the chainhook immediately (default: true)",
+          "flags": {
+            "optional": true
+          }
+        }
+      ],
+      "slug": "contract-call-monitor-options",
+      "displayName": "ContractCallMonitorOptions",
+      "category": "interface",
+      "importPath": "./index",
+      "signatures": [],
+      "examples": [],
+      "tags": []
+    },
+    {
+      "id": "createChainhooksService",
+      "name": "createChainhooksService",
+      "slug": "create-chainhooks-service",
+      "displayName": "createChainhooksService",
+      "category": "function",
+      "importPath": "./index",
+      "kind": "function",
+      "deprecated": false,
+      "signatures": [
+        {
+          "parameters": [
+            {
+              "name": "config",
+              "required": true,
+              "schema": {
+                "$ref": "#/types/ChainhooksServiceConfig"
+              },
+              "description": "Configuration options"
+            }
+          ],
+          "returns": {
+            "schema": {
+              "$ref": "#/types/ChainhooksService"
+            },
+            "description": "A new ChainhooksService instance",
+            "tsType": "ChainhooksService"
+          },
+          "description": "Creates a new ChainhooksService instance.\nThis is a convenience factory function."
+        }
+      ],
+      "description": "Creates a new ChainhooksService instance.\nThis is a convenience factory function.",
+      "source": {
+        "file": "/tmp/chainhooks-client/index.ts",
+        "line": 277
+      },
+      "examples": [
+        "```typescript\nconst service = createChainhooksService({\n  network: \"testnet\",\n  apiKey: process.env.HIRO_API_KEY!,\n});\n```"
+      ],
+      "tags": [
+        {
+          "name": "param",
+          "text": "config - Configuration options",
+          "paramName": "config"
+        },
+        {
+          "name": "returns",
+          "text": "A new ChainhooksService instance"
+        },
+        {
+          "name": "example",
+          "text": "```typescript\nconst service = createChainhooksService({\n  network: \"testnet\",\n  apiKey: process.env.HIRO_API_KEY!,\n});\n```",
+          "language": "typescript"
+        }
+      ],
+      "related": [
+        {
+          "type": "returns",
+          "target": "ChainhooksService"
+        }
+      ],
+      "members": []
+    },
+    {
+      "id": "formatStxAmount",
+      "name": "formatStxAmount",
+      "slug": "format-stx-amount",
+      "displayName": "formatStxAmount",
+      "category": "function",
+      "importPath": "./index",
+      "kind": "function",
+      "deprecated": false,
+      "signatures": [
+        {
+          "parameters": [
+            {
+              "name": "microStx",
+              "required": true,
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "description": "Amount in microSTX (1 STX = 1,000,000 microSTX)"
+            }
+          ],
+          "returns": {
+            "schema": {
+              "type": "string"
+            },
+            "description": "Formatted string with STX amount",
+            "tsType": "string"
+          },
+          "description": "Formats a microSTX amount to STX with proper decimal places"
+        }
+      ],
+      "description": "Formats a microSTX amount to STX with proper decimal places",
+      "source": {
+        "file": "/tmp/chainhooks-client/index.ts",
+        "line": 326
+      },
+      "examples": [
+        "```typescript\nformatStxAmount(\"1000000\") // \"1.000000 STX\"\nformatStxAmount(1500000)   // \"1.500000 STX\"\n```"
+      ],
+      "tags": [
+        {
+          "name": "param",
+          "text": "microStx - Amount in microSTX (1 STX = 1,000,000 microSTX)",
+          "paramName": "microStx"
+        },
+        {
+          "name": "returns",
+          "text": "Formatted string with STX amount"
+        },
+        {
+          "name": "example",
+          "text": "```typescript\nformatStxAmount(\"1000000\") // \"1.000000 STX\"\nformatStxAmount(1500000)   // \"1.500000 STX\"\n```",
+          "language": "typescript"
+        }
+      ],
+      "members": []
+    },
+    {
+      "id": "Network",
+      "name": "Network",
+      "kind": "type",
+      "deprecated": false,
+      "type": {
+        "$ref": "#/types/Network"
+      },
+      "description": "Supported Stacks networks for chainhooks",
+      "source": {
+        "file": "/tmp/chainhooks-client/index.ts",
+        "line": 17
+      },
+      "slug": "network",
+      "displayName": "Network",
+      "category": "type",
+      "importPath": "./index",
+      "signatures": [],
+      "members": [],
+      "examples": [],
+      "tags": []
+    },
+    {
+      "id": "parseWebhookPayload",
+      "name": "parseWebhookPayload",
+      "slug": "parse-webhook-payload",
+      "displayName": "parseWebhookPayload",
+      "category": "function",
+      "importPath": "./index",
+      "kind": "function",
+      "deprecated": false,
+      "signatures": [
+        {
+          "parameters": [
+            {
+              "name": "payload",
+              "required": true,
+              "schema": {
+                "type": "unknown"
+              },
+              "description": "The raw JSON payload from the webhook request"
+            }
+          ],
+          "returns": {
+            "schema": {
+              "type": "object",
+              "tsType": "{ chainhook: { name?: string | undefined; uuid: string; }; event: { chain: \"stacks\" | \"bitcoin\"; network: \"mainnet\" | \"testnet\"; apply: { metadata?: { signatures?: { signer_bitvec: string | null; signer_signatures: string[] | null; } | undefined; ... 7 more ...; tx_count: number; } | undefined; block_identifier: { ...."
+            },
+            "description": "The parsed ChainhookEvent",
+            "tsType": "{ chainhook: { name?: string | undefined; uuid: string; }; event: { chain: \"stacks\" | \"bitcoin\"; network: \"mainnet\" | \"testnet\"; apply: { metadata?: { signatures?: { signer_bitvec: string | null; signer_signatures: string[] | null; } | undefined; ... 7 more ...; tx_count: number; } | undefined; block_identifier: { ...."
+          },
+          "description": "Parses an incoming webhook payload and validates it as a ChainhookEvent.\nUse this in your webhook handler to safely parse incoming requests.",
+          "throws": [
+            {
+              "description": "Error if the payload is invalid"
+            }
+          ]
+        }
+      ],
+      "description": "Parses an incoming webhook payload and validates it as a ChainhookEvent.\nUse this in your webhook handler to safely parse incoming requests.",
+      "source": {
+        "file": "/tmp/chainhooks-client/index.ts",
+        "line": 297
+      },
+      "examples": [
+        "```typescript\napp.post(\"/webhook\", async (req) => {\n  const event = parseWebhookPayload(await req.json());\n  console.log(\"Received event for:\", event.chainhook.uuid);\n});\n```"
+      ],
+      "tags": [
+        {
+          "name": "param",
+          "text": "payload - The raw JSON payload from the webhook request",
+          "paramName": "payload"
+        },
+        {
+          "name": "returns",
+          "text": "The parsed ChainhookEvent"
+        },
+        {
+          "name": "throws",
+          "text": "Error if the payload is invalid"
+        },
+        {
+          "name": "example",
+          "text": "```typescript\napp.post(\"/webhook\", async (req) => {\n  const event = parseWebhookPayload(await req.json());\n  console.log(\"Received event for:\", event.chainhook.uuid);\n});\n```",
+          "language": "typescript"
+        }
+      ],
+      "related": [
+        {
+          "type": "returns",
+          "target": "ChainhookEvent"
+        }
+      ],
+      "members": []
+    },
+    {
+      "id": "StacksEventType",
+      "name": "StacksEventType",
+      "kind": "type",
+      "deprecated": false,
+      "type": {
+        "$ref": "#/types/StacksEventType"
+      },
+      "description": "Available event filter types for Stacks chainhooks",
+      "source": {
+        "file": "/tmp/chainhooks-client/index.ts",
+        "line": 32
+      },
+      "slug": "stacks-event-type",
+      "displayName": "StacksEventType",
+      "category": "type",
+      "importPath": "./index",
+      "signatures": [],
+      "members": [],
+      "examples": [],
+      "tags": []
+    },
+    {
+      "id": "StxTransferMonitorOptions",
+      "name": "StxTransferMonitorOptions",
+      "kind": "interface",
+      "deprecated": false,
+      "description": "Options for creating an STX transfer monitor chainhook",
+      "source": {
+        "file": "/tmp/chainhooks-client/index.ts",
+        "line": 55
+      },
+      "members": [
+        {
+          "id": "name",
+          "name": "name",
+          "kind": "property",
+          "schema": {
+            "type": "string"
+          },
+          "description": "Human-readable name for the chainhook"
+        },
+        {
+          "id": "webhookUrl",
+          "name": "webhookUrl",
+          "kind": "property",
+          "schema": {
+            "type": "string"
+          },
+          "description": "URL where events will be POSTed"
+        },
+        {
+          "id": "sender",
+          "name": "sender",
+          "kind": "property",
+          "schema": {
+            "type": "string"
+          },
+          "description": "Optional: filter by sender address",
+          "flags": {
+            "optional": true
+          }
+        },
+        {
+          "id": "receiver",
+          "name": "receiver",
+          "kind": "property",
+          "schema": {
+            "type": "string"
+          },
+          "description": "Optional: filter by receiver address",
+          "flags": {
+            "optional": true
+          }
+        },
+        {
+          "id": "decodeClarityValues",
+          "name": "decodeClarityValues",
+          "kind": "property",
+          "schema": {
+            "type": "boolean"
+          },
+          "description": "Whether to decode Clarity values in the payload (default: true)",
+          "flags": {
+            "optional": true
+          }
+        },
+        {
+          "id": "enableOnRegistration",
+          "name": "enableOnRegistration",
+          "kind": "property",
+          "schema": {
+            "type": "boolean"
+          },
+          "description": "Whether to enable the chainhook immediately (default: true)",
+          "flags": {
+            "optional": true
+          }
+        }
+      ],
+      "slug": "stx-transfer-monitor-options",
+      "displayName": "StxTransferMonitorOptions",
+      "category": "interface",
+      "importPath": "./index",
+      "signatures": [],
+      "examples": [],
+      "tags": []
+    }
+  ],
+  "types": [
+    {
+      "id": "Chainhook",
+      "name": "Chainhook",
+      "kind": "type",
+      "description": "",
+      "source": {
+        "file": "/private/tmp/chainhooks-client/node_modules/@hirosystems/chainhooks-client/dist/src/schemas/chainhook/index.d.ts",
+        "line": 318
+      },
+      "schema": {
+        "type": "object",
+        "tsType": "{ uuid: string; definition: { options?: { enable_on_registration?: boolean | undefined; expire_after_evaluations?: number | undefined; expire_after_occurrences?: number | undefined; ... 6 more ...; include_block_metadata?: boolean | undefined; } | null | undefined; ... 5 more ...; action: { ...; }; }; status: { ...;..."
+      },
+      "slug": "chainhook",
+      "displayName": "Chainhook",
+      "category": "type",
+      "members": [],
+      "tags": []
+    },
+    {
+      "id": "ChainhookDefinition",
+      "name": "ChainhookDefinition",
+      "kind": "type",
+      "description": "",
+      "source": {
+        "file": "/private/tmp/chainhooks-client/node_modules/@hirosystems/chainhooks-client/dist/src/schemas/chainhook/index.d.ts",
+        "line": 195
+      },
+      "schema": {
+        "type": "object",
+        "tsType": "{ options?: { enable_on_registration?: boolean | undefined; expire_after_evaluations?: number | undefined; expire_after_occurrences?: number | undefined; decode_clarity_values?: boolean | undefined; ... 5 more ...; include_block_metadata?: boolean | undefined; } | null | undefined; ... 5 more ...; action: { ...; }; }"
+      },
+      "slug": "chainhook-definition",
+      "displayName": "ChainhookDefinition",
+      "category": "type",
+      "members": [],
+      "tags": []
+    },
+    {
+      "id": "ChainhookEvent",
+      "name": "ChainhookEvent",
+      "kind": "type",
+      "description": "",
+      "source": {
+        "file": "/private/tmp/chainhooks-client/node_modules/@hirosystems/chainhooks-client/dist/src/schemas/chainhook-event/index.d.ts",
+        "line": 730
+      },
+      "schema": {
+        "type": "object",
+        "tsType": "{ chainhook: { name?: string | undefined; uuid: string; }; event: { chain: \"stacks\" | \"bitcoin\"; network: \"mainnet\" | \"testnet\"; apply: { metadata?: { signatures?: { signer_bitvec: string | null; signer_signatures: string[] | null; } | undefined; ... 7 more ...; tx_count: number; } | undefined; block_identifier: { ...."
+      },
+      "slug": "chainhook-event",
+      "displayName": "ChainhookEvent",
+      "category": "type",
+      "members": [],
+      "tags": []
+    },
+    {
+      "id": "ChainhooksClient",
+      "name": "ChainhooksClient",
+      "kind": "class",
+      "description": "Chainhooks Client\nA TypeScript client for interacting with the Chainhooks API.",
+      "source": {
+        "file": "/private/tmp/chainhooks-client/node_modules/@hirosystems/chainhooks-client/dist/src/client.d.ts",
+        "line": 34
+      },
+      "members": [
+        {
+          "id": "config",
+          "name": "config",
+          "kind": "property",
+          "visibility": "private",
+          "schema": {
+            "type": "any"
+          },
+          "description": "",
+          "flags": {
+            "readonly": true
+          }
+        },
+        {
+          "id": "requestHeaders",
+          "name": "requestHeaders",
+          "kind": "property",
+          "visibility": "private",
+          "schema": {
+            "type": "any"
+          },
+          "description": "",
+          "flags": {
+            "readonly": true
+          }
+        },
+        {
+          "id": "baseUrl",
+          "name": "baseUrl",
+          "kind": "property",
+          "visibility": "private",
+          "schema": {
+            "type": "any"
+          },
+          "description": "",
+          "flags": {
+            "readonly": true
+          }
+        },
+        {
+          "id": "constructor",
+          "name": "constructor",
+          "kind": "constructor"
+        },
+        {
+          "id": "registerChainhook",
+          "name": "registerChainhook",
+          "kind": "method",
+          "signatures": [
+            {
+              "parameters": [
+                {
+                  "name": "definition",
+                  "required": true,
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "options": {
+                        "anyOf": [
+                          {
+                            "type": "null"
+                          },
+                          {
+                            "type": "object",
+                            "tsType": "{ enable_on_registration?: boolean | undefined; expire_after_evaluations?: number | undefined; expire_after_occurrences?: number | undefined; decode_clarity_values?: boolean | undefined; ... 5 more ...; include_block_metadata?: boolean | undefined; }"
+                          }
+                        ]
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "version": {
+                        "enum": ["1"]
+                      },
+                      "chain": {
+                        "enum": ["stacks"]
+                      },
+                      "network": {
+                        "anyOf": [
+                          {
+                            "enum": ["mainnet"]
+                          },
+                          {
+                            "enum": ["testnet"]
+                          }
+                        ]
+                      },
+                      "filters": {
+                        "type": "object",
+                        "tsType": "{ events: ({ type: \"balance_change\"; principal: string; } | { asset_identifier?: string | undefined; type: \"ft_event\"; } | { asset_identifier?: string | undefined; receiver?: string | undefined; type: \"ft_mint\"; } | ... 14 more ... | { ...; })[]; }"
+                      },
+                      "action": {
+                        "type": "object",
+                        "tsType": "{ type: \"http_post\"; url: string; }"
+                      }
+                    },
+                    "required": ["name", "version", "chain", "network", "filters", "action"]
+                  }
+                }
+              ],
+              "returns": {
+                "schema": {
+                  "type": "object"
+                },
+                "description": ""
+              },
+              "description": "Register a new chainhook"
+            }
+          ],
+          "description": "Register a new chainhook"
+        },
+        {
+          "id": "updateChainhook",
+          "name": "updateChainhook",
+          "kind": "method",
+          "signatures": [
+            {
+              "parameters": [
+                {
+                  "name": "uuid",
+                  "required": true,
+                  "schema": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "name": "definition",
+                  "required": true,
+                  "schema": {
+                    "allOf": [
+                      {
+                        "type": "object",
+                        "tsType": "Partial<{ options?: { enable_on_registration?: boolean | undefined; expire_after_evaluations?: number | undefined; expire_after_occurrences?: number | undefined; decode_clarity_values?: boolean | undefined; ... 5 more ...; include_block_metadata?: boolean | undefined; } | null | undefined; ... 5 more ...; action: { ..."
+                      },
+                      {
+                        "type": "object"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "returns": {
+                "schema": {
+                  "type": "object"
+                },
+                "description": ""
+              },
+              "description": "Update a chainhook by UUID"
+            }
+          ],
+          "description": "Update a chainhook by UUID"
+        },
+        {
+          "id": "getChainhooks",
+          "name": "getChainhooks",
+          "kind": "method",
+          "signatures": [
+            {
+              "parameters": [
+                {
+                  "name": "options",
+                  "required": false,
+                  "schema": {
+                    "$ref": "#/types/PaginationOptions"
+                  }
+                }
+              ],
+              "returns": {
+                "schema": {
+                  "type": "object"
+                },
+                "description": ""
+              },
+              "description": "Get all chainhooks with pagination"
+            }
+          ],
+          "description": "Get all chainhooks with pagination"
+        },
+        {
+          "id": "getChainhook",
+          "name": "getChainhook",
+          "kind": "method",
+          "signatures": [
+            {
+              "parameters": [
+                {
+                  "name": "uuid",
+                  "required": true,
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              ],
+              "returns": {
+                "schema": {
+                  "type": "object"
+                },
+                "description": ""
+              },
+              "description": "Get a specific chainhook by UUID"
+            }
+          ],
+          "description": "Get a specific chainhook by UUID"
+        },
+        {
+          "id": "enableChainhook",
+          "name": "enableChainhook",
+          "kind": "method",
+          "signatures": [
+            {
+              "parameters": [
+                {
+                  "name": "uuid",
+                  "required": true,
+                  "schema": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "name": "enabled",
+                  "required": true,
+                  "schema": {
+                    "type": "boolean"
+                  }
+                }
+              ],
+              "returns": {
+                "schema": {
+                  "type": "object"
+                },
+                "description": ""
+              },
+              "description": "Change the enabled status of a chainhook by UUID"
+            }
+          ],
+          "description": "Change the enabled status of a chainhook by UUID"
+        },
+        {
+          "id": "bulkEnableChainhooks",
+          "name": "bulkEnableChainhooks",
+          "kind": "method",
+          "signatures": [
+            {
+              "parameters": [
+                {
+                  "name": "requestBody",
+                  "required": true,
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "filters": {
+                        "anyOf": [
+                          {
+                            "type": "null"
+                          },
+                          {
+                            "type": "object",
+                            "tsType": "{ uuids?: string[] | undefined; webhook_url?: string | undefined; statuses?: (\"new\" | \"streaming\" | \"expired\" | \"interrupted\")[] | undefined; }"
+                          }
+                        ]
+                      },
+                      "enabled": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": ["enabled"]
+                  }
+                }
+              ],
+              "returns": {
+                "schema": {
+                  "type": "object"
+                },
+                "description": ""
+              },
+              "description": "Update the enabled status of multiple chainhooks using filters"
+            }
+          ],
+          "description": "Update the enabled status of multiple chainhooks using filters"
+        },
+        {
+          "id": "deleteChainhook",
+          "name": "deleteChainhook",
+          "kind": "method",
+          "signatures": [
+            {
+              "parameters": [
+                {
+                  "name": "uuid",
+                  "required": true,
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              ],
+              "returns": {
+                "schema": {
+                  "type": "object"
+                },
+                "description": ""
+              },
+              "description": "Delete a chainhook by UUID"
+            }
+          ],
+          "description": "Delete a chainhook by UUID"
+        },
+        {
+          "id": "rotateConsumerSecret",
+          "name": "rotateConsumerSecret",
+          "kind": "method",
+          "signatures": [
+            {
+              "parameters": [],
+              "returns": {
+                "schema": {
+                  "type": "object"
+                },
+                "description": ""
+              },
+              "description": "Generate or rotate a consumer secret"
+            }
+          ],
+          "description": "Generate or rotate a consumer secret"
+        },
+        {
+          "id": "getConsumerSecret",
+          "name": "getConsumerSecret",
+          "kind": "method",
+          "signatures": [
+            {
+              "parameters": [],
+              "returns": {
+                "schema": {
+                  "type": "object"
+                },
+                "description": ""
+              },
+              "description": "Retrieve the current consumer secret (null when none is configured)"
+            }
+          ],
+          "description": "Retrieve the current consumer secret (null when none is configured)"
+        },
+        {
+          "id": "deleteConsumerSecret",
+          "name": "deleteConsumerSecret",
+          "kind": "method",
+          "signatures": [
+            {
+              "parameters": [],
+              "returns": {
+                "schema": {
+                  "type": "object"
+                },
+                "description": ""
+              },
+              "description": "Delete a consumer secret"
+            }
+          ],
+          "description": "Delete a consumer secret"
+        },
+        {
+          "id": "evaluateChainhook",
+          "name": "evaluateChainhook",
+          "kind": "method",
+          "signatures": [
+            {
+              "parameters": [
+                {
+                  "name": "uuid",
+                  "required": true,
+                  "schema": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "name": "requestBody",
+                  "required": true,
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "index_block_hash": {
+                        "anyOf": [
+                          {
+                            "type": "null"
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "block_height": {
+                        "anyOf": [
+                          {
+                            "type": "null"
+                          },
+                          {
+                            "type": "number"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              ],
+              "returns": {
+                "schema": {
+                  "type": "object"
+                },
+                "description": ""
+              },
+              "description": "Queue an on-demand evaluation for a chainhook"
+            }
+          ],
+          "description": "Queue an on-demand evaluation for a chainhook"
+        },
+        {
+          "id": "getStatus",
+          "name": "getStatus",
+          "kind": "method",
+          "signatures": [
+            {
+              "parameters": [],
+              "returns": {
+                "schema": {
+                  "type": "object"
+                },
+                "description": ""
+              },
+              "description": "Get API status"
+            }
+          ],
+          "description": "Get API status"
+        },
+        {
+          "id": "request",
+          "name": "request",
+          "kind": "property",
+          "visibility": "private",
+          "schema": {
+            "type": "any"
+          },
+          "description": ""
+        }
+      ],
+      "slug": "chainhooks-client",
+      "displayName": "ChainhooksClient",
+      "category": "class",
+      "tags": []
+    },
+    {
+      "id": "ChainhooksService",
+      "name": "ChainhooksService",
+      "slug": "chainhooks-service",
+      "displayName": "ChainhooksService",
+      "category": "class",
+      "importPath": "./index",
+      "kind": "class",
+      "description": "A service wrapper for interacting with the Hiro Chainhooks API.\nProvides convenient methods for common chainhook operations.",
+      "source": {
+        "file": "/tmp/chainhooks-client/index.ts",
+        "line": 105
+      },
+      "members": [
+        {
+          "id": "client",
+          "name": "client",
+          "kind": "property",
+          "visibility": "private",
+          "schema": {
+            "$ref": "#/types/ChainhooksClient"
+          },
+          "description": ""
+        },
+        {
+          "id": "network",
+          "name": "network",
+          "kind": "property",
+          "visibility": "private",
+          "schema": {
+            "$ref": "#/types/Network"
+          },
+          "description": ""
+        },
+        {
+          "id": "constructor",
+          "name": "constructor",
+          "kind": "constructor"
+        },
+        {
+          "id": "getClient",
+          "name": "getClient",
+          "kind": "method",
+          "signatures": [
+            {
+              "parameters": [],
+              "returns": {
+                "schema": {
+                  "$ref": "#/types/ChainhooksClient"
+                },
+                "description": "The raw ChainhooksClient instance"
+              },
+              "description": "Returns the underlying ChainhooksClient for advanced operations"
+            }
+          ],
+          "description": "Returns the underlying ChainhooksClient for advanced operations",
+          "tags": [
+            {
+              "name": "returns",
+              "text": "The raw ChainhooksClient instance"
+            }
+          ]
+        },
+        {
+          "id": "createStxTransferMonitor",
+          "name": "createStxTransferMonitor",
+          "kind": "method",
+          "signatures": [
+            {
+              "parameters": [
+                {
+                  "name": "options",
+                  "required": true,
+                  "schema": {
+                    "$ref": "#/types/StxTransferMonitorOptions"
+                  }
+                }
+              ],
+              "returns": {
+                "schema": {
+                  "type": "object"
+                },
+                "description": "The created chainhook with its UUID and status"
+              },
+              "description": "Creates a chainhook that monitors STX token transfers"
+            }
+          ],
+          "description": "Creates a chainhook that monitors STX token transfers",
+          "tags": [
+            {
+              "name": "param",
+              "text": "options - Configuration for the STX transfer monitor",
+              "paramName": "options"
+            },
+            {
+              "name": "returns",
+              "text": "The created chainhook with its UUID and status"
+            },
+            {
+              "name": "example",
+              "text": "```typescript\nconst hook = await service.createStxTransferMonitor({\n  name: \"whale-watcher\",\n  webhookUrl: \"https://myapp.com/webhooks/stx\",\n  sender: \"SP1234...\", // optional: only watch this sender\n});\nconsole.log(\"Created hook:\", hook.uuid);\n```",
+              "language": "typescript"
+            }
+          ]
+        },
+        {
+          "id": "createContractCallMonitor",
+          "name": "createContractCallMonitor",
+          "kind": "method",
+          "signatures": [
+            {
+              "parameters": [
+                {
+                  "name": "options",
+                  "required": true,
+                  "schema": {
+                    "$ref": "#/types/ContractCallMonitorOptions"
+                  }
+                }
+              ],
+              "returns": {
+                "schema": {
+                  "type": "object"
+                },
+                "description": "The created chainhook with its UUID and status"
+              },
+              "description": "Creates a chainhook that monitors calls to a specific smart contract"
+            }
+          ],
+          "description": "Creates a chainhook that monitors calls to a specific smart contract",
+          "tags": [
+            {
+              "name": "param",
+              "text": "options - Configuration for the contract call monitor",
+              "paramName": "options"
+            },
+            {
+              "name": "returns",
+              "text": "The created chainhook with its UUID and status"
+            },
+            {
+              "name": "example",
+              "text": "```typescript\nconst hook = await service.createContractCallMonitor({\n  name: \"nft-sales\",\n  webhookUrl: \"https://myapp.com/webhooks/nft\",\n  contractIdentifier: \"SP123.my-nft-contract\",\n  functionName: \"transfer\", // optional: only watch this function\n});\n```",
+              "language": "typescript"
+            }
+          ]
+        },
+        {
+          "id": "listChainhooks",
+          "name": "listChainhooks",
+          "kind": "method",
+          "signatures": [
+            {
+              "parameters": [
+                {
+                  "name": "limit",
+                  "required": false,
+                  "schema": {
+                    "type": "number"
+                  },
+                  "default": 50
+                },
+                {
+                  "name": "offset",
+                  "required": false,
+                  "schema": {
+                    "type": "number"
+                  },
+                  "default": 0
+                }
+              ],
+              "returns": {
+                "schema": {
+                  "type": "object"
+                },
+                "description": "Paginated list of chainhooks"
+              },
+              "description": "Lists all chainhooks registered to this account"
+            }
+          ],
+          "description": "Lists all chainhooks registered to this account",
+          "tags": [
+            {
+              "name": "param",
+              "text": "limit - Maximum number of results to return (default: 50)",
+              "paramName": "limit"
+            },
+            {
+              "name": "param",
+              "text": "offset - Number of results to skip for pagination (default: 0)",
+              "paramName": "offset"
+            },
+            {
+              "name": "returns",
+              "text": "Paginated list of chainhooks"
+            }
+          ]
+        },
+        {
+          "id": "getChainhook",
+          "name": "getChainhook",
+          "kind": "method",
+          "signatures": [
+            {
+              "parameters": [
+                {
+                  "name": "uuid",
+                  "required": true,
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              ],
+              "returns": {
+                "schema": {
+                  "type": "object"
+                },
+                "description": "The chainhook definition and status"
+              },
+              "description": "Retrieves a specific chainhook by its UUID"
+            }
+          ],
+          "description": "Retrieves a specific chainhook by its UUID",
+          "tags": [
+            {
+              "name": "param",
+              "text": "uuid - The unique identifier of the chainhook",
+              "paramName": "uuid"
+            },
+            {
+              "name": "returns",
+              "text": "The chainhook definition and status"
+            }
+          ]
+        },
+        {
+          "id": "setEnabled",
+          "name": "setEnabled",
+          "kind": "method",
+          "signatures": [
+            {
+              "parameters": [
+                {
+                  "name": "uuid",
+                  "required": true,
+                  "schema": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "name": "enabled",
+                  "required": true,
+                  "schema": {
+                    "type": "boolean"
+                  }
+                }
+              ],
+              "returns": {
+                "schema": {
+                  "type": "object"
+                },
+                "description": ""
+              },
+              "description": "Enables or disables a chainhook"
+            }
+          ],
+          "description": "Enables or disables a chainhook",
+          "tags": [
+            {
+              "name": "param",
+              "text": "uuid - The unique identifier of the chainhook",
+              "paramName": "uuid"
+            },
+            {
+              "name": "param",
+              "text": "enabled - Whether the chainhook should be enabled",
+              "paramName": "enabled"
+            }
+          ]
+        },
+        {
+          "id": "deleteChainhook",
+          "name": "deleteChainhook",
+          "kind": "method",
+          "signatures": [
+            {
+              "parameters": [
+                {
+                  "name": "uuid",
+                  "required": true,
+                  "schema": {
+                    "type": "string"
+                  }
+                }
+              ],
+              "returns": {
+                "schema": {
+                  "type": "object"
+                },
+                "description": ""
+              },
+              "description": "Permanently deletes a chainhook"
+            }
+          ],
+          "description": "Permanently deletes a chainhook",
+          "tags": [
+            {
+              "name": "param",
+              "text": "uuid - The unique identifier of the chainhook to delete",
+              "paramName": "uuid"
+            }
+          ]
+        },
+        {
+          "id": "checkStatus",
+          "name": "checkStatus",
+          "kind": "method",
+          "signatures": [
+            {
+              "parameters": [],
+              "returns": {
+                "schema": {
+                  "type": "object"
+                },
+                "description": "API status information"
+              },
+              "description": "Checks the API status and connectivity"
+            }
+          ],
+          "description": "Checks the API status and connectivity",
+          "tags": [
+            {
+              "name": "returns",
+              "text": "API status information"
+            }
+          ]
+        }
+      ],
+      "tags": [
+        {
+          "name": "example",
+          "text": "```typescript\nconst service = new ChainhooksService({\n  network: \"testnet\",\n  apiKey: process.env.HIRO_API_KEY!,\n});\n\nconst hook = await service.createStxTransferMonitor({\n  name: \"my-monitor\",\n  webhookUrl: \"https://example.com/webhook\",\n});\n```",
+          "language": "typescript"
+        }
+      ]
+    },
+    {
+      "id": "ChainhooksServiceConfig",
+      "name": "ChainhooksServiceConfig",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "network": {
+            "$ref": "#/types/Network"
+          },
+          "apiKey": {
+            "type": "string"
+          }
+        },
+        "required": ["network", "apiKey"]
+      },
+      "members": [
+        {
+          "id": "network",
+          "name": "network",
+          "kind": "property",
+          "schema": {
+            "$ref": "#/types/Network"
+          },
+          "description": "The network to connect to (mainnet or testnet)"
+        },
+        {
+          "id": "apiKey",
+          "name": "apiKey",
+          "kind": "property",
+          "schema": {
+            "type": "string"
+          },
+          "description": "Your Hiro API key from platform.hiro.so"
+        }
+      ],
+      "description": "Configuration options for creating a ChainhooksService instance",
+      "source": {
+        "file": "/tmp/chainhooks-client/index.ts",
+        "line": 22
+      },
+      "slug": "chainhooks-service-config",
+      "displayName": "ChainhooksServiceConfig",
+      "category": "interface",
+      "importPath": "./index",
+      "tags": []
+    },
+    {
+      "id": "ContractCallMonitorOptions",
+      "name": "ContractCallMonitorOptions",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "webhookUrl": {
+            "type": "string"
+          },
+          "contractIdentifier": {
+            "type": "string"
+          },
+          "functionName": {
+            "type": "string"
+          },
+          "decodeClarityValues": {
+            "type": "boolean"
+          },
+          "enableOnRegistration": {
+            "type": "boolean"
+          }
+        },
+        "required": ["name", "webhookUrl", "contractIdentifier"]
+      },
+      "members": [
+        {
+          "id": "name",
+          "name": "name",
+          "kind": "property",
+          "schema": {
+            "type": "string"
+          },
+          "description": "Human-readable name for the chainhook"
+        },
+        {
+          "id": "webhookUrl",
+          "name": "webhookUrl",
+          "kind": "property",
+          "schema": {
+            "type": "string"
+          },
+          "description": "URL where events will be POSTed"
+        },
+        {
+          "id": "contractIdentifier",
+          "name": "contractIdentifier",
+          "kind": "property",
+          "schema": {
+            "type": "string"
+          },
+          "description": "The contract identifier (e.g., SP123.contract-name)"
+        },
+        {
+          "id": "functionName",
+          "name": "functionName",
+          "kind": "property",
+          "schema": {
+            "type": "string"
+          },
+          "description": "Optional: filter by specific function name",
+          "flags": {
+            "optional": true
+          }
+        },
+        {
+          "id": "decodeClarityValues",
+          "name": "decodeClarityValues",
+          "kind": "property",
+          "schema": {
+            "type": "boolean"
+          },
+          "description": "Whether to decode Clarity values in the payload (default: true)",
+          "flags": {
+            "optional": true
+          }
+        },
+        {
+          "id": "enableOnRegistration",
+          "name": "enableOnRegistration",
+          "kind": "property",
+          "schema": {
+            "type": "boolean"
+          },
+          "description": "Whether to enable the chainhook immediately (default: true)",
+          "flags": {
+            "optional": true
+          }
+        }
+      ],
+      "description": "Options for creating a contract call monitor chainhook",
+      "source": {
+        "file": "/tmp/chainhooks-client/index.ts",
+        "line": 73
+      },
+      "slug": "contract-call-monitor-options",
+      "displayName": "ContractCallMonitorOptions",
+      "category": "interface",
+      "importPath": "./index",
+      "tags": []
+    },
+    {
+      "id": "Network",
+      "name": "Network",
+      "kind": "type",
+      "description": "Supported Stacks networks for chainhooks",
+      "source": {
+        "file": "/tmp/chainhooks-client/index.ts",
+        "line": 17
+      },
+      "schema": {
+        "$ref": "#/types/Network"
+      },
+      "slug": "network",
+      "displayName": "Network",
+      "category": "type",
+      "importPath": "./index",
+      "members": [],
+      "tags": []
+    },
+    {
+      "id": "PaginationOptions",
+      "name": "PaginationOptions",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "offset": {
+            "type": "number"
+          },
+          "limit": {
+            "type": "number"
+          }
+        }
+      },
+      "members": [
+        {
+          "id": "offset",
+          "name": "offset",
+          "kind": "property",
+          "schema": {
+            "type": "number"
+          },
+          "description": "Offset of the first item to return",
+          "flags": {
+            "optional": true
+          }
+        },
+        {
+          "id": "limit",
+          "name": "limit",
+          "kind": "property",
+          "schema": {
+            "type": "number"
+          },
+          "description": "Number of items to return",
+          "flags": {
+            "optional": true
+          }
+        }
+      ],
+      "description": "Pagination options for the Chainhooks Client",
+      "source": {
+        "file": "/private/tmp/chainhooks-client/node_modules/@hirosystems/chainhooks-client/dist/src/client.d.ts",
+        "line": 23
+      },
+      "slug": "pagination-options",
+      "displayName": "PaginationOptions",
+      "category": "interface",
+      "tags": []
+    },
+    {
+      "id": "StacksEventType",
+      "name": "StacksEventType",
+      "kind": "type",
+      "description": "Available event filter types for Stacks chainhooks",
+      "source": {
+        "file": "/tmp/chainhooks-client/index.ts",
+        "line": 32
+      },
+      "schema": {
+        "$ref": "#/types/StacksEventType"
+      },
+      "slug": "stacks-event-type",
+      "displayName": "StacksEventType",
+      "category": "type",
+      "importPath": "./index",
+      "members": [],
+      "tags": []
+    },
+    {
+      "id": "StxTransferMonitorOptions",
+      "name": "StxTransferMonitorOptions",
+      "kind": "interface",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "webhookUrl": {
+            "type": "string"
+          },
+          "sender": {
+            "type": "string"
+          },
+          "receiver": {
+            "type": "string"
+          },
+          "decodeClarityValues": {
+            "type": "boolean"
+          },
+          "enableOnRegistration": {
+            "type": "boolean"
+          }
+        },
+        "required": ["name", "webhookUrl"]
+      },
+      "members": [
+        {
+          "id": "name",
+          "name": "name",
+          "kind": "property",
+          "schema": {
+            "type": "string"
+          },
+          "description": "Human-readable name for the chainhook"
+        },
+        {
+          "id": "webhookUrl",
+          "name": "webhookUrl",
+          "kind": "property",
+          "schema": {
+            "type": "string"
+          },
+          "description": "URL where events will be POSTed"
+        },
+        {
+          "id": "sender",
+          "name": "sender",
+          "kind": "property",
+          "schema": {
+            "type": "string"
+          },
+          "description": "Optional: filter by sender address",
+          "flags": {
+            "optional": true
+          }
+        },
+        {
+          "id": "receiver",
+          "name": "receiver",
+          "kind": "property",
+          "schema": {
+            "type": "string"
+          },
+          "description": "Optional: filter by receiver address",
+          "flags": {
+            "optional": true
+          }
+        },
+        {
+          "id": "decodeClarityValues",
+          "name": "decodeClarityValues",
+          "kind": "property",
+          "schema": {
+            "type": "boolean"
+          },
+          "description": "Whether to decode Clarity values in the payload (default: true)",
+          "flags": {
+            "optional": true
+          }
+        },
+        {
+          "id": "enableOnRegistration",
+          "name": "enableOnRegistration",
+          "kind": "property",
+          "schema": {
+            "type": "boolean"
+          },
+          "description": "Whether to enable the chainhook immediately (default: true)",
+          "flags": {
+            "optional": true
+          }
+        }
+      ],
+      "description": "Options for creating an STX transfer monitor chainhook",
+      "source": {
+        "file": "/tmp/chainhooks-client/index.ts",
+        "line": 55
+      },
+      "slug": "stx-transfer-monitor-options",
+      "displayName": "StxTransferMonitorOptions",
+      "category": "interface",
+      "importPath": "./index",
+      "tags": []
+    }
+  ]
 }

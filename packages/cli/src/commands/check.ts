@@ -5,37 +5,42 @@ import {
   categorizeDrifts,
   createSourceFile,
   DocCov,
-  detectExampleAssertionFailures,
-  detectExampleRuntimeErrors,
   type EnrichedExport,
-  type ExampleRunResult,
   type ExampleTypeError,
+  type ExampleValidationResult,
   enrichSpec,
   type FixSuggestion,
   findJSDocLocation,
   generateFixesForExport,
   generateReport,
-  getDefaultConfig as getLintDefaultConfig,
-  hasNonAssertionComments,
   type JSDocEdit,
   type JSDocPatch,
-  type LintViolation,
-  lintExport,
   mergeFixes,
   NodeFileSystem,
-  parseAssertions,
+  parseExamplesFlag,
   parseJSDocToPatch,
+  type QualityViolation,
   resolveTarget,
-  runExamplesWithPackage,
-  saveReport,
   serializeJSDoc,
-  typecheckExamples,
+  validateExamples,
 } from '@doccov/sdk';
-import type { SpecDocDrift, SpecExport } from '@openpkg-ts/spec';
+import {
+  DRIFT_CATEGORIES,
+  type DriftCategory,
+  type DriftType,
+  type SpecDocDrift,
+  type SpecExport,
+} from '@openpkg-ts/spec';
 import chalk from 'chalk';
 import type { Command } from 'commander';
 import { loadDocCovConfig } from '../config';
-import { computeStats, renderHtml, renderMarkdown } from '../reports';
+import {
+  computeStats,
+  renderGithubSummary,
+  renderHtml,
+  renderMarkdown,
+  writeReports,
+} from '../reports';
 import {
   isLLMAssertionParsingAvailable,
   parseAssertionsWithLLM,
@@ -104,21 +109,24 @@ export function registerCheckCommand(
     .option('--min-coverage <percentage>', 'Minimum docs coverage percentage (0-100)', (value) =>
       Number(value),
     )
+    .option('--max-drift <percentage>', 'Maximum drift percentage allowed (0-100)', (value) =>
+      Number(value),
+    )
     .option(
       '--examples [mode]',
-      'Example validation: presence, types, run, or all (default: all when flag used, types otherwise)',
+      'Example validation: presence, typecheck, run (comma-separated). Bare flag runs all.',
     )
-    .option('--no-lint', 'Skip lint checks')
-    .option('--ignore-drift', 'Do not fail on documentation drift')
     .option('--skip-resolve', 'Skip external type resolution from node_modules')
-    .option('--fix', 'Auto-fix drift and lint issues')
+    .option('--fix', 'Auto-fix drift issues')
     .option('--write', 'Alias for --fix')
     .option('--dry-run', 'Preview fixes without writing (requires --fix)')
     .option('--format <format>', 'Output format: text, json, markdown, html, github', 'text')
-    .option('-o, --output <file>', 'Output file for non-text formats')
+    .option('-o, --output <file>', 'Custom output path (overrides default .doccov/ path)')
+    .option('--stdout', 'Output to stdout instead of writing to .doccov/')
     .option('--update-snapshot', 'Force regenerate .doccov/report.json')
     .option('--limit <n>', 'Max exports to show in report tables', '20')
     .option('--max-type-depth <number>', 'Maximum depth for type conversion (default: 20)')
+    .option('--no-cache', 'Bypass spec cache and force regeneration')
     .action(async (entry, options) => {
       try {
         // Resolve target directory and entry point
@@ -142,11 +150,17 @@ export function registerCheckCommand(
           );
         }
 
-        // Load config to get default minCoverage
+        // Load config to get minCoverage threshold
         const config = await loadDocCovConfig(targetDir);
 
-        // CLI option takes precedence, then config, then default (80)
-        const minCoverage = clampCoverage(options.minCoverage ?? config?.check?.minCoverage ?? 80);
+        // CLI option takes precedence, then config, then undefined (no threshold)
+        const minCoverageRaw = options.minCoverage ?? config?.check?.minCoverage;
+        const minCoverage =
+          minCoverageRaw !== undefined ? clampCoverage(minCoverageRaw) : undefined;
+
+        const maxDriftRaw = options.maxDrift ?? config?.check?.maxDrift;
+        const maxDrift = maxDriftRaw !== undefined ? clampCoverage(maxDriftRaw) : undefined;
+
         const resolveExternalTypes = !options.skipResolve;
 
         let specResult: Awaited<ReturnType<DocCov['analyzeFileWithDiagnostics']>> | undefined;
@@ -154,8 +168,15 @@ export function registerCheckCommand(
         const doccov = createDocCov({
           resolveExternalTypes,
           maxDepth: options.maxTypeDepth ? parseInt(options.maxTypeDepth, 10) : undefined,
+          useCache: options.cache !== false,
+          cwd: options.cwd,
         });
         specResult = await doccov.analyzeFileWithDiagnostics(entryFile);
+
+        // Show cache status
+        if (specResult.fromCache) {
+          log(chalk.gray('Using cached spec'));
+        }
 
         if (!specResult) {
           throw new Error('Failed to analyze documentation coverage.');
@@ -165,201 +186,76 @@ export function registerCheckCommand(
         const spec = enrichSpec(specResult.spec);
         const format = (options.format ?? 'text') as OutputFormat;
 
-        // Display spec diagnostics (warnings/info)
-        const warnings = specResult.diagnostics.filter((d) => d.severity === 'warning');
-        const infos = specResult.diagnostics.filter((d) => d.severity === 'info');
-
-        if (warnings.length > 0 || infos.length > 0) {
-          log('');
-          for (const diag of warnings) {
-            log(chalk.yellow(`⚠ ${diag.message}`));
-            if (diag.suggestion) {
-              log(chalk.gray(`  ${diag.suggestion}`));
-            }
-          }
-          for (const diag of infos) {
-            log(chalk.cyan(`ℹ ${diag.message}`));
-            if (diag.suggestion) {
-              log(chalk.gray(`  ${diag.suggestion}`));
-            }
-          }
-          log('');
-        }
+        // Collect spec diagnostics for later display (after all validation completes)
+        const specWarnings = specResult.diagnostics.filter((d) => d.severity === 'warning');
+        const specInfos = specResult.diagnostics.filter((d) => d.severity === 'info');
 
         // Normalize --fix / --write
         const shouldFix = options.fix || options.write;
 
-        // Run lint if not disabled
-        const lintViolations: Array<{ exportName: string; violation: LintViolation }> = [];
-        if (options.lint !== false) {
-          const lintConfig = getLintDefaultConfig();
-          for (const exp of spec.exports ?? []) {
-            const violations = lintExport(exp, undefined, lintConfig);
-            for (const violation of violations) {
-              lintViolations.push({ exportName: exp.name, violation });
-            }
+        // Collect quality violations from enriched spec
+        const violations: Array<{ exportName: string; violation: QualityViolation }> = [];
+        for (const exp of spec.exports ?? []) {
+          for (const v of exp.docs?.violations ?? []) {
+            violations.push({ exportName: exp.name, violation: v });
           }
         }
 
-        // Validate examples based on --examples mode (presence, types, run, all)
-        // - undefined (no flag): skip all example validation
-        // - true (flag with no value): default to 'all' (presence + types + run)
-        // - string: use the provided value
-        let examplesMode: 'presence' | 'types' | 'run' | 'all' | null = null;
-        if (options.examples === true) {
-          examplesMode = 'all';
-        } else if (typeof options.examples === 'string') {
-          examplesMode = options.examples as 'presence' | 'types' | 'run' | 'all';
-        }
+        // Parse --examples flag into validation modes
+        const validations = parseExamplesFlag(options.examples);
 
-        const shouldTypecheck =
-          examplesMode === 'types' || examplesMode === 'run' || examplesMode === 'all';
-        const shouldRun = examplesMode === 'run' || examplesMode === 'all';
+        // Run example validation using unified SDK function
+        let exampleResult: ExampleValidationResult | undefined;
         const typecheckErrors: Array<{ exportName: string; error: ExampleTypeError }> = [];
-        const runtimeDrifts: Array<{ name: string; issue: string; suggestion?: string }> = [];
+        const runtimeDrifts: CollectedDrift[] = [];
 
-        // Run typecheck if mode requires it
-        if (shouldTypecheck) {
-          const allExamplesForTypecheck: Array<{ exportName: string; examples: string[] }> = [];
-          for (const exp of spec.exports ?? []) {
-            if (exp.examples && exp.examples.length > 0) {
-              allExamplesForTypecheck.push({
-                exportName: exp.name,
-                examples: exp.examples as string[],
+        if (validations.length > 0) {
+          exampleResult = await validateExamples(spec.exports ?? [], {
+            validations,
+            packagePath: targetDir,
+            exportNames: (spec.exports ?? []).map((e) => e.name),
+            timeout: 5000,
+            installTimeout: 60000,
+            llmAssertionParser: isLLMAssertionParsingAvailable()
+              ? async (example) => {
+                  const result = await parseAssertionsWithLLM(example);
+                  return result;
+                }
+              : undefined,
+          });
+
+          // Convert typecheck errors to the expected format
+          if (exampleResult.typecheck) {
+            for (const err of exampleResult.typecheck.errors) {
+              typecheckErrors.push({
+                exportName: err.exportName,
+                error: err.error,
               });
             }
           }
 
-          // Collect all export names for import statements in virtual source files
-          const allExportNames = (spec.exports ?? []).map((e) => e.name);
-
-          if (allExamplesForTypecheck.length > 0) {
-            for (const { exportName, examples } of allExamplesForTypecheck) {
-              const result = typecheckExamples(examples, targetDir, {
-                exportNames: allExportNames,
+          // Convert runtime drifts to the expected format
+          if (exampleResult.run) {
+            for (const drift of exampleResult.run.drifts) {
+              runtimeDrifts.push({
+                name: drift.exportName,
+                type: 'example-runtime-error',
+                issue: drift.issue,
+                suggestion: drift.suggestion,
+                category: 'example',
               });
-              for (const err of result.errors) {
-                typecheckErrors.push({ exportName, error: err });
-              }
-            }
-          }
-        }
-
-        // Run examples at runtime if mode requires it
-        if (shouldRun) {
-          // Collect all examples from all exports
-          const allExamples: Array<{ exportName: string; examples: string[] }> = [];
-          for (const entry of spec.exports ?? []) {
-            if (entry.examples && entry.examples.length > 0) {
-              const stringExamples = entry.examples.filter(
-                (e): e is string => typeof e === 'string',
-              );
-              if (stringExamples.length > 0) {
-                allExamples.push({ exportName: entry.name, examples: stringExamples });
-              }
-            }
-          }
-
-          if (allExamples.length > 0) {
-            // Flatten examples for batch execution
-            const flatExamples = allExamples.flatMap((e) => e.examples);
-
-            // Run all examples with package installed
-            const packageResult = await runExamplesWithPackage(flatExamples, {
-              packagePath: targetDir,
-              timeout: 5000,
-              installTimeout: 60000,
-              cwd: targetDir,
-            });
-
-            if (packageResult.installSuccess) {
-              let exampleIndex = 0;
-
-              // Map results back to exports
-              for (const { exportName, examples } of allExamples) {
-                const entryResults = new Map<number, ExampleRunResult>();
-
-                for (let i = 0; i < examples.length; i++) {
-                  const result = packageResult.results.get(exampleIndex);
-                  if (result) {
-                    entryResults.set(i, result);
-                  }
-                  exampleIndex++;
-                }
-
-                // Find the entry to detect drifts
-                const entry = (spec.exports ?? []).find((e) => e.name === exportName);
-                if (entry) {
-                  // Detect runtime errors
-                  const runtimeErrorDrifts = detectExampleRuntimeErrors(entry, entryResults);
-                  for (const drift of runtimeErrorDrifts) {
-                    runtimeDrifts.push({
-                      name: entry.name,
-                      issue: drift.issue,
-                      suggestion: drift.suggestion,
-                    });
-                  }
-
-                  // Detect assertion failures (only for successful examples)
-                  const assertionDrifts = detectExampleAssertionFailures(entry, entryResults);
-                  for (const drift of assertionDrifts) {
-                    runtimeDrifts.push({
-                      name: entry.name,
-                      issue: drift.issue,
-                      suggestion: drift.suggestion,
-                    });
-                  }
-
-                  // LLM fallback: if no standard assertions but comments exist
-                  if (isLLMAssertionParsingAvailable() && entry.examples) {
-                    for (let exIdx = 0; exIdx < entry.examples.length; exIdx++) {
-                      const example = entry.examples[exIdx];
-                      const result = entryResults.get(exIdx);
-                      if (!result?.success || typeof example !== 'string') continue;
-
-                      // Check if regex found no assertions but comments exist
-                      const regexAssertions = parseAssertions(example);
-                      if (regexAssertions.length === 0 && hasNonAssertionComments(example)) {
-                        // Try LLM fallback
-                        const llmResult = await parseAssertionsWithLLM(example);
-                        if (llmResult?.hasAssertions && llmResult.assertions.length > 0) {
-                          // Validate LLM-extracted assertions against stdout
-                          const stdoutLines = result.stdout
-                            .split('\n')
-                            .map((l) => l.trim())
-                            .filter((l) => l.length > 0);
-
-                          for (let aIdx = 0; aIdx < llmResult.assertions.length; aIdx++) {
-                            const assertion = llmResult.assertions[aIdx];
-                            const actual = stdoutLines[aIdx];
-
-                            if (actual === undefined) {
-                              runtimeDrifts.push({
-                                name: entry.name,
-                                issue: `Assertion expected "${assertion.expected}" but no output was produced`,
-                                suggestion: `Consider using standard syntax: ${assertion.suggestedSyntax}`,
-                              });
-                            } else if (assertion.expected.trim() !== actual.trim()) {
-                              runtimeDrifts.push({
-                                name: entry.name,
-                                issue: `Assertion failed: expected "${assertion.expected}" but got "${actual}"`,
-                                suggestion: `Consider using standard syntax: ${assertion.suggestedSyntax}`,
-                              });
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
             }
           }
         }
 
         const coverageScore = spec.docs?.coverageScore ?? 0;
-        const failingExports = collectFailingExports(spec.exports ?? [], minCoverage);
-        let driftExports = [...collectDrift(spec.exports ?? []), ...runtimeDrifts];
+
+        // Collect drift issues - exclude example-category drifts unless --examples is used
+        const allDriftExports = [...collectDrift(spec.exports ?? []), ...runtimeDrifts];
+        let driftExports =
+          validations.length > 0
+            ? allDriftExports
+            : allDriftExports.filter((d) => d.category !== 'example');
 
         // Handle --fix / --write: auto-fix drift issues
         const fixedDriftKeys = new Set<string>();
@@ -521,132 +417,193 @@ export function registerCheckCommand(
         // Handle --format output for non-text formats
         if (format !== 'text') {
           const limit = parseInt(options.limit, 10) || 20;
-
-          // Always update .doccov/report.json
-          if (options.updateSnapshot || format === 'json') {
-            const report = generateReport(specResult.spec);
-            saveReport(report);
-            log(chalk.gray('Updated .doccov/report.json'));
-          }
-
-          let output: string;
           const stats = computeStats(spec);
 
+          // Generate JSON report (always needed for cache)
+          const report = generateReport(specResult.spec);
+          const jsonContent = JSON.stringify(report, null, 2);
+
+          // Generate requested format content
+          let formatContent: string;
           switch (format) {
-            case 'json': {
-              const report = generateReport(specResult.spec);
-              output = JSON.stringify(report, null, 2);
+            case 'json':
+              formatContent = jsonContent;
               break;
-            }
             case 'markdown':
-              output = renderMarkdown(stats, { limit });
+              formatContent = renderMarkdown(stats, { limit });
               break;
             case 'html':
-              output = renderHtml(stats, { limit });
+              formatContent = renderHtml(stats, { limit });
               break;
             case 'github':
-              // GitHub Actions summary format
-              output = `## Documentation Coverage: ${coverageScore}%\n\n`;
-              output += `| Metric | Value |\n|--------|-------|\n`;
-              output += `| Coverage Score | ${coverageScore}% |\n`;
-              output += `| Total Exports | ${spec.exports.length} |\n`;
-              output += `| Drift Issues | ${driftExports.length} |\n`;
-              output += `| Lint Issues | ${lintViolations.length} |\n`;
+              formatContent = renderGithubSummary(stats, {
+                coverageScore,
+                driftCount: driftExports.length,
+                qualityIssues: violations.length,
+              });
               break;
             default:
               throw new Error(`Unknown format: ${format}`);
           }
 
-          if (options.output) {
-            const outputPath = path.resolve(process.cwd(), options.output);
-            fs.writeFileSync(outputPath, output);
-            log(chalk.green(`✓ Wrote ${format} report to ${options.output}`));
+          // Write reports to .doccov/ (or output to stdout with --stdout)
+          if (options.stdout) {
+            log(formatContent);
           } else {
-            log(output);
+            writeReports({
+              format,
+              formatContent,
+              jsonContent,
+              outputPath: options.output,
+              cwd: options.cwd,
+            });
           }
 
+          // Calculate drift percentage
+          const totalExportsForDrift = spec.exports?.length ?? 0;
+          const exportsWithDrift = new Set(driftExports.map((d) => d.name)).size;
+          const driftScore =
+            totalExportsForDrift === 0
+              ? 0
+              : Math.round((exportsWithDrift / totalExportsForDrift) * 100);
+
           // Still exit with error if thresholds not met
-          const coverageFailed = coverageScore < minCoverage;
-          const hasDrift = !options.ignoreDrift && driftExports.length > 0;
-          const hasLintErrors =
-            lintViolations.filter((v) => v.violation.severity === 'error').length > 0;
+          const coverageFailed = minCoverage !== undefined && coverageScore < minCoverage;
+          const driftFailed = maxDrift !== undefined && driftScore > maxDrift;
+          const hasQualityErrors =
+            violations.filter((v) => v.violation.severity === 'error').length > 0;
           const hasTypecheckErrors = typecheckErrors.length > 0;
 
-          if (coverageFailed || hasDrift || hasLintErrors || hasTypecheckErrors) {
+          if (coverageFailed || driftFailed || hasQualityErrors || hasTypecheckErrors) {
             process.exit(1);
           }
           return;
         }
 
-        const coverageFailed = coverageScore < minCoverage;
-        const hasDrift = !options.ignoreDrift && driftExports.length > 0;
-        const hasLintErrors =
-          lintViolations.filter((v) => v.violation.severity === 'error').length > 0;
+        // Calculate drift percentage
+        const totalExportsForDrift = spec.exports?.length ?? 0;
+        const exportsWithDrift = new Set(driftExports.map((d) => d.name)).size;
+        const driftScore =
+          totalExportsForDrift === 0
+            ? 0
+            : Math.round((exportsWithDrift / totalExportsForDrift) * 100);
+
+        const coverageFailed = minCoverage !== undefined && coverageScore < minCoverage;
+        const driftFailed = maxDrift !== undefined && driftScore > maxDrift;
+        const hasQualityErrors =
+          violations.filter((v) => v.violation.severity === 'error').length > 0;
         const hasTypecheckErrors = typecheckErrors.length > 0;
 
-        if (!coverageFailed && !hasDrift && !hasLintErrors && !hasTypecheckErrors) {
-          log(chalk.green(`✓ Docs coverage ${coverageScore}% (min ${minCoverage}%)`));
-
-          if (failingExports.length > 0) {
-            log(chalk.gray('Some exports have partial docs:'));
-            for (const { name, missing } of failingExports.slice(0, 10)) {
-              log(chalk.gray(`  • ${name}: missing ${missing?.join(', ')}`));
+        // Display spec diagnostics (warnings/info) - now that all validation is complete
+        if (specWarnings.length > 0 || specInfos.length > 0) {
+          log('');
+          for (const diag of specWarnings) {
+            log(chalk.yellow(`⚠ ${diag.message}`));
+            if (diag.suggestion) {
+              log(chalk.gray(`  ${diag.suggestion}`));
             }
           }
-
-          if (options.ignoreDrift && driftExports.length > 0) {
-            log('');
-            log(chalk.yellow(`⚠️ ${driftExports.length} drift issue(s) detected (ignored):`));
-            for (const drift of driftExports.slice(0, 10)) {
-              log(chalk.yellow(`  • ${drift.name}: ${drift.issue}`));
-              if (drift.suggestion) {
-                log(chalk.gray(`    Suggestion: ${drift.suggestion}`));
-              }
+          for (const diag of specInfos) {
+            log(chalk.cyan(`ℹ ${diag.message}`));
+            if (diag.suggestion) {
+              log(chalk.gray(`  ${diag.suggestion}`));
             }
+          }
+        }
+
+        // Render concise summary output (like `info` but with more detail)
+        const pkgName = spec.meta?.name ?? 'unknown';
+        const pkgVersion = spec.meta?.version ?? '';
+        const totalExports = spec.exports?.length ?? 0;
+        const errorCount = violations.filter((v) => v.violation.severity === 'error').length;
+        const warnCount = violations.filter((v) => v.violation.severity === 'warn').length;
+
+        log('');
+        log(chalk.bold(`${pkgName}${pkgVersion ? `@${pkgVersion}` : ''}`));
+        log('');
+        log(`  Exports:    ${totalExports}`);
+
+        // Coverage with pass/fail indicator when threshold is set
+        if (minCoverage !== undefined) {
+          if (coverageFailed) {
+            log(
+              chalk.red(`  Coverage:   ✗ ${coverageScore}%`) + chalk.dim(` (min ${minCoverage}%)`),
+            );
+          } else {
+            log(
+              chalk.green(`  Coverage:   ✓ ${coverageScore}%`) +
+                chalk.dim(` (min ${minCoverage}%)`),
+            );
+          }
+        } else {
+          log(`  Coverage:   ${coverageScore}%`);
+        }
+
+        // Drift with pass/fail indicator when threshold is set
+        if (maxDrift !== undefined) {
+          if (driftFailed) {
+            log(chalk.red(`  Drift:      ✗ ${driftScore}%`) + chalk.dim(` (max ${maxDrift}%)`));
+          } else {
+            log(chalk.green(`  Drift:      ✓ ${driftScore}%`) + chalk.dim(` (max ${maxDrift}%)`));
+          }
+        } else {
+          log(`  Drift:      ${driftScore}%`);
+        }
+
+        // Show example validation results (typecheck errors only - runtime errors are in Drift)
+        if (exampleResult) {
+          const typecheckCount = exampleResult.typecheck?.errors.length ?? 0;
+          if (typecheckCount > 0) {
+            log(`  Examples:   ${typecheckCount} type errors`);
+          } else {
+            log(chalk.green(`  Examples:   ✓ validated`));
+          }
+        }
+
+        if (errorCount > 0 || warnCount > 0) {
+          const parts: string[] = [];
+          if (errorCount > 0) parts.push(`${errorCount} errors`);
+          if (warnCount > 0) parts.push(`${warnCount} warnings`);
+          log(`  Quality:    ${parts.join(', ')}`);
+        }
+
+        log('');
+
+        // Show pass/fail status
+        const failed = coverageFailed || driftFailed || hasQualityErrors || hasTypecheckErrors;
+
+        if (!failed) {
+          const thresholdParts: string[] = [];
+          if (minCoverage !== undefined) {
+            thresholdParts.push(`coverage ${coverageScore}% ≥ ${minCoverage}%`);
+          }
+          if (maxDrift !== undefined) {
+            thresholdParts.push(`drift ${driftScore}% ≤ ${maxDrift}%`);
+          }
+
+          if (thresholdParts.length > 0) {
+            log(chalk.green(`✓ Check passed (${thresholdParts.join(', ')})`));
+          } else {
+            log(chalk.green('✓ Check passed'));
+            log(
+              chalk.dim(
+                '  No thresholds configured. Use --min-coverage or --max-drift to enforce.',
+              ),
+            );
           }
           return;
         }
 
-        error('');
-        if (coverageFailed) {
-          error(chalk.red(`Docs coverage ${coverageScore}% fell below required ${minCoverage}%.`));
+        // Show failure reasons (only for non-threshold failures since those are shown inline)
+        if (hasQualityErrors) {
+          log(chalk.red(`✗ ${errorCount} quality errors`));
         }
-
-        if (hasLintErrors) {
-          error('');
-          error(chalk.bold('Lint errors:'));
-          for (const { exportName, violation } of lintViolations
-            .filter((v) => v.violation.severity === 'error')
-            .slice(0, 10)) {
-            error(chalk.red(`  • ${exportName}: ${violation.message}`));
-          }
-        }
-
         if (hasTypecheckErrors) {
-          error('');
-          error(chalk.bold('Type errors in examples:'));
-          for (const { exportName, error: err } of typecheckErrors.slice(0, 10)) {
-            error(
-              chalk.red(
-                `  • ${exportName} @example ${err.exampleIndex + 1}, line ${err.line}: ${err.message}`,
-              ),
-            );
-          }
+          log(chalk.red(`✗ ${typecheckErrors.length} example type errors`));
         }
 
-        if (failingExports.length > 0 || driftExports.length > 0) {
-          error('');
-          error(chalk.bold('Missing documentation details:'));
-          for (const { name, missing } of failingExports.slice(0, 10)) {
-            error(chalk.red(`  • ${name}: missing ${missing?.join(', ')}`));
-          }
-          for (const drift of driftExports.slice(0, 10)) {
-            error(chalk.red(`  • ${drift.name}: ${drift.issue}`));
-            if (drift.suggestion) {
-              error(chalk.yellow(`    Suggestion: ${drift.suggestion}`));
-            }
-          }
-        }
+        log('');
+        log(chalk.dim('Use --format json or --format markdown for detailed reports'));
 
         process.exit(1);
       } catch (commandError) {
@@ -666,47 +623,34 @@ function clampCoverage(value: number): number {
   return Math.min(100, Math.max(0, Math.round(value)));
 }
 
-function collectFailingExports(
-  exportsList: Array<{
-    name: string;
-    docs?: { coverageScore?: number; missing?: string[]; drift?: SpecDocDrift[] };
-  }>,
-  minCoverage: number,
-): Array<{ name: string; missing?: string[] }> {
-  const offenders: Array<{ name: string; missing?: string[] }> = [];
-
-  for (const entry of exportsList) {
-    const exportScore = entry.docs?.coverageScore ?? 0;
-    const missing = entry.docs?.missing;
-    if (exportScore < minCoverage || (missing && missing.length > 0)) {
-      offenders.push({
-        name: entry.name,
-        missing,
-      });
-    }
-  }
-
-  return offenders;
-}
+type CollectedDrift = {
+  name: string;
+  type: DriftType;
+  issue: string;
+  suggestion?: string;
+  category: DriftCategory;
+};
 
 function collectDrift(
   exportsList: Array<{
     name: string;
-    docs?: { drift?: Array<{ issue?: string; suggestion?: string }> };
+    docs?: { drift?: SpecDocDrift[] };
   }>,
-): Array<{ name: string; issue: string; suggestion?: string }> {
-  const drifts: Array<{ name: string; issue: string; suggestion?: string }> = [];
+): CollectedDrift[] {
+  const drifts: CollectedDrift[] = [];
   for (const entry of exportsList) {
     const drift = entry.docs?.drift;
     if (!drift || drift.length === 0) {
       continue;
     }
 
-    for (const signal of drift) {
+    for (const d of drift) {
       drifts.push({
         name: entry.name,
-        issue: signal.issue ?? 'Documentation drift detected.',
-        suggestion: signal.suggestion,
+        type: d.type,
+        issue: d.issue ?? 'Documentation drift detected.',
+        suggestion: d.suggestion,
+        category: DRIFT_CATEGORIES[d.type],
       });
     }
   }

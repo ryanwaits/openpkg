@@ -1,101 +1,78 @@
-import type {
-  SpecDocDrift,
-  SpecDocSignal,
-  SpecDocsMetadata,
-  SpecExport,
-  SpecSchema,
-  SpecTag,
+import {
+  DRIFT_CATEGORIES,
+  type DriftCategory,
+  type DriftType,
+  type SpecDocDrift,
+  type SpecExport,
+  type SpecSchema,
+  type SpecTag,
 } from '@openpkg-ts/spec';
 import ts from 'typescript';
 import { isBuiltInIdentifier } from '../utils/builtin-detection';
 import type { ExampleRunResult } from '../utils/example-runner';
 import type { OpenPkgSpec } from './spec-types';
 
-type ExportCoverageResult = {
+/**
+ * Result of computing drift for a single export.
+ */
+export type ExportDriftResult = {
   id: string;
-  docs: SpecDocsMetadata;
-};
-
-export type DocsCoverageResult = {
-  spec: SpecDocsMetadata;
-  exports: Map<string, SpecDocsMetadata>;
+  drift: SpecDocDrift[];
 };
 
 /**
- * Documentation signals required per export kind.
- * This ensures exports are only penalized for missing docs that make sense for their type.
+ * Result of computing drift for all exports.
  */
-type ExportKind =
-  | 'function'
-  | 'class'
-  | 'interface'
-  | 'type'
-  | 'variable'
-  | 'enum'
-  | 'namespace'
-  | 'module'
-  | 'reference'
-  | 'external';
-
-const SIGNALS_BY_KIND: Record<ExportKind, SpecDocSignal[]> = {
-  function: ['description', 'params', 'returns', 'examples'],
-  class: ['description', 'examples'], // params/returns only apply to methods
-  interface: ['description'], // no params/returns at interface level
-  type: ['description'], // type aliases don't have params/returns
-  variable: ['description'], // constants/variables don't have params/returns
-  enum: ['description'], // enums don't have params/returns
-  namespace: ['description'], // namespaces document their purpose
-  module: ['description'],
-  reference: ['description'],
-  external: ['description'],
+export type DriftResult = {
+  exports: Map<string, SpecDocDrift[]>;
 };
 
-// Legacy constant for backward compatibility
-const _DOC_SECTIONS: SpecDocSignal[] = ['description', 'params', 'returns', 'examples'];
-
 /**
- * Get the documentation signals that apply to an export based on its kind.
+ * Build a registry of all export/type names for cross-reference validation.
  */
-function getApplicableSignals(entry: SpecExport): SpecDocSignal[] {
-  const kind = (entry.kind ?? 'variable') as ExportKind;
-  return SIGNALS_BY_KIND[kind] ?? SIGNALS_BY_KIND.variable;
-}
-
-export function computeDocsCoverage(spec: OpenPkgSpec): DocsCoverageResult {
-  const coverageByExport = new Map<string, SpecDocsMetadata>();
-
-  // Build registry of all export names for cross-reference validation
-  const exportRegistry = new Set<string>();
+export function buildExportRegistry(spec: OpenPkgSpec): Set<string> {
+  const registry = new Set<string>();
   for (const entry of spec.exports ?? []) {
-    exportRegistry.add(entry.name);
-    exportRegistry.add(entry.id);
+    registry.add(entry.name);
+    registry.add(entry.id);
   }
   for (const type of spec.types ?? []) {
-    exportRegistry.add(type.name);
-    exportRegistry.add(type.id);
+    registry.add(type.name);
+    registry.add(type.id);
   }
-
-  let aggregateScore = 0;
-  let processed = 0;
-
-  for (const entry of spec.exports ?? []) {
-    const coverage = evaluateExport(entry, exportRegistry);
-    coverageByExport.set(entry.id ?? entry.name, coverage.docs);
-    aggregateScore += coverage.docs.coverageScore ?? 0;
-    processed += 1;
-  }
-
-  const specCoverageScore = processed === 0 ? 100 : Math.round(aggregateScore / processed);
-
-  return {
-    spec: { coverageScore: specCoverageScore },
-    exports: coverageByExport,
-  };
+  return registry;
 }
 
-function evaluateExport(entry: SpecExport, exportRegistry?: Set<string>): ExportCoverageResult {
-  const missing: SpecDocSignal[] = [];
-  const drift = [
+/**
+ * Compute drift for all exports in a spec.
+ *
+ * @param spec - The OpenPkg spec to analyze
+ * @returns Drift results per export
+ */
+export function computeDrift(spec: OpenPkgSpec): DriftResult {
+  const exportRegistry = buildExportRegistry(spec);
+  const exports = new Map<string, SpecDocDrift[]>();
+
+  for (const entry of spec.exports ?? []) {
+    const drift = computeExportDrift(entry, exportRegistry);
+    exports.set(entry.id ?? entry.name, drift);
+  }
+
+  return { exports };
+}
+
+/**
+ * Compute drift for a single export.
+ *
+ * @param entry - The export to analyze
+ * @param exportRegistry - Registry of known export names for link validation
+ * @returns Array of drift issues detected
+ */
+export function computeExportDrift(
+  entry: SpecExport,
+  exportRegistry?: Set<string>,
+): SpecDocDrift[] {
+  return [
     ...detectParamDrift(entry),
     ...detectOptionalityDrift(entry),
     ...detectParamTypeDrift(entry),
@@ -109,73 +86,6 @@ function evaluateExport(entry: SpecExport, exportRegistry?: Set<string>): Export
     ...detectAsyncMismatch(entry),
     ...detectPropertyTypeDrift(entry),
   ];
-
-  // Get applicable signals for this export kind
-  const applicableSignals = getApplicableSignals(entry);
-
-  // Only check signals that apply to this export kind
-  if (applicableSignals.includes('description') && !hasDescription(entry)) {
-    missing.push('description');
-  }
-
-  if (applicableSignals.includes('params') && !paramsDocumented(entry)) {
-    missing.push('params');
-  }
-
-  if (applicableSignals.includes('returns') && !returnsDocumented(entry)) {
-    missing.push('returns');
-  }
-
-  if (applicableSignals.includes('examples') && !hasExamples(entry)) {
-    missing.push('examples');
-  }
-
-  // Calculate score based on applicable signals, not all signals
-  const totalSignals = applicableSignals.length;
-  const satisfiedSignals = totalSignals - missing.length;
-  const coverageScore =
-    totalSignals === 0 ? 100 : Math.max(0, Math.round((satisfiedSignals / totalSignals) * 100));
-
-  return {
-    id: entry.id,
-    docs: {
-      coverageScore,
-      missing: missing.length > 0 ? missing : undefined,
-      drift: drift.length > 0 ? drift : undefined,
-    },
-  };
-}
-
-function hasDescription(entry: SpecExport): boolean {
-  return Boolean(entry.description && entry.description.trim().length > 0);
-}
-
-function paramsDocumented(entry: SpecExport): boolean {
-  const parameters = (entry.signatures ?? []).flatMap((signature) => signature.parameters ?? []);
-  if (parameters.length === 0) {
-    return true;
-  }
-
-  return parameters.every((param) =>
-    Boolean(param.description && param.description.trim().length > 0),
-  );
-}
-
-function returnsDocumented(entry: SpecExport): boolean {
-  const signatures = entry.signatures ?? [];
-  if (signatures.length === 0) {
-    return true;
-  }
-
-  // If every return block lacks a description, mark as missing
-  return signatures.every((signature) => {
-    const text = signature.returns?.description;
-    return Boolean(text && text.trim().length > 0);
-  });
-}
-
-function hasExamples(entry: SpecExport): boolean {
-  return Array.isArray(entry.examples) && entry.examples.length > 0;
 }
 
 function detectParamDrift(entry: SpecExport): SpecDocDrift[] {
@@ -1499,4 +1409,159 @@ export function detectExampleAssertionFailures(
   }
 
   return drifts;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Drift Categorization Utilities
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Drift types that can be fixed deterministically.
+ */
+const FIXABLE_DRIFT_TYPES: Set<DriftType> = new Set([
+  'param-mismatch',
+  'param-type-mismatch',
+  'optionality-mismatch',
+  'return-type-mismatch',
+  'generic-constraint-mismatch',
+  'example-assertion-failed',
+  'deprecated-mismatch',
+  'async-mismatch',
+  'property-type-drift',
+]);
+
+/**
+ * Extended drift with category and fixability metadata.
+ */
+export interface CategorizedDrift extends SpecDocDrift {
+  category: DriftCategory;
+  fixable: boolean;
+}
+
+/**
+ * Categorize a single drift issue.
+ *
+ * @param drift - The drift to categorize
+ * @returns The drift with category and fixable metadata
+ *
+ * @example
+ * ```ts
+ * const drift: SpecDocDrift = {
+ *   type: 'param-type-mismatch',
+ *   target: 'userId',
+ *   issue: 'Type mismatch'
+ * };
+ * const categorized = categorizeDrift(drift);
+ * console.log(categorized.category); // => 'structural'
+ * console.log(categorized.fixable);  // => true
+ * ```
+ */
+export function categorizeDrift(drift: SpecDocDrift): CategorizedDrift {
+  return {
+    ...drift,
+    category: DRIFT_CATEGORIES[drift.type],
+    fixable: FIXABLE_DRIFT_TYPES.has(drift.type),
+  };
+}
+
+/**
+ * Group drifts by category.
+ *
+ * @param drifts - Array of drift issues to group
+ * @returns Drifts organized by category
+ *
+ * @example
+ * ```ts
+ * const grouped = groupDriftsByCategory(spec.docs.drift ?? []);
+ * console.log(grouped.structural.length); // Number of structural issues
+ * console.log(grouped.semantic.length);   // Number of semantic issues
+ * console.log(grouped.example.length);    // Number of example issues
+ * ```
+ */
+export function groupDriftsByCategory(
+  drifts: SpecDocDrift[],
+): Record<DriftCategory, CategorizedDrift[]> {
+  const grouped: Record<DriftCategory, CategorizedDrift[]> = {
+    structural: [],
+    semantic: [],
+    example: [],
+  };
+
+  for (const drift of drifts) {
+    const categorized = categorizeDrift(drift);
+    grouped[categorized.category].push(categorized);
+  }
+
+  return grouped;
+}
+
+/**
+ * Summary of drift issues by category.
+ */
+export interface DriftSummary {
+  total: number;
+  byCategory: Record<DriftCategory, number>;
+  fixable: number;
+}
+
+/**
+ * Get drift summary counts by category.
+ *
+ * @param drifts - Array of drift issues
+ * @returns Summary with totals, category breakdown, and fixable count
+ *
+ * @example
+ * ```ts
+ * const summary = getDriftSummary(exportEntry.docs?.drift ?? []);
+ * console.log(`${summary.total} issues: ${summary.fixable} fixable`);
+ * // => "5 issues: 3 fixable"
+ * ```
+ */
+export function getDriftSummary(drifts: SpecDocDrift[]): DriftSummary {
+  const grouped = groupDriftsByCategory(drifts);
+
+  return {
+    total: drifts.length,
+    byCategory: {
+      structural: grouped.structural.length,
+      semantic: grouped.semantic.length,
+      example: grouped.example.length,
+    },
+    fixable: drifts.filter((d) => FIXABLE_DRIFT_TYPES.has(d.type)).length,
+  };
+}
+
+/**
+ * Format drift summary for CLI output (single line).
+ *
+ * @param summary - Drift summary to format
+ * @returns Human-readable summary string
+ *
+ * @example
+ * ```ts
+ * const summary = getDriftSummary(drifts);
+ * console.log(formatDriftSummaryLine(summary));
+ * // => "5 issues (3 structural, 1 semantic, 1 example)"
+ * ```
+ */
+export function formatDriftSummaryLine(summary: DriftSummary): string {
+  if (summary.total === 0) {
+    return 'No drift detected';
+  }
+
+  const parts: string[] = [];
+
+  if (summary.byCategory.structural > 0) {
+    parts.push(`${summary.byCategory.structural} structural`);
+  }
+  if (summary.byCategory.semantic > 0) {
+    parts.push(`${summary.byCategory.semantic} semantic`);
+  }
+  if (summary.byCategory.example > 0) {
+    parts.push(`${summary.byCategory.example} example`);
+  }
+
+  const fixableNote = summary.fixable > 0 ? ` (${summary.fixable} auto-fixable)` : '';
+
+  return `${summary.total} issues (${parts.join(', ')})${fixableNote}`;
 }

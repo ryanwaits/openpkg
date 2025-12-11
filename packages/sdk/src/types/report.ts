@@ -1,4 +1,5 @@
-import type { SpecDocDrift, SpecDocSignal } from '@openpkg-ts/spec';
+import type { DriftCategory, SpecDocDrift } from '@openpkg-ts/spec';
+import type { CategorizedDrift } from '../analysis/docs-coverage';
 
 /**
  * DocCov report schema version.
@@ -6,9 +7,87 @@ import type { SpecDocDrift, SpecDocSignal } from '@openpkg-ts/spec';
 export const REPORT_VERSION = '1.0.0';
 
 /**
+ * Default directory for DocCov outputs.
+ */
+export const DEFAULT_REPORT_DIR = '.doccov';
+
+/**
  * Default path for cached DocCov reports.
  */
 export const DEFAULT_REPORT_PATH = '.doccov/report.json';
+
+/**
+ * File extensions for each report format.
+ */
+export const REPORT_EXTENSIONS: Record<string, string> = {
+  json: 'json',
+  markdown: 'md',
+  html: 'html',
+  github: 'github.md',
+};
+
+/**
+ * Get the default report path for a given format.
+ *
+ * @param format - The report format (json, markdown, html, github)
+ * @param dir - The output directory (defaults to .doccov)
+ * @returns The full path to the report file
+ *
+ * @example
+ * ```ts
+ * getReportPath('markdown'); // '.doccov/report.md'
+ * getReportPath('html', 'reports'); // 'reports/report.html'
+ * ```
+ */
+export function getReportPath(format: string, dir: string = DEFAULT_REPORT_DIR): string {
+  const ext = REPORT_EXTENSIONS[format] ?? format;
+  return `${dir}/report.${ext}`;
+}
+
+/**
+ * Drift summary with category breakdown.
+ */
+export interface DriftReportSummary {
+  /**
+   * Total number of drift issues.
+   */
+  total: number;
+
+  /**
+   * Count of issues per category.
+   */
+  byCategory: Record<DriftCategory, number>;
+
+  /**
+   * Number of auto-fixable issues.
+   */
+  fixable: number;
+}
+
+/**
+ * Drift report with progressive disclosure structure.
+ *
+ * Provides three levels of detail:
+ * 1. Summary - total counts by category
+ * 2. By category - grouped drift issues
+ * 3. All - flat list for backward compatibility
+ */
+export interface DriftReport {
+  /**
+   * High-level summary counts.
+   */
+  summary: DriftReportSummary;
+
+  /**
+   * Issues grouped by category.
+   */
+  byCategory: Record<DriftCategory, CategorizedDrift[]>;
+
+  /**
+   * Flat list of all drift issues (backward compatible).
+   */
+  all: CategorizedDrift[];
+}
 
 /**
  * Coverage summary for an entire package or project.
@@ -30,14 +109,19 @@ export interface CoverageSummary {
   documentedExports: number;
 
   /**
-   * Breakdown of missing documentation by signal type.
+   * Breakdown of missing documentation by rule ID.
    */
-  missingBySignal: Record<SpecDocSignal, number>;
+  missingByRule: Record<string, number>;
 
   /**
    * Total number of drift issues detected.
    */
   driftCount: number;
+
+  /**
+   * Drift summary with category breakdown.
+   */
+  driftSummary?: DriftReportSummary;
 }
 
 /**
@@ -60,9 +144,9 @@ export interface ExportCoverageData {
   coverageScore: number;
 
   /**
-   * Missing documentation signals.
+   * Missing documentation rule IDs.
    */
-  missing?: SpecDocSignal[];
+  missing?: string[];
 
   /**
    * Drift issues for this export.

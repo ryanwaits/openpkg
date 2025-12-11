@@ -1,18 +1,26 @@
-import type {
-  OpenPkg,
-  SpecDocDrift,
-  SpecDocSignal,
-  SpecDocsMetadata,
-  SpecExport,
-} from '@openpkg-ts/spec';
-import { computeDocsCoverage } from './docs-coverage';
+import type { OpenPkg, SpecDocDrift, SpecDocsMetadata, SpecExport } from '@openpkg-ts/spec';
+import { evaluateExportQuality } from '../quality/engine';
+import type { QualityConfig, QualityViolation } from '../quality/types';
+import {
+  buildExportRegistry,
+  computeExportDrift,
+  type DriftSummary,
+  getDriftSummary,
+} from './docs-coverage';
 
 /**
  * An enriched export with computed documentation metadata.
  * Extends SpecExport with the `docs` field for coverage analysis.
  */
 export type EnrichedExport = SpecExport & {
-  docs?: SpecDocsMetadata;
+  docs?: EnrichedDocsMetadata;
+};
+
+/**
+ * Extended docs metadata with quality violations.
+ */
+export type EnrichedDocsMetadata = SpecDocsMetadata & {
+  violations?: QualityViolation[];
 };
 
 /**
@@ -21,18 +29,20 @@ export type EnrichedExport = SpecExport & {
  */
 export type EnrichedOpenPkg = Omit<OpenPkg, 'exports'> & {
   exports: EnrichedExport[];
-  docs?: SpecDocsMetadata;
+  docs?: EnrichedDocsMetadata;
+  /** Drift summary with category breakdown (if drift exists) */
+  driftSummary?: DriftSummary;
 };
 
 /**
- * Collect all missing signals across exports.
+ * Collect all missing rule IDs across exports.
  */
-function collectAllMissing(exports: EnrichedExport[]): SpecDocSignal[] {
-  const allMissing = new Set<SpecDocSignal>();
+function collectAllMissing(exports: EnrichedExport[]): string[] {
+  const allMissing = new Set<string>();
   for (const exp of exports) {
     if (exp.docs?.missing) {
-      for (const signal of exp.docs.missing) {
-        allMissing.add(signal);
+      for (const ruleId of exp.docs.missing) {
+        allMissing.add(ruleId);
       }
     }
   }
@@ -52,19 +62,43 @@ function collectAllDrift(exports: EnrichedExport[]): SpecDocDrift[] {
   return allDrift;
 }
 
+/**
+ * Collect all quality violations across exports.
+ */
+function collectAllViolations(exports: EnrichedExport[]): QualityViolation[] {
+  const allViolations: QualityViolation[] = [];
+  for (const exp of exports) {
+    if (exp.docs?.violations) {
+      allViolations.push(...exp.docs.violations);
+    }
+  }
+  return allViolations;
+}
+
 export interface EnrichOptions {
   /**
    * Per-export drift issues to include in enrichment.
    * Map from export ID to drift issues.
    */
   driftByExport?: Map<string, SpecDocDrift[]>;
+
+  /**
+   * Quality configuration with rule severities.
+   */
+  qualityConfig?: QualityConfig;
+
+  /**
+   * Per-export raw JSDoc text for style rule checks.
+   * Map from export ID to raw JSDoc string.
+   */
+  rawJSDocByExport?: Map<string, string>;
 }
 
 /**
  * Enrich an OpenPkg spec with documentation coverage metadata.
  *
- * This function computes coverage scores, missing documentation signals,
- * and drift issues to produce an EnrichedOpenPkg.
+ * This function computes coverage scores using quality rules,
+ * detects drift issues, and produces an EnrichedOpenPkg.
  *
  * @param spec - The pure OpenPkg spec to enrich
  * @param options - Optional enrichment configuration
@@ -80,27 +114,46 @@ export interface EnrichOptions {
  * // Enrich with coverage data
  * const enriched = enrichSpec(spec);
  * console.log(enriched.docs?.coverageScore); // e.g., 85
- * console.log(enriched.docs?.missing); // e.g., ['examples']
+ * console.log(enriched.docs?.missing); // e.g., ['has-examples']
  * ```
  */
 export function enrichSpec(spec: OpenPkg, options: EnrichOptions = {}): EnrichedOpenPkg {
-  const { driftByExport } = options;
+  const { driftByExport, qualityConfig = { rules: {} }, rawJSDocByExport } = options;
 
-  // Use the existing coverage computation logic
-  const coverageResult = computeDocsCoverage(spec);
+  // Build registry for cross-reference validation
+  const exportRegistry = buildExportRegistry(spec);
 
-  // Enrich each export with computed coverage data
+  let totalCoverage = 0;
+
+  // Enrich each export with quality and drift data
   const enrichedExports: EnrichedExport[] = spec.exports.map((exp) => {
-    const computedDocs = coverageResult.exports.get(exp.id ?? exp.name);
+    // Evaluate quality rules (coverage + violations)
+    const rawJSDoc = rawJSDocByExport?.get(exp.id);
+    const quality = evaluateExportQuality(exp, rawJSDoc, qualityConfig);
+
+    // Compute drift separately
+    const drift = computeExportDrift(exp, exportRegistry);
     const additionalDrift = driftByExport?.get(exp.id);
 
-    const docs: SpecDocsMetadata = {
-      ...computedDocs,
+    // Merge all drift
+    const allDrift = additionalDrift ? [...drift, ...additionalDrift] : drift;
+
+    totalCoverage += quality.coverageScore;
+
+    const docs: EnrichedDocsMetadata = {
+      coverageScore: quality.coverageScore,
     };
 
-    // Merge additional drift if provided
-    if (additionalDrift && additionalDrift.length > 0) {
-      docs.drift = [...(docs.drift ?? []), ...additionalDrift];
+    if (quality.coverage.missing.length > 0) {
+      docs.missing = quality.coverage.missing;
+    }
+
+    if (allDrift.length > 0) {
+      docs.drift = allDrift;
+    }
+
+    if (quality.violations.length > 0) {
+      docs.violations = quality.violations;
     }
 
     return {
@@ -110,11 +163,13 @@ export function enrichSpec(spec: OpenPkg, options: EnrichOptions = {}): Enriched
   });
 
   // Compute aggregate metadata
+  const count = enrichedExports.length;
   const allMissing = collectAllMissing(enrichedExports);
   const allDrift = collectAllDrift(enrichedExports);
+  const allViolations = collectAllViolations(enrichedExports);
 
-  const docs: SpecDocsMetadata = {
-    coverageScore: coverageResult.spec.coverageScore,
+  const docs: EnrichedDocsMetadata = {
+    coverageScore: count === 0 ? 100 : Math.round(totalCoverage / count),
   };
 
   if (allMissing.length > 0) {
@@ -125,9 +180,17 @@ export function enrichSpec(spec: OpenPkg, options: EnrichOptions = {}): Enriched
     docs.drift = allDrift;
   }
 
+  if (allViolations.length > 0) {
+    docs.violations = allViolations;
+  }
+
+  // Compute drift summary with category breakdown
+  const driftSummary = allDrift.length > 0 ? getDriftSummary(allDrift) : undefined;
+
   return {
     ...spec,
     exports: enrichedExports,
     docs,
+    driftSummary,
   };
 }

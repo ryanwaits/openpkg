@@ -167,14 +167,41 @@ const resolveFormat = (format: ConfigFormat, packageType: PackageType): 'mjs' | 
 };
 
 const buildTemplate = (format: 'mjs' | 'js' | 'cjs'): string => {
+  const configBody = `{
+  // Filter which exports to analyze
+  // include: ['MyClass', 'myFunction'],
+  // exclude: ['internal*'],
+
+  // Check command thresholds
+  check: {
+    // Minimum documentation coverage percentage (0-100)
+    // minCoverage: 80,
+
+    // Maximum drift percentage allowed (0-100)
+    // maxDrift: 20,
+
+    // Example validation: 'presence' | 'typecheck' | 'run'
+    // examples: 'typecheck',
+  },
+
+  // Quality rule severities: 'error' | 'warn' | 'off'
+  quality: {
+    rules: {
+      // 'has-description': 'warn',
+      // 'has-params': 'off',
+      // 'has-returns': 'off',
+      // 'has-examples': 'off',
+      // 'no-empty-returns': 'warn',
+      // 'consistent-param-style': 'off',
+    },
+  },
+}`;
+
   if (format === 'cjs') {
     return [
       "const { defineConfig } = require('@doccov/cli/config');",
       '',
-      'module.exports = defineConfig({',
-      '  include: [],',
-      '  exclude: [],',
-      '});',
+      `module.exports = defineConfig(${configBody});`,
       '',
     ].join('\n');
   }
@@ -182,10 +209,7 @@ const buildTemplate = (format: 'mjs' | 'js' | 'cjs'): string => {
   return [
     "import { defineConfig } from '@doccov/cli/config';",
     '',
-    'export default defineConfig({',
-    '  include: [],',
-    '  exclude: [],',
-    '});',
+    `export default defineConfig(${configBody});`,
     '',
   ].join('\n');
 };

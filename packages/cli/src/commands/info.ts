@@ -41,11 +41,9 @@ export function registerInfoCommand(program: Command): void {
         console.log('');
         console.log(chalk.bold(`${stats.packageName}@${stats.version}`));
         console.log('');
-        console.log(`  Exports:  ${chalk.bold(stats.totalExports.toString())}`);
-        console.log(`  Coverage: ${chalk.bold(`${stats.coverageScore}%`)}`);
-        console.log(
-          `  Drift:    ${stats.driftCount > 0 ? chalk.yellow(`${stats.driftCount} issues`) : chalk.green('none')}`,
-        );
+        console.log(`  Exports:    ${chalk.bold(stats.totalExports.toString())}`);
+        console.log(`  Coverage:   ${chalk.bold(`${stats.coverageScore}%`)}`);
+        console.log(`  Drift:      ${chalk.bold(`${stats.driftScore}%`)}`);
         console.log('');
       } catch (err) {
         console.error(chalk.red('Error:'), err instanceof Error ? err.message : err);

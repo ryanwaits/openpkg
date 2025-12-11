@@ -14,30 +14,39 @@ export interface DocsConfig {
 }
 
 /**
+ * Example validation modes.
+ */
+export type ExampleValidationMode = 'presence' | 'typecheck' | 'run';
+
+/**
  * Check command configuration options.
  */
 export interface CheckConfig {
-  /** Enable lint checks (default: true) */
-  lint?: boolean;
-  /** Enable typecheck for examples (default: true) */
-  typecheck?: boolean;
-  /** Enable runtime execution of examples (default: false) */
-  exec?: boolean;
+  /**
+   * Example validation modes to run.
+   * Can be a single mode, array of modes, or comma-separated string.
+   * - 'presence': Check that @example blocks exist on exports
+   * - 'typecheck': Compile examples with TypeScript
+   * - 'run': Execute examples and validate assertions
+   */
+  examples?: ExampleValidationMode | ExampleValidationMode[] | string;
   /** Minimum coverage percentage required (0-100) */
   minCoverage?: number;
+  /** Maximum drift percentage allowed (0-100) */
+  maxDrift?: number;
 }
 
 /**
- * Lint severity level.
+ * Quality rule severity level.
  */
-export type LintSeverity = 'error' | 'warn' | 'off';
+export type QualitySeverity = 'error' | 'warn' | 'off';
 
 /**
- * Lint rules configuration.
+ * Quality rules configuration.
  */
-export interface LintRulesConfig {
+export interface QualityRulesConfig {
   /** Rule severity overrides */
-  rules?: Record<string, LintSeverity>;
+  rules?: Record<string, QualitySeverity>;
 }
 
 /**
@@ -55,8 +64,8 @@ export interface DocCovConfig {
   docs?: DocsConfig;
   /** Check command configuration */
   check?: CheckConfig;
-  /** Lint configuration */
-  lint?: LintRulesConfig;
+  /** Quality rules configuration */
+  quality?: QualityRulesConfig;
 }
 
 /**
@@ -77,10 +86,10 @@ export interface DocCovConfig {
  *   docs: {
  *     include: ['docs/**\/*.md'],
  *   },
- *   lint: {
+ *   quality: {
  *     rules: {
- *       'require-description': 'error',
- *       'require-example': 'warn',
+ *       'has-description': 'error',
+ *       'has-examples': 'warn',
  *     },
  *   },
  * });

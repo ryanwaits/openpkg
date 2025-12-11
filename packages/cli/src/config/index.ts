@@ -4,8 +4,8 @@ import type {
   CheckConfig,
   DocCovConfigInput,
   DocsConfig,
-  LintRulesConfig,
   NormalizedDocCovConfig,
+  QualityRulesConfig,
 } from './schema';
 
 const defineConfig = (config: DocCovConfigInput): DocCovConfigInput => config;
@@ -15,7 +15,7 @@ export type {
   CheckConfig,
   DocCovConfigInput,
   DocsConfig,
-  LintRulesConfig,
+  QualityRulesConfig,
   LoadedDocCovConfig,
   NormalizedDocCovConfig,
 };

@@ -6,7 +6,8 @@ export type {
   CheckConfig,
   DocCovConfig,
   DocsConfig,
-  LintRulesConfig,
-  LintSeverity,
+  ExampleValidationMode,
+  QualityRulesConfig,
+  QualitySeverity,
 } from './types';
 export { defineConfig } from './types';
