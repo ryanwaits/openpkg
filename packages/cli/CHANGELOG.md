@@ -1,5 +1,62 @@
 # @doccov/cli
 
+## 0.10.0
+
+### Minor Changes
+
+- ### @openpkg-ts/spec
+
+  **Breaking (pre-1.0):** Restructured spec types to move coverage metadata to an enrichment layer:
+
+  - Removed `docs` field from `SpecExport` and `OpenPkg` types (now provided via SDK enrichment)
+  - Changed `SpecDocsMetadata.missing` from `SpecDocSignal[]` to `string[]` (now uses rule IDs)
+  - Added `DriftType` as a standalone exported type
+  - Added `DriftCategory` type with three categories: `structural`, `semantic`, `example`
+  - Added `DRIFT_CATEGORIES` mapping, `DRIFT_CATEGORY_LABELS`, and `DRIFT_CATEGORY_DESCRIPTIONS` constants for categorizing and displaying drift issues
+
+  ### @doccov/sdk
+
+  **Breaking (pre-1.0):** Replaced the lint module with a new quality rules engine and added spec-level caching:
+
+  - Removed the `lint` module (`LintConfig`, `LintRule`, `lintExport`, `lintExports`, etc.)
+  - Added `quality` module with a flexible rules-based engine:
+    - `QualityRule`, `QualityViolation`, `QualityConfig` types
+    - `evaluateQuality()`, `evaluateExportQuality()` functions
+    - Built-in rules: `CORE_RULES`, `STYLE_RULES`, `BUILTIN_RULES`
+  - Added `cache` module for spec-level caching:
+    - `loadSpecCache()`, `saveSpecCache()`, `validateSpecCache()`
+    - `hashFile()`, `hashFiles()`, `hashString()` utilities
+  - Added enrichment layer:
+    - `enrichSpec()` function
+    - `EnrichedExport`, `EnrichedOpenPkg`, `EnrichedDocsMetadata` types
+  - Added unified report generation:
+    - `generateReport()`, `generateReportFromEnriched()`
+    - `DocCovReport`, `CoverageSummary`, `DriftReport` types
+  - Added unified example validation:
+    - `validateExamples()` function
+    - `parseExamplesFlag()`, `shouldValidate()` utilities
+    - `ExampleValidationResult`, `ExampleValidationOptions` types
+
+  ### @doccov/cli
+
+  **Breaking (pre-1.0):** Revamped commands for better UX and added multi-format reporting:
+
+  - Renamed `generate` command to `spec` (generates OpenPkg spec files)
+  - Added `info` command for quick package summary (exports, coverage, drift at a glance)
+  - Revamped `check` command:
+    - Removed options: `--require-examples`, `--exec`, `--no-lint`, `--no-typecheck`, `--ignore-drift`
+    - Added options: `--examples [mode]` (presence, typecheck, run), `--max-drift <percentage>`, `--format <format>`, `-o/--output <file>`, `--stdout`, `--no-cache`
+    - Now supports multi-format output: text, json, markdown, html, github
+    - Writes reports to `.doccov/` directory by default
+  - Added spec-level caching (use `--no-cache` to bypass)
+  - Simplified config schema to match new quality rules engine
+
+### Patch Changes
+
+- Updated dependencies
+  - @openpkg-ts/spec@0.8.0
+  - @doccov/sdk@0.10.0
+
 ## 0.9.0
 
 ### Patch Changes

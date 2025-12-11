@@ -1,6 +1,6 @@
 {
   "name": "@doccov/api",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "DocCov API - Badge endpoint and coverage services",
   "keywords": [
     "doccov",
@@ -27,7 +27,7 @@
     "format": "biome format --write src/"
   },
   "dependencies": {
-    "@openpkg-ts/spec": "^0.7.0",
+    "@openpkg-ts/spec": "^0.8.0",
     "@vercel/sandbox": "^1.0.3",
     "hono": "^4.0.0",
     "ms": "^2.1.3",
