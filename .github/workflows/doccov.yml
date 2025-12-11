@@ -66,7 +66,7 @@ jobs:
 
       - name: Check coverage
         run: |
-          bunx @doccov/cli check --package @doccov/sdk --ignore-drift
+          bunx @doccov/cli check --package @doccov/sdk
 
       - name: Comment on PR
         if: github.event_name == 'pull_request' && steps.diff.outputs.diff
