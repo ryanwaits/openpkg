@@ -84,9 +84,10 @@ export async function detectEntryPoint(fs: FileSystem, packagePath = '.'): Promi
   ];
 
   for (const fallback of fallbacks) {
-    const fullPath = packagePath === '.' ? fallback : `${packagePath}/${fallback}`;
-    if (await fs.exists(fullPath)) {
-      return { path: fullPath, source: 'fallback', isDeclarationOnly: false };
+    const checkPath = packagePath === '.' ? fallback : `${packagePath}/${fallback}`;
+    if (await fs.exists(checkPath)) {
+      // Return path relative to packagePath, not including packagePath prefix
+      return { path: fallback, source: 'fallback', isDeclarationOnly: false };
     }
   }
 
@@ -136,16 +137,16 @@ async function resolveToSource(
   // Normalize path (remove leading ./)
   const normalized = filePath.replace(/^\.\//, '');
 
-  // Helper to build full path
-  const fullPath = (p: string) => (basePath === '.' ? p : `${basePath}/${p}`);
+  // Helper to build full path for existence checks (includes basePath)
+  const checkPath = (p: string) => (basePath === '.' ? p : `${basePath}/${p}`);
 
   // Already a .ts source file (not .d.ts)
   const isSourceTs =
     (normalized.endsWith('.ts') && !normalized.endsWith('.d.ts')) || normalized.endsWith('.tsx');
   if (isSourceTs) {
-    const path = fullPath(normalized);
-    if (await fs.exists(path)) {
-      return { path, isDeclarationOnly: false };
+    if (await fs.exists(checkPath(normalized))) {
+      // Return path relative to basePath, not including basePath prefix
+      return { path: normalized, isDeclarationOnly: false };
     }
   }
 
@@ -201,17 +202,17 @@ async function resolveToSource(
   // Check each candidate (skip .d.ts files - we want source, not declarations)
   for (const candidate of candidates) {
     if (candidate.endsWith('.d.ts')) continue;
-    const path = fullPath(candidate);
-    if (await fs.exists(path)) {
-      return { path, isDeclarationOnly: false };
+    if (await fs.exists(checkPath(candidate))) {
+      // Return path relative to basePath, not including basePath prefix
+      return { path: candidate, isDeclarationOnly: false };
     }
   }
 
   // Fall back to .d.ts if that's all we have
   if (normalized.endsWith('.d.ts')) {
-    const path = fullPath(normalized);
-    if (await fs.exists(path)) {
-      return { path, isDeclarationOnly: true };
+    if (await fs.exists(checkPath(normalized))) {
+      // Return path relative to basePath, not including basePath prefix
+      return { path: normalized, isDeclarationOnly: true };
     }
   }
 
