@@ -1,13 +1,13 @@
-# doccov generate
+# doccov spec
 
 Generate a pure OpenPkg structural specification from TypeScript source.
 
-> **Note:** This command outputs pure structural JSON only. For coverage reports, use [`doccov check --format`](./check.md).
+> **Note:** This command outputs pure structural JSON only. For coverage reports, use [`doccov check`](./check.md).
 
 ## Usage
 
 ```bash
-doccov generate [entry] [options]
+doccov spec [entry] [options]
 ```
 
 ## Arguments
@@ -21,10 +21,11 @@ doccov generate [entry] [options]
 | Option | Default | Description |
 |--------|---------|-------------|
 | `-o, --output <file>` | `openpkg.json` | Output file path |
-| `--include <ids>` | - | Filter exports by identifier (comma-separated) |
-| `--exclude <ids>` | - | Exclude exports by identifier (comma-separated) |
+| `--include <patterns>` | - | Filter exports by pattern (comma-separated) |
+| `--exclude <patterns>` | - | Exclude exports by pattern (comma-separated) |
 | `--show-diagnostics` | `false` | Print TypeScript diagnostics |
 | `--skip-resolve` | `false` | Skip external type resolution from node_modules |
+| `--max-type-depth <n>` | `20` | Maximum depth for type conversion |
 | `-p, --package <name>` | - | Target package name (for monorepos) |
 | `--cwd <dir>` | `.` | Working directory |
 
@@ -33,7 +34,7 @@ doccov generate [entry] [options]
 ### Basic Generation
 
 ```bash
-doccov generate
+doccov spec
 ```
 
 Auto-detects entry point, outputs `openpkg.json`.
@@ -41,29 +42,29 @@ Auto-detects entry point, outputs `openpkg.json`.
 ### Custom Output
 
 ```bash
-doccov generate -o api-spec.json
+doccov spec -o api-spec.json
 ```
 
 ### Specific Entry
 
 ```bash
-doccov generate src/lib/index.ts -o lib-spec.json
+doccov spec src/lib/index.ts -o lib-spec.json
 ```
 
 ### Filter Exports
 
 ```bash
 # Only include specific exports
-doccov generate --include "createUser,updateUser,deleteUser"
+doccov spec --include "createUser,updateUser,deleteUser"
 
 # Exclude internal helpers
-doccov generate --exclude "_internal*,debug*"
+doccov spec --exclude "_internal*,debug*"
 ```
 
 ### Monorepo Package
 
 ```bash
-doccov generate --package @myorg/utils -o utils-spec.json
+doccov spec --package @myorg/utils -o utils-spec.json
 ```
 
 ### Skip External Types
@@ -71,13 +72,13 @@ doccov generate --package @myorg/utils -o utils-spec.json
 Faster generation, but loses external type info:
 
 ```bash
-doccov generate --skip-resolve
+doccov spec --skip-resolve
 ```
 
 ### Debug TypeScript Issues
 
 ```bash
-doccov generate --show-diagnostics
+doccov spec --show-diagnostics
 ```
 
 ## Output Format
@@ -135,4 +136,3 @@ See [`doccov check`](./check.md) for details.
 - [check](./check.md) - Coverage validation and reports
 - [diff](./diff.md) - Compare two specs
 - [Configuration](../configuration.md) - Persistent settings
-

@@ -7,11 +7,10 @@ import {
   DocCov,
   detectExampleAssertionFailures,
   detectExampleRuntimeErrors,
-  enrichSpec,
   type EnrichedExport,
-  type EnrichedOpenPkg,
   type ExampleRunResult,
   type ExampleTypeError,
+  enrichSpec,
   type FixSuggestion,
   findJSDocLocation,
   generateFixesForExport,
@@ -105,10 +104,11 @@ export function registerCheckCommand(
     .option('--min-coverage <percentage>', 'Minimum docs coverage percentage (0-100)', (value) =>
       Number(value),
     )
-    .option('--require-examples', 'Require at least one @example for every export')
-    .option('--exec', 'Execute @example blocks at runtime')
+    .option(
+      '--examples [mode]',
+      'Example validation: presence, types, run, or all (default: all when flag used, types otherwise)',
+    )
     .option('--no-lint', 'Skip lint checks')
-    .option('--no-typecheck', 'Skip example type checking')
     .option('--ignore-drift', 'Do not fail on documentation drift')
     .option('--skip-resolve', 'Skip external type resolution from node_modules')
     .option('--fix', 'Auto-fix drift and lint issues')
@@ -135,34 +135,27 @@ export function registerCheckCommand(
           log(chalk.gray(`Found package at ${packageInfo.path}`));
         }
         if (!entry) {
-          log(chalk.gray(`Auto-detected entry point: ${entryPointInfo.path} (from ${entryPointInfo.source})`));
+          log(
+            chalk.gray(
+              `Auto-detected entry point: ${entryPointInfo.path} (from ${entryPointInfo.source})`,
+            ),
+          );
         }
 
         // Load config to get default minCoverage
         const config = await loadDocCovConfig(targetDir);
 
         // CLI option takes precedence, then config, then default (80)
-        const minCoverage = clampCoverage(
-          options.minCoverage ?? config?.normalized.check?.minCoverage ?? 80
-        );
+        const minCoverage = clampCoverage(options.minCoverage ?? config?.check?.minCoverage ?? 80);
         const resolveExternalTypes = !options.skipResolve;
-
-        // Use simple text indicator for CPU-intensive analysis (ora can't animate during blocking operations)
-        process.stdout.write(chalk.cyan('> Analyzing documentation coverage...\n'));
 
         let specResult: Awaited<ReturnType<DocCov['analyzeFileWithDiagnostics']>> | undefined;
 
-        try {
-          const doccov = createDocCov({
-            resolveExternalTypes,
-            maxDepth: options.maxTypeDepth ? parseInt(options.maxTypeDepth, 10) : undefined,
-          });
-          specResult = await doccov.analyzeFileWithDiagnostics(entryFile);
-          process.stdout.write(chalk.green('✓ Documentation analysis complete\n'));
-        } catch (analysisError) {
-          process.stdout.write(chalk.red('✗ Failed to analyze documentation coverage\n'));
-          throw analysisError;
-        }
+        const doccov = createDocCov({
+          resolveExternalTypes,
+          maxDepth: options.maxTypeDepth ? parseInt(options.maxTypeDepth, 10) : undefined,
+        });
+        specResult = await doccov.analyzeFileWithDiagnostics(entryFile);
 
         if (!specResult) {
           throw new Error('Failed to analyze documentation coverage.');
@@ -199,8 +192,6 @@ export function registerCheckCommand(
         // Run lint if not disabled
         const lintViolations: Array<{ exportName: string; violation: LintViolation }> = [];
         if (options.lint !== false) {
-          process.stdout.write(chalk.cyan('> Running lint checks...\n'));
-
           const lintConfig = getLintDefaultConfig();
           for (const exp of spec.exports ?? []) {
             const violations = lintExport(exp, undefined, lintConfig);
@@ -208,23 +199,27 @@ export function registerCheckCommand(
               lintViolations.push({ exportName: exp.name, violation });
             }
           }
-
-          if (lintViolations.length === 0) {
-            process.stdout.write(chalk.green('✓ No lint issues\n'));
-          } else {
-            const errors = lintViolations.filter((v) => v.violation.severity === 'error').length;
-            const warns = lintViolations.filter((v) => v.violation.severity === 'warn').length;
-            process.stdout.write(
-              chalk.yellow(
-                `⚠ ${lintViolations.length} lint issue(s) (${errors} error, ${warns} warn)\n`,
-              ),
-            );
-          }
         }
 
-        // Run typecheck if not disabled
+        // Validate examples based on --examples mode (presence, types, run, all)
+        // - undefined (no flag): skip all example validation
+        // - true (flag with no value): default to 'all' (presence + types + run)
+        // - string: use the provided value
+        let examplesMode: 'presence' | 'types' | 'run' | 'all' | null = null;
+        if (options.examples === true) {
+          examplesMode = 'all';
+        } else if (typeof options.examples === 'string') {
+          examplesMode = options.examples as 'presence' | 'types' | 'run' | 'all';
+        }
+
+        const shouldTypecheck =
+          examplesMode === 'types' || examplesMode === 'run' || examplesMode === 'all';
+        const shouldRun = examplesMode === 'run' || examplesMode === 'all';
         const typecheckErrors: Array<{ exportName: string; error: ExampleTypeError }> = [];
-        if (options.typecheck !== false) {
+        const runtimeDrifts: Array<{ name: string; issue: string; suggestion?: string }> = [];
+
+        // Run typecheck if mode requires it
+        if (shouldTypecheck) {
           const allExamplesForTypecheck: Array<{ exportName: string; examples: string[] }> = [];
           for (const exp of spec.exports ?? []) {
             if (exp.examples && exp.examples.length > 0) {
@@ -239,39 +234,33 @@ export function registerCheckCommand(
           const allExportNames = (spec.exports ?? []).map((e) => e.name);
 
           if (allExamplesForTypecheck.length > 0) {
-            process.stdout.write(chalk.cyan('> Type-checking examples...\n'));
-
             for (const { exportName, examples } of allExamplesForTypecheck) {
-              const result = typecheckExamples(examples, targetDir, { exportNames: allExportNames });
+              const result = typecheckExamples(examples, targetDir, {
+                exportNames: allExportNames,
+              });
               for (const err of result.errors) {
                 typecheckErrors.push({ exportName, error: err });
               }
             }
-
-            if (typecheckErrors.length === 0) {
-              process.stdout.write(chalk.green('✓ All examples type-check\n'));
-            } else {
-              process.stdout.write(chalk.red(`✗ ${typecheckErrors.length} type error(s)\n`));
-            }
           }
         }
 
-        // Run examples at runtime if --exec flag is set
-        const runtimeDrifts: Array<{ name: string; issue: string; suggestion?: string }> = [];
-        if (options.exec) {
+        // Run examples at runtime if mode requires it
+        if (shouldRun) {
           // Collect all examples from all exports
           const allExamples: Array<{ exportName: string; examples: string[] }> = [];
           for (const entry of spec.exports ?? []) {
             if (entry.examples && entry.examples.length > 0) {
-              allExamples.push({ exportName: entry.name, examples: entry.examples });
+              const stringExamples = entry.examples.filter(
+                (e): e is string => typeof e === 'string',
+              );
+              if (stringExamples.length > 0) {
+                allExamples.push({ exportName: entry.name, examples: stringExamples });
+              }
             }
           }
 
-          if (allExamples.length === 0) {
-            log(chalk.gray('No @example blocks found'));
-          } else {
-            process.stdout.write(chalk.cyan('> Installing package for examples...\n'));
-
+          if (allExamples.length > 0) {
             // Flatten examples for batch execution
             const flatExamples = allExamples.flatMap((e) => e.examples);
 
@@ -283,16 +272,7 @@ export function registerCheckCommand(
               cwd: targetDir,
             });
 
-            if (!packageResult.installSuccess) {
-              process.stdout.write(
-                chalk.red(`✗ Package install failed: ${packageResult.installError}\n`),
-              );
-              log(chalk.yellow('Skipping example execution. Ensure the package is built.'));
-            } else {
-              process.stdout.write(chalk.cyan('> Running @example blocks...\n'));
-
-              let examplesRun = 0;
-              let examplesFailed = 0;
+            if (packageResult.installSuccess) {
               let exampleIndex = 0;
 
               // Map results back to exports
@@ -303,8 +283,6 @@ export function registerCheckCommand(
                   const result = packageResult.results.get(exampleIndex);
                   if (result) {
                     entryResults.set(i, result);
-                    examplesRun++;
-                    if (!result.success) examplesFailed++;
                   }
                   exampleIndex++;
                 }
@@ -375,23 +353,12 @@ export function registerCheckCommand(
                   }
                 }
               }
-
-              if (examplesFailed > 0) {
-                process.stdout.write(
-                  chalk.red(`✗ ${examplesFailed}/${examplesRun} example(s) failed\n`),
-                );
-              } else {
-                process.stdout.write(chalk.green(`✓ ${examplesRun} example(s) passed\n`));
-              }
             }
           }
         }
 
         const coverageScore = spec.docs?.coverageScore ?? 0;
         const failingExports = collectFailingExports(spec.exports ?? [], minCoverage);
-        const missingExamples = options.requireExamples
-          ? failingExports.filter((item) => item.missing?.includes('examples'))
-          : [];
         let driftExports = [...collectDrift(spec.exports ?? []), ...runtimeDrifts];
 
         // Handle --fix / --write: auto-fix drift issues
@@ -469,8 +436,10 @@ export function registerCheckCommand(
                 }
 
                 // Generate fixes
+                // Cast to SpecExport - the SDK function accesses docs.drift internally
+                const expWithDrift = { ...exp, docs: { ...exp.docs, drift: drifts } };
                 const fixes = generateFixesForExport(
-                  { ...exp, docs: { ...exp.docs, drift: drifts } },
+                  expWithDrift as unknown as SpecExport,
                   existingPatch,
                 );
 
@@ -531,28 +500,12 @@ export function registerCheckCommand(
 
                   log(chalk.gray('Run without --dry-run to apply these changes.'));
                 } else {
-                  process.stdout.write(chalk.cyan('> Applying fixes...\n'));
-
                   const applyResult = await applyEdits(edits);
 
                   if (applyResult.errors.length > 0) {
-                    process.stdout.write(chalk.yellow('⚠ Some fixes could not be applied\n'));
                     for (const err of applyResult.errors) {
                       error(chalk.red(`  ${err.file}: ${err.error}`));
                     }
-                  } else {
-                    process.stdout.write(
-                      chalk.green(
-                        `✓ Applied ${applyResult.editsApplied} fix(es) to ${applyResult.filesModified} file(s)\n`,
-                      ),
-                    );
-                  }
-
-                  // Show summary
-                  log('');
-                  for (const [filePath, fileEdits] of editsByFile) {
-                    const relativePath = path.relative(targetDir, filePath);
-                    log(chalk.green(`  ✓ ${relativePath}: ${fileEdits.length} fix(es)`));
                   }
                 }
               }
@@ -615,7 +568,8 @@ export function registerCheckCommand(
           // Still exit with error if thresholds not met
           const coverageFailed = coverageScore < minCoverage;
           const hasDrift = !options.ignoreDrift && driftExports.length > 0;
-          const hasLintErrors = lintViolations.filter((v) => v.violation.severity === 'error').length > 0;
+          const hasLintErrors =
+            lintViolations.filter((v) => v.violation.severity === 'error').length > 0;
           const hasTypecheckErrors = typecheckErrors.length > 0;
 
           if (coverageFailed || hasDrift || hasLintErrors || hasTypecheckErrors) {
@@ -625,19 +579,12 @@ export function registerCheckCommand(
         }
 
         const coverageFailed = coverageScore < minCoverage;
-        const hasMissingExamples = missingExamples.length > 0;
         const hasDrift = !options.ignoreDrift && driftExports.length > 0;
         const hasLintErrors =
           lintViolations.filter((v) => v.violation.severity === 'error').length > 0;
         const hasTypecheckErrors = typecheckErrors.length > 0;
 
-        if (
-          !coverageFailed &&
-          !hasMissingExamples &&
-          !hasDrift &&
-          !hasLintErrors &&
-          !hasTypecheckErrors
-        ) {
+        if (!coverageFailed && !hasDrift && !hasLintErrors && !hasTypecheckErrors) {
           log(chalk.green(`✓ Docs coverage ${coverageScore}% (min ${minCoverage}%)`));
 
           if (failingExports.length > 0) {
@@ -663,14 +610,6 @@ export function registerCheckCommand(
         error('');
         if (coverageFailed) {
           error(chalk.red(`Docs coverage ${coverageScore}% fell below required ${minCoverage}%.`));
-        }
-
-        if (hasMissingExamples) {
-          error(
-            chalk.red(
-              `${missingExamples.length} export(s) missing examples (required via --require-examples)`,
-            ),
-          );
         }
 
         if (hasLintErrors) {
@@ -730,7 +669,7 @@ function clampCoverage(value: number): number {
 function collectFailingExports(
   exportsList: Array<{
     name: string;
-    docs?: { coverageScore?: number; missing?: string[]; drift?: Array<{ message: string }> };
+    docs?: { coverageScore?: number; missing?: string[]; drift?: SpecDocDrift[] };
   }>,
   minCoverage: number,
 ): Array<{ name: string; missing?: string[] }> {

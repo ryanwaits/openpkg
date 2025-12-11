@@ -71,18 +71,17 @@ Or in `package.json`:
 {
   "scripts": {
     "docs:check": "doccov check --min-coverage 80",
-    "docs:generate": "doccov generate -o openpkg.json"
+    "docs:spec": "doccov spec -o openpkg.json"
   }
 }
 ```
 
 ## Requirements
 
-- Node.js 18+ (Node 22+ for `--run-examples`)
+- Node.js 18+ (Node 22+ for `--examples run`)
 - TypeScript project with valid `tsconfig.json`
 
 ## See Also
 
 - [Quick Start](./quick-start.md) - Generate your first spec
 - [CLI Overview](../cli/overview.md) - Available commands
-

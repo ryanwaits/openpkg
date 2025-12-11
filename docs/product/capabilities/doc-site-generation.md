@@ -267,7 +267,7 @@ npm install @doccov/fumadocs-adapter @doccov/ui
 ### 2. Generate Spec
 
 ```bash
-doccov generate -o openpkg.json
+doccov spec -o openpkg.json
 ```
 
 ### 3. Create OpenPkg Instance

@@ -120,7 +120,7 @@ const diff = diffSpec(baseSpec, headSpec);
   run: curl -o base.json https://api.doccov.com/spec/${{ github.repository }}/main
 
 - name: Generate head spec
-  run: doccov generate -o head.json
+  run: doccov spec -o head.json
 
 - name: Compare
   run: doccov diff base.json head.json --fail-on-regression
@@ -146,7 +146,7 @@ Repository must have `openpkg.json` committed.
 Generate with:
 
 ```bash
-doccov generate -o openpkg.json
+doccov spec -o openpkg.json
 git add openpkg.json && git commit -m "Add DocCov spec" && git push
 ```
 
@@ -167,5 +167,5 @@ curl http://localhost:3000/spec/colinhacks/zod/v3.22.4
 
 - [Badge](./badge.md) - Badge uses this internally
 - [Diffing](../../spec/diffing.md) - Compare specs
-- [generate Command](../../cli/commands/generate.md) - Create spec
+- [spec Command](../../cli/commands/spec.md) - Create spec
 

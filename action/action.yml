@@ -35,7 +35,7 @@ inputs:
     description: 'Working directory for the check'
     required: false
     default: '.'
-  skip-generate:
+  skip-spec:
     description: 'Skip spec generation and use existing openpkg.json'
     required: false
     default: 'false'
@@ -67,18 +67,18 @@ runs:
       run: npm install -g @doccov/cli
 
     - name: Generate spec
-      if: inputs.skip-generate != 'true'
+      if: inputs.skip-spec != 'true'
       shell: bash
       working-directory: ${{ inputs.working-directory }}
-      run: doccov generate --output openpkg.json
+      run: doccov spec --output openpkg.json
 
     - name: Verify spec exists
-      if: inputs.skip-generate == 'true'
+      if: inputs.skip-spec == 'true'
       shell: bash
       working-directory: ${{ inputs.working-directory }}
       run: |
         if [ ! -f openpkg.json ]; then
-          echo "Error: openpkg.json not found. Either commit it or set skip-generate to false."
+          echo "Error: openpkg.json not found. Either commit it or set skip-spec to false."
           exit 1
         fi
 
@@ -88,7 +88,7 @@ runs:
       run: |
         ARGS="--min-coverage ${{ inputs.min-coverage }}"
         if [ "${{ inputs.require-examples }}" = "true" ]; then
-          ARGS="$ARGS --require-examples"
+          ARGS="$ARGS --examples presence"
         fi
         doccov check $ARGS
 
@@ -99,10 +99,10 @@ runs:
       run: |
         git fetch origin ${{ github.base_ref }}
         git checkout FETCH_HEAD -- . 2>/dev/null || true
-        if [ "${{ inputs.skip-generate }}" = "true" ] && [ -f openpkg.json ]; then
+        if [ "${{ inputs.skip-spec }}" = "true" ] && [ -f openpkg.json ]; then
           cp openpkg.json openpkg-base.json
         else
-          doccov generate --output openpkg-base.json 2>/dev/null || echo '{"docs":{"coverageScore":0},"exports":[]}' > openpkg-base.json
+          doccov spec --output openpkg-base.json 2>/dev/null || echo '{"docs":{"coverageScore":0},"exports":[]}' > openpkg-base.json
         fi
         git checkout - -- . 2>/dev/null || true
 

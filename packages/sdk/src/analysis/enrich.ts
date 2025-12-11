@@ -1,9 +1,9 @@
 import type {
   OpenPkg,
-  SpecExport,
-  SpecDocsMetadata,
-  SpecDocSignal,
   SpecDocDrift,
+  SpecDocSignal,
+  SpecDocsMetadata,
+  SpecExport,
 } from '@openpkg-ts/spec';
 import { computeDocsCoverage } from './docs-coverage';
 

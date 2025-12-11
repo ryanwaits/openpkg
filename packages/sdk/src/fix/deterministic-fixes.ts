@@ -150,7 +150,8 @@ function mergePatches(base: JSDocPatch, update: Partial<JSDocPatch>): JSDocPatch
     const updateNames = new Set(update.params.map((p) => p.name));
 
     // Check if this is a structural change (rename) - names differ but count same or similar
-    const hasStructuralChange = result.params &&
+    const hasStructuralChange =
+      result.params &&
       update.params.length === result.params.length &&
       ![...updateNames].every((name) => baseNames.has(name));
 
@@ -299,12 +300,13 @@ function generateParamMismatchFix(
     // 2. double quotes: "newName"
     // 3. single quotes: 'newName'
     // 4. just the word itself if it looks like a param name (no special chars)
-    const newNameMatch = drift.suggestion.match(/[`'"](\w+)[`'"]/) ??
-                         drift.suggestion.match(/(?:to|use|should be)\s+[`'"]?(\w+)[`'"]?/i);
-    const newName = newNameMatch?.[1] ?? (
+    const newNameMatch =
+      drift.suggestion.match(/[`'"](\w+)[`'"]/) ??
+      drift.suggestion.match(/(?:to|use|should be)\s+[`'"]?(\w+)[`'"]?/i);
+    const newName =
+      newNameMatch?.[1] ??
       // Fallback: if suggestion is a simple word, use it directly
-      /^\s*\w+\s*$/.test(drift.suggestion) ? drift.suggestion.trim() : null
-    );
+      (/^\s*\w+\s*$/.test(drift.suggestion) ? drift.suggestion.trim() : null);
 
     if (oldName && newName && oldName !== newName) {
       const updatedParams = existingParams.map((p) =>

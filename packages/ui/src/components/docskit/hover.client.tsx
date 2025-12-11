@@ -49,6 +49,7 @@ export function Hoverable({
   const { addHoveredName, removeHoveredName, hoveredNames } = useContext(HoverContext);
   const isHovered = hoveredNames.length > 0 && hoveredNames[hoveredNames.length - 1] === name;
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: Visual hover highlight only, not interactive
     <span
       className={className}
       onMouseEnter={() => addHoveredName(name)}

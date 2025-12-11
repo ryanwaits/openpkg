@@ -1,15 +1,9 @@
 import React from 'react';
 
-/* eslint-disable react-hooks/rules-of-hooks */
-/* eslint-disable react-hooks/exhaustive-deps */
 export function useStateOrLocalStorage(
   key: string | undefined,
   initialState: string,
 ): [string, (_: string) => void] {
-  if (!key) {
-    return React.useState(initialState);
-  }
-
   const [state, setState] = React.useState(initialState);
 
   React.useLayoutEffect(() => {

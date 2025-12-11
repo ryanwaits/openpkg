@@ -153,7 +153,7 @@ Docs Requiring Updates:
 
 ### 4. Validate Examples Work
 ```bash
-doccov check --exec --require-examples
+doccov check --examples run
 ```
 Every export needs an example, and every example must run without errors.
 

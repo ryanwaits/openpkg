@@ -278,12 +278,6 @@ Check for drift:
 doccov check
 ```
 
-Fail on any drift:
-
-```bash
-doccov check  # Fails by default if drift detected
-```
-
 Ignore drift:
 
 ```bash
@@ -293,7 +287,7 @@ doccov check --ignore-drift
 Run examples to detect runtime errors:
 
 ```bash
-doccov check --run-examples
+doccov check --examples run
 ```
 
 ## Drift in Spec Output

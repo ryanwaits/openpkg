@@ -176,7 +176,12 @@ const InputWithButton = React.forwardRef<HTMLInputElement, InputWithButtonProps>
           >
             {buttonLoading ? (
               <span className="inline-flex items-center gap-2">
-                <svg className="animate-spin size-4" viewBox="0 0 24 24" fill="none">
+                <svg
+                  className="animate-spin size-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden="true"
+                >
                   <circle
                     cx="12"
                     cy="12"
@@ -221,15 +226,24 @@ export interface SearchInputProps extends Omit<InputProps, 'leftIcon'> {
 
 const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
   ({ className, inputSize = 'md', showClear, onClear, ...props }, ref) => {
+    const inputId = React.useId();
     return (
       <div className="w-full space-y-2">
         {props.label && (
-          <label className="text-sm font-medium text-[var(--input-text)]">{props.label}</label>
+          <label htmlFor={inputId} className="text-sm font-medium text-[var(--input-text)]">
+            {props.label}
+          </label>
         )}
         <div className="relative">
           {/* Search icon */}
           <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--input-placeholder)]">
-            <svg className="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg
+              className="size-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -239,6 +253,7 @@ const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
             </svg>
           </div>
           <input
+            id={inputId}
             ref={ref}
             className={cn(
               inputVariants({ inputSize, variant: props.error ? 'error' : 'default' }),
@@ -253,9 +268,16 @@ const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
             <button
               type="button"
               onClick={onClear}
+              aria-label="Clear search"
               className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--input-placeholder)] hover:text-[var(--input-text)] transition-colors"
             >
-              <svg className="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg
+                className="size-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"

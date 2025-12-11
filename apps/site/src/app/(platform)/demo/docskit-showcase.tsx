@@ -315,7 +315,7 @@ npm run dev`,
       {/* Code Block with Expandable Annotation */}
       <div>
         <p className="text-xs font-medium text-muted-foreground mb-3">
-          Code Block with Expandable Annotation (// !expandable)
+          Code Block with Expandable Annotation {'(// !expandable)'}
         </p>
         <ClientDocsKitCode
           codeblock={{
@@ -329,7 +329,7 @@ npm run dev`,
       {/* Code Block with Hover Annotation */}
       <div>
         <p className="text-xs font-medium text-muted-foreground mb-3">
-          Code Block with Hover Annotation (// !hover)
+          Code Block with Hover Annotation {'(// !hover)'}
         </p>
         <WithHover>
           <p className="text-sm text-foreground mb-3">
@@ -348,7 +348,7 @@ npm run dev`,
       {/* Code Block with Tooltip Annotation */}
       <div>
         <p className="text-xs font-medium text-muted-foreground mb-3">
-          Code Block with Tooltip Annotation (// !tooltip)
+          Code Block with Tooltip Annotation {'(// !tooltip)'}
         </p>
         <ClientDocsKitCode
           codeblock={{

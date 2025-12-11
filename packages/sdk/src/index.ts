@@ -4,30 +4,30 @@ export {
   hasNonAssertionComments,
   parseAssertions,
 } from './analysis/docs-coverage';
-export type { OpenPkgSpec } from './analysis/spec-types';
 // Enrichment and coverage analysis
 export {
-  enrichSpec,
   type EnrichedExport,
   type EnrichedOpenPkg,
   type EnrichOptions,
+  enrichSpec,
 } from './analysis/enrich';
 // Report generation
 export {
   generateReport,
   generateReportFromEnriched,
+  isCachedReportValid,
   loadCachedReport,
   saveReport,
-  isCachedReportValid,
 } from './analysis/report';
-// Report types
-export {
-  type DocCovReport,
-  type CoverageSummary,
-  type ExportCoverageData,
-  REPORT_VERSION,
-  DEFAULT_REPORT_PATH,
-} from './types/report';
+export type { OpenPkgSpec } from './analysis/spec-types';
+// Configuration types
+export type {
+  CheckConfig,
+  DocCovConfig,
+  DocsConfig,
+  LintRulesConfig,
+} from './config';
+export { defineConfig } from './config';
 // Project detection (for CLI and API)
 export {
   type AnalyzeProjectOptions,
@@ -64,9 +64,9 @@ export {
   type WorkspacePackage,
 } from './detect';
 export { extractPackageSpec } from './extractor';
-export type { FilterOptions } from './filtering/types';
 export type { FilterSource, ResolvedFilters } from './filtering/merge';
 export { mergeFilters, parseListFlag } from './filtering/merge';
+export type { FilterOptions } from './filtering/types';
 // Fix utilities
 export {
   type ApplyEditsResult,
@@ -89,6 +89,19 @@ export {
   parseJSDocToPatch,
   serializeJSDoc,
 } from './fix';
+// GitHub utilities
+export type { ParsedGitHubUrl } from './github';
+export {
+  buildCloneUrl,
+  buildDisplayUrl,
+  buildRawUrl,
+  fetchSpec,
+  fetchSpecFromGitHub,
+  parseGitHubUrl,
+} from './github';
+// Dependency installation
+export type { CommandResult, CommandRunner, InstallOptions, InstallResult } from './install';
+export { createNodeCommandRunner, installDependencies } from './install';
 // Lint engine
 export {
   allRules,
@@ -141,21 +154,9 @@ export {
 export type { AnalysisResult, AnalyzeOptions, Diagnostic } from './openpkg';
 export { analyze, analyzeFile, DocCov, OpenPkg } from './openpkg';
 export type { DocCovOptions, OpenPkgOptions } from './options';
-// Example typechecker
-export {
-  type ExampleTypeError,
-  type TypecheckOptions,
-  type TypecheckResult,
-  typecheckExample,
-  typecheckExamples,
-} from './typecheck';
-export type {
-  ExampleRunResult,
-  RunExampleOptions,
-  RunExamplesWithPackageOptions,
-  RunExamplesWithPackageResult,
-} from './utils/example-runner';
-export { runExample, runExamples, runExamplesWithPackage } from './utils/example-runner';
+// Project resolution
+export type { ResolvedTarget, ResolveTargetOptions } from './resolve';
+export { resolveTarget } from './resolve';
 // Scan types and utilities
 export type {
   DriftIssue,
@@ -169,27 +170,26 @@ export type {
   SpecSummary,
 } from './scan';
 export { extractSpecSummary, MonorepoRequiresPackageError, ScanOrchestrator } from './scan';
-// GitHub utilities
-export type { ParsedGitHubUrl } from './github';
+// Example typechecker
 export {
-  buildCloneUrl,
-  buildDisplayUrl,
-  buildRawUrl,
-  fetchSpec,
-  fetchSpecFromGitHub,
-  parseGitHubUrl,
-} from './github';
-// Project resolution
-export type { ResolvedTarget, ResolveTargetOptions } from './resolve';
-export { resolveTarget } from './resolve';
-// Dependency installation
-export type { CommandResult, CommandRunner, InstallOptions, InstallResult } from './install';
-export { createNodeCommandRunner, installDependencies } from './install';
-// Configuration types
+  type ExampleTypeError,
+  type TypecheckOptions,
+  type TypecheckResult,
+  typecheckExample,
+  typecheckExamples,
+} from './typecheck';
+// Report types
+export {
+  type CoverageSummary,
+  DEFAULT_REPORT_PATH,
+  type DocCovReport,
+  type ExportCoverageData,
+  REPORT_VERSION,
+} from './types/report';
 export type {
-  CheckConfig,
-  DocCovConfig,
-  DocsConfig,
-  LintRulesConfig,
-} from './config';
-export { defineConfig } from './config';
+  ExampleRunResult,
+  RunExampleOptions,
+  RunExamplesWithPackageOptions,
+  RunExamplesWithPackageResult,
+} from './utils/example-runner';
+export { runExample, runExamples, runExamplesWithPackage } from './utils/example-runner';

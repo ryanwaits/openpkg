@@ -6,7 +6,7 @@ export function WithNotes({ children, ...rest }: { children: React.ReactNode }) 
   // and put them into Context
   const notes = Object.entries(rest)
     .filter(([name]) => name !== 'title' && name !== '_data')
-    .map(([name, block]: any) => {
+    .map(([name, block]: [string, Record<string, unknown>]) => {
       if (Object.hasOwn(block, 'children')) {
         return {
           name,

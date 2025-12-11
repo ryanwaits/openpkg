@@ -23,7 +23,7 @@ function formatSchema(schema: unknown): string {
   return 'unknown';
 }
 
-export function VariablePage({ export: exp, spec }: VariablePageProps): React.ReactNode {
+export function VariablePage({ export: exp, spec: _spec }: VariablePageProps): React.ReactNode {
   const typeValue = typeof exp.type === 'string' ? exp.type : formatSchema(exp.schema);
   const hasExamples = exp.examples && exp.examples.length > 0;
 

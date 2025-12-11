@@ -3,8 +3,8 @@
  * Abstracts the install logic for use in CLI and API.
  */
 
-import type { FileSystem, PackageManager, PackageManagerInfo } from '../detect/types';
 import { detectPackageManager, getInstallCommand } from '../detect/package-manager';
+import type { FileSystem, PackageManager } from '../detect/types';
 import type { ProgressCallback } from '../scan/types';
 
 /**
@@ -96,11 +96,7 @@ export async function installDependencies(
   runCommand: CommandRunner,
   options: InstallOptions = {},
 ): Promise<InstallResult> {
-  const {
-    timeout = 180000,
-    fallbackOrder = DEFAULT_FALLBACK_ORDER,
-    onProgress,
-  } = options;
+  const { timeout = 180000, fallbackOrder = DEFAULT_FALLBACK_ORDER, onProgress } = options;
 
   const errors: string[] = [];
 
@@ -241,4 +237,3 @@ export function createNodeCommandRunner(): CommandRunner {
     }
   };
 }
-

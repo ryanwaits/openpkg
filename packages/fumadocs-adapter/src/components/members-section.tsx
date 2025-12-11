@@ -114,7 +114,11 @@ function MemberRow({ member }: { member: SpecMember }) {
   );
 }
 
-export function MembersSection({ members, spec, title = 'Members' }: MembersSectionProps): React.ReactNode {
+export function MembersSection({
+  members,
+  spec: _spec,
+  title = 'Members',
+}: MembersSectionProps): React.ReactNode {
   if (!members?.length) return null;
 
   const groups = groupMembersByKind(members);

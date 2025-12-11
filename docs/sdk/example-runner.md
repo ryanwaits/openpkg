@@ -252,10 +252,10 @@ import { z } from 'zod';
 
 ## Integration with CLI
 
-The `--run-examples` flag uses `runExamplesWithPackage()` internally:
+The `--examples run` flag uses `runExamplesWithPackage()` internally:
 
 ```bash
-doccov check --run-examples
+doccov check --examples run
 ```
 
 This automatically:
@@ -293,7 +293,7 @@ bun run -e "
 
 ## See Also
 
-- [check --run-examples](../cli/commands/check.md) - CLI integration
+- [check --examples run](../cli/commands/check.md) - CLI integration
 - [Examples Run API](../api/endpoints/examples-run.md) - API endpoint
 - [Drift Types](../spec/drift-types.md) - `example-runtime-error`
 

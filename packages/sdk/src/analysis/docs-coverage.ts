@@ -25,7 +25,17 @@ export type DocsCoverageResult = {
  * Documentation signals required per export kind.
  * This ensures exports are only penalized for missing docs that make sense for their type.
  */
-type ExportKind = 'function' | 'class' | 'interface' | 'type' | 'variable' | 'enum' | 'namespace' | 'module' | 'reference' | 'external';
+type ExportKind =
+  | 'function'
+  | 'class'
+  | 'interface'
+  | 'type'
+  | 'variable'
+  | 'enum'
+  | 'namespace'
+  | 'module'
+  | 'reference'
+  | 'external';
 
 const SIGNALS_BY_KIND: Record<ExportKind, SpecDocSignal[]> = {
   function: ['description', 'params', 'returns', 'examples'],
@@ -41,7 +51,7 @@ const SIGNALS_BY_KIND: Record<ExportKind, SpecDocSignal[]> = {
 };
 
 // Legacy constant for backward compatibility
-const DOC_SECTIONS: SpecDocSignal[] = ['description', 'params', 'returns', 'examples'];
+const _DOC_SECTIONS: SpecDocSignal[] = ['description', 'params', 'returns', 'examples'];
 
 /**
  * Get the documentation signals that apply to an export based on its kind.
@@ -123,7 +133,8 @@ function evaluateExport(entry: SpecExport, exportRegistry?: Set<string>): Export
   // Calculate score based on applicable signals, not all signals
   const totalSignals = applicableSignals.length;
   const satisfiedSignals = totalSignals - missing.length;
-  const coverageScore = totalSignals === 0 ? 100 : Math.max(0, Math.round((satisfiedSignals / totalSignals) * 100));
+  const coverageScore =
+    totalSignals === 0 ? 100 : Math.max(0, Math.round((satisfiedSignals / totalSignals) * 100));
 
   return {
     id: entry.id,

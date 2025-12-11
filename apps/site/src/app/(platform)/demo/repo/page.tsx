@@ -22,7 +22,14 @@ function FileIcon({ type = 'ts' }: { type?: 'ts' | 'html' }) {
 // Chevron icon for expand/collapse
 function ChevronIcon({ className }: { className?: string }) {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={className} aria-hidden="true">
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      className={className}
+      aria-hidden="true"
+    >
       <title>Chevron icon</title>
       <path
         d="M4 6L8 10L12 6"

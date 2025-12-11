@@ -134,9 +134,7 @@ export function parseJSDocBlock(commentText: string): ParsedJSDocInfo {
       // Description text
       if (line.trim()) {
         const processed = processInlineLinks(line).trimEnd();
-        result.description = result.description
-          ? `${result.description}\n${processed}`
-          : processed;
+        result.description = result.description ? `${result.description}\n${processed}` : processed;
       }
     }
   }
@@ -303,7 +301,10 @@ export function parseExampleContent(content: string): ParsedExampleInfo | null {
   // Check first line for title (non-code line before code block)
   // Skip if it's a code fence or looks like code
   const firstLine = lines[0]?.trim() ?? '';
-  const looksLikeCode = /^(import|const|let|var|function|class|export|async|await|if|for|while|return|\/\/|\/\*|\{|\[)/.test(firstLine);
+  const looksLikeCode =
+    /^(import|const|let|var|function|class|export|async|await|if|for|while|return|\/\/|\/\*|\{|\[)/.test(
+      firstLine,
+    );
 
   if (firstLine && !firstLine.startsWith('```') && !looksLikeCode) {
     title = firstLine;
@@ -311,7 +312,9 @@ export function parseExampleContent(content: string): ParsedExampleInfo | null {
   }
 
   // Find code block
-  const codeBlockStart = lines.findIndex((l, i) => i >= codeStartIndex && l.trim().startsWith('```'));
+  const codeBlockStart = lines.findIndex(
+    (l, i) => i >= codeStartIndex && l.trim().startsWith('```'),
+  );
 
   if (codeBlockStart !== -1) {
     // Extract language from ``` fence
@@ -320,7 +323,7 @@ export function parseExampleContent(content: string): ParsedExampleInfo | null {
 
     // Description is lines between title and code block
     if (codeBlockStart > codeStartIndex) {
-      const descLines = lines.slice(codeStartIndex, codeBlockStart).filter(l => l.trim());
+      const descLines = lines.slice(codeStartIndex, codeBlockStart).filter((l) => l.trim());
       if (descLines.length > 0) {
         description = descLines.join('\n').trim();
       }
@@ -328,9 +331,10 @@ export function parseExampleContent(content: string): ParsedExampleInfo | null {
 
     // Extract code (between ``` fences)
     const codeBlockEnd = lines.findIndex((l, i) => i > codeBlockStart && l.trim() === '```');
-    const codeLines = codeBlockEnd === -1
-      ? lines.slice(codeBlockStart + 1)
-      : lines.slice(codeBlockStart + 1, codeBlockEnd);
+    const codeLines =
+      codeBlockEnd === -1
+        ? lines.slice(codeBlockStart + 1)
+        : lines.slice(codeBlockStart + 1, codeBlockEnd);
     const code = codeLines.join('\n');
 
     return { code, title, description, language };
@@ -493,7 +497,11 @@ function processTagContent(result: ParsedJSDocInfo, tag: string, content: string
         if (plainRef) {
           result.seeAlso.push(plainRef);
         }
-        result.tags.push({ name: 'see', text: trimmedContent, reference: plainRef || trimmedContent });
+        result.tags.push({
+          name: 'see',
+          text: trimmedContent,
+          reference: plainRef || trimmedContent,
+        });
       }
       break;
     }
@@ -571,9 +579,9 @@ function processTagContent(result: ParsedJSDocInfo, tag: string, content: string
 function extractAllLinkTargets(text: string): string[] {
   const targets: string[] = [];
   const linkRegex = /\{@link\s+([^}]+)\}/g;
+  const matches = text.matchAll(linkRegex);
 
-  let match: RegExpExecArray | null;
-  while ((match = linkRegex.exec(text)) !== null) {
+  for (const match of matches) {
     const target = extractLinkTarget(match[1]);
     if (target) {
       targets.push(target);
@@ -610,7 +618,7 @@ function extractLinkTarget(body: string): string {
  */
 export function extractJSDocFromSymbol(
   symbol: TS.Symbol,
-  checker: TS.TypeChecker,
+  _checker: TS.TypeChecker,
 ): ParsedJSDocInfo | null {
   const node = symbol.valueDeclaration || symbol.declarations?.[0];
   if (!node) return null;
@@ -665,4 +673,3 @@ function findLastJSDocRange(
 
   return undefined;
 }
-

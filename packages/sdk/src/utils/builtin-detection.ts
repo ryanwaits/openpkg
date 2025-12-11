@@ -7,7 +7,6 @@
  */
 
 import type * as TS from 'typescript';
-import { ts } from '../ts-module';
 
 /**
  * Check if a symbol is a built-in (from lib.*.d.ts or global scope).
@@ -16,7 +15,7 @@ import { ts } from '../ts-module';
  * @param checker - The TypeChecker instance
  * @returns true if the symbol is from a built-in library
  */
-export function isBuiltInSymbol(symbol: TS.Symbol | undefined, checker: TS.TypeChecker): boolean {
+export function isBuiltInSymbol(symbol: TS.Symbol | undefined, _checker: TS.TypeChecker): boolean {
   if (!symbol) return false;
 
   const declarations = symbol.getDeclarations();
@@ -329,4 +328,3 @@ const LIBRARY_INTERNAL_PATTERNS: RegExp[] = [
   /^(Union|Intersect|Object|Array)Static$/,
   /^Static(Decode|Encode)$/,
 ];
-

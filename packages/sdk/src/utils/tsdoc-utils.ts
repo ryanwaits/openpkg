@@ -1,13 +1,6 @@
 import type * as TS from 'typescript';
 import { ts } from '../ts-module';
-import {
-  parseJSDocBlock,
-  parseParamContent,
-  parseReturnContent,
-  type ParsedExampleInfo,
-  type ParsedJSDocInfo,
-  type ParsedParamInfo,
-} from './tsdoc-parser';
+import { type ParsedExampleInfo, parseJSDocBlock } from './tsdoc-parser';
 
 export interface ParsedParam {
   name: string;
@@ -159,7 +152,8 @@ export function parseJSDocText(commentText: string): ParsedJSDoc {
       type: p.type,
     })),
     examples: parsed.examples.length > 0 ? parsed.examples : undefined,
-    structuredExamples: parsed.structuredExamples.length > 0 ? parsed.structuredExamples : undefined,
+    structuredExamples:
+      parsed.structuredExamples.length > 0 ? parsed.structuredExamples : undefined,
     seeAlso: parsed.seeAlso.length > 0 ? parsed.seeAlso : undefined,
     tags: parsed.tags.length > 0 ? parsed.tags : undefined,
     rawParamNames: parsed.rawParamNames,

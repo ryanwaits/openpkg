@@ -43,14 +43,11 @@ type SpecExportKind =
 ### Commands
 
 ```bash
-# Generate OpenPkg spec (JSON)
-doccov generate --format json --output openpkg.json
+# Generate pure OpenPkg spec (JSON)
+doccov spec -o openpkg.json
 
-# Generate with coverage data
-doccov generate --format json
-
-# Generate without coverage (pure structural)
-doccov generate --format json --no-docs
+# Generate coverage report
+doccov check --format json -o coverage.json
 ```
 
 ---
@@ -146,7 +143,7 @@ DocCov detects 14 types of documentation drift (mismatches between docs and code
 ### Detection
 
 ```bash
-# Check for drift (included in standard check)
+# Check for drift (included in standard analysis)
 doccov check
 ```
 
@@ -199,7 +196,7 @@ Found 3 fixable issue(s)
       + Add missing @param timeout
 ```
 
-**Source**: `packages/sdk/src/fix/`, `packages/cli/src/commands/check.ts`
+**Source**: `packages/sdk/src/fix/`, `packages/cli/src/commands/analyze.ts`
 
 ---
 
@@ -210,7 +207,7 @@ DocCov validates `@example` blocks in three ways.
 ### Type-Checking
 
 ```bash
-doccov check --typecheck
+doccov check --examples types
 ```
 
 Compiles example code against actual TypeScript signatures. Catches type errors before runtime.
@@ -218,7 +215,7 @@ Compiles example code against actual TypeScript signatures. Catches type errors 
 ### Runtime Execution
 
 ```bash
-doccov check --exec
+doccov check --examples run
 ```
 
 Actually runs examples using Node.js with `--experimental-strip-types`. Catches runtime errors.
@@ -241,7 +238,7 @@ DocCov validates that `// => 5` matches actual stdout.
 
 ```bash
 # Fail if any export lacks @example
-doccov check --require-examples
+doccov check --examples presence
 ```
 
 **Source**: `packages/sdk/src/utils/example-runner.ts`, `packages/sdk/src/typecheck/`
@@ -377,8 +374,10 @@ Pluggable documentation linting rules.
 ### Commands
 
 ```bash
-doccov check --lint
+doccov check
 ```
+
+Lint checks are run by default. Skip them with `--ignore-lint`.
 
 **Source**: `packages/sdk/src/lint/rules/`
 

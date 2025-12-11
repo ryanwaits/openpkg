@@ -18,6 +18,7 @@ function ChevronIcon({ expanded }: { expanded: boolean }) {
       viewBox="0 0 16 16"
       fill="none"
       className={`transition-transform duration-200 ${expanded ? 'rotate-90' : ''}`}
+      aria-hidden="true"
     >
       <path
         d="M6 4L10 8L6 12"
@@ -68,7 +69,10 @@ function formatParamPreview(params: { name?: string }[] | undefined): string {
  * Collapsible method section with expand/collapse behavior
  * Shows compact signature when collapsed, full details when expanded
  */
-export function CollapsibleMethod({ member, defaultExpanded = false }: CollapsibleMethodProps): React.ReactNode {
+export function CollapsibleMethod({
+  member,
+  defaultExpanded = false,
+}: CollapsibleMethodProps): React.ReactNode {
   const [expanded, setExpanded] = useState(defaultExpanded);
 
   const sig = member.signatures?.[0];
@@ -93,6 +97,7 @@ export function CollapsibleMethod({ member, defaultExpanded = false }: Collapsib
     <div id={member.name} className="scroll-mt-20 border-b border-fd-border last:border-0">
       {/* Clickable header */}
       <button
+        type="button"
         onClick={() => setExpanded(!expanded)}
         className="w-full flex items-center gap-3 py-4 px-1 text-left hover:bg-fd-muted/30 transition-colors cursor-pointer group"
       >

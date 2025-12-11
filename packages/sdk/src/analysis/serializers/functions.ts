@@ -160,7 +160,7 @@ interface Relation {
  */
 function extractFunctionRelations(
   declaration: TS.FunctionDeclaration,
-  checker: TS.TypeChecker,
+  _checker: TS.TypeChecker,
   parsedDoc: ReturnType<typeof parseJSDocComment>,
 ): Relation[] {
   const relations: Relation[] = [];
@@ -169,7 +169,17 @@ function extractFunctionRelations(
   if (declaration.type && ts.isTypeReferenceNode(declaration.type)) {
     const typeName = declaration.type.typeName.getText();
     // Skip built-in types like Promise, Array, etc.
-    const builtIns = ['Promise', 'Array', 'Map', 'Set', 'Record', 'Partial', 'Required', 'Pick', 'Omit'];
+    const builtIns = [
+      'Promise',
+      'Array',
+      'Map',
+      'Set',
+      'Record',
+      'Partial',
+      'Required',
+      'Pick',
+      'Omit',
+    ];
     if (!builtIns.includes(typeName)) {
       relations.push({ type: 'returns', target: typeName });
     }

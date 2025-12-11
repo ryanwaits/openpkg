@@ -59,7 +59,7 @@ export function ClientDocsKitCode(props: {
     handlers.push(...extraHandlers);
   }
 
-  const { background, ...highlightedStyle } = highlighted.style;
+  const { background: _background, ...highlightedStyle } = highlighted.style;
   const showCopy = options?.copyButton;
   const icon = <CodeIcon title={title} lang={codeblock.lang} className="opacity-60" />;
 
@@ -137,7 +137,7 @@ export function ClientTerminal(props: { codeblock: RawCode; handlers?: Annotatio
     handlers.push(...extraHandlers);
   }
 
-  const { background, ...highlightedStyle } = highlighted.style;
+  const { background: _background, ...highlightedStyle } = highlighted.style;
   const showCopy = options?.copyButton;
   const isMultiLine = highlighted.code.includes('\n');
 
@@ -296,7 +296,7 @@ export function ClientCode(props: { codeblocks: RawCode[]; flags?: string; stora
   if (codeblocks.length === 1) {
     const tab = highlighted.get(0)!;
     const handlers = getHandlers(tab.options);
-    const { background, ...highlightedStyle } = tab.highlighted.style;
+    const { background: _background, ...highlightedStyle } = tab.highlighted.style;
 
     return (
       <div className="group rounded overflow-hidden relative border-dk-border flex flex-col border my-4 not-prose">
@@ -360,7 +360,7 @@ function ClientMultiCode({
   const [storedTitle, setCurrentTitle] = useStateOrLocalStorage(storage, tabs[0].title);
   const current = tabs.find((tab) => tab.title === storedTitle) || tabs[0];
   const handlers = getHandlers(current.options);
-  const { background, ...highlightedStyle } = current.highlighted.style;
+  const { background: _background, ...highlightedStyle } = current.highlighted.style;
 
   return (
     <Tabs

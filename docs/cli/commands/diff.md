@@ -254,7 +254,7 @@ Difference in package-wide coverage score.
 ```yaml
 - name: Generate specs
   run: |
-    doccov generate -o head.json
+    doccov spec -o head.json
     git fetch origin main
     git checkout origin/main -- openpkg.json
     mv openpkg.json base.json
@@ -293,8 +293,8 @@ Difference in package-wide coverage score.
 
 ```bash
 # Generate two specs
-doccov generate tests/fixtures/v1 -o /tmp/v1.json
-doccov generate tests/fixtures/v2 -o /tmp/v2.json
+doccov spec tests/fixtures/v1 -o /tmp/v1.json
+doccov spec tests/fixtures/v2 -o /tmp/v2.json
 
 # Diff with different formats
 doccov diff /tmp/v1.json /tmp/v2.json --format text
@@ -306,4 +306,4 @@ doccov diff /tmp/v1.json /tmp/v2.json --format github
 
 - [Diffing](../../spec/diffing.md) - SDK diff API
 - [GitHub Action](../../integrations/github-action.md) - Full PR integration
-- [generate](./generate.md) - Generate specs to diff
+- [spec](./spec.md) - Generate specs to diff

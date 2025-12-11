@@ -127,7 +127,7 @@ If you're not using React/Fumadocs, TypeDoc is still the simpler choice.
 
 ### Step 1: Generate OpenPkg Spec
 ```bash
-doccov generate -o openpkg.json
+doccov spec -o openpkg.json
 ```
 
 ### Step 2: Install Fumadocs Adapter

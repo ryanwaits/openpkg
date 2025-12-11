@@ -4,8 +4,8 @@
 
 | Command | Input | Output | Use Case |
 |---------|-------|--------|----------|
-| `generate` | Local dir/entry | `openpkg.json` spec file | Generate API spec for a local project |
-| `check` | Local dir/entry | Pass/fail + coverage % | CI validation, pre-commit hooks |
+| `spec` | Local dir/entry | `openpkg.json` spec file | Generate API spec for a local project |
+| `analyze` | Local dir/entry | Pass/fail + coverage % | CI validation, pre-commit hooks |
 | `scan` | GitHub URL | JSON coverage summary | Analyze any public GitHub repo remotely |
 | `diff` | Two specs | Diff report | Compare API changes between versions |
 | `init` | Interactive | `doccov.config.ts` | Project setup |
@@ -21,8 +21,8 @@
 │                                                                             │
 │   Local Development          CI/CD Pipeline          Web/Badge Service      │
 │   ─────────────────          ──────────────          ────────────────       │
-│   $ doccov generate          $ doccov check          POST /scan             │
-│   $ doccov check             $ doccov diff           GET /badge/:owner/:repo│
+│   $ doccov spec              $ doccov check        POST /scan             │
+│   $ doccov check           $ doccov diff           GET /badge/:owner/:repo│
 │   $ doccov scan <url>                                                       │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -46,7 +46,7 @@
 │  • Drift detection                               │  │  Isolated container:  │
 │                                                  │  │  1. Clone repo        │
 └──────────────────────────────────────────────────┘  │  2. npm install       │
-                                                      │  3. doccov generate   │
+                                                      │  3. doccov spec       │
                                                       │  4. Return JSON       │
                                                       └───────────────────────┘
 ```
@@ -55,16 +55,16 @@
 
 ## Command Details
 
-### 1. `doccov generate` (Local)
+### 1. `doccov spec` (Local)
 ```bash
-doccov generate --cwd ./my-project -o openpkg.json
+doccov spec --cwd ./my-project -o openpkg.json
 ```
 - **Who uses it**: Library authors documenting their API
-- **Outputs**: Full OpenPkg spec with exports, types, docs coverage, drift
+- **Outputs**: Full OpenPkg spec with exports, types
 
 ### 2. `doccov check` (Local/CI)
 ```bash
-doccov check --min-coverage 80 --require-examples
+doccov check --min-coverage 80 --examples presence
 ```
 - **Who uses it**: CI pipelines, pre-commit hooks
 - **Outputs**: Exit 0 (pass) or Exit 1 (fail) + coverage report
@@ -83,7 +83,7 @@ curl -X POST https://api.doccov.dev/scan \
   -d '{"url": "https://github.com/owner/repo"}'
 ```
 - **Who uses it**: Web UI, badges, integrations
-- **Process**: Spins up isolated Vercel Sandbox → runs `doccov generate`
+- **Process**: Spins up isolated Vercel Sandbox → runs `doccov spec`
 - **Outputs**: JSON coverage summary
 
 ---
@@ -92,7 +92,7 @@ curl -X POST https://api.doccov.dev/scan \
 
 | Persona | Tool | Flow |
 |---------|------|------|
-| **Library Author** | CLI `generate` + `check` | Local dev → CI validation → publish with spec |
+| **Library Author** | CLI `spec` + `analyze` | Local dev → CI validation → publish with spec |
 | **Contributor** | CLI `diff` | Compare PR changes against main branch API |
 | **Consumer** | Web badge / `scan` | Quick check of any library's doc quality |
 | **Platform** | API `/scan` | Automated analysis for leaderboards, badges |
@@ -104,8 +104,8 @@ curl -X POST https://api.doccov.dev/scan \
 | File | Purpose |
 |------|---------|
 | `packages/cli/src/commands/scan.ts` | CLI scan (clones + analyzes locally) |
-| `packages/cli/src/commands/check.ts` | CI-friendly local validation |
-| `packages/cli/src/commands/generate.ts` | Full spec generation |
+| `packages/cli/src/commands/analyze.ts` | CI-friendly local validation |
+| `packages/cli/src/commands/spec.ts` | Full spec generation |
 | `packages/api/api/scan.ts` | Vercel serverless → Sandbox execution |
 | `packages/api/api/index.ts` | Edge routes (health, badge, root) |
 | `packages/sdk/src/openpkg.ts` | Core analysis engine |

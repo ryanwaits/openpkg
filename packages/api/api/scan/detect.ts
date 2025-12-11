@@ -4,9 +4,9 @@
  */
 
 import {
-  detectMonorepo as sdkDetectMonorepo,
   detectPackageManager,
   SandboxFileSystem,
+  detectMonorepo as sdkDetectMonorepo,
 } from '@doccov/sdk';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Sandbox } from '@vercel/sandbox';
@@ -87,10 +87,7 @@ async function detectRepoStructure(url: string): Promise<DetectResponse> {
     const fs = new SandboxFileSystem(sandbox);
 
     // Use SDK detection functions
-    const [monoInfo, pmInfo] = await Promise.all([
-      sdkDetectMonorepo(fs),
-      detectPackageManager(fs),
-    ]);
+    const [monoInfo, pmInfo] = await Promise.all([sdkDetectMonorepo(fs), detectPackageManager(fs)]);
 
     if (!monoInfo.isMonorepo) {
       return {

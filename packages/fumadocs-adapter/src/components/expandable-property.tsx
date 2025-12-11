@@ -24,6 +24,7 @@ function ChevronIcon({ expanded }: { expanded: boolean }) {
       viewBox="0 0 12 12"
       fill="none"
       className={`transition-transform duration-200 ${expanded ? 'rotate-90' : ''}`}
+      aria-hidden="true"
     >
       <path
         d="M4.5 2.5L8 6L4.5 9.5"
@@ -108,7 +109,12 @@ function countProperties(schema: SpecSchema): number {
 /**
  * Nested property row with expandable nested objects
  */
-export function NestedProperty({ name, schema, required = false, depth = 0 }: NestedPropertyProps): React.ReactNode {
+export function NestedProperty({
+  name,
+  schema,
+  required = false,
+  depth = 0,
+}: NestedPropertyProps): React.ReactNode {
   const [expanded, setExpanded] = useState(false);
   const type = formatType(schema);
   const nestedProps = getNestedProperties(schema);
@@ -142,6 +148,7 @@ export function NestedProperty({ name, schema, required = false, depth = 0 }: Ne
         {/* Expand badge for nested objects */}
         {hasNested && (
           <button
+            type="button"
             onClick={() => setExpanded(!expanded)}
             className="flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-md
                        bg-fd-muted text-fd-muted-foreground hover:bg-fd-accent hover:text-fd-accent-foreground
@@ -208,6 +215,7 @@ export function ExpandableProperty({ param, depth = 0 }: ExpandablePropertyProps
         {/* Expand badge for nested objects */}
         {hasNested && (
           <button
+            type="button"
             onClick={() => setExpanded(!expanded)}
             className="flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-md
                        bg-fd-muted text-fd-muted-foreground hover:bg-fd-accent hover:text-fd-accent-foreground

@@ -154,11 +154,11 @@ export default defineConfig({
 
 ## Usage with CLI
 
-Config is auto-loaded by `generate` and `check`:
+Config is auto-loaded by `spec` and `check`:
 
 ```bash
 # Uses doccov.config.ts automatically
-doccov generate
+doccov spec
 doccov check
 ```
 
@@ -166,7 +166,7 @@ CLI flags override config:
 
 ```bash
 # Overrides config include
-doccov generate --include "specificExport"
+doccov spec --include "specificExport"
 ```
 
 ## TypeScript Support
@@ -199,13 +199,14 @@ In the working directory (or `--cwd` if specified).
 bun run packages/cli/src/cli.ts init
 
 # Test with config
-bun run packages/cli/src/cli.ts generate
+bun run packages/cli/src/cli.ts spec
 ```
 
 ## See Also
 
 - [init](./commands/init.md) - Create config file
-- [generate](./commands/generate.md) - Uses config for filtering
+- [spec](./commands/spec.md) - Uses config for filtering
+- [check](./commands/check.md) - Uses config for filtering
 - [diff](./commands/diff.md) - Uses config for docs paths
 - [Filtering](../sdk/filtering.md) - SDK filtering API
 

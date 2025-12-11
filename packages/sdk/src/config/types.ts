@@ -89,4 +89,3 @@ export interface DocCovConfig {
 export function defineConfig(config: DocCovConfig): DocCovConfig {
   return config;
 }
-

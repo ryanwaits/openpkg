@@ -5,7 +5,14 @@ import { cn } from '../../lib/utils';
 
 function ArrowIcon({ className }: { className?: string }) {
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className={className}>
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      className={className}
+      aria-hidden="true"
+    >
       <path
         d="M6.5 12L17 12M13 16.5L17.5 12L13 7.5"
         stroke="currentColor"

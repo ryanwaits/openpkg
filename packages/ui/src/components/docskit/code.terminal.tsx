@@ -31,7 +31,7 @@ export async function Terminal(props: { codeblock: RawCode; handlers?: Annotatio
     handlers.push(...extraHandlers);
   }
 
-  const { background, ...highlightedStyle } = highlighted.style;
+  const { background: _background, ...highlightedStyle } = highlighted.style;
   const showCopy = options?.copyButton;
   const isMultiLine = highlighted.code.includes('\n');
 

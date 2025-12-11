@@ -48,7 +48,7 @@ docs-diff:
   script:
     - npm ci
     # Generate head spec
-    - npx @doccov/cli generate -o head.json
+    - npx @doccov/cli spec -o head.json
     # Get base spec from main
     - git fetch origin main
     - git checkout origin/main -- openpkg.json || echo "{}" > openpkg.json
@@ -117,10 +117,10 @@ steps:
   - task: NodeTool@0
     inputs:
       versionSpec: '20.x'
-      
+
   - script: npm ci
     displayName: 'Install dependencies'
-    
+
   - script: npx @doccov/cli check --min-coverage 80
     displayName: 'Check docs coverage'
 ```
@@ -136,14 +136,14 @@ pipeline {
             image 'node:20'
         }
     }
-    
+
     stages {
         stage('Install') {
             steps {
                 sh 'npm ci'
             }
         }
-        
+
         stage('Docs Check') {
             steps {
                 sh 'npx @doccov/cli check --min-coverage 80'
@@ -174,7 +174,7 @@ npx doccov check --min-coverage 80
 ```json
 {
   "lint-staged": {
-    "*.ts": "doccov check"
+    "*.ts": "doccov check --info"
   }
 }
 ```
@@ -187,9 +187,9 @@ Add to `package.json`:
 {
   "scripts": {
     "docs:check": "doccov check --min-coverage 80",
-    "docs:generate": "doccov generate -o openpkg.json",
-    "docs:report": "doccov report --output markdown --out COVERAGE.md",
-    "docs:strict": "doccov check --min-coverage 90 --require-examples"
+    "docs:spec": "doccov spec -o openpkg.json",
+    "docs:report": "doccov check --format markdown -o COVERAGE.md",
+    "docs:strict": "doccov check --min-coverage 90 --examples presence"
   }
 }
 ```
@@ -201,7 +201,7 @@ All CI systems check exit codes:
 | Code | Meaning | CI Result |
 |------|---------|-----------|
 | 0 | Pass | Success |
-| 1 | Fail | Failure |
+| 1 | Fail | Failure (when `--min-coverage` threshold not met) |
 
 ## Artifacts
 
@@ -209,7 +209,7 @@ All CI systems check exit codes:
 
 ```yaml
 # GitHub Actions
-- run: npx @doccov/cli report --output html --out coverage.html
+- run: npx @doccov/cli check --format html -o coverage.html
 - uses: actions/upload-artifact@v4
   with:
     name: coverage
@@ -219,7 +219,7 @@ All CI systems check exit codes:
 ### Save Spec
 
 ```yaml
-- run: npx @doccov/cli generate -o openpkg.json
+- run: npx @doccov/cli spec -o openpkg.json
 - uses: actions/upload-artifact@v4
   with:
     name: spec
@@ -262,4 +262,3 @@ Optional:
 - [GitHub Action](./github-action.md) - Full action reference
 - [check Command](../cli/commands/check.md) - CLI options
 - [diff Command](../cli/commands/diff.md) - Compare specs
-

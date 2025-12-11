@@ -111,6 +111,7 @@ export function PackageInstall({
         <div className="flex items-center gap-0.5 ml-1">
           {managers.map((manager) => (
             <button
+              type="button"
               key={manager}
               onClick={() => setActiveManager(manager)}
               className={cn(

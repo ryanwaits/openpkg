@@ -15,9 +15,9 @@ export const consistentParamStyle: LintRule = {
     // Find all @param tags and check their format
     // Expected format: @param {type} name - description (with dash separator)
     const paramRegex = /@param\s+(?:\{[^}]+\}\s+)?(\S+)\s+([^@\n]+)/g;
-    let match: RegExpExecArray | null;
+    const matches = rawJSDoc.matchAll(paramRegex);
 
-    while ((match = paramRegex.exec(rawJSDoc)) !== null) {
+    for (const match of matches) {
       const paramName = match[1];
       const rest = match[2].trim();
 

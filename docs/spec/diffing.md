@@ -93,10 +93,10 @@ Output format options:
 
 ```bash
 # Human-readable text (default)
-doccov diff old.json new.json --output text
+doccov diff old.json new.json --format text
 
 # JSON output
-doccov diff old.json new.json --output json
+doccov diff old.json new.json --format json
 ```
 
 Fail on regression:
@@ -149,7 +149,7 @@ diff.docsOnly // ['getUser']
 ```yaml
 - name: Check docs regression
   run: |
-    doccov generate -o new.json
+    doccov spec -o new.json
     doccov diff openpkg.json new.json --fail-on-regression
 ```
 
@@ -182,8 +182,8 @@ console.log(`New exports: ${diff.nonBreaking.length}`);
 
 ```bash
 # Generate two specs
-bun run packages/cli/src/cli.ts generate tests/fixtures/v1 -o /tmp/v1.json
-bun run packages/cli/src/cli.ts generate tests/fixtures/v2 -o /tmp/v2.json
+bun run packages/cli/src/cli.ts spec tests/fixtures/v1 -o /tmp/v1.json
+bun run packages/cli/src/cli.ts spec tests/fixtures/v2 -o /tmp/v2.json
 
 # Diff them
 bun run packages/cli/src/cli.ts diff /tmp/v1.json /tmp/v2.json

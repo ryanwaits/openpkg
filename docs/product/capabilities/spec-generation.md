@@ -74,10 +74,10 @@ interface OpenPkg {
 
 ```bash
 # Generate structural API spec
-doccov generate -o openpkg.json
+doccov spec -o openpkg.json
 
 # With filtering
-doccov generate --include "Client*" --exclude "*Internal"
+doccov spec --include "Client*" --exclude "*Internal"
 ```
 
 The output is a pure structural specification:
@@ -105,10 +105,10 @@ The output is a pure structural specification:
 
 ### Get Coverage Data
 
-For coverage analysis, use the `check` command:
+For coverage analysis, use the `analyze` command:
 
 ```bash
-# Check with text output
+# Analyze with threshold
 doccov check --min-coverage 80
 
 # Generate coverage report (JSON)
@@ -144,7 +144,7 @@ console.log(enriched.exports[0].docs?.missing); // ['examples']
 | Aspect | OpenPkg (Pure) | EnrichedOpenPkg |
 |--------|----------------|-----------------|
 | Purpose | Structural API description | Quality analysis |
-| Output by | `doccov generate` | `enrichSpec()` or `doccov check --format json` |
+| Output by | `doccov spec` | `enrichSpec()` or `doccov check --format json` |
 | Coverage scores | No | Yes |
 | Missing signals | No | Yes |
 | Drift detection | No | Yes |

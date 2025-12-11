@@ -33,7 +33,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   // Parse GitHub URL using SDK
-  let parsed;
+  let parsed: ReturnType<typeof parseGitHubUrl>;
   try {
     parsed = parseGitHubUrl(body.url, body.ref ?? 'main');
   } catch {

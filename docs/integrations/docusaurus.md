@@ -62,7 +62,7 @@ At `/{routeBasePath}/{exportId}`:
 ### 1. Generate Spec
 
 ```bash
-doccov generate -o openpkg.json
+doccov spec -o openpkg.json
 ```
 
 ### 2. Configure Plugin
@@ -152,7 +152,7 @@ Regenerate spec before building:
 
 ```yaml
 - name: Generate spec
-  run: npx @doccov/cli generate -o openpkg.json
+  run: npx @doccov/cli spec -o openpkg.json
 
 - name: Build docs
   run: npm run build
@@ -208,7 +208,7 @@ module.exports = {
 
 ## See Also
 
-- [generate Command](../cli/commands/generate.md) - Create spec
+- [spec Command](../cli/commands/spec.md) - Create spec
 - [Spec Overview](../spec/overview.md) - OpenPkg format
 - [Badges & Widgets](./badges-widgets.md) - Embed coverage
 

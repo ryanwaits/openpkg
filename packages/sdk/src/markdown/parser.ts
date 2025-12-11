@@ -10,17 +10,16 @@ import remarkParse from 'remark-parse';
 import { unified } from 'unified';
 import { visit } from 'unist-util-visit';
 import {
-  extractImports,
   extractFunctionCalls,
-  extractMethodCalls,
+  extractImports,
   hasInstantiationAST,
   type MethodCallInfo,
 } from './ast-extractor';
 import type { ExportReference, MarkdownCodeBlock, MarkdownDocFile } from './types';
 
-// Re-export AST-based extraction functions
-export { extractImports, extractFunctionCalls, extractMethodCalls } from './ast-extractor';
 export type { MethodCallInfo } from './ast-extractor';
+// Re-export AST-based extraction functions
+export { extractFunctionCalls, extractImports, extractMethodCalls } from './ast-extractor';
 
 /**
  * @deprecated Use MethodCallInfo instead
@@ -135,7 +134,6 @@ export function parseMarkdownFiles(
 ): MarkdownDocFile[] {
   return files.map((f) => parseMarkdownFile(f.content, f.path, options));
 }
-
 
 /**
  * Check if code contains a class instantiation (new ClassName())

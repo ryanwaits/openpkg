@@ -1,8 +1,7 @@
 import type * as TS from 'typescript';
-import { ts } from '../ts-module';
-
-import { extractParameterDecorators, type DecoratorInfo } from '../analysis/decorator-utils';
+import { type DecoratorInfo, extractParameterDecorators } from '../analysis/decorator-utils';
 import { DEFAULT_MAX_TYPE_DEPTH } from '../options';
+import { ts } from '../ts-module';
 import type { ParameterDocumentation, ParsedJSDoc } from './tsdoc-utils';
 import { isBuiltInType } from './type-utils';
 
@@ -104,9 +103,7 @@ function isTypeBoxOptionalMarker(type: TS.Type): boolean {
  * Unwrap TypeBox optional intersection and detect optionality
  * Returns { innerTypes, isOptional } where innerTypes excludes OptionalKind marker
  */
-function unwrapTypeBoxOptional(
-  type: TS.Type,
-): { innerTypes: TS.Type[]; isOptional: boolean } {
+function unwrapTypeBoxOptional(type: TS.Type): { innerTypes: TS.Type[]; isOptional: boolean } {
   if (!type.isIntersection()) {
     return { innerTypes: [type], isOptional: false };
   }
@@ -233,11 +230,29 @@ function formatTypeBoxSchema(
       if (itemSymbolName && typeRefs.has(itemSymbolName)) {
         items = { $ref: `#/types/${itemSymbolName}` };
       } else if (itemSymbolName && isTypeBoxSchemaType(itemSymbolName)) {
-        items = formatTypeBoxSchema(itemType, typeChecker, typeRefs, referencedTypes, visited, depth + 1, maxDepth, typeIds) ?? {
+        items = formatTypeBoxSchema(
+          itemType,
+          typeChecker,
+          typeRefs,
+          referencedTypes,
+          visited,
+          depth + 1,
+          maxDepth,
+          typeIds,
+        ) ?? {
           type: 'object',
         };
       } else {
-        items = formatTypeReference(itemType, typeChecker, typeRefs, referencedTypes, visited, depth + 1, maxDepth, typeIds);
+        items = formatTypeReference(
+          itemType,
+          typeChecker,
+          typeRefs,
+          referencedTypes,
+          visited,
+          depth + 1,
+          maxDepth,
+          typeIds,
+        );
       }
 
       return { type: 'array', items };
@@ -260,13 +275,31 @@ function formatTypeBoxSchema(
             members.push({ $ref: `#/types/${memberSymbolName}` });
           } else if (memberSymbolName && isTypeBoxSchemaType(memberSymbolName)) {
             members.push(
-              formatTypeBoxSchema(memberType, typeChecker, typeRefs, referencedTypes, visited, depth + 1, maxDepth, typeIds) ?? {
+              formatTypeBoxSchema(
+                memberType,
+                typeChecker,
+                typeRefs,
+                referencedTypes,
+                visited,
+                depth + 1,
+                maxDepth,
+                typeIds,
+              ) ?? {
                 type: 'object',
               },
             );
           } else {
             members.push(
-              formatTypeReference(memberType, typeChecker, typeRefs, referencedTypes, visited, depth + 1, maxDepth, typeIds),
+              formatTypeReference(
+                memberType,
+                typeChecker,
+                typeRefs,
+                referencedTypes,
+                visited,
+                depth + 1,
+                maxDepth,
+                typeIds,
+              ),
             );
           }
         }
@@ -280,13 +313,31 @@ function formatTypeBoxSchema(
             members.push({ $ref: `#/types/${memberSymbolName}` });
           } else if (memberSymbolName && isTypeBoxSchemaType(memberSymbolName)) {
             members.push(
-              formatTypeBoxSchema(memberType, typeChecker, typeRefs, referencedTypes, visited, depth + 1, maxDepth, typeIds) ?? {
+              formatTypeBoxSchema(
+                memberType,
+                typeChecker,
+                typeRefs,
+                referencedTypes,
+                visited,
+                depth + 1,
+                maxDepth,
+                typeIds,
+              ) ?? {
                 type: 'object',
               },
             );
           } else {
             members.push(
-              formatTypeReference(memberType, typeChecker, typeRefs, referencedTypes, visited, depth + 1, maxDepth, typeIds),
+              formatTypeReference(
+                memberType,
+                typeChecker,
+                typeRefs,
+                referencedTypes,
+                visited,
+                depth + 1,
+                maxDepth,
+                typeIds,
+              ),
             );
           }
         }
@@ -312,13 +363,31 @@ function formatTypeBoxSchema(
             members.push({ $ref: `#/types/${memberSymbolName}` });
           } else if (memberSymbolName && isTypeBoxSchemaType(memberSymbolName)) {
             members.push(
-              formatTypeBoxSchema(memberType, typeChecker, typeRefs, referencedTypes, visited, depth + 1, maxDepth, typeIds) ?? {
+              formatTypeBoxSchema(
+                memberType,
+                typeChecker,
+                typeRefs,
+                referencedTypes,
+                visited,
+                depth + 1,
+                maxDepth,
+                typeIds,
+              ) ?? {
                 type: 'object',
               },
             );
           } else {
             members.push(
-              formatTypeReference(memberType, typeChecker, typeRefs, referencedTypes, visited, depth + 1, maxDepth, typeIds),
+              formatTypeReference(
+                memberType,
+                typeChecker,
+                typeRefs,
+                referencedTypes,
+                visited,
+                depth + 1,
+                maxDepth,
+                typeIds,
+              ),
             );
           }
         }
@@ -340,7 +409,16 @@ function formatTypeBoxSchema(
         return { $ref: `#/types/${innerSymbolName}` };
       } else if (innerSymbolName && isTypeBoxSchemaType(innerSymbolName)) {
         return (
-          formatTypeBoxSchema(innerType, typeChecker, typeRefs, referencedTypes, visited, depth + 1, maxDepth, typeIds) ?? {
+          formatTypeBoxSchema(
+            innerType,
+            typeChecker,
+            typeRefs,
+            referencedTypes,
+            visited,
+            depth + 1,
+            maxDepth,
+            typeIds,
+          ) ?? {
             type: 'object',
           }
         );
@@ -389,7 +467,16 @@ function formatTypeBoxSchema(
         additionalProperties = { $ref: `#/types/${valueSymbolName}` };
       } else if (valueSymbolName && isTypeBoxSchemaType(valueSymbolName)) {
         additionalProperties =
-          formatTypeBoxSchema(valueType, typeChecker, typeRefs, referencedTypes, visited, depth + 1, maxDepth, typeIds) ?? true;
+          formatTypeBoxSchema(
+            valueType,
+            typeChecker,
+            typeRefs,
+            referencedTypes,
+            visited,
+            depth + 1,
+            maxDepth,
+            typeIds,
+          ) ?? true;
       } else {
         additionalProperties = formatTypeReference(
           valueType,
@@ -942,6 +1029,7 @@ export function formatTypeReference(
   const typeIds = visitedTypeIds ?? new Set<number>();
 
   // TypeDoc pattern: track by type.id to catch anonymous recursive types
+  // biome-ignore lint/suspicious/noExplicitAny: TypeScript internal type id not exposed in public API
   const typeId = (type as any).id as number | undefined;
   if (typeId !== undefined) {
     if (typeIds.has(typeId)) {
@@ -1025,7 +1113,16 @@ export function formatTypeReference(
     if (type.isUnion()) {
       const unionType = type as TS.UnionType;
       const parts = unionType.types.map((t) =>
-        formatTypeReference(t, typeChecker, typeRefs, referencedTypes, visited, depth + 1, maxDepth, typeIds),
+        formatTypeReference(
+          t,
+          typeChecker,
+          typeRefs,
+          referencedTypes,
+          visited,
+          depth + 1,
+          maxDepth,
+          typeIds,
+        ),
       );
 
       // Deduplicate (e.g., null and undefined both become { type: 'null' })
@@ -1056,9 +1153,7 @@ export function formatTypeReference(
       const intersectionType = type as TS.IntersectionType;
 
       // Filter out TypeBox OptionalKind marker types
-      const filteredTypes = intersectionType.types.filter(
-        (t) => !isTypeBoxOptionalMarker(t),
-      );
+      const filteredTypes = intersectionType.types.filter((t) => !isTypeBoxOptionalMarker(t));
 
       // If only one type remains after filtering, unwrap
       if (filteredTypes.length === 1) {
@@ -1079,7 +1174,16 @@ export function formatTypeReference(
       }
 
       const parts = filteredTypes.map((t) =>
-        formatTypeReference(t, typeChecker, typeRefs, referencedTypes, visited, depth + 1, maxDepth, typeIds),
+        formatTypeReference(
+          t,
+          typeChecker,
+          typeRefs,
+          referencedTypes,
+          visited,
+          depth + 1,
+          maxDepth,
+          typeIds,
+        ),
       );
 
       const normalized = parts.flatMap((part) => {

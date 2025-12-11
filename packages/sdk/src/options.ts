@@ -14,7 +14,10 @@ export type NormalizedDocCovOptions = DocCovOptions & {
 /** Default max depth for type conversion (matches TypeDoc's approach) */
 export const DEFAULT_MAX_TYPE_DEPTH = 20;
 
-const DEFAULT_OPTIONS: Pick<NormalizedDocCovOptions, 'includePrivate' | 'followImports' | 'maxDepth'> = {
+const DEFAULT_OPTIONS: Pick<
+  NormalizedDocCovOptions,
+  'includePrivate' | 'followImports' | 'maxDepth'
+> = {
   includePrivate: false,
   followImports: true,
   maxDepth: DEFAULT_MAX_TYPE_DEPTH,

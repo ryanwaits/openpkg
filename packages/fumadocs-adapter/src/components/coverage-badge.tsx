@@ -19,7 +19,11 @@ function formatSignal(signal: string): string {
   return signal.charAt(0).toUpperCase() + signal.slice(1);
 }
 
-export function CoverageBadge({ docs, showMissing = true, showDrift = true }: CoverageBadgeProps): React.ReactNode {
+export function CoverageBadge({
+  docs,
+  showMissing = true,
+  showDrift = true,
+}: CoverageBadgeProps): React.ReactNode {
   const score = docs.coverageScore;
   const hasMissing = showMissing && docs.missing && docs.missing.length > 0;
   const hasDrift = showDrift && docs.drift && docs.drift.length > 0;
@@ -32,7 +36,13 @@ export function CoverageBadge({ docs, showMissing = true, showDrift = true }: Co
         <div
           className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md border text-sm font-medium ${getScoreColor(score)}`}
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -63,8 +73,8 @@ export function CoverageBadge({ docs, showMissing = true, showDrift = true }: Co
             Documentation Drift
           </p>
           <ul className="text-sm text-red-600/80 dark:text-red-400/80 space-y-1">
-            {docs.drift!.map((drift, index) => (
-              <li key={index} className="flex flex-col">
+            {docs.drift!.map((drift) => (
+              <li key={`${drift.type}-${drift.issue}`} className="flex flex-col">
                 <span className="font-medium">{drift.type}</span>
                 <span className="text-xs opacity-80">{drift.issue}</span>
                 {drift.suggestion && (

@@ -4,15 +4,15 @@
  */
 
 import type { OpenPkg } from '@openpkg-ts/spec';
-import type { FileSystem } from '../detect/types';
 import { detectBuildInfo, getPrimaryBuildScript } from '../detect/build';
-import { detectMonorepo, findPackageByName } from '../detect/monorepo';
 import { detectEntryPoint } from '../detect/entry-point';
+import { detectMonorepo, findPackageByName } from '../detect/monorepo';
+import type { FileSystem } from '../detect/types';
+import { type ParsedGitHubUrl, parseGitHubUrl } from '../github';
 import { type CommandRunner, type InstallResult, installDependencies } from '../install';
-import { parseGitHubUrl, type ParsedGitHubUrl } from '../github';
 import { DocCov } from '../openpkg';
-import type { ProgressCallback, ProgressEvent, ScanOptions, ScanResult } from './types';
 import { extractSpecSummary } from './summary';
+import type { ProgressCallback, ProgressEvent, ScanOptions, ScanResult } from './types';
 
 /**
  * Options for creating a ScanOrchestrator.
@@ -97,7 +97,9 @@ export class ScanOrchestrator {
    * @returns Target directory path (relative to workDir)
    * @throws Error if monorepo requires --package flag
    */
-  async detectPackage(packageName?: string): Promise<{ targetPath: string; resolvedPackage?: string }> {
+  async detectPackage(
+    packageName?: string,
+  ): Promise<{ targetPath: string; resolvedPackage?: string }> {
     this.emit({ stage: 'detecting', message: 'Detecting project structure...', progress: 10 });
 
     const mono = await detectMonorepo(this.fs);
@@ -291,4 +293,3 @@ export class MonorepoRequiresPackageError extends Error {
     this.availablePackages = availablePackages;
   }
 }
-

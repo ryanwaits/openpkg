@@ -37,7 +37,7 @@ Stages Mapping
 
 | building | npm run build | "Building @stacks/transactions..." |
 
-| analyzing | doccov generate | "Generating DocCov spec..." |
+| analyzing | doccov spec | "Generating DocCov spec..." |
 
 | extracting | node summary script | "Analyzing 410 exports..." |
 

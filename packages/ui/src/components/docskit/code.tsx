@@ -80,7 +80,7 @@ export async function toCodeGroup(props: {
       if (props.handlers) {
         handlers.push(...props.handlers);
       }
-      const { background, ...highlightedStyle } = highlighted.style;
+      const { background: _background, ...highlightedStyle } = highlighted.style;
       return {
         options,
         title,

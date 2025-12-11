@@ -1,5 +1,7 @@
+// biome-ignore-all lint/suspicious/noArrayIndexKey: Skeleton arrays are static and never reorder
 'use client';
 
+import { useId } from 'react';
 import { cn } from '../../lib/utils';
 
 interface SkeletonLineProps {
@@ -20,6 +22,7 @@ export function CodeBlockSkeleton({
   hasTitle?: boolean;
   lines?: number;
 }) {
+  const id = useId();
   // Randomize line widths for a more natural look
   const lineWidths = Array.from({ length: lines }, (_, i) => {
     const widths = ['40%', '65%', '55%', '80%', '45%', '70%', '60%', '50%'];
@@ -43,7 +46,7 @@ export function CodeBlockSkeleton({
       )}
       <div className="bg-dk-background px-4 py-3 space-y-2">
         {lineWidths.map((width, i) => (
-          <SkeletonLine key={i} width={width} />
+          <SkeletonLine key={`${id}-line-${i}`} width={width} />
         ))}
       </div>
     </div>
@@ -54,6 +57,7 @@ export function CodeBlockSkeleton({
  * Loading skeleton for terminal-style code blocks.
  */
 export function TerminalSkeleton({ lines = 3 }: { lines?: number }) {
+  const id = useId();
   const lineWidths = Array.from({ length: lines }, (_, i) => {
     const widths = ['60%', '45%', '70%', '55%'];
     return widths[i % widths.length];
@@ -77,7 +81,7 @@ export function TerminalSkeleton({ lines = 3 }: { lines?: number }) {
       </div>
       <div className="bg-dk-background px-4 py-3 space-y-2">
         {lineWidths.map((width, i) => (
-          <SkeletonLine key={i} width={width} />
+          <SkeletonLine key={`${id}-line-${i}`} width={width} />
         ))}
       </div>
     </div>
@@ -97,6 +101,7 @@ export function InlineCodeSkeleton() {
  * Loading skeleton for code tabs.
  */
 export function CodeTabsSkeleton({ tabs = 2, lines = 6 }: { tabs?: number; lines?: number }) {
+  const id = useId();
   const lineWidths = Array.from({ length: lines }, (_, i) => {
     const widths = ['40%', '65%', '55%', '80%', '45%', '70%'];
     return widths[i % widths.length];
@@ -112,7 +117,7 @@ export function CodeTabsSkeleton({ tabs = 2, lines = 6 }: { tabs?: number; lines
         )}
       >
         {Array.from({ length: tabs }).map((_, i) => (
-          <div key={i} className="flex items-center gap-1.5 px-3 h-full">
+          <div key={`${id}-tab-${i}`} className="flex items-center gap-1.5 px-3 h-full">
             <div className="size-4 bg-dk-border/30 rounded animate-pulse" />
             <div className="h-4 w-16 bg-dk-border/30 rounded animate-pulse" />
           </div>
@@ -120,7 +125,7 @@ export function CodeTabsSkeleton({ tabs = 2, lines = 6 }: { tabs?: number; lines
       </div>
       <div className="bg-dk-background px-4 py-3 space-y-2">
         {lineWidths.map((width, i) => (
-          <SkeletonLine key={i} width={width} />
+          <SkeletonLine key={`${id}-line-${i}`} width={width} />
         ))}
       </div>
     </div>

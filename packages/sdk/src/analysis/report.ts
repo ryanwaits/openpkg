@@ -1,14 +1,14 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import type { OpenPkg, SpecDocSignal } from '@openpkg-ts/spec';
-import { enrichSpec, type EnrichedOpenPkg } from './enrich.js';
 import {
-  type DocCovReport,
   type CoverageSummary,
+  DEFAULT_REPORT_PATH,
+  type DocCovReport,
   type ExportCoverageData,
   REPORT_VERSION,
-  DEFAULT_REPORT_PATH,
 } from '../types/report.js';
+import { type EnrichedOpenPkg, enrichSpec } from './enrich.js';
 
 /**
  * Generate a DocCov report from an OpenPkg spec.
@@ -149,7 +149,7 @@ export function saveReport(report: DocCovReport, reportPath: string = DEFAULT_RE
  */
 export function isCachedReportValid(
   reportPath: string = DEFAULT_REPORT_PATH,
-  sourceFiles: string[] = []
+  sourceFiles: string[] = [],
 ): boolean {
   const report = loadCachedReport(reportPath);
   if (!report) {

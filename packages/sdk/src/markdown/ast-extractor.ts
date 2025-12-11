@@ -145,7 +145,7 @@ export function extractImportsAST(code: string): ImportInfo[] {
  */
 export function extractCallsAST(code: string): CallInfo[] {
   const calls: CallInfo[] = [];
-  const lines = code.split('\n');
+  const _lines = code.split('\n');
 
   try {
     const sourceFile = ts.createSourceFile(
@@ -335,7 +335,11 @@ export function extractIdentifierReferences(code: string): Set<string> {
         if (parent && ts.isPropertyAccessExpression(parent) && parent.name === node) {
           // But include if it's a call expression parent (method call)
           const grandparent = parent.parent;
-          if (grandparent && ts.isCallExpression(grandparent) && grandparent.expression === parent) {
+          if (
+            grandparent &&
+            ts.isCallExpression(grandparent) &&
+            grandparent.expression === parent
+          ) {
             identifiers.add(node.text);
           }
           return;
@@ -518,4 +522,3 @@ export function extractFunctionCalls(code: string): string[] {
 export function extractMethodCalls(code: string): MethodCallInfo[] {
   return extractMethodCallsAST(code);
 }
-

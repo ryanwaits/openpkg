@@ -10,4 +10,3 @@ export type {
   LintSeverity,
 } from './types';
 export { defineConfig } from './types';
-

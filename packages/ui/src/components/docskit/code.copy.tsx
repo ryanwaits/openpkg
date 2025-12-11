@@ -17,6 +17,7 @@ export function CopyButton({
 
   return (
     <button
+      type="button"
       className={cn(
         'cursor-pointer transition-opacity duration-200',
         variant === 'floating' && [

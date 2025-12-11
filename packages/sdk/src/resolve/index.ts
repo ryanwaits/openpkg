@@ -5,9 +5,8 @@
 
 import * as path from 'node:path';
 import { detectEntryPoint } from '../detect/entry-point';
-import type { FileSystem } from '../detect/types';
 import { detectMonorepo, findPackageByName } from '../detect/monorepo';
-import type { WorkspacePackage, EntryPointInfo } from '../detect/types';
+import type { EntryPointInfo, FileSystem, WorkspacePackage } from '../detect/types';
 
 /**
  * Options for resolving a target package/entry point.
@@ -155,4 +154,3 @@ async function isDir(fs: FileSystem, relativePath: string): Promise<boolean> {
   // This is a heuristic - the actual check happens in the caller
   return !path.extname(relativePath);
 }
-

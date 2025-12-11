@@ -260,7 +260,14 @@ function serializeClassMembers(
       const signatures =
         callSignatures.length > 0
           ? callSignatures.map((sig, index) => ({
-              ...serializeSignature(sig, checker, typeRefs, referencedTypes, methodDoc, memberSymbol),
+              ...serializeSignature(
+                sig,
+                checker,
+                typeRefs,
+                referencedTypes,
+                methodDoc,
+                memberSymbol,
+              ),
               overloadIndex: callSignatures.length > 1 ? index : undefined,
             }))
           : undefined;

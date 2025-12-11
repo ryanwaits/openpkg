@@ -97,7 +97,7 @@ Requires `openpkg.json` in the repository root (main/master branch).
 Generate it with:
 
 ```bash
-doccov generate -o openpkg.json
+doccov spec -o openpkg.json
 git add openpkg.json
 git commit -m "Add DocCov spec"
 git push
@@ -117,5 +117,5 @@ curl http://localhost:3000/badge/tanstack/query
 
 - [Widget](./widget.md) - Detailed signal breakdown
 - [Badges & Widgets](../../integrations/badges-widgets.md) - README examples
-- [generate Command](../../cli/commands/generate.md) - Create openpkg.json
+- [spec Command](../../cli/commands/spec.md) - Create openpkg.json
 

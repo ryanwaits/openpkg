@@ -23,11 +23,23 @@ function CopyButton({ text }: { text: string }) {
       aria-label="Copy code"
     >
       {copied ? (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg
+          className="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
         </svg>
       ) : (
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg
+          className="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -53,9 +65,9 @@ export function ExamplesSection({ examples }: ExamplesSectionProps): React.React
 
       {showTabs && (
         <div className="flex gap-1 mb-2 border-b border-fd-border">
-          {examples.map((_, index) => (
+          {examples.map((example, index) => (
             <button
-              key={index}
+              key={`example-${typeof example === 'string' ? example.slice(0, 20) : index}`}
               type="button"
               onClick={() => setActiveIndex(index)}
               className={`px-3 py-1.5 text-sm font-medium transition-colors ${

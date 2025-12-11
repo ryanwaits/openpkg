@@ -13,15 +13,15 @@ npm install -g @doccov/cli
 Run in your TypeScript project root:
 
 ```bash
-doccov check
+doccov check --info
 ```
 
 Output:
 
 ```
-✓ Auto-detected entry point: src/index.ts
-✓ Documentation analysis complete
-✓ Docs coverage 85% (min 80%)
+Coverage: 85% (17/20 documented)
+Drift: 0 issues
+Lint: 0 warnings
 ```
 
 ## 3. Generate Spec
@@ -29,14 +29,13 @@ Output:
 Create an `openpkg.json` file:
 
 ```bash
-doccov generate -o openpkg.json
+doccov spec -o openpkg.json
 ```
 
 This JSON file contains:
 - Package metadata
 - All exported functions, classes, types
-- Documentation coverage scores
-- Drift issues (JSDoc out of sync with code)
+- Full type information and signatures
 
 ## 4. Add a Badge
 
@@ -75,7 +74,7 @@ jobs:
 Require examples and higher coverage:
 
 ```bash
-doccov check --min-coverage 90 --require-examples
+doccov check --min-coverage 90 --examples presence
 ```
 
 ### Validate Examples Run
@@ -83,7 +82,7 @@ doccov check --min-coverage 90 --require-examples
 Execute `@example` blocks to catch runtime errors:
 
 ```bash
-doccov check --run-examples
+doccov check --examples run
 ```
 
 ### Generate Report
@@ -91,7 +90,7 @@ doccov check --run-examples
 Create a markdown coverage report:
 
 ```bash
-doccov report --output markdown --out COVERAGE.md
+doccov check --format markdown -o COVERAGE.md
 ```
 
 ### Scan Any Repo
@@ -107,4 +106,3 @@ doccov scan https://github.com/tanstack/query
 - [Concepts](./concepts.md) - Understand coverage and drift
 - [CLI Commands](../cli/overview.md) - Full command reference
 - [GitHub Action](../integrations/github-action.md) - Advanced CI setup
-

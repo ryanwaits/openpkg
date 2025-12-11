@@ -89,11 +89,11 @@ function process(count: number) {}
 ## Detection
 
 ```bash
-# Standard check includes drift detection
+# Standard analysis includes drift detection
 doccov check
 
-# View drift in generated spec
-doccov generate --format json | jq '.exports[].docs.drift'
+# View drift in coverage report
+doccov check --format json | jq '.exports[].docs.drift'
 ```
 
 ---

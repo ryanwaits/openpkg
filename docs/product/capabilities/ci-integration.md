@@ -1,6 +1,6 @@
 # CI/CD Integration
 
-> Last updated: 2024-12-08
+> Last updated: 2024-12-10
 
 How to integrate DocCov into your CI/CD pipeline.
 
@@ -29,9 +29,8 @@ jobs:
       - run: bun install
       - run: bun run build
 
-      - name: Generate base spec
-        run: doccov generate -o base.json
-        if: github.event_name == 'pull_request'
+      - name: Generate head spec
+        run: doccov spec -o head.json
 
       - name: Check coverage
         run: doccov check --min-coverage 80
@@ -40,7 +39,7 @@ jobs:
         if: github.event_name == 'pull_request'
         run: |
           git checkout ${{ github.base_ref }}
-          doccov generate -o base.json
+          doccov spec -o base.json
           git checkout ${{ github.sha }}
           doccov diff base.json head.json --format github --strict all
 ```
@@ -74,12 +73,3 @@ Output appears inline in PR diffs:
 ```
 ::warning file=docs/api.md,line=30::API Change: method removed
 ```
-
----
-
-## TODO
-
-- [ ] Add complete GitHub Action example
-- [ ] Document PR comment integration
-- [ ] Add GitLab CI example
-- [ ] Add CircleCI example

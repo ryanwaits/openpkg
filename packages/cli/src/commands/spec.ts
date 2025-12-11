@@ -1,10 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import {
-  DocCov,
-  NodeFileSystem,
-  resolveTarget,
-} from '@doccov/sdk';
+import { DocCov, NodeFileSystem, resolveTarget } from '@doccov/sdk';
 import { normalize, type OpenPkg as OpenPkgSpec, validateSpec } from '@openpkg-ts/spec';
 import chalk from 'chalk';
 import type { Command } from 'commander';
@@ -15,7 +11,27 @@ import {
   parseListFlag,
 } from '../utils/filter-options';
 
-export interface GenerateCommandDependencies {
+export interface SpecOptions {
+  // Core options
+  cwd: string;
+  package?: string;
+
+  // Output
+  output: string;
+
+  // Filtering
+  include?: string;
+  exclude?: string;
+
+  // Type resolution
+  skipResolve?: boolean;
+  maxTypeDepth?: string;
+
+  // Diagnostics
+  showDiagnostics?: boolean;
+}
+
+export interface SpecCommandDependencies {
   createDocCov?: (
     options: ConstructorParameters<typeof DocCov>[0],
   ) => Pick<DocCov, 'analyzeFileWithDiagnostics'>;
@@ -24,7 +40,7 @@ export interface GenerateCommandDependencies {
   error?: typeof console.error;
 }
 
-const defaultDependencies: Required<GenerateCommandDependencies> = {
+const defaultDependencies: Required<SpecCommandDependencies> = {
   createDocCov: (options) => new DocCov(options),
   writeFileSync: fs.writeFileSync,
   log: console.log,
@@ -36,7 +52,6 @@ type GeneratedSpec = Awaited<ReturnType<DocCov['analyzeFileWithDiagnostics']>>;
 function getArrayLength(value: unknown): number {
   return Array.isArray(value) ? value.length : 0;
 }
-
 
 function formatDiagnosticOutput(
   prefix: string,
@@ -55,9 +70,9 @@ function formatDiagnosticOutput(
   return `${prefix} ${locationPrefix}${diagnostic.message}`;
 }
 
-export function registerGenerateCommand(
+export function registerSpecCommand(
   program: Command,
-  dependencies: GenerateCommandDependencies = {},
+  dependencies: SpecCommandDependencies = {},
 ): void {
   const { createDocCov, writeFileSync, log, error } = {
     ...defaultDependencies,
@@ -65,18 +80,28 @@ export function registerGenerateCommand(
   };
 
   program
-    .command('generate [entry]')
-    .description('Generate pure OpenPkg structural specification (JSON)')
-    .option('-o, --output <file>', 'Output file', 'openpkg.json')
-    .option('-p, --package <name>', 'Target package name (for monorepos)')
+    .command('spec [entry]')
+    .description('Generate OpenPkg specification (JSON)')
+
+    // === Core options ===
     .option('--cwd <dir>', 'Working directory', process.cwd())
+    .option('-p, --package <name>', 'Target package name (for monorepos)')
+
+    // === Output ===
+    .option('-o, --output <file>', 'Output file path', 'openpkg.json')
+
+    // === Filtering ===
+    .option('--include <patterns>', 'Include exports matching pattern (comma-separated)')
+    .option('--exclude <patterns>', 'Exclude exports matching pattern (comma-separated)')
+
+    // === Type resolution ===
     .option('--skip-resolve', 'Skip external type resolution from node_modules')
-    .option('--include <ids>', 'Filter exports by identifier (comma-separated or repeated)')
-    .option('--exclude <ids>', 'Exclude exports by identifier (comma-separated or repeated)')
-    .option('--show-diagnostics', 'Print TypeScript diagnostics from analysis')
-    .option('--max-type-depth <number>', 'Maximum depth for type conversion (default: 20)')
-    .option('-y, --yes', 'Skip all prompts and use defaults')
-    .action(async (entry, options) => {
+    .option('--max-type-depth <n>', 'Maximum depth for type conversion', '20')
+
+    // === Diagnostics ===
+    .option('--show-diagnostics', 'Show TypeScript compiler diagnostics')
+
+    .action(async (entry: string | undefined, options: SpecOptions) => {
       try {
         // Resolve target directory and entry point
         const fileSystem = new NodeFileSystem(options.cwd);
@@ -92,16 +117,14 @@ export function registerGenerateCommand(
           log(chalk.gray(`Found package at ${packageInfo.path}`));
         }
         if (!entry) {
-          log(chalk.gray(`Auto-detected entry point: ${entryPointInfo.path} (from ${entryPointInfo.source})`));
+          log(
+            chalk.gray(
+              `Auto-detected entry point: ${entryPointInfo.path} (from ${entryPointInfo.source})`,
+            ),
+          );
         }
 
-        const resolveExternalTypes = !options.skipResolve;
-
-        const cliFilters: CliFilterOptions = {
-          include: parseListFlag(options.include),
-          exclude: parseListFlag(options.exclude),
-        };
-
+        // Load config
         let config: LoadedDocCovConfig | null = null;
         try {
           config = await loadDocCovConfig(targetDir);
@@ -118,12 +141,19 @@ export function registerGenerateCommand(
           process.exit(1);
         }
 
+        // Merge filter options
+        const cliFilters: CliFilterOptions = {
+          include: parseListFlag(options.include),
+          exclude: parseListFlag(options.exclude),
+        };
         const resolvedFilters = mergeFilterOptions(config, cliFilters);
         for (const message of resolvedFilters.messages) {
-          log(chalk.gray(`• ${message}`));
+          log(chalk.gray(`${message}`));
         }
 
-        // Use simple text indicator for CPU-intensive analysis (ora can't animate during blocking operations)
+        const resolveExternalTypes = !options.skipResolve;
+
+        // Run analysis
         process.stdout.write(chalk.cyan('> Generating OpenPkg spec...\n'));
 
         let result: GeneratedSpec | undefined;
@@ -132,6 +162,7 @@ export function registerGenerateCommand(
             resolveExternalTypes,
             maxDepth: options.maxTypeDepth ? parseInt(options.maxTypeDepth, 10) : undefined,
           });
+
           const analyzeOptions =
             resolvedFilters.include || resolvedFilters.exclude
               ? {
@@ -143,9 +174,9 @@ export function registerGenerateCommand(
               : {};
 
           result = await doccov.analyzeFileWithDiagnostics(entryFile, analyzeOptions);
-          process.stdout.write(chalk.green('✓ Generated OpenPkg spec\n'));
+          process.stdout.write(chalk.green('> Generated OpenPkg spec\n'));
         } catch (generationError) {
-          process.stdout.write(chalk.red('✗ Failed to generate spec\n'));
+          process.stdout.write(chalk.red('> Failed to generate spec\n'));
           throw generationError;
         }
 
@@ -153,8 +184,8 @@ export function registerGenerateCommand(
           throw new Error('Failed to produce an OpenPkg spec.');
         }
 
+        // Normalize and validate
         const normalized = normalize(result.spec as OpenPkgSpec);
-
         const validation = validateSpec(normalized);
 
         if (!validation.ok) {
@@ -165,25 +196,25 @@ export function registerGenerateCommand(
           process.exit(1);
         }
 
+        // Write output
         const outputPath = path.resolve(process.cwd(), options.output);
-
-        // Output pure JSON spec (no coverage data - use `doccov check --format` for coverage reports)
         writeFileSync(outputPath, JSON.stringify(normalized, null, 2));
-        log(chalk.green(`✓ Generated ${options.output}`));
+
+        log(chalk.green(`> Wrote ${options.output}`));
         log(chalk.gray(`  ${getArrayLength(normalized.exports)} exports`));
         log(chalk.gray(`  ${getArrayLength(normalized.types)} types`));
-        log(chalk.gray(`  For coverage reports, use: doccov check --format <json|markdown|html>`))
 
+        // Show diagnostics if requested
         if (options.showDiagnostics && result.diagnostics.length > 0) {
           log('');
           log(chalk.bold('Diagnostics'));
           for (const diagnostic of result.diagnostics) {
             const prefix =
               diagnostic.severity === 'error'
-                ? chalk.red('✖')
+                ? chalk.red('>')
                 : diagnostic.severity === 'warning'
-                  ? chalk.yellow('⚠')
-                  : chalk.cyan('ℹ');
+                  ? chalk.yellow('>')
+                  : chalk.cyan('>');
             log(formatDiagnosticOutput(prefix, diagnostic, targetDir));
           }
         }

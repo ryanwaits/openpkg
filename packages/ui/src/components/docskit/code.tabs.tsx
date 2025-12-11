@@ -6,7 +6,9 @@ import { MultiCode } from './code.client';
 
 export async function CodeGroup(props: unknown) {
   // Type assertion needed due to zod version mismatch between codehike and project
+  // biome-ignore lint/suspicious/noExplicitAny: codehike/zod version mismatch requires any cast
   const result = (Block.extend as any)({
+    // biome-ignore lint/suspicious/noExplicitAny: codehike/zod version mismatch requires any cast
     code: z.array(CodeBlock as any),
     flags: z.string().optional(),
     storage: z.string().optional(),

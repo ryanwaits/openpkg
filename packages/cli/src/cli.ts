@@ -6,9 +6,10 @@ import { fileURLToPath } from 'node:url';
 import { Command } from 'commander';
 import { registerCheckCommand } from './commands/check';
 import { registerDiffCommand } from './commands/diff';
-import { registerGenerateCommand } from './commands/generate';
+import { registerInfoCommand } from './commands/info';
 import { registerInitCommand } from './commands/init';
 import { registerScanCommand } from './commands/scan';
+import { registerSpecCommand } from './commands/spec';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -22,8 +23,12 @@ program
   .description('DocCov - Documentation coverage and drift detection for TypeScript')
   .version(packageJson.version);
 
-registerGenerateCommand(program);
+// Core commands
 registerCheckCommand(program);
+registerInfoCommand(program);
+registerSpecCommand(program);
+
+// Utility commands
 registerDiffCommand(program);
 registerInitCommand(program);
 registerScanCommand(program);

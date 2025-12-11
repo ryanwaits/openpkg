@@ -18,7 +18,7 @@ DocCov validates examples three ways:
 ## Type-Checking
 
 ```bash
-doccov check --typecheck
+doccov check --examples types
 ```
 
 Compiles example code using TypeScript to catch:
@@ -31,7 +31,7 @@ Compiles example code using TypeScript to catch:
 ## Runtime Execution
 
 ```bash
-doccov check --exec
+doccov check --examples run
 ```
 
 Runs examples using Node.js with `--experimental-strip-types`:
@@ -62,7 +62,7 @@ DocCov:
 
 ```bash
 # Fail if any export lacks @example
-doccov check --require-examples
+doccov check --examples presence
 ```
 
 ---

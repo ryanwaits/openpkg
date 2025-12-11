@@ -126,7 +126,7 @@ This is where DocCov significantly outperforms API Extractor.
 
 #### Coverage Scoring
 ```bash
-doccov generate --format markdown
+doccov check --format markdown
 
 Coverage: 72%
 | Signal      | Coverage |
@@ -180,10 +180,10 @@ DocCov validates `@example` blocks three ways:
 
 ```bash
 # Type-check examples against actual signatures
-doccov check --typecheck
+doccov check --examples types
 
 # Execute examples and catch runtime errors
-doccov check --exec
+doccov check --examples run
 
 # Validate inline assertions
 # @example

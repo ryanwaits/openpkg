@@ -78,7 +78,7 @@ function MiniProgress({ percent, className }: { percent: number; className?: str
   const strokeDashoffset = circumference - (percent / 100) * circumference;
 
   return (
-    <svg className={cn('size-4', className)} viewBox="0 0 14 14">
+    <svg className={cn('size-4', className)} viewBox="0 0 14 14" aria-hidden="true">
       <circle
         cx="7"
         cy="7"
@@ -168,26 +168,20 @@ const SegmentedTabs = React.forwardRef<HTMLDivElement, SegmentedTabsProps>(
                   </span>
                   <span className="font-mono text-[13px]">{tab.label}</span>
                   {tab.closeable && onTabClose && (
-                    <span
-                      role="button"
-                      tabIndex={0}
+                    <button
+                      type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         onTabClose(tab.id);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.stopPropagation();
-                          onTabClose(tab.id);
-                        }
                       }}
                       className={cn(
                         'ml-0.5 p-0.5 rounded-sm transition-colors',
                         'text-muted-foreground/50 hover:text-foreground hover:bg-accent',
                       )}
+                      aria-label={`Close ${tab.label}`}
                     >
                       <X className="size-3" />
-                    </span>
+                    </button>
                   )}
                 </>
               )}

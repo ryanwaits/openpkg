@@ -10,7 +10,7 @@ export interface EnumPageProps {
   spec: OpenPkg;
 }
 
-export function EnumPage({ export: exp, spec }: EnumPageProps): React.ReactNode {
+export function EnumPage({ export: exp, spec: _spec }: EnumPageProps): React.ReactNode {
   const members = exp.members ?? [];
 
   return (
@@ -49,7 +49,9 @@ export function EnumPage({ export: exp, spec }: EnumPageProps): React.ReactNode 
                   const value =
                     member.schema !== undefined
                       ? typeof member.schema === 'object' && member.schema !== null
-                        ? ((member.schema as any).const ?? (member.schema as any).default ?? '-')
+                        ? ((member.schema as Record<string, unknown>).const ??
+                          (member.schema as Record<string, unknown>).default ??
+                          '-')
                         : member.schema
                       : '-';
 

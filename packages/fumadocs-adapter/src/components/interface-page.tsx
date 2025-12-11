@@ -69,7 +69,7 @@ export function InterfacePage({ export: exp, spec }: InterfacePageProps): React.
                         const type =
                           typeof p.schema === 'string'
                             ? p.schema
-                            : ((p.schema as any)?.tsType ?? 'any');
+                            : ((p.schema as Record<string, unknown>)?.tsType ?? 'unknown');
                         return `${p.name}${optional}: ${type}`;
                       })
                       .join(', ')}

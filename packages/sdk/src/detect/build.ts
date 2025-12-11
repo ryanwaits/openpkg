@@ -58,7 +58,8 @@ export async function detectBuildInfo(fs: FileSystem, packagePath = '.'): Promis
   // Find build-related scripts by name
   const buildScriptsByName = scriptNames.filter(
     (name) =>
-      BUILD_SCRIPT_NAMES.has(name) || BUILD_SCRIPT_PREFIXES.some((prefix) => name.startsWith(prefix)),
+      BUILD_SCRIPT_NAMES.has(name) ||
+      BUILD_SCRIPT_PREFIXES.some((prefix) => name.startsWith(prefix)),
   );
 
   // Also check script contents for build tool invocations
@@ -66,7 +67,7 @@ export async function detectBuildInfo(fs: FileSystem, packagePath = '.'): Promis
     if (buildScriptsByName.includes(name)) return false; // Already found by name
     const content = scripts[name] ?? '';
     return BUILD_TOOL_PATTERNS.some(
-      (tool) => content.includes(tool) && !content.includes(`${tool}-`)
+      (tool) => content.includes(tool) && !content.includes(`${tool}-`),
     );
   });
 

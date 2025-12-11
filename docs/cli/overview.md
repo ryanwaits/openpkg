@@ -12,8 +12,8 @@ npm install -g @doccov/cli
 
 | Command | Description |
 |---------|-------------|
-| [generate](./commands/generate.md) | Generate OpenPkg spec or coverage reports |
-| [check](./commands/check.md) | Validate coverage thresholds, auto-fix drift |
+| [check](./commands/check.md) | Check coverage, detect drift, generate reports |
+| [spec](./commands/spec.md) | Generate pure OpenPkg structural spec |
 | [diff](./commands/diff.md) | Compare two specs |
 | [scan](./commands/scan.md) | Analyze remote GitHub repos |
 | [init](./commands/init.md) | Create config file |
@@ -41,7 +41,7 @@ Most commands auto-detect the entry point:
 Override with positional argument:
 
 ```bash
-doccov generate src/lib/index.ts
+doccov spec src/lib/index.ts
 ```
 
 ## Monorepo Support
@@ -62,25 +62,28 @@ DocCov auto-detects monorepo structure from:
 | Code | Meaning |
 |------|---------|
 | 0 | Success |
-| 1 | Failure (coverage below threshold, drift detected, etc.) |
+| 1 | Failure (coverage below threshold with `--min-coverage`) |
 
 ## Examples
 
 ```bash
-# Check with defaults (80% coverage)
-doccov check
+# Quick coverage info
+doccov check --info
+
+# Check with threshold enforcement
+doccov check --min-coverage 80
 
 # Auto-fix documentation drift
 doccov check --fix --dry-run
 
 # Generate spec
-doccov generate -o openpkg.json
+doccov spec -o openpkg.json
 
 # Compare specs
 doccov diff old.json new.json
 
 # Generate markdown report
-doccov generate --format markdown -o COVERAGE.md
+doccov check --format markdown -o COVERAGE.md
 
 # Scan GitHub repo
 doccov scan https://github.com/tanstack/query
@@ -101,4 +104,3 @@ See [Configuration](./configuration.md) for options.
 - [Installation](../getting-started/installation.md)
 - [Quick Start](../getting-started/quick-start.md)
 - [Configuration](./configuration.md)
-

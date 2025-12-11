@@ -63,7 +63,7 @@ function getValidator(version: SchemaVersion = 'latest'): ValidateFunction<OpenP
   }
 
   // Cast to any to avoid strict Ajv type checking on dynamic schemas
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // biome-ignore lint/suspicious/noExplicitAny: Ajv schema type is dynamically loaded
   validator = ajv.compile<OpenPkg>(schema as any);
   validatorCache.set(resolvedVersion, validator);
   return validator;
@@ -113,7 +113,10 @@ export function getAvailableVersions(): string[] {
  * @param spec - The value to validate
  * @param version - Schema version to validate against (default: 'latest')
  */
-export function assertSpec(spec: unknown, version: SchemaVersion = 'latest'): asserts spec is OpenPkg {
+export function assertSpec(
+  spec: unknown,
+  version: SchemaVersion = 'latest',
+): asserts spec is OpenPkg {
   const result = validateSpec(spec, version);
   if (!result.ok) {
     const details = result.errors

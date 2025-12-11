@@ -185,4 +185,3 @@ export async function fetchSpec(
 ): Promise<OpenPkg | null> {
   return fetchSpecFromGitHub({ owner, repo, ref: branch });
 }
-

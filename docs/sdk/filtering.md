@@ -120,7 +120,7 @@ filters: {
 Same patterns work with CLI:
 
 ```bash
-doccov generate --include "User*,Auth*" --exclude "_*"
+doccov spec --include "User*,Auth*" --exclude "_*"
 doccov check --include "create*,update*"
 ```
 
@@ -168,7 +168,7 @@ filters: { include: ['NonExistent*'] }  // Zero exports
 
 ```bash
 # Test filtering
-bun run packages/cli/src/cli.ts generate tests/fixtures/simple-math.ts \
+bun run packages/cli/src/cli.ts spec tests/fixtures/simple-math.ts \
   --include "add,subtract" \
   -o /tmp/filtered.json
 
@@ -179,6 +179,6 @@ cat /tmp/filtered.json | jq '.exports[].name'
 ## See Also
 
 - [Configuration](../cli/configuration.md) - Persistent filters
-- [generate Command](../cli/commands/generate.md) - CLI filtering
+- [spec Command](../cli/commands/spec.md) - CLI filtering
 - [DocCov Class](./doccov-class.md) - SDK filtering
 

@@ -151,7 +151,7 @@ function parsePnpmWorkspace(content: string): string[] {
         // Extract pattern from "- pattern" format
         // Handles: - pattern, - "pattern", - 'pattern'
         const match = trimmed.match(/^-\s*(['"]?)([^'"#]+)\1\s*(?:#.*)?$/);
-        if (match && match[2]) {
+        if (match?.[2]) {
           const pattern = match[2].trim();
           if (pattern) {
             patterns.push(pattern);

@@ -1,4 +1,4 @@
-import type { SpecDocSignal, SpecDocDrift } from '@openpkg-ts/spec';
+import type { SpecDocDrift, SpecDocSignal } from '@openpkg-ts/spec';
 
 /**
  * DocCov report schema version.

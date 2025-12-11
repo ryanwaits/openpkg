@@ -21,7 +21,7 @@ function formatSchema(schema: unknown): string {
   return 'unknown';
 }
 
-export function ParameterCard({ param, spec }: ParameterCardProps): React.ReactNode {
+export function ParameterCard({ param, spec: _spec }: ParameterCardProps): React.ReactNode {
   const type = formatSchema(param.schema);
   const isRequired = param.required !== false;
 

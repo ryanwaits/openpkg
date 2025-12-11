@@ -87,4 +87,3 @@ export interface ProgressEvent {
  * Callback for receiving progress events.
  */
 export type ProgressCallback = (event: ProgressEvent) => void;
-

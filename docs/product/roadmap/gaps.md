@@ -40,7 +40,7 @@ Prioritized list of feature gaps compared to competitors, with recommendations.
 **Recommendation**: Add `--format api-surface` to generate a minimal, deterministic file:
 
 ```bash
-doccov generate --format api-surface --output api-surface.md
+doccov spec --format api-surface --output api-surface.md
 ```
 
 Output would be sorted, minimal (just signatures), and stable for git diffs:
@@ -78,7 +78,7 @@ function deleteUser(id: string): Promise<void>
 
 ```bash
 # Only analyze public API
-doccov generate --visibility public
+doccov spec --visibility public
 
 # Include beta but exclude alpha/internal
 doccov check --visibility public,beta

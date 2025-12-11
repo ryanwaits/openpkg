@@ -64,7 +64,7 @@ Both badge and widget require `openpkg.json` in your repository:
 
 ```bash
 # Generate spec
-doccov generate -o openpkg.json
+doccov spec -o openpkg.json
 
 # Commit and push
 git add openpkg.json
@@ -159,7 +159,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: npm ci
-      - run: npx @doccov/cli generate -o openpkg.json
+      - run: npx @doccov/cli spec -o openpkg.json
       - uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "docs: update coverage spec"
@@ -170,5 +170,5 @@ jobs:
 
 - [Badge Endpoint](../api/endpoints/badge.md) - API reference
 - [Widget Endpoint](../api/endpoints/widget.md) - API reference
-- [generate Command](../cli/commands/generate.md) - Create spec
+- [spec Command](../cli/commands/spec.md) - Create spec
 
