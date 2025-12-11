@@ -1,5 +1,11 @@
 # @doccov/cli
 
+## 0.10.2
+
+### Patch Changes
+
+- Update @doccov/sdk dependency to include monorepo entry point path fix
+
 ## 0.10.0
 
 ### Minor Changes

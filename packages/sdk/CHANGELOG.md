@@ -1,5 +1,17 @@
 # @doccov/sdk
 
+## 0.10.1
+
+### Patch Changes
+
+- Fix path duplication bug in monorepo entry point detection
+
+  When using `--package` flag in a monorepo, the entry point path was being duplicated
+  (e.g., `packages/sdk/packages/sdk/src/index.ts` instead of `packages/sdk/src/index.ts`).
+
+  The `detectEntryPoint` function now correctly returns paths relative to the package
+  directory rather than including the package path prefix.
+
 ## 0.10.0
 
 ### Minor Changes
