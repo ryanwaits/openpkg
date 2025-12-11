@@ -25,14 +25,29 @@ import { defineConfig } from '@doccov/sdk';
 export default defineConfig({
   // Include only these exports (glob patterns)
   include: ['createUser', 'update*', 'User*'],
-  
+
   // Exclude these exports (glob patterns)
   exclude: ['_internal*', 'debug*', '*Helper'],
-  
+
   // Markdown documentation paths (for diff --docs)
   docs: {
     include: ['docs/**/*.md', 'README.md'],
     exclude: ['docs/archive/**'],
+  },
+
+  // Check command defaults
+  check: {
+    examples: 'typecheck',
+    minCoverage: 80,
+    maxDrift: 10,
+  },
+
+  // Quality rules configuration
+  quality: {
+    rules: {
+      'missing-description': 'error',
+      'missing-example': 'warn',
+    },
   },
 });
 ```
@@ -94,6 +109,61 @@ When configured, `doccov diff` automatically analyzes these files without needin
 # Uses docs paths from config
 doccov diff base.json head.json
 ```
+
+### check
+
+Type: `{ examples?: string | string[], minCoverage?: number, maxDrift?: number }`
+
+Configure defaults for the `check` command.
+
+```typescript
+export default defineConfig({
+  check: {
+    // Example validation mode(s): 'presence', 'typecheck', 'run'
+    // Can be single value, array, or comma-separated string
+    examples: 'typecheck',
+
+    // Minimum coverage percentage (0-100)
+    minCoverage: 80,
+
+    // Maximum drift percentage (0-100)
+    maxDrift: 10,
+  },
+});
+```
+
+CLI flags override these settings:
+
+```bash
+# Config sets minCoverage: 80, but CLI overrides to 90
+doccov check --min-coverage 90
+```
+
+### quality
+
+Type: `{ rules?: Record<string, 'error' | 'warn' | 'off'> }`
+
+Configure quality rule severities.
+
+```typescript
+export default defineConfig({
+  quality: {
+    rules: {
+      'missing-description': 'error',   // Fail on missing descriptions
+      'missing-example': 'warn',         // Warn on missing examples
+      'missing-param-description': 'off', // Disable this rule
+    },
+  },
+});
+```
+
+Available severity levels:
+
+| Level | Behavior |
+|-------|----------|
+| `error` | Causes check to fail (exit 1) |
+| `warn` | Shows warning but doesn't fail |
+| `off` | Disables the rule |
 
 ## Pattern Syntax
 

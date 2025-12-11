@@ -18,16 +18,34 @@ doccov spec [entry] [options]
 
 ## Options
 
+### Output
+
 | Option | Default | Description |
 |--------|---------|-------------|
 | `-o, --output <file>` | `openpkg.json` | Output file path |
+
+### Filtering
+
+| Option | Default | Description |
+|--------|---------|-------------|
 | `--include <patterns>` | - | Filter exports by pattern (comma-separated) |
 | `--exclude <patterns>` | - | Exclude exports by pattern (comma-separated) |
-| `--show-diagnostics` | `false` | Print TypeScript diagnostics |
-| `--skip-resolve` | `false` | Skip external type resolution from node_modules |
-| `--max-type-depth <n>` | `20` | Maximum depth for type conversion |
+
+### Target
+
+| Option | Default | Description |
+|--------|---------|-------------|
 | `-p, --package <name>` | - | Target package name (for monorepos) |
 | `--cwd <dir>` | `.` | Working directory |
+
+### Analysis
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--skip-resolve` | `false` | Skip external type resolution from node_modules |
+| `--max-type-depth <n>` | `20` | Maximum depth for type conversion |
+| `--no-cache` | `false` | Bypass spec cache and force regeneration |
+| `--show-diagnostics` | `false` | Print TypeScript diagnostics |
 
 ## Examples
 
@@ -73,6 +91,14 @@ Faster generation, but loses external type info:
 
 ```bash
 doccov spec --skip-resolve
+```
+
+### Skip Caching
+
+Force a fresh analysis:
+
+```bash
+doccov spec --no-cache
 ```
 
 ### Debug TypeScript Issues

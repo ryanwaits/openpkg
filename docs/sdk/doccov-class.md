@@ -21,12 +21,22 @@ const doccov = new DocCov(options?: DocCovOptions);
 ```typescript
 interface DocCovOptions {
   resolveExternalTypes?: boolean;  // Default: true
+  useCache?: boolean;              // Default: true
+  cwd?: string;                    // Default: process.cwd()
+  maxDepth?: number;               // Default: 20
+  includePrivate?: boolean;        // Default: false
+  followImports?: boolean;         // Default: true
 }
 ```
 
 | Option | Default | Description |
 |--------|---------|-------------|
 | `resolveExternalTypes` | `true` | Resolve types from `node_modules` |
+| `useCache` | `true` | Enable spec caching for faster subsequent runs |
+| `cwd` | `process.cwd()` | Working directory for cache operations |
+| `maxDepth` | `20` | Maximum depth for type conversion |
+| `includePrivate` | `false` | Include private exports in analysis |
+| `followImports` | `true` | Follow and analyze imports |
 
 ## Methods
 
@@ -67,14 +77,29 @@ interface FilterOptions {
 interface AnalysisResult {
   spec: OpenPkg;
   diagnostics: Diagnostic[];
+  metadata: AnalysisMetadata;
+  fromCache?: boolean;           // True if result came from cache
+  cacheStatus?: CacheValidationResult;
+}
+
+interface AnalysisMetadata {
+  baseDir: string;
+  configPath?: string;
+  packageJsonPath?: string;
+  hasNodeModules: boolean;
+  resolveExternalTypes: boolean;
+  sourceFiles?: string[];
 }
 
 interface Diagnostic {
-  file: string;
-  line: number;
-  column: number;
   message: string;
   severity: 'error' | 'warning' | 'info';
+  suggestion?: string;
+  location?: {
+    file: string;
+    line?: number;
+    column?: number;
+  };
 }
 ```
 
@@ -111,6 +136,29 @@ Faster analysis, but loses external type info:
 ```typescript
 const doccov = new DocCov({ resolveExternalTypes: false });
 const { spec } = await doccov.analyzeFileWithDiagnostics('src/index.ts');
+```
+
+### Disable Caching
+
+Force fresh analysis every time:
+
+```typescript
+const doccov = new DocCov({ useCache: false });
+const { spec, fromCache } = await doccov.analyzeFileWithDiagnostics('src/index.ts');
+console.log(`From cache: ${fromCache}`);  // Always false
+```
+
+### Check Cache Status
+
+```typescript
+const doccov = new DocCov();
+const result = await doccov.analyzeFileWithDiagnostics('src/index.ts');
+
+if (result.fromCache) {
+  console.log('Using cached spec (no source changes detected)');
+} else {
+  console.log('Fresh analysis performed');
+}
 ```
 
 ### Check for Errors
@@ -198,6 +246,36 @@ for (const exp of withDrift) {
     }
   }
 }
+```
+
+## Caching
+
+DocCov caches analysis results to speed up subsequent runs. The cache is stored in `.doccov/spec-cache.json`.
+
+### How Caching Works
+
+1. On first run, DocCov performs full analysis and saves the result
+2. On subsequent runs, it checks if source files have changed
+3. If no changes detected, returns cached spec instantly
+4. If changes detected, performs fresh analysis and updates cache
+
+### Cache Invalidation
+
+The cache is automatically invalidated when:
+
+- Source files are modified
+- `tsconfig.json` changes
+- `package.json` changes
+- `resolveExternalTypes` option changes
+
+### Disabling Cache
+
+```typescript
+// Per-instance
+const doccov = new DocCov({ useCache: false });
+
+// Or check if result was cached
+const { spec, fromCache } = await doccov.analyzeFileWithDiagnostics('src/index.ts');
 ```
 
 ## TypeScript Resolution
