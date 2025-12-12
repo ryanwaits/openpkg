@@ -1,5 +1,25 @@
 # @doccov/api
 
+## 0.3.6
+
+### Patch Changes
+
+- ### Execute Endpoint Fixes
+
+  Fixed several issues with the `/execute` and `/execute-stream` endpoints when running in Vercel Sandbox:
+
+  - **Path handling**: Added `normalizeCwd()` to properly handle working directory paths in the sandbox environment (`/vercel/sandbox/`)
+  - **Local binary wrapping**: Added `wrapLocalBinary()` to automatically wrap devDependency tools (turbo, tsc, esbuild, vite, etc.) with the appropriate package manager exec command (npx, pnpm exec, bunx)
+  - **Monorepo support**: Fixed entry point path stripping when targeting specific packages - paths like `packages/v0-sdk/src/index.ts` are now correctly resolved relative to the package root
+  - **File reading**: Fixed `openpkg.json` read path to correctly locate the file in subdirectories when `rootPath` is set
+  - **Cleanup**: Removed debug logging from production endpoints
+
+  ### Documentation
+
+  - Added "When to Use Which" section to execute endpoint docs
+  - Clarified that the `package` parameter in `/plan` should be a directory path, not a package name
+  - Added curl examples for streaming with summary output
+
 ## 0.3.5
 
 ### Patch Changes
