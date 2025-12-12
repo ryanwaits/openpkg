@@ -34,10 +34,13 @@ planRoute.post('/', async (c) => {
 
     // Check for private repos
     if (context.metadata.isPrivate) {
-      return c.json({
-        error: 'Private repositories are not supported',
-        hint: 'Use a public repository or run doccov locally',
-      }, 403);
+      return c.json(
+        {
+          error: 'Private repositories are not supported',
+          hint: 'Use a public repository or run doccov locally',
+        },
+        403,
+      );
     }
 
     // Generate build plan using AI
@@ -67,9 +70,12 @@ planRoute.post('/', async (c) => {
       }
     }
 
-    return c.json({
-      error: 'Failed to generate build plan',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    }, 500);
+    return c.json(
+      {
+        error: 'Failed to generate build plan',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
+      500,
+    );
   }
 });

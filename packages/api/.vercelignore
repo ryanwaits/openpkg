@@ -1,5 +1,2 @@
 # Ignore local development files - not needed for Vercel serverless
 src/
-# Source files are bundled into dist/ - only dist/ is needed at runtime
-functions/
-lib/

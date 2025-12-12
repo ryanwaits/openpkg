@@ -1,6 +1,6 @@
 # API Overview
 
-The DocCov API provides programmatic access to coverage badges, widgets, scanning, and more.
+The DocCov API provides programmatic access to documentation analysis for TypeScript/JavaScript projects.
 
 ## Base URL
 
@@ -8,48 +8,162 @@ The DocCov API provides programmatic access to coverage badges, widgets, scannin
 https://api.doccov.com
 ```
 
-## Technology
-
-- **Framework**: [Hono](https://hono.dev)
-- **Hosting**: Vercel (Edge + Node.js functions)
-- **Sandbox**: Vercel Sandbox for code execution
-
 ## Endpoints
 
-| Endpoint | Description |
-|----------|-------------|
-| [GET /badge/:owner/:repo](./endpoints/badge.md) | Coverage badge SVG |
-| [POST /scan](./endpoints/scan-stream.md) | Scan a GitHub repository |
-| [GET /spec/:owner/:repo](./endpoints/spec.md) | Fetch spec from GitHub |
-| [POST /api/examples/run](./endpoints/examples-run.md) | Execute code |
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/` | GET | API info and health status |
+| `/badge/:owner/:repo` | GET | Coverage badge SVG |
+| `/spec/:owner/:repo/:ref?` | GET | Fetch spec from GitHub |
+| `/plan` | POST | Generate AI build plan |
+| `/execute` | POST | Execute build plan |
+| `/execute-stream` | POST | Execute with SSE streaming |
 
-## Health Check
+## Quick Start
+
+The typical workflow is: **Plan** → **Execute**
+
+### 1. Generate a Build Plan
 
 ```bash
-curl https://api.doccov.com/health
+curl -X POST https://api.doccov.com/plan \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://github.com/sindresorhus/ky"}'
 ```
 
+Response:
 ```json
 {
-  "status": "ok",
-  "timestamp": "2024-01-15T10:30:00.000Z"
+  "plan": {
+    "version": "1.0.0",
+    "target": {
+      "type": "github",
+      "repoUrl": "https://github.com/sindresorhus/ky",
+      "entryPoints": ["distribution/index.d.ts"]
+    },
+    "environment": {
+      "runtime": "node22",
+      "packageManager": "npm"
+    },
+    "steps": [
+      { "id": "install", "command": "npm", "args": ["install"] },
+      { "id": "build", "command": "npm", "args": ["run", "build"] }
+    ],
+    "confidence": "high"
+  },
+  "context": {
+    "owner": "sindresorhus",
+    "repo": "ky",
+    "ref": "main"
+  }
 }
 ```
 
-## Root Endpoint
+### 2. Execute the Plan
 
 ```bash
-curl https://api.doccov.com/
+curl -X POST https://api.doccov.com/execute \
+  -H "Content-Type: application/json" \
+  -d '{"plan": <plan-from-step-1>}'
 ```
 
+Response (summary by default):
 ```json
 {
-  "name": "DocCov API",
-  "version": "0.3.0",
-  "endpoints": {
-    "badge": "/badge/:owner/:repo",
-    "scan": "/scan",
-    "health": "/health"
+  "success": true,
+  "summary": {
+    "name": "ky",
+    "version": "1.0.0",
+    "coverage": 85,
+    "exports": 42,
+    "types": 15,
+    "documented": 36,
+    "undocumented": 6
+  },
+  "stepResults": [
+    { "stepId": "install", "success": true, "duration": 12000 },
+    { "stepId": "build", "success": true, "duration": 8000 },
+    { "stepId": "analyze", "success": true, "duration": 5000 }
+  ],
+  "totalDuration": 25000
+}
+```
+
+Add `?includeSpec=true` to include the full OpenPkg spec in the response.
+
+### 3. Execute with Streaming (SSE)
+
+For real-time progress updates:
+
+```bash
+curl -X POST https://api.doccov.com/execute-stream \
+  -H "Content-Type: application/json" \
+  -d '{"plan": <plan-from-step-1>}'
+```
+
+SSE Events:
+```
+event: progress
+data: {"stage":"init","message":"Creating sandbox...","progress":5}
+
+event: progress
+data: {"stage":"cloned","message":"Repository cloned","progress":15}
+
+event: step:start
+data: {"stepId":"install","name":"Install dependencies","progress":15}
+
+event: step:complete
+data: {"stepId":"install","success":true,"duration":12000,"progress":38}
+
+event: step:start
+data: {"stepId":"build","name":"Build TypeScript","progress":38}
+
+event: step:complete
+data: {"stepId":"build","success":true,"duration":8000,"progress":61}
+
+event: step:start
+data: {"stepId":"analyze","name":"Analyzing API","progress":85}
+
+event: step:complete
+data: {"stepId":"analyze","success":true,"progress":95}
+
+event: complete
+data: {"success":true,"summary":{...},"totalDuration":25000}
+```
+
+## JavaScript Client Example
+
+```javascript
+// 1. Generate plan
+const planRes = await fetch('https://api.doccov.com/plan', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ url: 'https://github.com/sindresorhus/ky' })
+});
+const { plan } = await planRes.json();
+
+// 2. Execute with streaming
+const response = await fetch('https://api.doccov.com/execute-stream', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ plan })
+});
+
+const reader = response.body.getReader();
+const decoder = new TextDecoder();
+
+while (true) {
+  const { done, value } = await reader.read();
+  if (done) break;
+
+  const text = decoder.decode(value);
+  const lines = text.split('\n');
+
+  for (const line of lines) {
+    if (line.startsWith('data: ')) {
+      const data = JSON.parse(line.slice(6));
+      console.log(data);
+    }
   }
 }
 ```
@@ -58,58 +172,34 @@ curl https://api.doccov.com/
 
 All endpoints have CORS enabled for browser access.
 
-## Rate Limits
+## Runtime
 
-Currently no rate limits. May be introduced for scan/examples endpoints.
+All endpoints run on Node.js 22 with Vercel Sandbox for secure code execution.
 
-## Edge vs Node.js
+## Timeout
 
-| Type | Endpoints | Runtime |
-|------|-----------|---------|
-| Edge | badge, spec | Vercel Edge |
-| Node.js | scan, examples/run | Node.js 22 |
-
-Edge functions are faster but can't use Node.js APIs. Scan and example execution require Node.js for Vercel Sandbox.
-
-## Authentication
-
-No authentication required for public endpoints. Rate-limited endpoints may require API keys in the future.
+Maximum duration: 5 minutes (300 seconds).
 
 ## Error Responses
 
-All endpoints return consistent error format:
-
 ```json
 {
-  "error": "Not found",
-  "message": "No openpkg.json found for owner/repo"
+  "error": "Repository not found",
+  "message": "Could not fetch https://github.com/owner/repo"
 }
 ```
-
-HTTP status codes:
 
 | Code | Meaning |
 |------|---------|
 | 200 | Success |
 | 400 | Bad request (missing params) |
+| 403 | Private repository |
 | 404 | Resource not found |
-| 405 | Method not allowed |
+| 429 | Rate limit exceeded |
 | 500 | Internal error |
-
-## Local Development
-
-```bash
-cd packages/api
-
-# Hono dev server (fast, no sandbox)
-bun run dev
-
-# Vercel dev (full simulation)
-vercel dev
-```
 
 ## See Also
 
-- [Self-Hosting](./self-hosting.md) - Deploy your own instance
-- [Badges & Widgets](../integrations/badges-widgets.md) - README embeds
-
+- [Plan Endpoint](./endpoints/plan.md)
+- [Execute Endpoint](./endpoints/execute.md)
+- [Badges & Widgets](../integrations/badges-widgets.md)
