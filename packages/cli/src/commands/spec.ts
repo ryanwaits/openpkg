@@ -2,15 +2,16 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { DocCov, type GenerationInput, NodeFileSystem, resolveTarget } from '@doccov/sdk';
 import { normalize, type OpenPkg as OpenPkgSpec, validateSpec } from '@openpkg-ts/spec';
-import { version as cliVersion } from '../../package.json';
 import chalk from 'chalk';
 import type { Command } from 'commander';
+import { version as cliVersion } from '../../package.json';
 import { type LoadedDocCovConfig, loadDocCovConfig } from '../config';
 import {
   type FilterOptions as CliFilterOptions,
   mergeFilterOptions,
   parseListFlag,
 } from '../utils/filter-options';
+import { StepProgress } from '../utils/progress';
 
 export interface SpecOptions {
   // Core options
@@ -116,6 +117,15 @@ export function registerSpecCommand(
 
     .action(async (entry: string | undefined, options: SpecOptions) => {
       try {
+        const steps = new StepProgress([
+          { label: 'Resolved target', activeLabel: 'Resolving target' },
+          { label: 'Loaded config', activeLabel: 'Loading config' },
+          { label: 'Generated spec', activeLabel: 'Generating spec' },
+          { label: 'Validated schema', activeLabel: 'Validating schema' },
+          { label: 'Wrote output', activeLabel: 'Writing output' },
+        ]);
+        steps.start();
+
         // Resolve target directory and entry point
         const fileSystem = new NodeFileSystem(options.cwd);
         const resolved = await resolveTarget(fileSystem, {
@@ -125,27 +135,12 @@ export function registerSpecCommand(
         });
 
         const { targetDir, entryFile, packageInfo, entryPointInfo } = resolved;
-
-        if (packageInfo) {
-          log(chalk.gray(`Found package at ${packageInfo.path}`));
-        }
-        if (!entry) {
-          log(
-            chalk.gray(
-              `Auto-detected entry point: ${entryPointInfo.path} (from ${entryPointInfo.source})`,
-            ),
-          );
-        }
+        steps.next();
 
         // Load config
         let config: LoadedDocCovConfig | null = null;
         try {
           config = await loadDocCovConfig(targetDir);
-          if (config?.filePath) {
-            log(
-              chalk.gray(`Loaded configuration from ${path.relative(targetDir, config.filePath)}`),
-            );
-          }
         } catch (configError) {
           error(
             chalk.red('Failed to load DocCov config:'),
@@ -153,6 +148,7 @@ export function registerSpecCommand(
           );
           process.exit(1);
         }
+        steps.next();
 
         // Merge filter options
         const cliFilters: CliFilterOptions = {
@@ -160,62 +156,46 @@ export function registerSpecCommand(
           exclude: parseListFlag(options.exclude),
         };
         const resolvedFilters = mergeFilterOptions(config, cliFilters);
-        for (const message of resolvedFilters.messages) {
-          log(chalk.gray(`${message}`));
-        }
 
         const resolveExternalTypes = !options.skipResolve;
 
         // Run analysis
-        process.stdout.write(chalk.cyan('> Generating OpenPkg spec...\n'));
+        const doccov = createDocCov({
+          resolveExternalTypes,
+          maxDepth: options.maxTypeDepth ? parseInt(options.maxTypeDepth, 10) : undefined,
+          useCache: options.cache !== false,
+          cwd: options.cwd,
+        });
 
-        let result: GeneratedSpec | undefined;
-        try {
-          const doccov = createDocCov({
-            resolveExternalTypes,
-            maxDepth: options.maxTypeDepth ? parseInt(options.maxTypeDepth, 10) : undefined,
-            useCache: options.cache !== false,
-            cwd: options.cwd,
-          });
+        // Build generation input for spec metadata
+        const generationInput: GenerationInput = {
+          entryPoint: path.relative(targetDir, entryFile),
+          entryPointSource: entryPointInfo.source,
+          isDeclarationOnly: entryPointInfo.isDeclarationOnly ?? false,
+          generatorName: '@doccov/cli',
+          generatorVersion: cliVersion,
+          packageManager: packageInfo?.packageManager,
+          isMonorepo: resolved.isMonorepo,
+          targetPackage: packageInfo?.name,
+        };
 
-          // Build generation input for spec metadata
-          const generationInput: GenerationInput = {
-            entryPoint: path.relative(targetDir, entryFile),
-            entryPointSource: entryPointInfo.source,
-            isDeclarationOnly: entryPointInfo.isDeclarationOnly ?? false,
-            generatorName: '@doccov/cli',
-            generatorVersion: cliVersion,
-            packageManager: packageInfo?.packageManager,
-            isMonorepo: resolved.isMonorepo,
-            targetPackage: packageInfo?.name,
-          };
+        const analyzeOptions =
+          resolvedFilters.include || resolvedFilters.exclude
+            ? {
+                filters: {
+                  include: resolvedFilters.include,
+                  exclude: resolvedFilters.exclude,
+                },
+                generationInput,
+              }
+            : { generationInput };
 
-          const analyzeOptions =
-            resolvedFilters.include || resolvedFilters.exclude
-              ? {
-                  filters: {
-                    include: resolvedFilters.include,
-                    exclude: resolvedFilters.exclude,
-                  },
-                  generationInput,
-                }
-              : { generationInput };
-
-          result = await doccov.analyzeFileWithDiagnostics(entryFile, analyzeOptions);
-
-          if (result.fromCache) {
-            process.stdout.write(chalk.gray('> Using cached spec\n'));
-          } else {
-            process.stdout.write(chalk.green('> Generated OpenPkg spec\n'));
-          }
-        } catch (generationError) {
-          process.stdout.write(chalk.red('> Failed to generate spec\n'));
-          throw generationError;
-        }
+        const result = await doccov.analyzeFileWithDiagnostics(entryFile, analyzeOptions);
 
         if (!result) {
           throw new Error('Failed to produce an OpenPkg spec.');
         }
+        steps.next();
 
         // Normalize and validate
         const normalized = normalize(result.spec as OpenPkgSpec);
@@ -228,12 +208,13 @@ export function registerSpecCommand(
           }
           process.exit(1);
         }
+        steps.next();
 
         // Write output
         const outputPath = path.resolve(process.cwd(), options.output);
         writeFileSync(outputPath, JSON.stringify(normalized, null, 2));
 
-        log(chalk.green(`> Wrote ${options.output}`));
+        steps.complete(`Generated ${options.output}`);
         log(chalk.gray(`  ${getArrayLength(normalized.exports)} exports`));
         log(chalk.gray(`  ${getArrayLength(normalized.types)} types`));
 
@@ -246,11 +227,7 @@ export function registerSpecCommand(
           log(chalk.gray(`  Generator:        ${gen.generator.name}@${gen.generator.version}`));
           log(chalk.gray(`  Entry point:      ${gen.analysis.entryPoint}`));
           log(chalk.gray(`  Detected via:     ${gen.analysis.entryPointSource}`));
-          log(
-            chalk.gray(
-              `  Declaration only: ${gen.analysis.isDeclarationOnly ? 'yes' : 'no'}`,
-            ),
-          );
+          log(chalk.gray(`  Declaration only: ${gen.analysis.isDeclarationOnly ? 'yes' : 'no'}`));
           log(
             chalk.gray(
               `  External types:   ${gen.analysis.resolvedExternalTypes ? 'resolved' : 'skipped'}`,
@@ -261,7 +238,11 @@ export function registerSpecCommand(
           }
           log('');
           log(chalk.bold('Environment'));
-          log(chalk.gray(`  node_modules:     ${gen.environment.hasNodeModules ? 'found' : 'not found'}`));
+          log(
+            chalk.gray(
+              `  node_modules:     ${gen.environment.hasNodeModules ? 'found' : 'not found'}`,
+            ),
+          );
           if (gen.environment.packageManager) {
             log(chalk.gray(`  Package manager:  ${gen.environment.packageManager}`));
           }

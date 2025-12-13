@@ -45,6 +45,7 @@ import {
   isLLMAssertionParsingAvailable,
   parseAssertionsWithLLM,
 } from '../utils/llm-assertion-parser';
+import { StepProgress } from '../utils/progress';
 import { clampPercentage } from '../utils/validation';
 
 type OutputFormat = 'text' | 'json' | 'markdown' | 'html' | 'github';
@@ -130,6 +131,23 @@ export function registerCheckCommand(
     .option('--no-cache', 'Bypass spec cache and force regeneration')
     .action(async (entry, options) => {
       try {
+        // Parse --examples flag early to determine steps
+        const validations = parseExamplesFlag(options.examples);
+        const hasExamples = validations.length > 0;
+
+        const stepList = [
+          { label: 'Resolved target', activeLabel: 'Resolving target' },
+          { label: 'Loaded config', activeLabel: 'Loading config' },
+          { label: 'Generated spec', activeLabel: 'Generating spec' },
+          { label: 'Enriched spec', activeLabel: 'Enriching spec' },
+          ...(hasExamples
+            ? [{ label: 'Validated examples', activeLabel: 'Validating examples' }]
+            : []),
+          { label: 'Processed results', activeLabel: 'Processing results' },
+        ];
+        const steps = new StepProgress(stepList);
+        steps.start();
+
         // Resolve target directory and entry point
         const fileSystem = new NodeFileSystem(options.cwd);
         const resolved = await resolveTarget(fileSystem, {
@@ -138,18 +156,8 @@ export function registerCheckCommand(
           entry: entry as string | undefined,
         });
 
-        const { targetDir, entryFile, packageInfo, entryPointInfo } = resolved;
-
-        if (packageInfo) {
-          log(chalk.gray(`Found package at ${packageInfo.path}`));
-        }
-        if (!entry) {
-          log(
-            chalk.gray(
-              `Auto-detected entry point: ${entryPointInfo.path} (from ${entryPointInfo.source})`,
-            ),
-          );
-        }
+        const { targetDir, entryFile } = resolved;
+        steps.next();
 
         // Load config to get minCoverage threshold
         const config = await loadDocCovConfig(targetDir);
@@ -161,6 +169,7 @@ export function registerCheckCommand(
 
         const maxDriftRaw = options.maxDrift ?? config?.check?.maxDrift;
         const maxDrift = maxDriftRaw !== undefined ? clampPercentage(maxDriftRaw) : undefined;
+        steps.next();
 
         const resolveExternalTypes = !options.skipResolve;
 
@@ -174,18 +183,15 @@ export function registerCheckCommand(
         });
         specResult = await doccov.analyzeFileWithDiagnostics(entryFile);
 
-        // Show cache status
-        if (specResult.fromCache) {
-          log(chalk.gray('Using cached spec'));
-        }
-
         if (!specResult) {
           throw new Error('Failed to analyze documentation coverage.');
         }
+        steps.next();
 
         // Enrich the spec with coverage data
         const spec = enrichSpec(specResult.spec);
         const format = (options.format ?? 'text') as OutputFormat;
+        steps.next();
 
         // Collect spec diagnostics for later display (after all validation completes)
         const specWarnings = specResult.diagnostics.filter((d) => d.severity === 'warning');
@@ -202,15 +208,12 @@ export function registerCheckCommand(
           }
         }
 
-        // Parse --examples flag into validation modes
-        const validations = parseExamplesFlag(options.examples);
-
         // Run example validation using unified SDK function
         let exampleResult: ExampleValidationResult | undefined;
         const typecheckErrors: Array<{ exportName: string; error: ExampleTypeError }> = [];
         const runtimeDrifts: CollectedDrift[] = [];
 
-        if (validations.length > 0) {
+        if (hasExamples) {
           exampleResult = await validateExamples(spec.exports ?? [], {
             validations,
             packagePath: targetDir,
@@ -247,16 +250,17 @@ export function registerCheckCommand(
               });
             }
           }
+
+          steps.next();
         }
 
         const coverageScore = spec.docs?.coverageScore ?? 0;
 
         // Collect drift issues - exclude example-category drifts unless --examples is used
         const allDriftExports = [...collectDrift(spec.exports ?? []), ...runtimeDrifts];
-        let driftExports =
-          validations.length > 0
-            ? allDriftExports
-            : allDriftExports.filter((d) => d.category !== 'example');
+        let driftExports = hasExamples
+          ? allDriftExports
+          : allDriftExports.filter((d) => d.category !== 'example');
 
         // Handle --fix / --write: auto-fix drift issues
         const fixedDriftKeys = new Set<string>();
@@ -414,6 +418,8 @@ export function registerCheckCommand(
             driftExports = driftExports.filter((d) => !fixedDriftKeys.has(`${d.name}:${d.issue}`));
           }
         }
+
+        steps.complete('Check complete');
 
         // Handle --format output for non-text formats
         if (format !== 'text') {
