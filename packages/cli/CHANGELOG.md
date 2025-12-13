@@ -1,5 +1,17 @@
 # @doccov/cli
 
+## 0.14.0
+
+### Minor Changes
+
+- Add step-based progress feedback for CLI commands
+
+  - Added `StepProgress` utility for multi-step progress tracking with timing
+  - Added `ProgressBar` utility for incremental progress with percentage/ETA display
+  - Updated `spec` command to show 5-step progress (resolve, config, generate, validate, write)
+  - Updated `check` command to show 5-6 step progress (includes optional example validation step)
+  - Removed `ora` dependency in favor of simpler carriage-return based progress that doesn't freeze during I/O blocking operations
+
 ## 0.13.0
 
 ### Patch Changes
