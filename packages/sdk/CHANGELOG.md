@@ -1,5 +1,11 @@
 # @doccov/sdk
 
+## 0.15.0
+
+### Minor Changes
+
+- Add SDK test suite with 113 tests, refactor parameter-utils.ts into focused modules (typebox-handler, schema-builder, type-formatter), remove deprecated aliases (OpenPkg, OpenPkgOptions)
+
 ## 0.13.0
 
 ### Minor Changes
