@@ -385,9 +385,6 @@ export async function analyzeFile(
   return new DocCov().analyzeFile(filePath, options);
 }
 
-/** @deprecated Use DocCov instead */
-export const OpenPkg: typeof DocCov = DocCov;
-
 function resolvePackageDir(entryFile: string): string {
   const fallbackDir = path.dirname(entryFile);
   let currentDir = fallbackDir;

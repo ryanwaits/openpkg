@@ -39,10 +39,3 @@ export function normalizeDocCovOptions(options: DocCovOptions = {}): NormalizedD
     cwd: options.cwd ?? process.cwd(),
   };
 }
-
-/** @deprecated Use DocCovOptions instead */
-export type OpenPkgOptions = DocCovOptions;
-/** @deprecated Use NormalizedDocCovOptions instead */
-export type NormalizedOpenPkgOptions = NormalizedDocCovOptions;
-/** @deprecated Use normalizeDocCovOptions instead */
-export const normalizeOpenPkgOptions: typeof normalizeDocCovOptions = normalizeDocCovOptions;

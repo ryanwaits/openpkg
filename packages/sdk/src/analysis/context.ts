@@ -1,7 +1,7 @@
 import * as path from 'node:path';
 import type * as ts from 'typescript';
-import type { NormalizedOpenPkgOptions, OpenPkgOptions } from '../options';
-import { normalizeOpenPkgOptions } from '../options';
+import type { NormalizedDocCovOptions, DocCovOptions } from '../options';
+import { normalizeDocCovOptions } from '../options';
 import { createProgram } from './program';
 
 export interface AnalysisContext {
@@ -12,7 +12,7 @@ export interface AnalysisContext {
   sourceFile: ts.SourceFile;
   compilerOptions: ts.CompilerOptions;
   compilerHost: ts.CompilerHost;
-  options: NormalizedOpenPkgOptions;
+  options: NormalizedDocCovOptions;
   configPath?: string;
 }
 
@@ -20,7 +20,7 @@ export interface AnalysisContextInput {
   entryFile: string;
   packageDir?: string;
   content?: string;
-  options?: OpenPkgOptions;
+  options?: DocCovOptions;
 }
 
 export function createAnalysisContext({
@@ -30,7 +30,7 @@ export function createAnalysisContext({
   options,
 }: AnalysisContextInput): AnalysisContext {
   const baseDir = packageDir ?? path.dirname(entryFile);
-  const normalizedOptions: NormalizedOpenPkgOptions = normalizeOpenPkgOptions(options);
+  const normalizedOptions: NormalizedDocCovOptions = normalizeDocCovOptions(options);
 
   const programResult = createProgram({ entryFile, baseDir, content });
 

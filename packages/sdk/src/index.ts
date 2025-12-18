@@ -187,8 +187,8 @@ export {
   parseMarkdownFiles,
 } from './markdown';
 export type { AnalysisResult, AnalyzeOptions, Diagnostic } from './openpkg';
-export { analyze, analyzeFile, DocCov, OpenPkg } from './openpkg';
-export type { DocCovOptions, OpenPkgOptions } from './options';
+export { analyze, analyzeFile, DocCov } from './openpkg';
+export type { DocCovOptions } from './options';
 // Quality rules engine
 export {
   type AggregateQualityResult,

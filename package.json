@@ -23,7 +23,7 @@
     "format": "biome format --write packages/ apps/ tests/",
     "changeset": "changeset",
     "version": "changeset version && bun install",
-    "release": "changeset publish"
+    "release": "NPM_TOKEN=$NPM_DOCCOV_TOKEN changeset publish"
   },
   "devDependencies": {
     "@biomejs/biome": "2.1.2",

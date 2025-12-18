@@ -2,6 +2,7 @@
  * GitHub context fetcher for AI-powered build plan generation.
  * Fetches project context via GitHub API without cloning the repository.
  */
+import { parseGitHubUrl as parseGitHubUrlFull } from '../github';
 
 /**
  * Repository metadata from GitHub API.
@@ -66,22 +67,15 @@ export interface GitHubProjectContext {
 
 /**
  * Parse GitHub URL into owner and repo.
+ * Uses the richer parseGitHubUrl from github/index.ts, returning null on error.
  */
 export function parseGitHubUrl(url: string): { owner: string; repo: string } | null {
-  // Handle various GitHub URL formats
-  const patterns = [
-    /github\.com\/([^/]+)\/([^/]+?)(?:\.git)?(?:\/|$)/,
-    /^([^/]+)\/([^/]+)$/, // shorthand: owner/repo
-  ];
-
-  for (const pattern of patterns) {
-    const match = url.match(pattern);
-    if (match) {
-      return { owner: match[1], repo: match[2].replace(/\.git$/, '') };
-    }
+  try {
+    const { owner, repo } = parseGitHubUrlFull(url);
+    return { owner, repo };
+  } catch {
+    return null;
   }
-
-  return null;
 }
 
 /**
