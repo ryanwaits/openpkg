@@ -1,6 +1,6 @@
 {
   "name": "@doccov/sdk",
-  "version": "0.15.0",
+  "version": "0.15.1",
   "description": "DocCov SDK - Documentation coverage and drift detection for TypeScript",
   "keywords": [
     "typescript",

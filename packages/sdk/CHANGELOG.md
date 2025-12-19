@@ -1,5 +1,11 @@
 # @doccov/sdk
 
+## 0.15.1
+
+### Patch Changes
+
+- Consolidate duplicate FIXABLE_DRIFT_TYPES into single isFixableDrift() source
+
 ## 0.15.0
 
 ### Minor Changes
