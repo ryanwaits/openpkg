@@ -2,20 +2,6 @@
  * Scan module - AI-powered build plan generation and execution.
  */
 
-// Summary utilities
-export type { SpecSummary, SummaryDriftIssue } from './summary';
-export { extractSpecSummary } from './summary';
-
-// Build plan types
-export type {
-  BuildPlan,
-  BuildPlanEnvironment,
-  BuildPlanExecutionResult,
-  BuildPlanStep,
-  BuildPlanStepResult,
-  BuildPlanTarget,
-} from './types';
-
 // GitHub context fetcher
 export type {
   BuildHints,
@@ -25,3 +11,15 @@ export type {
   WorkspaceConfig,
 } from './github-context';
 export { fetchGitHubContext, listWorkspacePackages, parseGitHubUrl } from './github-context';
+// Summary utilities
+export type { SpecSummary, SummaryDriftIssue } from './summary';
+export { extractSpecSummary } from './summary';
+// Build plan types
+export type {
+  BuildPlan,
+  BuildPlanEnvironment,
+  BuildPlanExecutionResult,
+  BuildPlanStep,
+  BuildPlanStepResult,
+  BuildPlanTarget,
+} from './types';

@@ -52,9 +52,8 @@ export function buildOpenPkgSpec(
     : {};
 
   // Use provided generation info or create a default
-  const generationInfo = generation ?? createDefaultGenerationInfo(
-    path.relative(baseDir, entryFile),
-  );
+  const generationInfo =
+    generation ?? createDefaultGenerationInfo(path.relative(baseDir, entryFile));
 
   const spec: OpenPkgSpec = {
     $schema: SCHEMA_URL,

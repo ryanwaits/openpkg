@@ -1,8 +1,9 @@
-import type { EnrichedOpenPkg } from '@doccov/sdk';
+import { type EnrichedOpenPkg, isFixableDrift } from '@doccov/sdk';
 import {
   DRIFT_CATEGORIES,
   type DriftCategory,
   type DriftType,
+  type SpecDocDrift,
   type SpecExportKind,
 } from '@openpkg-ts/spec';
 
@@ -38,19 +39,6 @@ export type ReportStats = {
   driftByCategory: Record<DriftCategory, DriftIssueItem[]>;
   driftSummary: DriftSummaryStats;
 };
-
-// Drift types that can be auto-fixed
-const FIXABLE_DRIFT_TYPES = new Set<string>([
-  'param-mismatch',
-  'param-type-mismatch',
-  'optionality-mismatch',
-  'return-type-mismatch',
-  'generic-constraint-mismatch',
-  'example-assertion-failed',
-  'deprecated-mismatch',
-  'async-mismatch',
-  'property-type-drift',
-]);
 
 /**
  * Compute report statistics from an enriched OpenPkg spec.
@@ -144,7 +132,9 @@ export function computeStats(spec: EnrichedOpenPkg): ReportStats {
       semantic: driftByCategory.semantic.length,
       example: driftByCategory.example.length,
     },
-    fixable: driftIssues.filter((d) => FIXABLE_DRIFT_TYPES.has(d.type)).length,
+    fixable: driftIssues.filter((d) =>
+      isFixableDrift({ type: d.type as DriftType } as SpecDocDrift),
+    ).length,
   };
 
   // Compute drift score (% of exports with drift issues)

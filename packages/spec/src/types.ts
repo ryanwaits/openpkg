@@ -356,13 +356,13 @@ export type OpenPkgMeta = {
  * Method used to detect the entry point for analysis.
  */
 export type EntryPointDetectionMethod =
-  | 'types'     // package.json types/typings field
-  | 'exports'   // package.json exports field
-  | 'main'      // package.json main field
-  | 'module'    // package.json module field
-  | 'fallback'  // Convention-based (src/index.ts, etc.)
-  | 'explicit'  // User-specified entry point
-  | 'llm';      // LLM-detected entry point
+  | 'types' // package.json types/typings field
+  | 'exports' // package.json exports field
+  | 'main' // package.json main field
+  | 'module' // package.json module field
+  | 'fallback' // Convention-based (src/index.ts, etc.)
+  | 'explicit' // User-specified entry point
+  | 'llm'; // LLM-detected entry point
 
 /**
  * Severity level for issues encountered during spec generation.

@@ -8,31 +8,31 @@ import { ts } from '../ts-module';
 import type { ParameterDocumentation, ParsedJSDoc } from './tsdoc-utils';
 import { isBuiltInType } from './type-utils';
 
+export {
+  buildSchemaFromTypeNode,
+  isObjectLiteralType,
+  isPureRefSchema,
+  propertiesToSchema,
+  type StructuredProperty,
+  schemaIsAny,
+  schemasAreEqual,
+} from './schema-builder';
 // Re-export from sub-modules for backwards compatibility
 export { formatTypeReference } from './type-formatter';
-export {
-  propertiesToSchema,
+export { getPropertyType, isInternalProperty } from './typebox-handler';
+
+import {
   buildSchemaFromTypeNode,
+  isObjectLiteralType,
+  isPureRefSchema,
+  propertiesToSchema,
+  type StructuredProperty,
   schemaIsAny,
   schemasAreEqual,
-  isPureRefSchema,
-  isObjectLiteralType,
-  type StructuredProperty,
 } from './schema-builder';
-export { isInternalProperty, getPropertyType } from './typebox-handler';
-
 // Import from sub-modules
 import { formatTypeReference } from './type-formatter';
-import {
-  propertiesToSchema,
-  buildSchemaFromTypeNode,
-  schemaIsAny,
-  schemasAreEqual,
-  isPureRefSchema,
-  isObjectLiteralType,
-  type StructuredProperty,
-} from './schema-builder';
-import { isInternalProperty, getPropertyType } from './typebox-handler';
+import { getPropertyType, isInternalProperty } from './typebox-handler';
 
 export interface StructuredParameter {
   name: string;

@@ -2,14 +2,14 @@
  * Tests for example validation logic.
  */
 import { describe, expect, test } from 'bun:test';
-import { validateExamples } from '../src/examples/validator';
 import {
-  parseExamplesFlag,
-  shouldValidate,
   ALL_VALIDATIONS,
   type ExampleValidation,
+  parseExamplesFlag,
+  shouldValidate,
 } from '../src/examples/types';
-import { createExport, createDocumentedFunction } from './test-helpers';
+import { validateExamples } from '../src/examples/validator';
+import { createDocumentedFunction, createExport } from './test-helpers';
 
 describe('parseExamplesFlag', () => {
   test('returns empty array for undefined', () => {
@@ -112,10 +112,7 @@ describe('validateExamples', () => {
     });
 
     test('reports missing exports', async () => {
-      const exports = [
-        createExport({ name: 'foo' }),
-        createExport({ name: 'bar' }),
-      ];
+      const exports = [createExport({ name: 'foo' }), createExport({ name: 'bar' })];
 
       const result = await validateExamples(exports, {
         validations: ['presence'],

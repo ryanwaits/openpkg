@@ -1,7 +1,7 @@
 /**
  * Shared test fixtures and helpers for SDK tests.
  */
-import type { OpenPkg, SpecExport, SpecDocDrift } from '@openpkg-ts/spec';
+import type { OpenPkg, SpecDocDrift, SpecExport } from '@openpkg-ts/spec';
 
 /**
  * Create a minimal valid OpenPkg spec for testing.

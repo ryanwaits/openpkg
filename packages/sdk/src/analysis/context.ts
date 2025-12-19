@@ -1,6 +1,6 @@
 import * as path from 'node:path';
 import type * as ts from 'typescript';
-import type { NormalizedDocCovOptions, DocCovOptions } from '../options';
+import type { DocCovOptions, NormalizedDocCovOptions } from '../options';
 import { normalizeDocCovOptions } from '../options';
 import { createProgram } from './program';
 

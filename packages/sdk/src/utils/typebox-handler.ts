@@ -3,8 +3,8 @@
  * Converts TypeBox schema types (TObject, TArray, TUnion, etc.) to JSON Schema.
  */
 import type * as TS from 'typescript';
-import { ts } from '../ts-module';
 import { DEFAULT_MAX_TYPE_DEPTH } from '../options';
+import { ts } from '../ts-module';
 
 /**
  * TypeBox primitive type mappings to JSON Schema
@@ -50,7 +50,10 @@ export function isTypeBoxOptionalMarker(type: TS.Type): boolean {
  * Unwrap TypeBox optional intersection and detect optionality
  * Returns { innerTypes, isOptional } where innerTypes excludes OptionalKind marker
  */
-export function unwrapTypeBoxOptional(type: TS.Type): { innerTypes: TS.Type[]; isOptional: boolean } {
+export function unwrapTypeBoxOptional(type: TS.Type): {
+  innerTypes: TS.Type[];
+  isOptional: boolean;
+} {
   if (!type.isIntersection()) {
     return { innerTypes: [type], isOptional: false };
   }

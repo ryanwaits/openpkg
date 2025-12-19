@@ -2,8 +2,8 @@
  * Tests for spec enrichment with coverage metadata.
  */
 import { describe, expect, test } from 'bun:test';
-import { enrichSpec, type EnrichedOpenPkg } from '../src/analysis/enrich';
-import { createSpec, createExport, createDocumentedFunction, createDrift } from './test-helpers';
+import { type EnrichedOpenPkg, enrichSpec } from '../src/analysis/enrich';
+import { createDocumentedFunction, createDrift, createExport, createSpec } from './test-helpers';
 
 describe('enrichSpec', () => {
   describe('coverage calculation', () => {

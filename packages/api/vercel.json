@@ -2,7 +2,5 @@
   "framework": null,
   "installCommand": "bun install",
   "outputDirectory": ".",
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/api" }
-  ]
+  "rewrites": [{ "source": "/(.*)", "destination": "/api" }]
 }

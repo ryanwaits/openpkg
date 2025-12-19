@@ -103,10 +103,7 @@ async function fetchRawFile(
 /**
  * Fetch repository metadata from GitHub API.
  */
-async function fetchRepoMetadata(
-  owner: string,
-  repo: string,
-): Promise<GitHubRepoMetadata> {
+async function fetchRepoMetadata(owner: string, repo: string): Promise<GitHubRepoMetadata> {
   const url = `https://api.github.com/repos/${owner}/${repo}`;
 
   const response = await fetch(url, {
@@ -220,10 +217,7 @@ async function detectWorkspace(
 /**
  * Detect build hints from package.json and tsconfig.json.
  */
-function detectBuildHints(
-  packageJson: unknown,
-  tsconfigJson: unknown,
-): BuildHints {
+function detectBuildHints(packageJson: unknown, tsconfigJson: unknown): BuildHints {
   const hints: BuildHints = {
     hasTypeScript: false,
     hasWasm: false,

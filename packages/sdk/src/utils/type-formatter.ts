@@ -3,23 +3,23 @@
  * Main entry point for converting TypeScript types to JSON Schema.
  */
 import type * as TS from 'typescript';
-import { ts } from '../ts-module';
 import { DEFAULT_MAX_TYPE_DEPTH } from '../options';
-import { isBuiltInType } from './type-utils';
-import {
-  isTypeBoxSchemaType,
-  isTypeBoxOptionalMarker,
-  isInternalProperty,
-  getPropertyType,
-  formatTypeBoxSchema,
-  setFormatTypeReference,
-} from './typebox-handler';
+import { ts } from '../ts-module';
 import {
   BUILTIN_TYPE_SCHEMAS,
-  findDiscriminatorProperty,
   deduplicateSchemas,
+  findDiscriminatorProperty,
   setSchemaBuilderFormatTypeReference,
 } from './schema-builder';
+import { isBuiltInType } from './type-utils';
+import {
+  formatTypeBoxSchema,
+  getPropertyType,
+  isInternalProperty,
+  isTypeBoxOptionalMarker,
+  isTypeBoxSchemaType,
+  setFormatTypeReference,
+} from './typebox-handler';
 
 /**
  * Safely convert a type to string, catching any stack overflow errors.

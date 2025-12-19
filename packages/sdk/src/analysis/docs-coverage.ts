@@ -1,13 +1,13 @@
 import {
   DRIFT_CATEGORIES,
   type DriftCategory,
-  type DriftType,
   type SpecDocDrift,
   type SpecExport,
   type SpecSchema,
   type SpecTag,
 } from '@openpkg-ts/spec';
 import ts from 'typescript';
+import { isFixableDrift } from '../fix';
 import { isBuiltInIdentifier } from '../utils/builtin-detection';
 import type { ExampleRunResult } from '../utils/example-runner';
 import type { OpenPkgSpec } from './spec-types';
@@ -1416,21 +1416,6 @@ export function detectExampleAssertionFailures(
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Drift types that can be fixed deterministically.
- */
-const FIXABLE_DRIFT_TYPES: Set<DriftType> = new Set([
-  'param-mismatch',
-  'param-type-mismatch',
-  'optionality-mismatch',
-  'return-type-mismatch',
-  'generic-constraint-mismatch',
-  'example-assertion-failed',
-  'deprecated-mismatch',
-  'async-mismatch',
-  'property-type-drift',
-]);
-
-/**
  * Extended drift with category and fixability metadata.
  */
 export interface CategorizedDrift extends SpecDocDrift {
@@ -1460,7 +1445,7 @@ export function categorizeDrift(drift: SpecDocDrift): CategorizedDrift {
   return {
     ...drift,
     category: DRIFT_CATEGORIES[drift.type],
-    fixable: FIXABLE_DRIFT_TYPES.has(drift.type),
+    fixable: isFixableDrift(drift),
   };
 }
 
@@ -1527,7 +1512,7 @@ export function getDriftSummary(drifts: SpecDocDrift[]): DriftSummary {
       semantic: grouped.semantic.length,
       example: grouped.example.length,
     },
-    fixable: drifts.filter((d) => FIXABLE_DRIFT_TYPES.has(d.type)).length,
+    fixable: drifts.filter((d) => isFixableDrift(d)).length,
   };
 }
 
@@ -1628,7 +1613,9 @@ export function calculateAggregateCoverage(spec: OpenPkgSpec): number {
  * console.log(specWithCoverage.docs?.coverageScore); // e.g., 85
  * ```
  */
-export function ensureSpecCoverage(spec: OpenPkgSpec): OpenPkgSpec & { docs: { coverageScore: number } } {
+export function ensureSpecCoverage(
+  spec: OpenPkgSpec,
+): OpenPkgSpec & { docs: { coverageScore: number } } {
   type SpecWithDocs = OpenPkgSpec & { docs?: { coverageScore?: number } };
   const specWithDocs = spec as SpecWithDocs;
 

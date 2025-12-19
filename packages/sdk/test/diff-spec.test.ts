@@ -2,8 +2,8 @@
  * Tests for spec diffing and breaking change detection.
  */
 import { describe, expect, test } from 'bun:test';
-import { diffSpec, categorizeBreakingChanges } from '@openpkg-ts/spec';
-import { createSpec, createExport, createEnrichedSpec, createDrift } from './test-helpers';
+import { categorizeBreakingChanges, diffSpec } from '@openpkg-ts/spec';
+import { createDrift, createEnrichedSpec, createExport, createSpec } from './test-helpers';
 
 describe('diffSpec', () => {
   describe('structural changes', () => {
@@ -293,7 +293,9 @@ describe('categorizeBreakingChanges', () => {
       exports: [createExport({ name: 'Config', kind: 'type' })],
     });
     const newSpec = createEnrichedSpec({
-      exports: [createExport({ name: 'Config', kind: 'type', signature: 'type Config = { new: true }' })],
+      exports: [
+        createExport({ name: 'Config', kind: 'type', signature: 'type Config = { new: true }' }),
+      ],
     });
 
     const categorized = categorizeBreakingChanges(['Config'], oldSpec, newSpec);

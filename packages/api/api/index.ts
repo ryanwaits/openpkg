@@ -670,7 +670,11 @@ async function handleExecute(req: VercelRequest, res: VercelResponse): Promise<v
 
       try {
         const normalizedCwd = normalizeCwd(step.cwd);
-        const { cmd, args } = wrapLocalBinary(step.command, step.args, plan.environment.packageManager);
+        const { cmd, args } = wrapLocalBinary(
+          step.command,
+          step.args,
+          plan.environment.packageManager,
+        );
         const result = await sandbox.runCommand({
           cmd,
           args,
@@ -837,7 +841,11 @@ async function handleExecuteStream(req: VercelRequest, res: VercelResponse): Pro
 
       try {
         const normalizedCwd = normalizeCwd(step.cwd);
-        const { cmd, args } = wrapLocalBinary(step.command, step.args, plan.environment.packageManager);
+        const { cmd, args } = wrapLocalBinary(
+          step.command,
+          step.args,
+          plan.environment.packageManager,
+        );
         const result = await sandbox.runCommand({
           cmd,
           args,

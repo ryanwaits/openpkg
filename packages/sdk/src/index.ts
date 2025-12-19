@@ -213,6 +213,8 @@ export type { ResolvedTarget, ResolveTargetOptions } from './resolve';
 export { resolveTarget } from './resolve';
 // Scan types and utilities
 export type {
+  // GitHub context types
+  BuildHints,
   // Build plan types
   BuildPlan,
   BuildPlanEnvironment,
@@ -220,15 +222,13 @@ export type {
   BuildPlanStep,
   BuildPlanStepResult,
   BuildPlanTarget,
-  // GitHub context types
-  BuildHints,
   DetectedPackageManager,
   GitHubProjectContext,
   GitHubRepoMetadata,
-  WorkspaceConfig,
   // Summary
   SpecSummary,
   SummaryDriftIssue,
+  WorkspaceConfig,
 } from './scan';
 export {
   extractSpecSummary,

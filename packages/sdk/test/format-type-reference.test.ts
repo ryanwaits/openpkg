@@ -4,7 +4,7 @@
  * These tests use a minimal TypeScript program to test formatTypeReference
  * with real TypeScript types.
  */
-import { describe, expect, test, beforeAll } from 'bun:test';
+import { beforeAll, describe, expect, test } from 'bun:test';
 import * as ts from 'typescript';
 import { formatTypeReference, propertiesToSchema } from '../src/utils/parameter-utils';
 
@@ -163,9 +163,7 @@ describe('formatTypeReference', () => {
     });
 
     test('deduplicates null and undefined', () => {
-      const { type, typeChecker } = getFirstVarType(
-        'const x: string | null | undefined = "";',
-      );
+      const { type, typeChecker } = getFirstVarType('const x: string | null | undefined = "";');
       const result = formatTypeReference(type, typeChecker, new Map());
 
       expect(result).toHaveProperty('anyOf');
@@ -349,9 +347,7 @@ describe('propertiesToSchema', () => {
   });
 
   test('handles $ref types', () => {
-    const result = propertiesToSchema([
-      { name: 'user', type: { $ref: '#/types/User' } },
-    ]);
+    const result = propertiesToSchema([{ name: 'user', type: { $ref: '#/types/User' } }]);
 
     expect((result as any).properties.user).toEqual({ $ref: '#/types/User' });
   });

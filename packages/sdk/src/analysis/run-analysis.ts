@@ -1,11 +1,11 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import type * as TS from 'typescript';
 import type {
   EntryPointDetectionMethod,
   GenerationIssue,
   SpecGenerationInfo,
 } from '@openpkg-ts/spec';
+import type * as TS from 'typescript';
 import { ts } from '../ts-module';
 import { isBuiltInType } from '../utils/type-utils';
 import type { AnalysisContextInput } from './context';

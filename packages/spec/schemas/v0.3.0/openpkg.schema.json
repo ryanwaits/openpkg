@@ -134,7 +134,12 @@
         "analysis": {
           "type": "object",
           "description": "Details about the analysis process",
-          "required": ["entryPoint", "entryPointSource", "isDeclarationOnly", "resolvedExternalTypes"],
+          "required": [
+            "entryPoint",
+            "entryPointSource",
+            "isDeclarationOnly",
+            "resolvedExternalTypes"
+          ],
           "properties": {
             "entryPoint": {
               "type": "string",
