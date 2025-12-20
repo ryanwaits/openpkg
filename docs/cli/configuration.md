@@ -4,20 +4,53 @@ DocCov configuration file for persistent settings.
 
 ## Config File
 
-Create `doccov.config.ts` in your project root:
+Create a config file in your project root:
 
 ```bash
-doccov init
+doccov init              # TypeScript config
+doccov init --format yaml  # YAML config (simpler)
 ```
 
-Or manually create any of:
+Supported formats:
 
+- `doccov.yml` / `doccov.yaml` (recommended for simplicity)
 - `doccov.config.ts`
 - `doccov.config.js`
 - `doccov.config.mjs`
 - `doccov.config.cjs`
 
 ## Schema
+
+### YAML Format
+
+```yaml
+# doccov.yml
+include:
+  - "createUser"
+  - "update*"
+  - "User*"
+
+exclude:
+  - "_internal*"
+  - "debug*"
+
+docs:
+  include:
+    - "docs/**/*.md"
+    - "README.md"
+
+check:
+  minCoverage: 80
+  maxDrift: 10
+  examples: typecheck
+
+quality:
+  rules:
+    has-description: error
+    has-examples: warn
+```
+
+### TypeScript Format
 
 ```typescript
 import { defineConfig } from '@doccov/sdk';
@@ -256,9 +289,13 @@ export default defineConfig({
 DocCov looks for config in this order:
 
 1. `doccov.config.ts`
-2. `doccov.config.js`
-3. `doccov.config.mjs`
-4. `doccov.config.cjs`
+2. `doccov.config.mts`
+3. `doccov.config.cts`
+4. `doccov.config.js`
+5. `doccov.config.mjs`
+6. `doccov.config.cjs`
+7. `doccov.yml`
+8. `doccov.yaml`
 
 In the working directory (or `--cwd` if specified).
 

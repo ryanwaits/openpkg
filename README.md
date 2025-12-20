@@ -21,6 +21,16 @@ doccov check --min-coverage 80
 doccov generate -o openpkg.json
 ```
 
+## Badges
+
+Add a documentation coverage badge:
+
+```markdown
+![DocCov](https://api.doccov.com/badge/YOUR_ORG/YOUR_REPO)
+```
+
+Requires `openpkg.json` committed to your default branch. See [badges docs](./docs/integrations/badges-widgets.md) for options.
+
 ## Documentation
 
 Full documentation at [docs/README.md](./docs/README.md):

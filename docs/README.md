@@ -16,7 +16,7 @@ DocCov uses two naming conventions:
 
 | Name | Usage | Examples |
 |------|-------|----------|
-| **DocCov** | Product name, CLI tool, most packages | `@doccov/cli`, `@doccov/sdk`, `doccov.config.js` |
+| **DocCov** | Product name, CLI tool, most packages | `@doccov/cli`, `@doccov/sdk`, `doccov.yml` |
 | **OpenPkg** | Specification format (open standard) | `@openpkg-ts/spec`, `openpkg.json` output files |
 
 - **DocCov** is the tool that analyzes your TypeScript documentation
@@ -37,7 +37,7 @@ DocCov uses two naming conventions:
   - [diff](./cli/commands/diff.md) - Compare two specs
   - [scan](./cli/commands/scan.md) - Analyze remote GitHub repos
   - [init](./cli/commands/init.md) - Create config file
-- [Configuration](./cli/configuration.md) - `doccov.config.ts` options
+- [Configuration](./cli/configuration.md) - `doccov.yml` or `.config.ts` options
 
 ## API Reference
 

@@ -5,104 +5,59 @@ Get DocCov running in 5 minutes.
 ## 1. Install
 
 ```bash
-npm install -g @doccov/cli
+npm install -D @doccov/cli
 ```
 
-## 2. Check Coverage
-
-Run in your TypeScript project root:
+## 2. Add Config
 
 ```bash
-doccov check --info
+npx doccov init --format yaml
 ```
 
-Output:
+Creates `doccov.yml`:
 
+```yaml
+check:
+  # minCoverage: 80
 ```
-Coverage: 85% (17/20 documented)
-Drift: 0 issues
-Lint: 0 warnings
-```
 
-## 3. Generate Spec
-
-Create an `openpkg.json` file:
+## 3. Check Coverage
 
 ```bash
-doccov spec -o openpkg.json
+npx doccov check
 ```
 
-This JSON file contains:
-- Package metadata
-- All exported functions, classes, types
-- Full type information and signatures
+## 4. Generate Spec
 
-## 4. Add a Badge
+```bash
+npx doccov spec -o openpkg.json
+```
 
-Add to your README:
+## 5. Add Badge
 
 ```markdown
 ![DocCov](https://api.doccov.com/badge/YOUR_ORG/YOUR_REPO)
 ```
 
-Requires `openpkg.json` committed to your repo's main branch.
+Requires `openpkg.json` committed to main branch.
 
-## 5. Enforce in CI
-
-Add to GitHub Actions:
+## 6. Add to CI
 
 ```yaml
+# .github/workflows/docs.yml
 name: Docs
 on: [push, pull_request]
 
 jobs:
-  check:
+  doccov:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      - run: npm ci
-      - run: npx @doccov/cli check --min-coverage 80
-```
-
-## Common Workflows
-
-### Strict Mode
-
-Require examples and higher coverage:
-
-```bash
-doccov check --min-coverage 90 --examples presence
-```
-
-### Validate Examples Run
-
-Execute `@example` blocks to catch runtime errors:
-
-```bash
-doccov check --examples run
-```
-
-### Generate Report
-
-Create a markdown coverage report:
-
-```bash
-doccov check --format markdown -o COVERAGE.md
-```
-
-### Scan Any Repo
-
-Analyze a public GitHub repository:
-
-```bash
-doccov scan https://github.com/tanstack/query
+      - uses: doccov/doccov@v1
 ```
 
 ## Next Steps
 
-- [Concepts](./concepts.md) - Understand coverage and drift
-- [CLI Commands](../cli/overview.md) - Full command reference
-- [GitHub Action](../integrations/github-action.md) - Advanced CI setup
+- [Concepts](./concepts.md) - Coverage and drift
+- [CLI Commands](../cli/overview.md) - Full reference
+- [GitHub Action](../integrations/github-action.md) - Advanced CI

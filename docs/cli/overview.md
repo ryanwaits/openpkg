@@ -91,10 +91,11 @@ doccov scan https://github.com/tanstack/query
 
 ## Configuration
 
-Create `doccov.config.ts` for persistent settings:
+Create a config file for persistent settings:
 
 ```bash
-doccov init
+doccov init --format yaml  # Creates doccov.yml
+doccov init                # Creates doccov.config.mjs
 ```
 
 See [Configuration](./configuration.md) for options.

@@ -1,6 +1,7 @@
-import { access } from 'node:fs/promises';
+import { access, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { parse as parseYaml } from 'yaml';
 import { docCovConfigSchema, type NormalizedDocCovConfig, normalizeConfig } from './schema';
 
 const DOCCOV_CONFIG_FILENAMES = [
@@ -10,6 +11,8 @@ const DOCCOV_CONFIG_FILENAMES = [
   'doccov.config.js',
   'doccov.config.mjs',
   'doccov.config.cjs',
+  'doccov.yml',
+  'doccov.yaml',
 ] as const;
 
 const fileExists = async (filePath: string): Promise<boolean> => {
@@ -46,6 +49,15 @@ interface LoadedDocCovConfig extends NormalizedDocCovConfig {
 }
 
 const importConfigModule = async (absolutePath: string): Promise<unknown> => {
+  const ext = path.extname(absolutePath);
+
+  // YAML files
+  if (ext === '.yml' || ext === '.yaml') {
+    const content = await readFile(absolutePath, 'utf-8');
+    return parseYaml(content);
+  }
+
+  // JS/TS modules
   const fileUrl = pathToFileURL(absolutePath);
   // Bust the import cache so edits are picked up between runs.
   fileUrl.searchParams.set('t', Date.now().toString());

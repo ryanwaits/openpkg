@@ -12,7 +12,7 @@ export interface InitCommandDependencies {
   error?: typeof console.error;
 }
 
-type ConfigFormat = 'auto' | 'mjs' | 'js' | 'cjs';
+type ConfigFormat = 'auto' | 'mjs' | 'js' | 'cjs' | 'yaml';
 
 type PackageType = 'module' | 'commonjs' | undefined;
 
@@ -37,13 +37,13 @@ export function registerInitCommand(
     .command('init')
     .description('Create a DocCov configuration file')
     .option('--cwd <dir>', 'Working directory', process.cwd())
-    .option('--format <format>', 'Config format: auto, mjs, js, cjs', 'auto')
+    .option('--format <format>', 'Config format: auto, mjs, js, cjs, yaml', 'auto')
     .action((options) => {
       const cwd = path.resolve(options.cwd as string);
 
       const formatOption = String(options.format ?? 'auto').toLowerCase();
       if (!isValidFormat(formatOption)) {
-        error(chalk.red(`Invalid format "${formatOption}". Use auto, mjs, js, or cjs.`));
+        error(chalk.red(`Invalid format "${formatOption}". Use auto, mjs, js, cjs, or yaml.`));
         process.exitCode = 1;
         return;
       }
@@ -70,7 +70,7 @@ export function registerInitCommand(
         );
       }
 
-      const fileName = `doccov.config.${targetFormat}`;
+      const fileName = targetFormat === 'yaml' ? 'doccov.yml' : `doccov.config.${targetFormat}`;
       const outputPath = path.join(cwd, fileName);
 
       if (fileExists(outputPath)) {
@@ -87,7 +87,7 @@ export function registerInitCommand(
 }
 
 const isValidFormat = (value: string): value is ConfigFormat => {
-  return value === 'auto' || value === 'mjs' || value === 'js' || value === 'cjs';
+  return ['auto', 'mjs', 'js', 'cjs', 'yaml'].includes(value);
 };
 
 const findExistingConfig = (cwd: string, fileExists: typeof fs.existsSync): string | null => {
@@ -158,15 +158,39 @@ const findNearestPackageJson = (cwd: string, fileExists: typeof fs.existsSync): 
   return null;
 };
 
-const resolveFormat = (format: ConfigFormat, packageType: PackageType): 'mjs' | 'js' | 'cjs' => {
+const resolveFormat = (
+  format: ConfigFormat,
+  packageType: PackageType,
+): 'mjs' | 'js' | 'cjs' | 'yaml' => {
+  if (format === 'yaml') return 'yaml';
   if (format === 'auto') {
     return packageType === 'module' ? 'js' : 'mjs';
   }
-
   return format;
 };
 
-const buildTemplate = (format: 'mjs' | 'js' | 'cjs'): string => {
+const buildTemplate = (format: 'mjs' | 'js' | 'cjs' | 'yaml'): string => {
+  if (format === 'yaml') {
+    return `# doccov.yml
+# include:
+#   - "MyClass"
+#   - "myFunction"
+# exclude:
+#   - "internal*"
+
+check:
+  # minCoverage: 80
+  # maxDrift: 20
+  # examples: typecheck
+
+quality:
+  rules:
+    # has-description: warn
+    # has-params: off
+    # has-returns: off
+`;
+  }
+
   const configBody = `{
   // Filter which exports to analyze
   // include: ['MyClass', 'myFunction'],
