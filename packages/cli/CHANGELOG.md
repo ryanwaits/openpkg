@@ -1,5 +1,15 @@
 # @doccov/cli
 
+## 0.17.0
+
+### Minor Changes
+
+- feat: add YAML config support (doccov.yml)
+
+  - Added `--format yaml` option to `doccov init` command
+  - Config loader now supports `doccov.yml` and `doccov.yaml` files
+  - YAML configs are simpler - no imports or TypeScript needed
+
 ## 0.16.0
 
 ### Minor Changes
