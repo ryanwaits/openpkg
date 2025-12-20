@@ -1,5 +1,16 @@
 # @doccov/cli
 
+## 0.16.0
+
+### Minor Changes
+
+- feat(cli): add --format pr-comment for actionable GitHub PR comments
+
+  - New pr-comment format with coverage summary, undocumented exports grouped by file, drift issues, contextual fix guidance
+  - Added --repo-url and --sha options for clickable file links
+  - Added strict mode presets: ci, release, quality
+  - Moved PR comment rendering from action.yml inline JS to CLI
+
 ## 0.15.1
 
 ### Patch Changes
