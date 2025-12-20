@@ -24,7 +24,7 @@ jobs:
 |-------|---------|-------------|
 | `min-coverage` | `80` | Minimum coverage percentage |
 | `require-examples` | `false` | Require `@example` on all exports |
-| `strict` | - | Fail conditions (comma-separated): `regression`, `drift`, `docs-impact`, `breaking`, `undocumented`, `all` |
+| `strict` | - | Fail conditions: preset (`ci`, `release`, `quality`) or comma-separated checks |
 | `docs-glob` | - | Glob pattern for markdown docs to check for impact |
 | `format` | `github` | Output format for diff: `text`, `json`, `github` |
 | `comment-on-pr` | `true` | Post coverage report as PR comment |
@@ -51,13 +51,38 @@ jobs:
     min-coverage: 80
 ```
 
-### Strict Mode
+### Strict Mode with Presets
+
+Use presets for common CI patterns:
+
+```yaml
+# Default CI protection
+- uses: doccov/doccov@v1
+  with:
+    strict: ci
+
+# Pre-release validation (all checks)
+- uses: doccov/doccov@v1
+  with:
+    strict: release
+
+# Documentation hygiene
+- uses: doccov/doccov@v1
+  with:
+    strict: quality
+```
+
+| Preset | Checks | Use Case |
+|--------|--------|----------|
+| `ci` | breaking, regression | Default CI protection |
+| `release` | breaking, regression, drift, docs-impact, undocumented | Pre-release validation |
+| `quality` | drift, undocumented | Documentation hygiene |
+
+Or use custom check combinations:
 
 ```yaml
 - uses: doccov/doccov@v1
   with:
-    min-coverage: 90
-    require-examples: true
     strict: drift,undocumented
 ```
 
@@ -107,47 +132,54 @@ This will fail the check if:
 
 ## PR Comments
 
-When `comment-on-pr: true`, the action posts a comment with:
+When `comment-on-pr: true`, the action posts an actionable comment with:
 
-- Coverage percentage
-- Coverage delta (vs base branch)
-- New undocumented exports
-- Drift issues introduced/resolved
-- **Docs impact** (if `docs-glob` is set)
+- Coverage summary with target comparison
+- Undocumented exports grouped by file (with clickable links)
+- Doc drift issues with fix guidance
+- Contextual "How to fix" section
+- Collapsible full metrics table
 
 Example comment:
 
 ```markdown
-## 📈 DocCov Report
+## ✅ DocCov — Documentation Coverage
 
-| Metric | Value |
-|--------|-------|
-| Coverage | 80% → 85% (+5%) |
-| New exports | 3 |
-| Undocumented | 1 |
-| Drift introduced | 0 |
-| Drift resolved | 2 |
+**Patch coverage:** 86% (target: 80%) ✅
+**New undocumented exports:** 2
+**Doc drift issues:** 1
 
-## 📚 Documentation Impact
+### Undocumented exports in this PR
 
-### Files Needing Updates
+📁 [`packages/client/src/index.ts`](https://github.com/org/repo/blob/sha/packages/client/src/index.ts)
+- `export function createClient(options: ClientOptions): Client`
+  - Missing: description, `@param options`, `@returns`
 
-| File | Issues |
-|------|--------|
-| `docs/getting-started.md` | 2 reference(s) |
-| `docs/guides/webhooks.mdx` | 1 reference(s) |
+### Doc drift detected
 
-### Missing Documentation
+⚠️ `docs/api.md`: `fetchData`
+- Parameter type mismatch: expected `string`, got `Options`
+- Fix: Update @param type annotation
 
-- `createWebhook()` - new export with no docs
+### How to fix
+
+**For undocumented exports:**
+Add JSDoc/TSDoc blocks with description, `@param`, and `@returns` tags.
+
+**For doc drift:**
+Update the code examples in your markdown files to match current signatures.
+
+Push your changes — DocCov re-checks automatically.
 
 <details>
-<summary>View details</summary>
+<summary>View full report</summary>
 
-#### docs/getting-started.md
-
-- **Line 45**: `fetchData` (signature changed)
-- **Line 78**: `fetchData` (signature changed)
+| Metric | Before | After | Delta |
+|--------|--------|-------|-------|
+| Coverage | 80% | 86% | +6% |
+| Breaking changes | - | 0 | - |
+| New exports | - | 3 | - |
+| Undocumented | - | 2 | - |
 
 </details>
 ```

@@ -16,7 +16,10 @@ inputs:
     required: false
     default: 'false'
   strict:
-    description: 'Fail conditions (comma-separated): regression, drift, docs-impact, breaking, undocumented, all'
+    description: |
+      Fail conditions. Use preset name or comma-separated checks:
+      Presets: ci (breaking,regression), release (all), quality (drift,undocumented)
+      Custom: "breaking,drift,undocumented"
     required: false
     default: ''
   docs-glob:
@@ -150,83 +153,43 @@ runs:
           eval "doccov diff openpkg-base.json openpkg.json $DIFF_ARGS"
         fi
 
-    - name: Post PR comment
+    - name: Generate PR comment
       if: github.event_name == 'pull_request' && inputs.comment-on-pr == 'true'
+      id: comment
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        if [ -f openpkg-base.json ]; then
+          COMMENT_ARGS="--format pr-comment"
+          COMMENT_ARGS="$COMMENT_ARGS --repo-url https://github.com/${{ github.repository }}"
+          COMMENT_ARGS="$COMMENT_ARGS --sha ${{ github.event.pull_request.head.sha }}"
+          COMMENT_ARGS="$COMMENT_ARGS --min-coverage ${{ inputs.min-coverage }}"
+          if [ -n "${{ inputs.docs-glob }}" ]; then
+            COMMENT_ARGS="$COMMENT_ARGS --docs '${{ inputs.docs-glob }}'"
+          fi
+
+          COMMENT=$(eval "doccov diff openpkg-base.json openpkg.json $COMMENT_ARGS")
+          echo "body<<EOF" >> $GITHUB_OUTPUT
+          echo "$COMMENT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Post PR comment
+      if: github.event_name == 'pull_request' && inputs.comment-on-pr == 'true' && steps.comment.outputs.body != ''
       uses: actions/github-script@v7
       with:
         github-token: ${{ inputs.github-token }}
         script: |
-          const diff = JSON.parse(process.env.DIFF_RESULT || '{}');
-          
-          const emoji = diff.coverageDelta > 0 ? '📈' : diff.coverageDelta < 0 ? '📉' : '➡️';
-          const delta = diff.coverageDelta > 0 ? `+${diff.coverageDelta}` : String(diff.coverageDelta || 0);
-          
-          let body = `## ${emoji} DocCov Report\n\n`;
-          body += `| Metric | Value |\n|--------|-------|\n`;
-          body += `| Coverage | ${diff.oldCoverage || 0}% → ${diff.newCoverage || 0}% (${delta}%) |\n`;
-          body += `| New exports | ${diff.nonBreaking?.length || 0} |\n`;
-          body += `| Undocumented | ${diff.newUndocumented?.length || 0} |\n`;
-          body += `| Drift introduced | ${diff.driftIntroduced || 0} |\n`;
-          body += `| Drift resolved | ${diff.driftResolved || 0} |\n`;
-          
-          // Add docs impact section if available
-          if (diff.docsImpact) {
-            const impact = diff.docsImpact;
-            const impactedCount = impact.impactedFiles?.length || 0;
-            const missingCount = impact.missingDocs?.length || 0;
-            
-            if (impactedCount > 0 || missingCount > 0) {
-              body += `\n## 📚 Documentation Impact\n\n`;
-              
-              if (impactedCount > 0) {
-                body += `### Files Needing Updates\n\n`;
-                body += `| File | Issues |\n|------|--------|\n`;
-                for (const file of impact.impactedFiles.slice(0, 10)) {
-                  body += `| \`${file.file}\` | ${file.references.length} reference(s) |\n`;
-                }
-                if (impactedCount > 10) {
-                  body += `\n_...and ${impactedCount - 10} more file(s)_\n`;
-                }
-              }
-              
-              if (missingCount > 0) {
-                body += `\n### Missing Documentation\n\n`;
-                for (const name of impact.missingDocs.slice(0, 5)) {
-                  body += `- \`${name}()\` - new export with no docs\n`;
-                }
-                if (missingCount > 5) {
-                  body += `\n_...and ${missingCount - 5} more_\n`;
-                }
-              }
-              
-              // Expandable details
-              if (impactedCount > 0) {
-                body += `\n<details>\n<summary>View details</summary>\n\n`;
-                for (const file of impact.impactedFiles.slice(0, 5)) {
-                  body += `#### ${file.file}\n\n`;
-                  for (const ref of file.references.slice(0, 5)) {
-                    const label = ref.changeType === 'signature-changed' ? 'signature changed' :
-                                  ref.changeType === 'removed' ? 'removed' : 'deprecated';
-                    body += `- **Line ${ref.line}**: \`${ref.exportName}\` (${label})\n`;
-                  }
-                  if (file.references.length > 5) {
-                    body += `- _...and ${file.references.length - 5} more_\n`;
-                  }
-                  body += `\n`;
-                }
-                body += `</details>\n`;
-              }
-            }
-          }
-          
+          const body = process.env.COMMENT_BODY;
+
           const { data: comments } = await github.rest.issues.listComments({
             owner: context.repo.owner,
             repo: context.repo.repo,
             issue_number: context.issue.number,
           });
-          
-          const existing = comments.find(c => c.body?.includes('DocCov Report'));
-          
+
+          const existing = comments.find(c => c.body?.includes('DocCov'));
+
           if (existing) {
             await github.rest.issues.updateComment({
               owner: context.repo.owner,
@@ -243,5 +206,5 @@ runs:
             });
           }
       env:
-        DIFF_RESULT: ${{ steps.diff.outputs.result }}
+        COMMENT_BODY: ${{ steps.comment.outputs.body }}
 

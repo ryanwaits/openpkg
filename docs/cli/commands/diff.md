@@ -19,9 +19,12 @@ doccov diff <base> <head> [options]
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `--format <format>` | `text` | Output format: `text`, `json`, `github`, `report` |
-| `--strict <options>` | - | Fail conditions (comma-separated): `regression`, `drift`, `docs-impact`, `breaking`, `undocumented`, `all` |
+| `--format <format>` | `text` | Output format: `text`, `json`, `github`, `pr-comment`, `markdown`, `html` |
+| `--strict <preset>` | - | Fail conditions: preset (`ci`, `release`, `quality`) or comma-separated checks |
 | `--docs <glob>` | - | Glob pattern for markdown docs to check for impact (repeatable) |
+| `--repo-url <url>` | - | GitHub repo URL for file links (pr-comment format) |
+| `--sha <sha>` | - | Commit SHA for file links (pr-comment format) |
+| `--min-coverage <n>` | - | Minimum coverage % for HEAD spec |
 | `--ai` | `false` | Use AI for deeper analysis and fix suggestions |
 
 ### Output Formats
@@ -31,18 +34,27 @@ doccov diff <base> <head> [options]
 | `text` | Human-readable CLI output | Local dev, quick checks |
 | `json` | Structured JSON object | AI/LLM consumption, programmatic use |
 | `github` | GitHub Actions annotations | CI inline feedback in PR diffs |
-| `report` | HTML report | Documentation, sharing |
+| `pr-comment` | PR comment markdown | GitHub PR comments with actionable info |
+| `markdown` | Full markdown report | Documentation, sharing |
+| `html` | HTML report | Standalone viewing |
 
-### Strict Options
+### Strict Presets
 
-| Option | Description |
-|--------|-------------|
+| Preset | Checks | Use Case |
+|--------|--------|----------|
+| `ci` | breaking, regression | Default CI protection |
+| `release` | breaking, regression, drift, docs-impact, undocumented | Pre-release validation |
+| `quality` | drift, undocumented | Documentation hygiene |
+
+### Individual Checks
+
+| Check | Description |
+|-------|-------------|
 | `regression` | Fail if coverage decreased |
 | `drift` | Fail if new drift introduced |
 | `docs-impact` | Fail if docs need updates (requires `--docs`) |
 | `breaking` | Fail if any breaking changes detected |
 | `undocumented` | Fail if new exports lack documentation |
-| `all` | Enable all strict checks |
 
 ## Examples
 
@@ -119,21 +131,39 @@ doccov diff base.json head.json --format github
 
 ### Strict Mode
 
-Fail CI on specific conditions:
+Fail CI on specific conditions using presets:
 
 ```bash
-# Fail if coverage dropped
-doccov diff base.json head.json --strict regression
+# Use preset - default CI protection
+doccov diff base.json head.json --strict ci
 
-# Fail if any breaking changes
-doccov diff base.json head.json --strict breaking
+# Use preset - pre-release validation
+doccov diff base.json head.json --strict release
 
-# Fail on multiple conditions
+# Use preset - documentation hygiene
+doccov diff base.json head.json --strict quality
+
+# Custom checks
 doccov diff base.json head.json --strict regression,drift,undocumented
-
-# Fail on all conditions
-doccov diff base.json head.json --strict all
 ```
+
+### PR Comment Format
+
+Generate markdown optimized for GitHub PR comments:
+
+```bash
+doccov diff base.json head.json --format pr-comment \
+  --repo-url https://github.com/org/repo \
+  --sha abc123 \
+  --min-coverage 80
+```
+
+Output includes:
+- Coverage summary with target comparison
+- Undocumented exports grouped by file (with clickable links)
+- Doc drift issues with fix guidance
+- Contextual "How to fix" section
+- Collapsible full metrics table
 
 ### HTML Report
 

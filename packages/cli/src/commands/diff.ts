@@ -16,7 +16,13 @@ import chalk from 'chalk';
 import type { Command } from 'commander';
 import { glob } from 'glob';
 import { loadDocCovConfig } from '../config';
-import { type DiffReportData, renderDiffHtml, renderDiffMarkdown, writeReport } from '../reports';
+import {
+  type DiffReportData,
+  renderDiffHtml,
+  renderDiffMarkdown,
+  renderPRComment,
+  writeReport,
+} from '../reports';
 import { generateImpactSummary, isAIDocsAnalysisAvailable } from '../utils/docs-impact-ai';
 import { resolveThreshold } from '../utils/validation';
 
@@ -32,7 +38,7 @@ const defaultDependencies: Required<DiffCommandDependencies> = {
   error: console.error,
 };
 
-type OutputFormat = 'text' | 'json' | 'markdown' | 'html' | 'github';
+type OutputFormat = 'text' | 'json' | 'markdown' | 'html' | 'github' | 'pr-comment';
 
 /** Strict mode presets */
 type StrictPreset = 'ci' | 'release' | 'quality';
@@ -71,11 +77,18 @@ export function registerDiffCommand(
     .option('--base <file>', 'Base spec file (the "before" state)')
     .option('--head <file>', 'Head spec file (the "after" state)')
     // Output control
-    .option('--format <format>', 'Output format: text, json, markdown, html, github', 'text')
+    .option(
+      '--format <format>',
+      'Output format: text, json, markdown, html, github, pr-comment',
+      'text',
+    )
     .option('--stdout', 'Output to stdout instead of writing to .doccov/')
     .option('-o, --output <file>', 'Custom output path')
     .option('--cwd <dir>', 'Working directory', process.cwd())
     .option('--limit <n>', 'Max items to show in terminal/reports', '10')
+    // PR comment options
+    .option('--repo-url <url>', 'GitHub repo URL for file links (pr-comment format)')
+    .option('--sha <sha>', 'Commit SHA for file links (pr-comment format)')
     // Thresholds (same as check command, applied to HEAD spec)
     .option('--min-coverage <n>', 'Minimum coverage % for HEAD spec (0-100)')
     .option('--max-drift <n>', 'Maximum drift % for HEAD spec (0-100)')
@@ -234,6 +247,21 @@ export function registerDiffCommand(
             // Always stdout for CI annotation parsing
             printGitHubAnnotations(diff, log);
             break;
+
+          case 'pr-comment': {
+            // PR comment format - always stdout for GitHub Actions
+            const content = renderPRComment(
+              { diff, baseName, headName, headSpec },
+              {
+                repoUrl: options.repoUrl,
+                sha: options.sha,
+                minCoverage,
+                limit,
+              },
+            );
+            log(content);
+            break;
+          }
         }
 
         // Run validation (thresholds + strict presets)

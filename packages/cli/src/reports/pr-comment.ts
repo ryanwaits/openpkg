@@ -1,0 +1,329 @@
+/**
+ * PR comment renderer for GitHub Actions
+ *
+ * Generates actionable markdown optimized for PR comments
+ */
+
+import type { SpecDiffWithDocs } from '@doccov/sdk';
+import type { OpenPkg, SpecDocDrift, SpecExport } from '@openpkg-ts/spec';
+
+export interface PRCommentOptions {
+  /** GitHub repo URL for file links (e.g. "https://github.com/org/repo") */
+  repoUrl?: string;
+  /** Commit SHA for blob links */
+  sha?: string;
+  /** Target coverage percentage from config/action */
+  minCoverage?: number;
+  /** Max items per section (default 10) */
+  limit?: number;
+}
+
+export interface PRCommentData {
+  diff: SpecDiffWithDocs;
+  baseName: string;
+  headName: string;
+  /** Head spec for detailed export/drift info */
+  headSpec?: OpenPkg;
+}
+
+/**
+ * Render a PR comment from diff data
+ */
+export function renderPRComment(data: PRCommentData, opts: PRCommentOptions = {}): string {
+  const { diff, headSpec } = data;
+  const limit = opts.limit ?? 10;
+  const lines: string[] = [];
+
+  // Determine status
+  const hasIssues =
+    diff.newUndocumented.length > 0 ||
+    diff.driftIntroduced > 0 ||
+    diff.breaking.length > 0 ||
+    (opts.minCoverage !== undefined && diff.newCoverage < opts.minCoverage);
+
+  const statusIcon = hasIssues ? (diff.coverageDelta < 0 ? '❌' : '⚠️') : '✅';
+
+  // Header
+  lines.push(`## ${statusIcon} DocCov — Documentation Coverage`);
+  lines.push('');
+
+  // Summary metrics
+  const targetStr =
+    opts.minCoverage !== undefined
+      ? ` (target: ${opts.minCoverage}%) ${diff.newCoverage >= opts.minCoverage ? '✅' : '❌'}`
+      : '';
+  lines.push(`**Patch coverage:** ${diff.newCoverage}%${targetStr}`);
+
+  if (diff.newUndocumented.length > 0) {
+    lines.push(`**New undocumented exports:** ${diff.newUndocumented.length}`);
+  }
+
+  if (diff.driftIntroduced > 0) {
+    lines.push(`**Doc drift issues:** ${diff.driftIntroduced}`);
+  }
+
+  // Undocumented exports section
+  if (diff.newUndocumented.length > 0) {
+    lines.push('');
+    lines.push('### Undocumented exports in this PR');
+    lines.push('');
+    renderUndocumentedExports(lines, diff.newUndocumented, headSpec, opts, limit);
+  }
+
+  // Doc drift section
+  if (diff.driftIntroduced > 0 && headSpec) {
+    lines.push('');
+    lines.push('### Doc drift detected');
+    lines.push('');
+    renderDriftIssues(lines, diff.newUndocumented, headSpec, opts, limit);
+  }
+
+  // How to fix section (contextual)
+  const fixGuidance = renderFixGuidance(diff);
+  if (fixGuidance) {
+    lines.push('');
+    lines.push('### How to fix');
+    lines.push('');
+    lines.push(fixGuidance);
+  }
+
+  // Collapsible details
+  lines.push('');
+  lines.push('<details>');
+  lines.push('<summary>View full report</summary>');
+  lines.push('');
+  renderDetailsTable(lines, diff);
+  lines.push('');
+  lines.push('</details>');
+
+  return lines.join('\n');
+}
+
+/**
+ * Render undocumented exports grouped by file
+ */
+function renderUndocumentedExports(
+  lines: string[],
+  undocumented: string[],
+  headSpec: OpenPkg | undefined,
+  opts: PRCommentOptions,
+  limit: number,
+): void {
+  if (!headSpec) {
+    // Fallback: just list names
+    for (const name of undocumented.slice(0, limit)) {
+      lines.push(`- \`${name}\``);
+    }
+    if (undocumented.length > limit) {
+      lines.push(`- _...and ${undocumented.length - limit} more_`);
+    }
+    return;
+  }
+
+  // Group exports by file
+  const byFile = new Map<string, SpecExport[]>();
+  const undocSet = new Set(undocumented);
+
+  for (const exp of headSpec.exports) {
+    if (undocSet.has(exp.name)) {
+      const file = exp.source?.file ?? 'unknown';
+      const list = byFile.get(file) ?? [];
+      list.push(exp);
+      byFile.set(file, list);
+    }
+  }
+
+  let count = 0;
+  for (const [file, exports] of byFile) {
+    if (count >= limit) break;
+
+    const fileLink = buildFileLink(file, opts);
+    lines.push(`📁 ${fileLink}`);
+
+    for (const exp of exports) {
+      if (count >= limit) {
+        lines.push(`- _...and more_`);
+        break;
+      }
+
+      const sig = formatExportSignature(exp);
+      lines.push(`- \`${sig}\``);
+
+      // List missing signals
+      const missing = getMissingSignals(exp);
+      if (missing.length > 0) {
+        lines.push(`  - Missing: ${missing.join(', ')}`);
+      }
+
+      count++;
+    }
+    lines.push('');
+  }
+
+  if (undocumented.length > count) {
+    lines.push(`_...and ${undocumented.length - count} more undocumented exports_`);
+  }
+}
+
+/**
+ * Render drift issues from head spec
+ */
+function renderDriftIssues(
+  lines: string[],
+  _undocumented: string[],
+  headSpec: OpenPkg,
+  opts: PRCommentOptions,
+  limit: number,
+): void {
+  const driftIssues: { exportName: string; file?: string; drift: SpecDocDrift }[] = [];
+
+  // Collect drift from all exports
+  for (const exp of headSpec.exports) {
+    const drifts = (exp as { docs?: { drift?: SpecDocDrift[] } }).docs?.drift;
+    if (drifts) {
+      for (const d of drifts) {
+        driftIssues.push({
+          exportName: exp.name,
+          file: exp.source?.file,
+          drift: d,
+        });
+      }
+    }
+  }
+
+  if (driftIssues.length === 0) {
+    lines.push('_No specific drift details available_');
+    return;
+  }
+
+  for (const issue of driftIssues.slice(0, limit)) {
+    const fileRef = issue.file ? `\`${issue.file}\`` : 'unknown file';
+    const fileLink = issue.file ? buildFileLink(issue.file, opts) : fileRef;
+
+    lines.push(`⚠️ ${fileLink}: \`${issue.exportName}\``);
+    lines.push(`- ${issue.drift.issue}`);
+    if (issue.drift.suggestion) {
+      lines.push(`- Fix: ${issue.drift.suggestion}`);
+    }
+    lines.push('');
+  }
+
+  if (driftIssues.length > limit) {
+    lines.push(`_...and ${driftIssues.length - limit} more drift issues_`);
+  }
+}
+
+/**
+ * Build file link with optional GitHub URL
+ */
+function buildFileLink(file: string, opts: PRCommentOptions): string {
+  if (opts.repoUrl && opts.sha) {
+    const url = `${opts.repoUrl}/blob/${opts.sha}/${file}`;
+    return `[\`${file}\`](${url})`;
+  }
+  return `\`${file}\``;
+}
+
+/**
+ * Format export signature for display
+ */
+function formatExportSignature(exp: SpecExport): string {
+  const prefix = `export ${exp.kind === 'type' ? 'type' : exp.kind === 'interface' ? 'interface' : exp.kind === 'class' ? 'class' : 'function'}`;
+
+  if (exp.kind === 'function' && exp.signatures?.[0]) {
+    const sig = exp.signatures[0];
+    const params =
+      sig.parameters?.map((p) => `${p.name}${p.required === false ? '?' : ''}`).join(', ') ?? '';
+    const ret = sig.returns?.tsType ?? 'void';
+    return `${prefix} ${exp.name}(${params}): ${ret}`;
+  }
+
+  if (exp.kind === 'type' || exp.kind === 'interface') {
+    return `${prefix} ${exp.name}`;
+  }
+
+  if (exp.kind === 'class') {
+    return `${prefix} ${exp.name}`;
+  }
+
+  return `export ${exp.kind} ${exp.name}`;
+}
+
+/**
+ * Get list of missing documentation signals
+ */
+function getMissingSignals(exp: SpecExport): string[] {
+  const missing: string[] = [];
+
+  if (!exp.description) {
+    missing.push('description');
+  }
+
+  if (exp.kind === 'function' && exp.signatures?.[0]) {
+    const sig = exp.signatures[0];
+    const undocParams = sig.parameters?.filter((p) => !p.description) ?? [];
+    if (undocParams.length > 0) {
+      missing.push(`\`@param ${undocParams.map((p) => p.name).join(', ')}\``);
+    }
+    if (!sig.returns?.description && sig.returns?.tsType !== 'void') {
+      missing.push('`@returns`');
+    }
+  }
+
+  return missing;
+}
+
+/**
+ * Render contextual fix guidance based on issue types
+ */
+function renderFixGuidance(diff: SpecDiffWithDocs): string {
+  const sections: string[] = [];
+
+  if (diff.newUndocumented.length > 0) {
+    sections.push(
+      '**For undocumented exports:**\n' +
+        'Add JSDoc/TSDoc blocks with description, `@param`, and `@returns` tags.',
+    );
+  }
+
+  if (diff.driftIntroduced > 0) {
+    sections.push(
+      '**For doc drift:**\n' +
+        'Update the code examples in your markdown files to match current signatures.',
+    );
+  }
+
+  if (diff.breaking.length > 0) {
+    sections.push(
+      '**For breaking changes:**\n' + 'Consider adding a migration guide or updating changelog.',
+    );
+  }
+
+  if (sections.length === 0) {
+    return '';
+  }
+
+  sections.push('\nPush your changes — DocCov re-checks automatically.');
+  return sections.join('\n\n');
+}
+
+/**
+ * Render collapsible details table
+ */
+function renderDetailsTable(lines: string[], diff: SpecDiffWithDocs): void {
+  const delta = (n: number) => (n > 0 ? `+${n}` : n === 0 ? '0' : String(n));
+
+  lines.push('| Metric | Before | After | Delta |');
+  lines.push('|--------|--------|-------|-------|');
+  lines.push(
+    `| Coverage | ${diff.oldCoverage}% | ${diff.newCoverage}% | ${delta(diff.coverageDelta)}% |`,
+  );
+  lines.push(`| Breaking changes | - | ${diff.breaking.length} | - |`);
+  lines.push(`| New exports | - | ${diff.nonBreaking.length} | - |`);
+  lines.push(`| Undocumented | - | ${diff.newUndocumented.length} | - |`);
+
+  if (diff.driftIntroduced > 0 || diff.driftResolved > 0) {
+    const driftDelta = diff.driftIntroduced - diff.driftResolved;
+    lines.push(`| Drift | - | - | ${delta(driftDelta)} |`);
+  }
+}
