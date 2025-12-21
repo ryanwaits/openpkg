@@ -1,5 +1,11 @@
 # @doccov/api
 
+## 0.4.0
+
+### Minor Changes
+
+- feat: add platform auth, billing, org management & coverage tracking
+
 ## 0.3.7
 
 ### Patch Changes

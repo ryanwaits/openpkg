@@ -1,6 +1,6 @@
 {
   "name": "@doccov/api",
-  "version": "0.3.7",
+  "version": "0.4.0",
   "description": "DocCov API - Badge endpoint and coverage services",
   "keywords": [
     "doccov",
