@@ -10,6 +10,7 @@ export {
 export type { CodeInfo } from './code.config';
 export { flagsToOptions, theme } from './code.config';
 export { CopyButton } from './code.copy';
+export { ClientDiffCode, type ClientDiffCodeProps, type DiffStats } from './code.diff';
 export { CodeIcon } from './code.icon';
 export { DocsKitInlineCode } from './code.inline';
 export { PackageInstall } from './code.package-install';

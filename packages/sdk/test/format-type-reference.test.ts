@@ -4,7 +4,7 @@
  * These tests use a minimal TypeScript program to test formatTypeReference
  * with real TypeScript types.
  */
-import { beforeAll, describe, expect, test } from 'bun:test';
+import { describe, expect, test } from 'bun:test';
 import * as ts from 'typescript';
 import { formatTypeReference, propertiesToSchema } from '../src/utils/parameter-utils';
 

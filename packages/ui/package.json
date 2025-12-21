@@ -14,7 +14,12 @@
     "./file-change-row": "./src/components/file-change-row/index.ts",
     "./file-chip": "./src/components/file-chip/index.ts",
     "./docskit": "./src/components/docskit/index.ts",
-    "./lib/utils": "./src/lib/utils.ts"
+    "./fix-workflow": "./src/components/fix-workflow/index.ts",
+    "./pr-coverage": "./src/components/pr-coverage/index.ts",
+    "./drift-command-center": "./src/components/drift-command-center/index.ts",
+    "./coverage-trends": "./src/components/coverage-trends/index.ts",
+    "./lib/utils": "./src/lib/utils.ts",
+    "./components/pr-coverage": "./src/components/pr-coverage/index.ts"
   },
   "scripts": {
     "lint": "biome check src/",

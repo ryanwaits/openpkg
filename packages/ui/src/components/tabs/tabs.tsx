@@ -120,6 +120,51 @@ const SegmentedTabs = React.forwardRef<HTMLDivElement, SegmentedTabsProps>(
           const isLast = index === tabs.length - 1;
           const isActive = 'isActive' in tab ? tab.isActive : tab.id === activeTab;
           const isAction = tab.type === 'action';
+          const isFileWithClose = tab.type === 'file' && tab.closeable && onTabClose;
+
+          // File tabs with close button need special handling to avoid nested buttons
+          if (isFileWithClose && tab.type === 'file') {
+            return (
+              <div
+                key={tab.id}
+                className={cn('relative flex items-center', !isLast && 'border-r border-border')}
+              >
+                <button
+                  type="button"
+                  onClick={() => onTabChange?.(tab.id)}
+                  className={cn(
+                    'flex items-center gap-1.5 pl-3 pr-1 py-2 text-[13px] transition-colors',
+                    'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
+                    isActive
+                      ? 'bg-accent text-foreground font-medium'
+                      : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground',
+                  )}
+                >
+                  <span
+                    className={cn(
+                      'flex items-center justify-center size-4 rounded-[3px] text-[8px] font-bold text-white',
+                      fileTypeColors[tab.fileType || 'ts'] || 'bg-stone-500',
+                    )}
+                  >
+                    {fileTypeLabels[tab.fileType || 'ts']}
+                  </span>
+                  <span className="font-mono text-[13px]">{tab.label}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onTabClose(tab.id)}
+                  className={cn(
+                    'p-0.5 mr-2 rounded-sm transition-colors',
+                    'text-muted-foreground/50 hover:text-foreground hover:bg-accent',
+                    isActive ? 'bg-accent' : '',
+                  )}
+                  aria-label={`Close ${tab.label}`}
+                >
+                  <X className="size-3" />
+                </button>
+              </div>
+            );
+          }
 
           return (
             <button
@@ -167,22 +212,6 @@ const SegmentedTabs = React.forwardRef<HTMLDivElement, SegmentedTabsProps>(
                     {fileTypeLabels[tab.fileType || 'ts']}
                   </span>
                   <span className="font-mono text-[13px]">{tab.label}</span>
-                  {tab.closeable && onTabClose && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onTabClose(tab.id);
-                      }}
-                      className={cn(
-                        'ml-0.5 p-0.5 rounded-sm transition-colors',
-                        'text-muted-foreground/50 hover:text-foreground hover:bg-accent',
-                      )}
-                      aria-label={`Close ${tab.label}`}
-                    >
-                      <X className="size-3" />
-                    </button>
-                  )}
                 </>
               )}
 

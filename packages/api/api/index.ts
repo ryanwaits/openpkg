@@ -183,7 +183,6 @@ function wrapLocalBinary(
         return { cmd: 'yarn', args: [cmd, ...args] }; // yarn runs local bins directly
       case 'bun':
         return { cmd: 'bunx', args: [cmd, ...args] };
-      case 'npm':
       default:
         return { cmd: 'npx', args: [cmd, ...args] };
     }
@@ -715,7 +714,7 @@ async function handleExecute(req: VercelRequest, res: VercelResponse): Promise<v
     const analyzeCwd = normalizeCwd(plan.target.rootPath);
 
     // If running in a subdirectory (rootPath), strip the rootPath prefix from entryPoint
-    if (plan.target.rootPath && entryPoint.startsWith(plan.target.rootPath + '/')) {
+    if (plan.target.rootPath && entryPoint.startsWith(`${plan.target.rootPath}/`)) {
       entryPoint = entryPoint.slice(plan.target.rootPath.length + 1);
     }
 
@@ -899,7 +898,7 @@ async function handleExecuteStream(req: VercelRequest, res: VercelResponse): Pro
 
     // If running in a subdirectory (rootPath), strip the rootPath prefix from entryPoint
     // e.g., rootPath="packages/v0-sdk", entryPoint="packages/v0-sdk/src/index.ts" -> "src/index.ts"
-    if (plan.target.rootPath && entryPoint.startsWith(plan.target.rootPath + '/')) {
+    if (plan.target.rootPath && entryPoint.startsWith(`${plan.target.rootPath}/`)) {
       entryPoint = entryPoint.slice(plan.target.rootPath.length + 1);
     }
 

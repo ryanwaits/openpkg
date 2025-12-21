@@ -1,14 +1,7 @@
-export type {
-  FileChangeListProps,
-  FileChangeRowProps,
-  FileChangeRowTriggerProps,
-  FileType,
-} from './file-change-row';
+export type { FileChangeListProps, FileChangeRowProps } from './file-change-row';
 export {
   FileChangeList,
   FileChangeRow,
-  FileChangeRowTrigger,
-  FileTypeIcon,
-  getFileType,
+  getLangFromFilename,
   StackedChevrons,
 } from './file-change-row';

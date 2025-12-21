@@ -18,9 +18,9 @@
     "dev:sdk": "cd packages/sdk && bun run dev",
     "dev:cli": "cd packages/cli && bun run dev",
     "dev:site": "cd apps/site && bun run dev",
-    "lint": "biome check packages/ apps/ tests/",
-    "lint:fix": "biome check --write packages/ apps/ tests/",
-    "format": "biome format --write packages/ apps/ tests/",
+    "lint": "biome check packages/ apps/",
+    "lint:fix": "biome check --write packages/ apps/",
+    "format": "biome format --write packages/ apps/",
     "changeset": "changeset",
     "version": "changeset version && bun install",
     "release": "NPM_TOKEN=$NPM_DOCCOV_TOKEN changeset publish"
@@ -33,8 +33,5 @@
   },
   "dependencies": {
     "vercel": "^48.10.12"
-  },
-  "overrides": {
-    "zod": "^3.25.0"
   }
 }

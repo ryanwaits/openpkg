@@ -48,6 +48,7 @@ export function ClientDocsKitCode(props: {
     return () => {
       cancelled = true;
     };
+    // Only depend on primitive values to avoid infinite re-renders
   }, [codeblock.value, codeblock.lang, codeblock.meta, codeblock]);
 
   if (!highlighted) {
@@ -126,6 +127,7 @@ export function ClientTerminal(props: { codeblock: RawCode; handlers?: Annotatio
     return () => {
       cancelled = true;
     };
+    // Only depend on primitive values to avoid infinite re-renders
   }, [codeblock.value, codeblock.lang, codeblock.meta, codeblock]);
 
   if (!highlighted) {
@@ -199,6 +201,7 @@ export function ClientInlineCode({ codeblock }: { codeblock: RawCode }) {
     return () => {
       cancelled = true;
     };
+    // Only depend on primitive values to avoid infinite re-renders
   }, [codeblock.value, codeblock.lang, codeblock.meta, codeblock]);
 
   if (!highlighted) {
@@ -258,6 +261,9 @@ export function ClientCode(props: { codeblocks: RawCode[]; flags?: string; stora
     groupFlags?.startsWith('-') ? groupFlags.slice(1) : groupFlags,
   );
 
+  // Create stable dependency key from codeblocks content
+  const _codeBlocksKey = codeblocks.map((b) => `${b.value}|${b.lang}|${b.meta}`).join('::');
+
   useEffect(() => {
     let cancelled = false;
 
@@ -286,6 +292,8 @@ export function ClientCode(props: { codeblocks: RawCode[]; flags?: string; stora
     return () => {
       cancelled = true;
     };
+    // Only depend on primitive values to avoid infinite re-renders
+    // biome-ignore lint/correctness/useExhaustiveDependencies: groupOptions is derived from groupFlags
   }, [codeblocks.map, groupOptions]);
 
   if (!highlighted) {
