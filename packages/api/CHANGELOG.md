@@ -1,5 +1,18 @@
 # @doccov/api
 
+## 0.5.0
+
+### Minor Changes
+
+- Enhanced quality rules, filtering, github context, analysis reports, new API routes (ai, billing, demo, github-app, invites, orgs), trends command, diff capabilities
+
+### Patch Changes
+
+- Updated dependencies
+  - @doccov/sdk@0.18.0
+  - @openpkg-ts/spec@0.10.0
+  - @doccov/db@0.1.0
+
 ## 0.4.0
 
 ### Minor Changes

@@ -1,5 +1,11 @@
 # @doccov/ui
 
+## 0.1.1
+
+### Patch Changes
+
+- Enhanced quality rules, filtering, github context, analysis reports, new API routes (ai, billing, demo, github-app, invites, orgs), trends command, diff capabilities
+
 ## 0.1.0
 
 ### Minor Changes
