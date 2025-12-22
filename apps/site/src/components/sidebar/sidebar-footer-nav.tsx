@@ -1,12 +1,14 @@
 'use client';
 
-import { ExternalLink, Key, Settings } from 'lucide-react';
+import { BarChart3, ExternalLink, Key, Settings, Users } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
 const footerNavItems = [
   { href: '/settings', label: 'Settings', icon: Settings, exact: true },
+  { href: '/settings/members', label: 'Members', icon: Users },
+  { href: '/settings/usage', label: 'Usage', icon: BarChart3 },
   { href: '/settings/api-keys', label: 'API Keys', icon: Key },
 ];
 
@@ -39,7 +41,7 @@ export function SidebarFooterNav() {
 
       {/* Documentation link (external) */}
       <a
-        href="https://doccov.dev/docs"
+        href="https://doccov.com/docs"
         target="_blank"
         rel="noopener noreferrer"
         className={cn(

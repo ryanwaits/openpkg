@@ -54,7 +54,7 @@ export function CommandMenu({ open, onOpenChange }: CommandMenuProps) {
         <CommandSeparator />
         <CommandGroup heading="Links">
           <CommandItem
-            onSelect={() => runCommand(() => window.open('https://doccov.dev/docs', '_blank'))}
+            onSelect={() => runCommand(() => window.open('https://doccov.com/docs', '_blank'))}
           >
             <ExternalLink className="mr-2" />
             <span>Documentation</span>

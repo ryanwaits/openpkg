@@ -13,6 +13,8 @@ import {
   CoverageTrends,
   type SignalDataPoint,
 } from '@/components/coverage-trends';
+import { UpgradeCard } from '@/components/upgrade-card';
+import { useAuth } from '@/lib/auth-context';
 
 // Mock coverage trend data
 const mockCoverageData: CoverageDataPoint[] = [
@@ -205,8 +207,10 @@ const mockPackages = [
 ];
 
 export default function Dashboard() {
+  const { currentOrg } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [activePackage, setActivePackage] = useState(mockPackages[0].slug);
+  const isFreeUser = !currentOrg || currentOrg.plan === 'free';
 
   const tabs: TabCell[] = [
     { id: 'overview', type: 'text', label: 'Overview' },
@@ -285,19 +289,22 @@ export default function Dashboard() {
         </div>
       )}
 
-      {activeTab === 'trends' && (
-        <CoverageTrends
-          data={mockCoverageData}
-          signalData={mockSignalData}
-          insights={mockInsights}
-          regression={{
-            fromVersion: 'v1.5',
-            toVersion: 'v1.6',
-            coverageDrop: 4,
-            exportsLost: 3,
-          }}
-        />
-      )}
+      {activeTab === 'trends' &&
+        (isFreeUser ? (
+          <UpgradeCard feature="trends" />
+        ) : (
+          <CoverageTrends
+            data={mockCoverageData}
+            signalData={mockSignalData}
+            insights={mockInsights}
+            regression={{
+              fromVersion: 'v1.5',
+              toVersion: 'v1.6',
+              coverageDrop: 4,
+              exportsLost: 3,
+            }}
+          />
+        ))}
 
       {activeTab === 'undocumented' && (
         <div className="space-y-6">
