@@ -1,339 +1,151 @@
 # doccov diff
 
-Compare two OpenPkg specs and report changes.
+Compare two OpenPkg specs to detect breaking changes, coverage delta, and docs impact.
 
 ## Usage
 
 ```bash
-doccov diff <base> <head> [options]
+doccov diff [base] [head] [options]
+# or
+doccov diff --base <file> --head <file>
 ```
-
-## Arguments
-
-| Argument | Description |
-|----------|-------------|
-| `base` | Path to base/old spec file |
-| `head` | Path to head/new spec file |
 
 ## Options
 
-| Option | Default | Description |
-|--------|---------|-------------|
-| `--format <format>` | `text` | Output format: `text`, `json`, `github`, `pr-comment`, `markdown`, `html` |
-| `--strict <preset>` | - | Fail conditions: preset (`ci`, `release`, `quality`) or comma-separated checks |
-| `--docs <glob>` | - | Glob pattern for markdown docs to check for impact (repeatable) |
-| `--repo-url <url>` | - | GitHub repo URL for file links (pr-comment format) |
-| `--sha <sha>` | - | Commit SHA for file links (pr-comment format) |
-| `--min-coverage <n>` | - | Minimum coverage % for HEAD spec |
-| `--ai` | `false` | Use AI for deeper analysis and fix suggestions |
+### Input
 
-### Output Formats
+| Flag | Description |
+|------|-------------|
+| `--base <file>` | Base spec (the "before" state) |
+| `--head <file>` | Head spec (the "after" state) |
+| `--cwd <dir>` | Working directory |
 
-| Format | Description | Use Case |
-|--------|-------------|----------|
-| `text` | Human-readable CLI output | Local dev, quick checks |
-| `json` | Structured JSON object | AI/LLM consumption, programmatic use |
-| `github` | GitHub Actions annotations | CI inline feedback in PR diffs |
-| `pr-comment` | PR comment markdown | GitHub PR comments with actionable info |
-| `markdown` | Full markdown report | Documentation, sharing |
-| `html` | HTML report | Standalone viewing |
+### Output
 
-### Strict Presets
+| Flag | Description |
+|------|-------------|
+| `--format <fmt>` | `text`, `json`, `markdown`, `html`, `github`, `pr-comment`, `changelog` |
+| `-o, --output <file>` | Output path |
+| `--stdout` | Output to stdout |
+| `--limit <n>` | Max items (default: 10) |
 
-| Preset | Checks | Use Case |
-|--------|--------|----------|
-| `ci` | breaking, regression | Default CI protection |
-| `release` | breaking, regression, drift, docs-impact, undocumented | Pre-release validation |
-| `quality` | drift, undocumented | Documentation hygiene |
+### Validation
 
-### Individual Checks
+| Flag | Description |
+|------|-------------|
+| `--min-coverage <n>` | Min coverage % for HEAD |
+| `--max-drift <n>` | Max drift % for HEAD |
+| `--strict <preset>` | Fail on: `ci`, `release`, `quality` |
 
-| Check | Description |
-|-------|-------------|
-| `regression` | Fail if coverage decreased |
-| `drift` | Fail if new drift introduced |
-| `docs-impact` | Fail if docs need updates (requires `--docs`) |
-| `breaking` | Fail if any breaking changes detected |
-| `undocumented` | Fail if new exports lack documentation |
+### Enhancement
+
+| Flag | Description |
+|------|-------------|
+| `--docs <glob>` | Markdown docs to check for impact |
+| `--ai` | AI-powered analysis |
+| `--recommend-version` | Output semver bump recommendation |
+| `--repo-url <url>` | GitHub repo for file links |
+| `--sha <sha>` | Commit SHA for links |
 
 ## Examples
 
-### Basic Diff
+### Compare specs
 
 ```bash
-doccov diff old.json new.json
+doccov diff old-spec.json new-spec.json
 ```
 
-Output:
-
-```
-DocCov Diff Report
-────────────────────────────────────────
-
-Coverage
-  80% ↑ 85% (+5%)
-
-API Changes
-  ChainhooksClient [BREAKING]
-    ✖ evaluateChainhook() → Use replayChainhook instead
-    ~ bulkEnableChainhooks() signature changed
-        was: bulkEnableChainhooks(filters)
-        now: bulkEnableChainhooks(options)
-    + deleteAllChainhooks(), replayChainhook()
-
-  Function Changes (1):
-    ✖ legacyFetch (removed)
-
-  New Exports (3) (1 undocumented)
-    + createUser, updateUser, deleteUser
-
-  Drift: +1 drift, -2 resolved
-```
-
-### JSON Output
+### CI validation
 
 ```bash
-doccov diff old.json new.json --format json
+doccov diff --base main.json --head pr.json --strict ci
 ```
 
-```json
-{
-  "breaking": ["legacyFetch", "ChainhooksClient"],
-  "nonBreaking": ["createUser", "updateUser", "deleteUser"],
-  "coverageDelta": 5,
-  "oldCoverage": 80,
-  "newCoverage": 85,
-  "categorizedBreaking": [
-    { "id": "legacyFetch", "name": "legacyFetch", "kind": "function", "severity": "high", "reason": "removed" }
-  ],
-  "memberChanges": [
-    { "className": "ChainhooksClient", "memberName": "evaluateChainhook", "changeType": "removed", "suggestion": "Use replayChainhook instead" }
-  ],
-  "newUndocumented": ["deleteUser"],
-  "driftIntroduced": 1,
-  "driftResolved": 2
-}
-```
-
-### GitHub Annotations
-
-For CI - output annotations that show inline in PR diffs:
+### PR comment format
 
 ```bash
-doccov diff base.json head.json --format github
-```
-
-```
-::warning file=docs/evaluate.mdx,line=30,title=API Change::evaluateChainhook() removed → Use replayChainhook instead
-::error title=Breaking Change::legacyFetch - removed
-::notice title=Missing Documentation::New export deleteUser needs documentation
-```
-
-### Strict Mode
-
-Fail CI on specific conditions using presets:
-
-```bash
-# Use preset - default CI protection
-doccov diff base.json head.json --strict ci
-
-# Use preset - pre-release validation
-doccov diff base.json head.json --strict release
-
-# Use preset - documentation hygiene
-doccov diff base.json head.json --strict quality
-
-# Custom checks
-doccov diff base.json head.json --strict regression,drift,undocumented
-```
-
-### PR Comment Format
-
-Generate markdown optimized for GitHub PR comments:
-
-```bash
-doccov diff base.json head.json --format pr-comment \
+doccov diff --base base.json --head head.json \
+  --format pr-comment \
   --repo-url https://github.com/org/repo \
-  --sha abc123 \
-  --min-coverage 80
+  --sha abc123
 ```
 
-Output includes:
-- Coverage summary with target comparison
-- Undocumented exports grouped by file (with clickable links)
-- Doc drift issues with fix guidance
-- Contextual "How to fix" section
-- Collapsible full metrics table
-
-### HTML Report
-
-Generate a standalone HTML report:
+### Semver recommendation
 
 ```bash
-doccov diff base.json head.json --format report > report.html
+doccov diff base.json head.json --recommend-version
+# Output: minor (2 new exports added)
 ```
 
-## Docs Impact Analysis
-
-Detect which markdown documentation files are impacted by API changes.
-
-### Check Docs Impact
+### Docs impact analysis
 
 ```bash
 doccov diff base.json head.json --docs "docs/**/*.md"
 ```
 
-Output:
+## Strict Mode Presets
 
-```
-Docs Requiring Updates
-  Scanned 15 files, 42 code blocks
+| Preset | Fails on |
+|--------|----------|
+| `ci` | breaking changes, coverage regression |
+| `release` | breaking, regression, drift, docs-impact, undocumented |
+| `quality` | drift, undocumented exports |
 
-  evaluate.mdx (2 issues)
-    L30: evaluateChainhook() → Use replayChainhook instead
-    L44: evaluateChainhook() → Use replayChainhook instead
+## Output
 
-  create.mdx (4 issues)
-    L78: bulkEnableChainhooks() ~ signature changed
-    L96: bulkEnableChainhooks() ~ signature changed
-    ... and 2 more
-
-  5 file(s) with class instantiation to review:
-    migration.mdx, update.mdx, secrets.mdx, ...
-
-  Missing documentation for 1 new export(s):
-    deleteUser
-```
-
-### Multiple Globs
-
-```bash
-doccov diff base.json head.json \
-  --docs "docs/**/*.md" \
-  --docs "README.md" \
-  --docs "**/*.mdx"
-```
-
-### Fail on Docs Impact
-
-```bash
-doccov diff base.json head.json --docs "docs/**/*.md" --strict docs-impact
-```
-
-### AI-Enhanced Analysis
-
-Get AI-generated summary and fix suggestions:
-
-```bash
-doccov diff base.json head.json --docs "docs/**/*.md" --ai
-```
-
-Requires `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` environment variable.
-
-### Config-Based Docs Paths
-
-Configure in `doccov.config.ts`:
+### SpecDiff Result
 
 ```typescript
-export default defineConfig({
-  docs: {
-    include: ['docs/**/*.md', 'README.md'],
-    exclude: ['docs/archive/**'],
-  },
-});
+{
+  breaking: string[];      // Removed or signature-changed exports
+  nonBreaking: string[];   // New exports
+  docsOnly: string[];      // Documentation-only changes
+  coverageDelta: number;   // Coverage change (+/-)
+  oldCoverage: number;
+  newCoverage: number;
+  newUndocumented: string[];
+  improvedExports: string[];
+  regressedExports: string[];
+  driftIntroduced: number;
+  driftResolved: number;
+}
 ```
 
-Then just run:
+### pr-comment Format
 
-```bash
-doccov diff base.json head.json
+```markdown
+## DocCov Report
+
+| Metric | Value |
+|--------|-------|
+| Coverage | 85% (+5%) |
+| Breaking | 0 |
+| New exports | 3 |
+
+### Undocumented Exports
+- `newFunction` ([src/utils.ts:42](link))
 ```
 
-## Change Categories
+### changelog Format
 
-### Breaking Changes (High Severity)
+```markdown
+## Breaking Changes
+- **REMOVED** `deprecatedFn` (high severity)
 
-- Functions removed
-- Class methods removed
-- Constructor signature changed
+## New Exports
+- `newHelper` (function)
 
-### Breaking Changes (Medium Severity)
+## Documentation
+- 3 exports improved
+- 1 drift resolved
 
-- Method signature changed
-- Interface/type definition changed
-
-### Non-Breaking Changes
-
-- New exports added
-
-### Coverage Delta
-
-Difference in package-wide coverage score.
-
-## Exit Codes
-
-| Code | Meaning |
-|------|---------|
-| 0 | Success (or no `--strict` options) |
-| 1 | Strict condition failed |
-
-## CI/CD Integration
-
-### GitHub Actions with Annotations
-
-```yaml
-- name: Generate specs
-  run: |
-    doccov spec -o head.json
-    git fetch origin main
-    git checkout origin/main -- openpkg.json
-    mv openpkg.json base.json
-
-- name: Diff with annotations
-  run: doccov diff base.json head.json --docs "docs/**/*.md" --format github
-
-- name: Strict check
-  run: doccov diff base.json head.json --strict regression,drift
+**Recommended version bump:** minor
 ```
 
-### PR Comment with JSON
+## Semver Recommendation
 
-```yaml
-- name: Diff specs
-  id: diff
-  run: |
-    doccov diff base.json head.json --format json > diff.json
-    echo "delta=$(jq .coverageDelta diff.json)" >> $GITHUB_OUTPUT
-
-- name: Comment on PR
-  uses: actions/github-script@v7
-  with:
-    script: |
-      const delta = ${{ steps.diff.outputs.delta }};
-      const emoji = delta > 0 ? '📈' : delta < 0 ? '📉' : '➡️';
-      github.rest.issues.createComment({
-        owner: context.repo.owner,
-        repo: context.repo.repo,
-        issue_number: context.issue.number,
-        body: `${emoji} Coverage: ${delta > 0 ? '+' : ''}${delta}%`
-      });
-```
-
-## Local Testing
-
-```bash
-# Generate two specs
-doccov spec tests/fixtures/v1 -o /tmp/v1.json
-doccov spec tests/fixtures/v2 -o /tmp/v2.json
-
-# Diff with different formats
-doccov diff /tmp/v1.json /tmp/v2.json --format text
-doccov diff /tmp/v1.json /tmp/v2.json --format json
-doccov diff /tmp/v1.json /tmp/v2.json --format github
-```
-
-## See Also
-
-- [Diffing](../../spec/diffing.md) - SDK diff API
-- [GitHub Action](../../integrations/github-action.md) - Full PR integration
-- [spec](./spec.md) - Generate specs to diff
+Based on changes:
+- **major**: Any breaking changes
+- **minor**: New exports added
+- **patch**: Documentation-only changes
+- **none**: No changes

@@ -1,6 +1,6 @@
 # doccov check
 
-Check documentation coverage, detect drift, validate examples, and generate coverage reports.
+Analyze documentation coverage with threshold validation, auto-fix, and AI generation.
 
 ## Usage
 
@@ -8,266 +8,148 @@ Check documentation coverage, detect drift, validate examples, and generate cove
 doccov check [entry] [options]
 ```
 
-## Arguments
-
-| Argument | Description |
-|----------|-------------|
-| `entry` | Entry file or directory (auto-detected if omitted) |
-
 ## Options
 
-### Output
+### Input/Output
 
-| Option | Default | Description |
-|--------|---------|-------------|
-| `--format <format>` | `text` | Output format: `text`, `json`, `markdown`, `html`, `github` |
-| `-o, --output <file>` | - | Custom output path (overrides default .doccov/ path) |
-| `--stdout` | `false` | Output to stdout instead of writing to .doccov/ |
-| `--limit <n>` | `20` | Max exports to show in report tables |
-| `--update-snapshot` | `false` | Force regenerate .doccov/report.json |
+| Flag | Description |
+|------|-------------|
+| `--cwd <dir>` | Working directory |
+| `--package <name>` | Target monorepo package |
+| `--format <fmt>` | Output: `text` \| `json` \| `markdown` \| `html` \| `github` |
+| `-o, --output <file>` | Custom output path |
+| `--stdout` | Output to stdout |
+| `--limit <n>` | Max exports in tables (default: 20) |
 
 ### Thresholds
 
-| Option | Default | Description |
-|--------|---------|-------------|
-| `--min-coverage <n>` | - | Minimum coverage percentage (0-100) - exit 1 if not met |
-| `--max-drift <n>` | - | Maximum drift percentage allowed (0-100) - exit 1 if exceeded |
-
-### Example Validation
-
-| Option | Default | Description |
-|--------|---------|-------------|
-| `--examples [mode]` | - | Example validation: `presence`, `typecheck`, `run` (comma-separated). Bare flag runs all. |
-
-### Auto-Fix
-
-| Option | Default | Description |
-|--------|---------|-------------|
-| `--fix` | `false` | Auto-fix drift issues |
-| `--write` | `false` | Alias for --fix |
-| `--dry-run` | `false` | Preview fixes without writing (requires `--fix`) |
-
-### Target
-
-| Option | Default | Description |
-|--------|---------|-------------|
-| `-p, --package <name>` | - | Target package in monorepo |
-| `--cwd <dir>` | `.` | Working directory |
+| Flag | Description |
+|------|-------------|
+| `--min-coverage <n>` | Minimum coverage % (0-100) |
+| `--max-drift <n>` | Maximum drift % (0-100) |
 
 ### Analysis
 
-| Option | Default | Description |
-|--------|---------|-------------|
-| `--skip-resolve` | `false` | Skip external type resolution from node_modules |
-| `--max-type-depth <n>` | `20` | Maximum depth for type conversion |
-| `--no-cache` | `false` | Bypass spec cache and force regeneration |
+| Flag | Description |
+|------|-------------|
+| `--examples [mode]` | Example validation: `presence`, `typecheck`, `run` |
+| `--skip-resolve` | Skip external type resolution |
+| `--max-type-depth <n>` | Type recursion depth (default: 20) |
+| `--visibility <tags>` | Filter: `public`, `beta`, `alpha`, `internal` |
+
+### Auto-fix & AI
+
+| Flag | Description |
+|------|-------------|
+| `--fix` / `--write` | Auto-fix drift issues |
+| `--generate` | AI-generate missing JSDoc (requires `--fix`) |
+| `--dry-run` | Preview fixes without writing |
+
+### Ownership
+
+| Flag | Description |
+|------|-------------|
+| `--owners` | Coverage breakdown by CODEOWNERS |
+| `--contributors` | Show doc contributors (git blame) |
+
+### Cache
+
+| Flag | Description |
+|------|-------------|
+| `--no-cache` | Bypass spec cache |
+| `--update-snapshot` | Force regenerate report |
 
 ## Examples
 
-### Quick Summary
-
-For a brief summary, use the [`info`](./info.md) command:
-
-```bash
-doccov info
-```
-
-### Full Report
+### Basic check
 
 ```bash
 doccov check
 ```
 
-Displays detailed coverage breakdown with issues.
-
-### CI with Thresholds
+### Enforce thresholds in CI
 
 ```bash
-# Enforce minimum coverage
-doccov check --min-coverage 80
-
-# Enforce both coverage and drift limits
-doccov check --min-coverage 80 --max-drift 10
+doccov check --min-coverage 80 --max-drift 5
 ```
 
-Exits with code 1 if thresholds are not met.
-
-### Example Validation
-
-```bash
-# Check that examples exist
-doccov check --examples presence
-
-# Type-check examples
-doccov check --examples typecheck
-
-# Run examples and check for runtime errors
-doccov check --examples run
-
-# Run all validations
-doccov check --examples
-
-# Combine modes
-doccov check --examples presence,typecheck
-```
-
-Running examples requires Node.js 22+ (uses `--experimental-strip-types`).
-
-### Auto-Fix Drift
-
-Automatically fix drift issues:
+### Auto-fix drift
 
 ```bash
 doccov check --fix
 ```
 
-Preview fixes without applying:
+### AI-generate missing docs
 
 ```bash
-doccov check --fix --dry-run
+doccov check --fix --generate
 ```
 
-### Monorepo
-
-Check specific package:
+### Validate examples run
 
 ```bash
-doccov check --package @myorg/core
+doccov check --examples run
 ```
 
-### Coverage Reports
-
-Generate coverage reports in different formats:
+### GitHub Actions output
 
 ```bash
-# JSON report
-doccov check --format json -o coverage.json
-
-# Markdown report
-doccov check --format markdown -o COVERAGE.md
-
-# HTML report
-doccov check --format html -o coverage.html
-
-# GitHub Actions summary format
-doccov check --format github
+doccov check --format github >> $GITHUB_STEP_SUMMARY
 ```
 
-### Output to Stdout
+### CODEOWNERS breakdown
 
 ```bash
-doccov check --format json --stdout
+doccov check --owners
 ```
 
-### Skip Caching
+## Output Formats
 
-Force a fresh analysis:
-
-```bash
-doccov check --no-cache
-```
-
-## Output
-
-### Text Format (default)
+### text (default)
 
 ```
-my-package@1.0.0
-
-  Exports:    42
-  Coverage:   85% (min 80%)
-  Drift:      5% (max 10%)
-  Examples:   validated
-  Quality:    2 warnings
-
-Check passed (coverage 85% >= 80%, drift 5% <= 10%)
+@myorg/core@1.0.0
+  Coverage:  85% ████████░░
+  Drift:     3 issues (2 fixable)
+  Exports:   42 total, 36 documented
 ```
 
-### With Threshold Failures
+### json
+
+Full report saved to `.doccov/report.json`:
+
+```json
+{
+  "coverage": { "score": 85, "totalExports": 42 },
+  "exports": { ... },
+  "driftSummary": { ... }
+}
+```
+
+### markdown
+
+Detailed tables with signal coverage, drift breakdown, lowest-scoring exports.
+
+### github
 
 ```
-my-package@1.0.0
-
-  Exports:    42
-  Coverage:   72% (min 80%)
-  Drift:      15% (max 10%)
-
-Use --format json or --format markdown for detailed reports
+::warning file=src/utils.ts,line=42::Missing @param for 'options'
 ```
 
 ## Exit Codes
 
-| Code | Meaning |
-|------|---------|
-| 0 | Pass - no threshold set, or all thresholds met |
-| 1 | Fail - coverage below `--min-coverage`, drift above `--max-drift`, quality errors, or example type errors |
+- `0` - All thresholds passed
+- `1` - Threshold failed or error
 
-**Note:** Without thresholds, the command always exits 0 (information only). Use `--min-coverage` and/or `--max-drift` to enforce thresholds in CI.
+## Behavior
 
-## CI/CD Integration
-
-### GitHub Actions
-
-```yaml
-- name: Check docs coverage
-  run: npx doccov check --min-coverage 80 --max-drift 10
-```
-
-### Pre-commit Hook
-
-```bash
-# .husky/pre-commit
-npx doccov check --min-coverage 80
-```
-
-### package.json
-
-```json
-{
-  "scripts": {
-    "docs:check": "doccov check --min-coverage 80",
-    "docs:strict": "doccov check --min-coverage 90 --max-drift 5 --examples typecheck"
-  }
-}
-```
-
-## Drift Detection
-
-Drift types detected:
-
-| Type | Description |
-|------|-------------|
-| `param-mismatch` | `@param` doesn't match signature |
-| `param-type-mismatch` | `@param {Type}` differs from actual |
-| `return-type-mismatch` | `@returns {Type}` differs from actual |
-| `optionality-mismatch` | `[param]` vs required param |
-| `example-drift` | Example references missing export |
-| `example-runtime-error` | Example throws (with `--examples run`) |
-| `example-assertion-failed` | `// => value` assertion doesn't match output |
-| `broken-link` | `{@link X}` target not found |
-
-See [Drift Types](../../spec/drift-types.md) for full list.
-
-## Auto-Fixable Drift Types
-
-The `--fix` flag can automatically fix:
-
-| Type | Fix Applied |
-|------|-------------|
-| `param-mismatch` | Remove stale `@param` tags, rename parameters |
-| `param-type-mismatch` | Update `@param {type}` to match signature |
-| `optionality-mismatch` | Add/remove `[param]` brackets for optional params |
-| `return-type-mismatch` | Update `@returns {type}` to match signature |
-| `generic-constraint-mismatch` | Update `@template T extends X` constraints |
-| `example-assertion-failed` | Update `// => value` assertions to match output |
-| `deprecated-mismatch` | Add/remove `@deprecated` tag |
-| `async-mismatch` | Add/remove `@async` tag |
-
-Non-fixable types (require manual intervention): `example-drift`, `example-syntax-error`, `example-runtime-error`, `broken-link`, `visibility-mismatch`.
-
-## See Also
-
-- [info](./info.md) - Quick summary
-- [spec](./spec.md) - Generate pure structural spec
-- [Drift Types](../../spec/drift-types.md) - All drift detectors
-- [Configuration](../configuration.md) - Config file options
+1. Resolves entry file (from package.json or CLI arg)
+2. Loads config for thresholds/filters
+3. Analyzes with DocCov SDK
+4. Enriches spec with coverage data
+5. Validates examples if `--examples`
+6. Auto-fixes drift if `--fix`
+7. AI-generates docs if `--generate`
+8. Evaluates policies if configured
+9. Outputs in requested format
+10. Exits 1 if thresholds fail

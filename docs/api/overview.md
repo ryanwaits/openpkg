@@ -1,205 +1,111 @@
 # API Overview
 
-The DocCov API provides programmatic access to documentation analysis for TypeScript/JavaScript projects.
+`@doccov/api` - REST API for documentation coverage analysis.
 
 ## Base URL
 
 ```
-https://api.doccov.com
+https://api.doccov.dev
 ```
+
+## Authentication
+
+Three auth methods depending on endpoint:
+
+| Method | Used For |
+|--------|----------|
+| None | Public endpoints (badge, demo) |
+| Session | Dashboard (browser cookies) |
+| API Key | Programmatic access (`/v1/*`) |
+
+See [Authentication](./authentication.md) for details.
 
 ## Endpoints
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/` | GET | API info and health status |
-| `/badge/:owner/:repo` | GET | Coverage badge SVG |
-| `/spec/:owner/:repo/:ref?` | GET | Fetch spec from GitHub |
-| `/plan` | POST | Generate AI build plan |
-| `/execute` | POST | Execute build plan |
-| `/execute-stream` | POST | Execute with SSE streaming |
+### Public
 
-## Quick Start
+| Endpoint | Description |
+|----------|-------------|
+| [`GET /badge/:owner/:repo`](./endpoints/badge.md) | Coverage badge SVG |
+| [`GET /demo/analyze`](./endpoints/demo.md) | Analyze npm package |
 
-The typical workflow is: **Plan** → **Execute**
+### Organizations
 
-### 1. Generate a Build Plan
+| Endpoint | Description |
+|----------|-------------|
+| [`GET /orgs/`](./endpoints/orgs.md) | List organizations |
+| [`GET /orgs/:slug`](./endpoints/orgs.md#get-organization) | Get organization |
+| [`GET /orgs/:slug/members`](./endpoints/orgs.md#members) | List members |
+| [`POST /orgs/:slug/invites`](./endpoints/orgs.md#invites) | Create invite |
 
-```bash
-curl -X POST https://api.doccov.com/plan \
-  -H "Content-Type: application/json" \
-  -d '{"url": "https://github.com/sindresorhus/ky"}'
+### Coverage
+
+| Endpoint | Description |
+|----------|-------------|
+| [`GET /coverage/projects/:id/history`](./endpoints/coverage.md) | Coverage history |
+| [`POST /coverage/projects/:id/snapshots`](./endpoints/coverage.md#record) | Record snapshot |
+
+### Billing
+
+| Endpoint | Description |
+|----------|-------------|
+| [`GET /billing/checkout`](./endpoints/billing.md) | Start checkout |
+| [`GET /billing/status`](./endpoints/billing.md#status) | Billing status |
+| [`GET /billing/usage`](./endpoints/billing.md#usage) | Usage details |
+
+### AI (API Key Required)
+
+| Endpoint | Description |
+|----------|-------------|
+| [`POST /v1/ai/generate`](./endpoints/ai.md) | Generate JSDoc |
+| [`GET /v1/ai/quota`](./endpoints/ai.md#quota) | Check quota |
+
+### GitHub App
+
+| Endpoint | Description |
+|----------|-------------|
+| [`GET /github/install`](./endpoints/github-app.md) | Install app |
+| [`GET /github/repos`](./endpoints/github-app.md#repos) | List repos |
+| [`GET /github/status`](./endpoints/github-app.md#status) | Install status |
+
+## Rate Limiting
+
+| Endpoint | Limit | Window |
+|----------|-------|--------|
+| `/badge/*` | 10 | 24h (per IP) |
+| `/demo/*` | 5 | 1h (per IP) |
+| `/v1/*` | 50-200 | Daily (per org) |
+
+Rate limit headers:
 ```
-
-Response:
-```json
-{
-  "plan": {
-    "version": "1.0.0",
-    "target": {
-      "type": "github",
-      "repoUrl": "https://github.com/sindresorhus/ky",
-      "entryPoints": ["distribution/index.d.ts"]
-    },
-    "environment": {
-      "runtime": "node22",
-      "packageManager": "npm"
-    },
-    "steps": [
-      { "id": "install", "command": "npm", "args": ["install"] },
-      { "id": "build", "command": "npm", "args": ["run", "build"] }
-    ],
-    "confidence": "high"
-  },
-  "context": {
-    "owner": "sindresorhus",
-    "repo": "ky",
-    "ref": "main"
-  }
-}
+X-RateLimit-Limit: 50
+X-RateLimit-Remaining: 45
+X-RateLimit-Reset: 1704067200
 ```
-
-### 2. Execute the Plan
-
-```bash
-curl -X POST https://api.doccov.com/execute \
-  -H "Content-Type: application/json" \
-  -d '{"plan": <plan-from-step-1>}'
-```
-
-Response (summary by default):
-```json
-{
-  "success": true,
-  "summary": {
-    "name": "ky",
-    "version": "1.0.0",
-    "coverage": 85,
-    "exports": 42,
-    "types": 15,
-    "documented": 36,
-    "undocumented": 6
-  },
-  "stepResults": [
-    { "stepId": "install", "success": true, "duration": 12000 },
-    { "stepId": "build", "success": true, "duration": 8000 },
-    { "stepId": "analyze", "success": true, "duration": 5000 }
-  ],
-  "totalDuration": 25000
-}
-```
-
-Add `?includeSpec=true` to include the full OpenPkg spec in the response.
-
-### 3. Execute with Streaming (SSE)
-
-For real-time progress updates:
-
-```bash
-curl -X POST https://api.doccov.com/execute-stream \
-  -H "Content-Type: application/json" \
-  -d '{"plan": <plan-from-step-1>}'
-```
-
-SSE Events:
-```
-event: progress
-data: {"stage":"init","message":"Creating sandbox...","progress":5}
-
-event: progress
-data: {"stage":"cloned","message":"Repository cloned","progress":15}
-
-event: step:start
-data: {"stepId":"install","name":"Install dependencies","progress":15}
-
-event: step:complete
-data: {"stepId":"install","success":true,"duration":12000,"progress":38}
-
-event: step:start
-data: {"stepId":"build","name":"Build TypeScript","progress":38}
-
-event: step:complete
-data: {"stepId":"build","success":true,"duration":8000,"progress":61}
-
-event: step:start
-data: {"stepId":"analyze","name":"Analyzing API","progress":85}
-
-event: step:complete
-data: {"stepId":"analyze","success":true,"progress":95}
-
-event: complete
-data: {"success":true,"summary":{...},"totalDuration":25000}
-```
-
-## JavaScript Client Example
-
-```javascript
-// 1. Generate plan
-const planRes = await fetch('https://api.doccov.com/plan', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ url: 'https://github.com/sindresorhus/ky' })
-});
-const { plan } = await planRes.json();
-
-// 2. Execute with streaming
-const response = await fetch('https://api.doccov.com/execute-stream', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ plan })
-});
-
-const reader = response.body.getReader();
-const decoder = new TextDecoder();
-
-while (true) {
-  const { done, value } = await reader.read();
-  if (done) break;
-
-  const text = decoder.decode(value);
-  const lines = text.split('\n');
-
-  for (const line of lines) {
-    if (line.startsWith('data: ')) {
-      const data = JSON.parse(line.slice(6));
-      console.log(data);
-    }
-  }
-}
-```
-
-## CORS
-
-All endpoints have CORS enabled for browser access.
-
-## Runtime
-
-All endpoints run on Node.js 22 with Vercel Sandbox for secure code execution.
-
-## Timeout
-
-Maximum duration: 5 minutes (300 seconds).
 
 ## Error Responses
 
 ```json
 {
-  "error": "Repository not found",
-  "message": "Could not fetch https://github.com/owner/repo"
+  "error": "Error message",
+  "code": "ERROR_CODE"
 }
 ```
 
-| Code | Meaning |
-|------|---------|
-| 200 | Success |
-| 400 | Bad request (missing params) |
-| 403 | Private repository |
-| 404 | Resource not found |
+| Status | Description |
+|--------|-------------|
+| 400 | Invalid request |
+| 401 | Unauthorized |
+| 403 | Forbidden (insufficient permissions) |
+| 404 | Not found |
 | 429 | Rate limit exceeded |
-| 500 | Internal error |
+| 500 | Server error |
 
-## See Also
+## Plans
 
-- [Plan Endpoint](./endpoints/plan.md)
-- [Execute Endpoint](./endpoints/execute.md)
-- [Badges & Widgets](../integrations/badges-widgets.md)
+| Feature | Free | Team | Pro |
+|---------|------|------|-----|
+| Badge API | 10/day | Unlimited | Unlimited |
+| AI Generation | 0 | 50/mo | 250/mo |
+| Coverage History | 0 days | 30 days | 90 days |
+| Daily Analyses | 0 | 50 | 200 |

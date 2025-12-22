@@ -2,183 +2,107 @@
 
 Filter which exports are included in analysis.
 
-## Import
-
-```typescript
-import type { FilterOptions } from '@doccov/sdk';
-```
-
 ## FilterOptions
 
 ```typescript
 interface FilterOptions {
-  include?: string[];  // Only include matching exports
-  exclude?: string[];  // Exclude matching exports
+  include?: string[];       // Patterns to include
+  exclude?: string[];       // Patterns to exclude
+  visibility?: ReleaseTag[];  // Release stage filter
 }
-```
 
-## Usage
-
-### With DocCov Class
-
-```typescript
-import { DocCov } from '@doccov/sdk';
-
-const doccov = new DocCov();
-const { spec } = await doccov.analyzeFileWithDiagnostics('src/index.ts', {
-  filters: {
-    include: ['create*', 'update*'],
-    exclude: ['_*'],
-  },
-});
-```
-
-### Include Only
-
-```typescript
-const { spec } = await doccov.analyzeFileWithDiagnostics('src/index.ts', {
-  filters: {
-    include: ['User*', 'Auth*'],
-  },
-});
-```
-
-### Exclude Only
-
-```typescript
-const { spec } = await doccov.analyzeFileWithDiagnostics('src/index.ts', {
-  filters: {
-    exclude: ['_internal*', '*Helper', 'test*'],
-  },
-});
+type ReleaseTag = 'public' | 'beta' | 'alpha' | 'internal';
 ```
 
 ## Pattern Syntax
 
-Patterns use glob-style matching:
+Supports wildcards:
 
-| Pattern | Matches | Examples |
-|---------|---------|----------|
-| `foo` | Exact match | `foo` |
-| `foo*` | Starts with | `fooBar`, `fooHelper` |
-| `*foo` | Ends with | `helperFoo`, `createFoo` |
-| `*foo*` | Contains | `myFooHelper`, `fooBar` |
-| `foo*bar` | Starts with, ends with | `fooMyBar` |
+| Pattern | Matches |
+|---------|---------|
+| `MyClass` | Exact name |
+| `use*` | Starts with "use" |
+| `*Helper` | Ends with "Helper" |
+| `*util*` | Contains "util" |
 
-## Order of Application
+## Usage
 
-1. If `include` is set, only matching exports are considered
-2. Then `exclude` patterns are applied to remove matches
+### In DocCov
 
 ```typescript
-// Start with: createUser, updateUser, _createInternal, _updateInternal
-
-filters: {
-  include: ['*User', '*Internal'],  // createUser, updateUser, _createInternal, _updateInternal
-  exclude: ['_*'],                   // createUser, updateUser
-}
-
-// Result: createUser, updateUser
-```
-
-## Common Patterns
-
-### Public API Only
-
-```typescript
-filters: {
-  exclude: ['_*', '*Internal', '*Private'],
-}
-```
-
-### Specific Feature
-
-```typescript
-filters: {
-  include: ['User*', 'createUser', 'updateUser', 'deleteUser'],
-}
-```
-
-### Exclude Test Utilities
-
-```typescript
-filters: {
-  exclude: ['test*', 'mock*', '*Mock', '*Stub', '*Fixture'],
-}
-```
-
-### CRUD Operations
-
-```typescript
-filters: {
-  include: ['create*', 'read*', 'update*', 'delete*', 'get*', 'set*'],
-}
-```
-
-## CLI Usage
-
-Same patterns work with CLI:
-
-```bash
-doccov spec --include "User*,Auth*" --exclude "_*"
-doccov check --include "create*,update*"
-```
-
-## Config File
-
-Persistent filters in `doccov.config.ts`:
-
-```typescript
-import { defineConfig } from '@doccov/sdk';
-
-export default defineConfig({
-  include: ['create*', 'update*', 'delete*'],
-  exclude: ['_*', '*Internal'],
+const doccov = new DocCov();
+const result = await doccov.analyzeFileWithDiagnostics('src/index.ts', {
+  filters: {
+    include: ['MyClass', 'use*'],
+    exclude: ['*Internal', '_*'],
+    visibility: ['public', 'beta'],
+  }
 });
 ```
 
-## Filtering Behavior
-
-### Empty Include
-
-If `include` is empty or not set, all exports are included.
+### applyFilters Function
 
 ```typescript
-filters: { include: [] }  // All exports included
-filters: {}               // All exports included
+import { applyFilters } from '@doccov/sdk';
+
+const filtered = applyFilters(spec, {
+  include: ['MyClass'],
+  exclude: ['*Internal'],
+});
 ```
 
-### Empty Exclude
+## Visibility Filtering
 
-If `exclude` is empty or not set, no exports are excluded.
+Filter by JSDoc release tags:
 
 ```typescript
-filters: { exclude: [] }  // No exclusions
+/**
+ * @public
+ */
+export function publicApi() {}
+
+/**
+ * @beta
+ */
+export function betaApi() {}
+
+/**
+ * @internal
+ */
+export function internalApi() {}
 ```
-
-### No Match
-
-If `include` patterns match nothing, result has no exports.
 
 ```typescript
-filters: { include: ['NonExistent*'] }  // Zero exports
+// Only public exports
+{ visibility: ['public'] }
+
+// Public and beta
+{ visibility: ['public', 'beta'] }
 ```
 
-## Local Testing
+## Type Dependencies
 
-```bash
-# Test filtering
-bun run packages/cli/src/cli.ts spec tests/fixtures/simple-math.ts \
-  --include "add,subtract" \
-  -o /tmp/filtered.json
+When filtering, dependent types are automatically included:
 
-# Check result
-cat /tmp/filtered.json | jq '.exports[].name'
+```typescript
+export interface Options { /* ... */ }
+export function createThing(opts: Options) { /* ... */ }
 ```
 
-## See Also
+If `createThing` is included, `Options` is automatically included.
 
-- [Configuration](../cli/configuration.md) - Persistent filters
-- [spec Command](../cli/commands/spec.md) - CLI filtering
-- [DocCov Class](./doccov-class.md) - SDK filtering
+## Diagnostics
 
+Filters generate diagnostics for:
+- Unmatched include patterns
+- Types excluded that are dependencies
+
+```typescript
+const result = await doccov.analyzeFileWithDiagnostics(path, { filters });
+
+for (const diag of result.diagnostics) {
+  if (diag.message.includes('filter')) {
+    console.warn(diag.message);
+  }
+}
+```

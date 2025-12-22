@@ -10,125 +10,107 @@ doccov init [options]
 
 ## Options
 
-| Option | Default | Description |
-|--------|---------|-------------|
-| `--format <format>` | `auto` | Config format: `auto`, `mjs`, `js`, `cjs`, `yaml` |
-| `--cwd <dir>` | `.` | Working directory |
+| Flag | Description |
+|------|-------------|
+| `--cwd <dir>` | Working directory |
+| `--format <fmt>` | Config format: `auto`, `mjs`, `js`, `cjs`, `yaml` |
 
 ## Examples
 
-### Auto-detect Format
+### Auto-detect format
 
 ```bash
 doccov init
+# Creates doccov.yml or doccov.config.js based on package.json type
 ```
 
-Creates `doccov.config.mjs` (or `.js` based on project type).
-
-### YAML Format (Recommended)
+### Force YAML
 
 ```bash
 doccov init --format yaml
+# Creates doccov.yml
 ```
 
-Creates `doccov.yml` - simpler syntax, no imports needed.
-
-### Specific JS Format
+### Force ESM
 
 ```bash
-# ES Module
 doccov init --format mjs
-
-# CommonJS
-doccov init --format cjs
+# Creates doccov.config.mjs
 ```
 
-## Generated Config
+## Generated Files
 
-### YAML
-
-`doccov.yml`:
+### YAML (doccov.yml)
 
 ```yaml
+# DocCov Configuration
+# https://doccov.dev/docs/cli/configuration
+
 # include:
 #   - "MyClass"
-#   - "myFunction"
+#   - "use*"
+
 # exclude:
-#   - "internal*"
+#   - "*Internal"
 
 check:
   # minCoverage: 80
-  # maxDrift: 20
-  # examples: typecheck
+  # maxDrift: 10
+  # examples: presence
 
 quality:
   rules:
-    # has-description: warn
-    # has-params: off
+    has-description: error
+    # has-params: warn
+    # has-examples: off
 ```
 
-### TypeScript (default)
+### ESM JS (doccov.config.js)
 
-`doccov.config.ts`:
-
-```typescript
-import { defineConfig } from '@doccov/cli/config';
+```javascript
+// @ts-check
+import { defineConfig } from '@doccov/cli';
 
 export default defineConfig({
-  // Filter which exports to include
-  // include: ['createUser', 'updateUser'],
+  // include: ['MyClass', 'use*'],
+  // exclude: ['*Internal'],
 
-  // Exclude specific exports
-  // exclude: ['_internal*', 'debug*'],
+  check: {
+    // minCoverage: 80,
+    // maxDrift: 10,
+    // examples: 'presence',
+  },
+
+  quality: {
+    rules: {
+      'has-description': 'error',
+      // 'has-params': 'warn',
+    },
+  },
 });
 ```
 
-### ES Module
-
-`doccov.config.mjs`:
+### CommonJS (doccov.config.cjs)
 
 ```javascript
-import { defineConfig } from '@doccov/cli/config';
-
-export default defineConfig({
-  // include: [],
-  // exclude: [],
-});
-```
-
-### CommonJS
-
-`doccov.config.cjs`:
-
-```javascript
-const { defineConfig } = require('@doccov/cli/config');
+// @ts-check
+const { defineConfig } = require('@doccov/cli');
 
 module.exports = defineConfig({
-  // include: [],
-  // exclude: [],
+  // ...same structure
 });
 ```
 
-## Config Options
+## Format Detection
 
-See [Configuration](../configuration.md) for all options.
+When `--format auto` (default):
+1. Reads `package.json` → `type` field
+2. If `"type": "module"` → generates `.js` (ESM)
+3. If `"type": "commonjs"` or missing → generates `.mjs`
 
-## Exit Codes
+## Existing Config
 
-| Code | Meaning |
-|------|---------|
-| 0 | Config created |
-| 1 | Config already exists or error |
-
-## Local Testing
-
-```bash
-bun run packages/cli/src/cli.ts init --cwd /tmp/test-project
+If config already exists, command exits with message:
 ```
-
-## See Also
-
-- [Configuration](../configuration.md) - Full config reference
-- [generate](./generate.md) - Uses config for filtering
-- [check](./check.md) - Uses config for filtering
-
+Config already exists at: /path/to/doccov.yml
+```

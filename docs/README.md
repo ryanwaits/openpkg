@@ -12,85 +12,71 @@ Documentation coverage and drift detection for TypeScript.
 
 ## Naming Convention
 
-DocCov uses two naming conventions:
-
 | Name | Usage | Examples |
 |------|-------|----------|
-| **DocCov** | Product name, CLI tool, most packages | `@doccov/cli`, `@doccov/sdk`, `doccov.yml` |
-| **OpenPkg** | Specification format (open standard) | `@openpkg-ts/spec`, `openpkg.json` output files |
-
-- **DocCov** is the tool that analyzes your TypeScript documentation
-- **OpenPkg** is the open specification format that DocCov outputs (designed to be tool-agnostic)
-
-## Getting Started
-
-- [Installation](./getting-started/installation.md) - Install DocCov packages
-- [Quick Start](./getting-started/quick-start.md) - 5-minute tutorial
-- [Concepts](./getting-started/concepts.md) - Coverage, drift, signals
+| **DocCov** | Product name, CLI tool | `@doccov/cli`, `doccov.yml` |
+| **OpenPkg** | Specification format | `openpkg.json` output |
 
 ## CLI Reference
 
-- [Overview](./cli/overview.md) - Command list and global options
-- [Commands](./cli/commands/) - Detailed command reference
-  - [generate](./cli/commands/generate.md) - Generate OpenPkg spec or coverage reports
-  - [check](./cli/commands/check.md) - Validate coverage thresholds, auto-fix drift
-  - [diff](./cli/commands/diff.md) - Compare two specs
-  - [scan](./cli/commands/scan.md) - Analyze remote GitHub repos
-  - [init](./cli/commands/init.md) - Create config file
-- [Configuration](./cli/configuration.md) - `doccov.yml` or `.config.ts` options
-
-## API Reference
-
-- [Overview](./api/overview.md) - Hono API, Vercel deployment
-- [Endpoints](./api/endpoints/)
-  - [Badge](./api/endpoints/badge.md) - Coverage badge SVG
-  - [Scan](./api/endpoints/scan-stream.md) - Scan GitHub repositories
-  - [Spec](./api/endpoints/spec.md) - Fetch specs from GitHub
-  - [Examples Run](./api/endpoints/examples-run.md) - Execute code
-- [Self-Hosting](./api/self-hosting.md) - Deploy your own instance
+- [Overview](./cli/overview.md) - Installation & commands
+- [Configuration](./cli/configuration.md) - `doccov.yml` options
+- Commands:
+  - [check](./cli/commands/check.md) - Coverage analysis & auto-fix
+  - [spec](./cli/commands/spec.md) - Generate OpenPkg spec
+  - [diff](./cli/commands/diff.md) - Compare specs
+  - [info](./cli/commands/info.md) - Quick summary
+  - [init](./cli/commands/init.md) - Create config
+  - [trends](./cli/commands/trends.md) - Track history
 
 ## SDK Reference
 
 - [Overview](./sdk/overview.md) - Package exports
-- [DocCov Class](./sdk/doccov-class.md) - Main analysis API
-- [Example Runner](./sdk/example-runner.md) - Execute @example blocks
-- [Filtering](./sdk/filtering.md) - Include/exclude exports
+- [Analysis](./sdk/analysis.md) - DocCov class & pipeline
+- [Filtering](./sdk/filtering.md) - Export filtering
+- [Quality Rules](./sdk/quality-rules.md) - Rule engine
+- [Drift Detection](./sdk/drift-detection.md) - Drift types
+- [Example Validation](./sdk/example-validation.md) - @example testing
 
-## Spec Reference
+## API Reference
 
-- [Overview](./spec/overview.md) - OpenPkg 0.2.0 schema
-- [Types](./spec/types.md) - Full type reference
-- [Drift Types](./spec/drift-types.md) - All 10 drift detectors
-- [Diffing](./spec/diffing.md) - Compare specs
+- [Overview](./api/overview.md) - REST API & rate limits
+- [Authentication](./api/authentication.md) - Auth methods
+- Endpoints:
+  - [Badge](./api/endpoints/badge.md) - Coverage badge SVG
+  - [Demo](./api/endpoints/demo.md) - npm package analysis
+  - [Organizations](./api/endpoints/orgs.md) - Org management
+  - [Coverage](./api/endpoints/coverage.md) - History & snapshots
+  - [Billing](./api/endpoints/billing.md) - Subscriptions
+  - [AI](./api/endpoints/ai.md) - JSDoc generation
+  - [GitHub App](./api/endpoints/github-app.md) - CI integration
 
-## Integrations
+## Quick Start
 
-- [GitHub Action](./integrations/github-action.md) - CI/CD integration
-- [Docusaurus](./integrations/docusaurus.md) - Plugin setup
-- [CI/CD](./integrations/ci-cd.md) - Generic CI patterns
-- [Badges & Widgets](./integrations/badges-widgets.md) - README embeds
+```bash
+# Install
+npm install -g @doccov/cli
 
-## UI Components
+# Check coverage
+doccov check
 
-- [Overview](./ui/overview.md) - `@doccov/ui` package exports
-- [DocsKit](./ui/docskit/)
-  - [Code Blocks](./ui/docskit/code-blocks.md) - Syntax-highlighted code
-  - [Terminal](./ui/docskit/terminal.md) - macOS-style terminal
-  - [Package Install](./ui/docskit/package-install.md) - Package manager tabs
-  - [Code Tabs](./ui/docskit/code-tabs.md) - Multi-file code blocks
-  - [Inline Code](./ui/docskit/inline-code.md) - Inline highlighting
-  - [Annotations](./ui/docskit/annotations.md) - Mark, diff, collapse, hover, tooltip
-  - [Client Components](./ui/docskit/client-components.md) - Client-side variants
-  - [Skeletons](./ui/docskit/skeletons.md) - Loading states
+# Generate spec
+doccov spec
 
-## Development
+# Auto-fix drift
+doccov check --fix
+```
 
-- [Local Testing](./development/local-testing.md) - Test CLI/SDK/API locally
-- [Vercel Deployment](./development/vercel-deployment.md) - Production deploy
-- [Contributing](./development/contributing.md) - Contribution guidelines
+## Config Example
 
-## Reference
+```yaml
+# doccov.yml
+check:
+  minCoverage: 80
+  maxDrift: 10
 
-- [OpenPkg Schema](./reference/openpkg-schema.md) - JSON Schema spec
-- [Changelog](./reference/changelog.md) - Release history
-
+quality:
+  rules:
+    has-description: error
+    has-examples: warn
+```

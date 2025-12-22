@@ -278,7 +278,7 @@ Automatically posted to PRs via CI.
 - `README.md` (1 issue)
 
 ---
-*[View Full Report](https://doccov.dev/pr/owner/repo/142)* · *[Fix Issues](https://doccov.dev/fix/owner/repo/142)*
+*[View Full Report](https://doccov.com/pr/owner/repo/142)* · *[Fix Issues](https://doccov.com/fix/owner/repo/142)*
 ```
 
 ### Check Run Annotations

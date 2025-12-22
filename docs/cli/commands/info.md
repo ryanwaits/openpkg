@@ -1,6 +1,6 @@
 # doccov info
 
-Show a brief documentation coverage summary.
+Quick coverage summary without detailed reports.
 
 ## Usage
 
@@ -8,80 +8,36 @@ Show a brief documentation coverage summary.
 doccov info [entry] [options]
 ```
 
-## Arguments
-
-| Argument | Description |
-|----------|-------------|
-| `entry` | Entry file or directory (auto-detected if omitted) |
-
 ## Options
 
-| Option | Default | Description |
-|--------|---------|-------------|
-| `--cwd <dir>` | `.` | Working directory |
-| `-p, --package <name>` | - | Target package name (for monorepos) |
-| `--skip-resolve` | `false` | Skip external type resolution from node_modules |
-
-## Output
-
-Displays a concise summary:
-
-```
-my-package@1.0.0
-
-  Exports:    42
-  Coverage:   85%
-  Drift:      5%
-```
+| Flag | Description |
+|------|-------------|
+| `--cwd <dir>` | Working directory |
+| `--package <name>` | Target monorepo package |
+| `--skip-resolve` | Skip external type resolution |
 
 ## Examples
-
-### Quick Check
 
 ```bash
 doccov info
 ```
 
-### Specific Package in Monorepo
+## Output
 
-```bash
-doccov info --package @myorg/core
+```
+@myorg/core@1.0.0
+  Exports:    42
+  Coverage:   85%
+  Drift:      3%
 ```
 
-### Custom Entry Point
+## Use Case
 
-```bash
-doccov info src/lib/index.ts
-```
+Fast check without:
+- Threshold validation
+- Report generation
+- Example validation
+- Filtering
+- Caching overhead
 
-## Use Cases
-
-- Quick health check of documentation status
-- Pre-commit verification
-- Dashboard/status displays
-- Scripting and automation
-
-## Comparison with `check`
-
-| Feature | `info` | `check` |
-|---------|--------|---------|
-| Coverage score | Yes | Yes |
-| Drift score | Yes | Yes |
-| Detailed reports | No | Yes |
-| Threshold enforcement | No | Yes |
-| Auto-fix | No | Yes |
-| Multiple formats | No | Yes |
-
-Use `info` for quick status checks. Use `check` for CI enforcement and detailed reports.
-
-## Exit Codes
-
-| Code | Meaning |
-|------|---------|
-| 0 | Success |
-| 1 | Analysis error |
-
-## See Also
-
-- [check](./check.md) - Full validation with thresholds and reports
-- [spec](./spec.md) - Generate OpenPkg specification
+Ideal for quick local checks during development.

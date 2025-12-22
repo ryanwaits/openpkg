@@ -1,8 +1,6 @@
 # doccov spec
 
-Generate a pure OpenPkg structural specification from TypeScript source.
-
-> **Note:** This command outputs pure structural JSON only. For coverage reports, use [`doccov check`](./check.md).
+Generate OpenPkg specification from TypeScript source.
 
 ## Usage
 
@@ -10,155 +8,105 @@ Generate a pure OpenPkg structural specification from TypeScript source.
 doccov spec [entry] [options]
 ```
 
-## Arguments
-
-| Argument | Description |
-|----------|-------------|
-| `entry` | Entry file or directory (auto-detected if omitted) |
-
 ## Options
 
-### Output
-
-| Option | Default | Description |
-|--------|---------|-------------|
-| `-o, --output <file>` | `openpkg.json` | Output file path |
-
-### Filtering
-
-| Option | Default | Description |
-|--------|---------|-------------|
-| `--include <patterns>` | - | Filter exports by pattern (comma-separated) |
-| `--exclude <patterns>` | - | Exclude exports by pattern (comma-separated) |
-
-### Target
-
-| Option | Default | Description |
-|--------|---------|-------------|
-| `-p, --package <name>` | - | Target package name (for monorepos) |
-| `--cwd <dir>` | `.` | Working directory |
-
-### Analysis
-
-| Option | Default | Description |
-|--------|---------|-------------|
-| `--skip-resolve` | `false` | Skip external type resolution from node_modules |
-| `--max-type-depth <n>` | `20` | Maximum depth for type conversion |
-| `--no-cache` | `false` | Bypass spec cache and force regeneration |
-| `--show-diagnostics` | `false` | Print TypeScript diagnostics |
+| Flag | Description |
+|------|-------------|
+| `--cwd <dir>` | Working directory |
+| `-p, --package <name>` | Target monorepo package |
+| `-o, --output <file>` | Output path (default: `openpkg.json`) |
+| `-f, --format <fmt>` | `json` (default) or `api-surface` |
+| `--include <patterns>` | Include exports (comma-separated) |
+| `--exclude <patterns>` | Exclude exports (comma-separated) |
+| `--visibility <tags>` | Filter by release tags |
+| `--skip-resolve` | Skip external type resolution |
+| `--max-type-depth <n>` | Type depth limit (default: 20) |
+| `--no-cache` | Bypass cache |
+| `--show-diagnostics` | Show TypeScript diagnostics |
+| `--verbose` | Show generation metadata |
 
 ## Examples
 
-### Basic Generation
+### Generate spec
 
 ```bash
 doccov spec
+# Creates openpkg.json
 ```
 
-Auto-detects entry point, outputs `openpkg.json`.
-
-### Custom Output
+### Custom entry point
 
 ```bash
-doccov spec -o api-spec.json
+doccov spec src/index.ts -o api-spec.json
 ```
 
-### Specific Entry
+### Filter exports
 
 ```bash
-doccov spec src/lib/index.ts -o lib-spec.json
+doccov spec --include "use*,My*" --exclude "*Internal"
 ```
 
-### Filter Exports
+### Public API only
 
 ```bash
-# Only include specific exports
-doccov spec --include "createUser,updateUser,deleteUser"
-
-# Exclude internal helpers
-doccov spec --exclude "_internal*,debug*"
+doccov spec --visibility public
 ```
 
-### Monorepo Package
+### Show metadata
 
 ```bash
-doccov spec --package @myorg/utils -o utils-spec.json
+doccov spec --verbose
 ```
 
-### Skip External Types
+## Output
 
-Faster generation, but loses external type info:
+### json (default)
 
-```bash
-doccov spec --skip-resolve
-```
-
-### Skip Caching
-
-Force a fresh analysis:
-
-```bash
-doccov spec --no-cache
-```
-
-### Debug TypeScript Issues
-
-```bash
-doccov spec --show-diagnostics
-```
-
-## Output Format
-
-The generated `openpkg.json` is a **pure structural format** (no coverage data):
+OpenPkg spec with:
 
 ```json
 {
   "$schema": "https://openpkg.dev/schemas/v0.3.0/openpkg.schema.json",
   "openpkg": "0.3.0",
   "meta": {
-    "name": "my-package",
-    "version": "1.0.0",
-    "ecosystem": "js/ts"
+    "name": "@myorg/core",
+    "version": "1.0.0"
   },
-  "exports": [
-    {
-      "id": "createUser",
-      "name": "createUser",
-      "kind": "function",
-      "description": "Creates a new user",
-      "signatures": [...]
+  "exports": [...],
+  "types": [...],
+  "generation": {
+    "timestamp": "2024-01-15T10:00:00Z",
+    "generator": { "name": "@doccov/cli", "version": "0.17.0" },
+    "analysis": {
+      "entryPoint": "src/index.ts",
+      "entryPointSource": "types",
+      "isDeclarationOnly": false
     }
-  ],
-  "types": [...]
+  }
 }
 ```
 
-## Coverage Reports
+### api-surface
 
-For coverage reports with scores, missing signals, and drift issues, use the `check` command:
+Human-readable API documentation text format.
 
-```bash
-# Markdown report
-doccov check --format markdown -o COVERAGE.md
+## Entry Point Detection
 
-# HTML report
-doccov check --format html -o coverage.html
+Resolution order:
+1. CLI argument
+2. `package.json` → `types` / `typings`
+3. `package.json` → `exports`
+4. `package.json` → `main` / `module`
+5. Fallback: `src/index.ts`, `index.ts`
 
-# JSON report with coverage data
-doccov check --format json -o coverage.json
-```
+## Generation Metadata
 
-See [`doccov check`](./check.md) for details.
+The `generation` field captures:
 
-## Exit Codes
-
-| Code | Meaning |
-|------|---------|
-| 0 | Success |
-| 1 | TypeScript or generation error |
-
-## See Also
-
-- [check](./check.md) - Coverage validation and reports
-- [diff](./diff.md) - Compare two specs
-- [Configuration](../configuration.md) - Persistent settings
+- Timestamp
+- Generator name/version
+- Entry point source (how detected)
+- Declaration-only flag (.d.ts)
+- External types resolution status
+- Package manager detected
+- Monorepo status
