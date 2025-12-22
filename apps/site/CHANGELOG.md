@@ -1,5 +1,11 @@
 # @doccov/site
 
+## 0.2.0
+
+### Minor Changes
+
+- Add pricing page, billing/members/usage settings, and invite flow
+
 ## 0.1.0
 
 ### Minor Changes
