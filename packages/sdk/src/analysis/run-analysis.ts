@@ -266,6 +266,19 @@ export function runAnalysis(
 
   const spec = buildOpenPkgSpec(context, resolveExternalTypes, generation);
 
+  // Track schema extraction metadata if Standard Schemas were detected
+  if (input.detectedSchemas && input.detectedSchemas.size > 0 && generation) {
+    const vendors = new Set<string>();
+    for (const entry of input.detectedSchemas.values()) {
+      vendors.add(entry.vendor);
+    }
+    generation.analysis.schemaExtraction = {
+      method: 'hybrid',
+      runtimeCount: input.detectedSchemas.size,
+      vendors: Array.from(vendors),
+    };
+  }
+
   // Check for dangling $refs (refs to types that don't exist at all)
   const danglingRefs = collectDanglingRefs(spec);
   for (const ref of danglingRefs) {

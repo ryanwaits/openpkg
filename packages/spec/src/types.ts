@@ -411,6 +411,15 @@ export type SpecGenerationInfo = {
     resolvedExternalTypes: boolean;
     /** Maximum type depth used for nested type resolution */
     maxTypeDepth?: number;
+    /** Schema extraction method and metadata */
+    schemaExtraction?: {
+      /** How schemas were extracted */
+      method: 'standard-json-schema' | 'static-ast' | 'hybrid';
+      /** Number of schemas extracted via Standard Schema runtime */
+      runtimeCount?: number;
+      /** Vendors detected (e.g., ['zod', 'valibot']) */
+      vendors?: string[];
+    };
   };
 
   /** Environment information during generation */

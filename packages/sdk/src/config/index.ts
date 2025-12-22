@@ -7,6 +7,7 @@ export type {
   DocCovConfig,
   DocsConfig,
   ExampleValidationMode,
+  PolicyConfig,
   QualityRulesConfig,
   QualitySeverity,
 } from './types';

@@ -11,13 +11,14 @@ import {
   parseMarkdownFiles,
   type SpecDiffWithDocs,
 } from '@doccov/sdk';
-import type { OpenPkg } from '@openpkg-ts/spec';
+import { calculateNextVersion, type OpenPkg, recommendSemverBump } from '@openpkg-ts/spec';
 import chalk from 'chalk';
 import type { Command } from 'commander';
 import { glob } from 'glob';
 import { loadDocCovConfig } from '../config';
 import {
   type DiffReportData,
+  renderChangelog,
   renderDiffHtml,
   renderDiffMarkdown,
   renderPRComment,
@@ -38,7 +39,7 @@ const defaultDependencies: Required<DiffCommandDependencies> = {
   error: console.error,
 };
 
-type OutputFormat = 'text' | 'json' | 'markdown' | 'html' | 'github' | 'pr-comment';
+type OutputFormat = 'text' | 'json' | 'markdown' | 'html' | 'github' | 'pr-comment' | 'changelog';
 
 /** Strict mode presets */
 type StrictPreset = 'ci' | 'release' | 'quality';
@@ -79,7 +80,7 @@ export function registerDiffCommand(
     // Output control
     .option(
       '--format <format>',
-      'Output format: text, json, markdown, html, github, pr-comment',
+      'Output format: text, json, markdown, html, github, pr-comment, changelog',
       'text',
     )
     .option('--stdout', 'Output to stdout instead of writing to .doccov/')
@@ -99,6 +100,8 @@ export function registerDiffCommand(
     .option('--ai', 'Use AI for deeper analysis and fix suggestions')
     // Caching
     .option('--no-cache', 'Bypass cache and force regeneration')
+    // Semver recommendation
+    .option('--recommend-version', 'Output recommended semver version bump')
     .action(async (baseArg: string | undefined, headArg: string | undefined, options) => {
       try {
         // Support both positional and explicit arguments
@@ -150,6 +153,38 @@ export function registerDiffCommand(
         // Resolve thresholds (CLI flags take precedence over config)
         const minCoverage = resolveThreshold(options.minCoverage, config?.check?.minCoverage);
         const maxDrift = resolveThreshold(options.maxDrift, config?.check?.maxDrift);
+
+        // Handle --recommend-version flag
+        if (options.recommendVersion) {
+          const recommendation = recommendSemverBump(diff);
+          const currentVersion = headSpec.meta?.version ?? '0.0.0';
+          const nextVersion = calculateNextVersion(currentVersion, recommendation.bump);
+
+          if (options.format === 'json') {
+            log(
+              JSON.stringify(
+                {
+                  current: currentVersion,
+                  recommended: nextVersion,
+                  bump: recommendation.bump,
+                  reason: recommendation.reason,
+                  breakingCount: recommendation.breakingCount,
+                  additionCount: recommendation.additionCount,
+                  docsOnlyChanges: recommendation.docsOnlyChanges,
+                },
+                null,
+                2,
+              ),
+            );
+          } else {
+            log('');
+            log(chalk.bold('Semver Recommendation'));
+            log(`  Current version:    ${currentVersion}`);
+            log(`  Recommended:        ${chalk.cyan(nextVersion)} (${chalk.yellow(recommendation.bump.toUpperCase())})`);
+            log(`  Reason:             ${recommendation.reason}`);
+          }
+          return;
+        }
 
         // Handle format
         const format = (options.format ?? 'text') as OutputFormat;
@@ -260,6 +295,35 @@ export function registerDiffCommand(
               },
             );
             log(content);
+            break;
+          }
+
+          case 'changelog': {
+            // Changelog format
+            const content = renderChangelog(
+              {
+                diff,
+                categorizedBreaking: diff.categorizedBreaking,
+                version: headSpec.meta?.version,
+              },
+              {
+                version: headSpec.meta?.version,
+                compareUrl: options.repoUrl
+                  ? `${options.repoUrl}/compare/${baseSpec.meta?.version ?? 'v0'}...${headSpec.meta?.version ?? 'HEAD'}`
+                  : undefined,
+              },
+            );
+            if (options.stdout) {
+              log(content);
+            } else {
+              const outputPath = options.output ?? getDiffReportPath(baseHash, headHash, 'md');
+              writeReport({
+                format: 'markdown',
+                content,
+                outputPath: outputPath.replace(/\.(json|html)$/, '.changelog.md'),
+                cwd: options.cwd,
+              });
+            }
             break;
           }
         }

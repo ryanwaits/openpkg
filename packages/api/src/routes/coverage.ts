@@ -1,3 +1,4 @@
+import { getPlanLimits, type Plan } from '@doccov/db';
 import { Hono } from 'hono';
 import { nanoid } from 'nanoid';
 import { auth } from '../auth/config';
@@ -29,33 +30,50 @@ coverageRoute.get('/projects/:projectId/history', async (c) => {
   const { projectId } = c.req.param();
   const { range = '30d', limit = '50' } = c.req.query();
 
-  // Verify user has access to project
-  const project = await db
+  // Verify user has access to project and get org plan
+  const projectWithOrg = await db
     .selectFrom('projects')
     .innerJoin('org_members', 'org_members.orgId', 'projects.orgId')
+    .innerJoin('organizations', 'organizations.id', 'projects.orgId')
     .where('projects.id', '=', projectId)
     .where('org_members.userId', '=', session.user.id)
-    .select(['projects.id', 'projects.name'])
+    .select(['projects.id', 'projects.name', 'organizations.plan'])
     .executeTakeFirst();
 
-  if (!project) {
+  if (!projectWithOrg) {
     return c.json({ error: 'Project not found' }, 404);
   }
 
-  // Calculate date filter based on range
+  // Check plan limits for trends access
+  const planLimits = getPlanLimits(projectWithOrg.plan as Plan);
+  if (planLimits.historyDays === 0) {
+    return c.json(
+      {
+        error: 'Coverage trends require Team plan or higher',
+        upgrade: 'https://doccov.com/pricing',
+      },
+      403,
+    );
+  }
+
+  // Calculate date filter based on range (capped by plan limit)
   let dateFilter: Date | null = null;
   const now = new Date();
-  switch (range) {
-    case '7d':
-      dateFilter = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      break;
-    case '30d':
-      dateFilter = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-      break;
-    case '90d':
-      dateFilter = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
-      break;
-    // 'all' and 'versions' - no date filter
+  const maxDays = planLimits.historyDays;
+
+  // Map range to days, capped by plan limit
+  const rangeDays: Record<string, number> = {
+    '7d': Math.min(7, maxDays),
+    '30d': Math.min(30, maxDays),
+    '90d': Math.min(90, maxDays),
+  };
+
+  if (range in rangeDays) {
+    const days = rangeDays[range];
+    dateFilter = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+  } else if (range === 'all' || range === 'versions') {
+    // Still cap by plan limit
+    dateFilter = new Date(now.getTime() - maxDays * 24 * 60 * 60 * 1000);
   }
 
   let query = db

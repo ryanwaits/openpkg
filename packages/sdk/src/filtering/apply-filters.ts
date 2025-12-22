@@ -1,10 +1,40 @@
 import type { OpenPkgSpec } from '../analysis/spec-types';
-import type { FilterDiagnostic, FilterOptions, FilterResult } from './types';
+import type { FilterDiagnostic, FilterOptions, FilterResult, ReleaseTag } from './types';
 
 const TYPE_REF_PREFIX = '#/types/';
 
 // Use the actual spec types instead of loose interfaces
 type SpecExport = OpenPkgSpec['exports'][number];
+
+/**
+ * Extract release tag from an export's tags array.
+ * Looks for @public, @beta, @alpha, @internal tags.
+ */
+const getExportReleaseTag = (exp: SpecExport): ReleaseTag | undefined => {
+  const tags = exp.tags ?? [];
+  for (const tag of tags) {
+    const tagName = tag.name?.toLowerCase();
+    if (tagName === 'public') return 'public';
+    if (tagName === 'beta') return 'beta';
+    if (tagName === 'alpha') return 'alpha';
+    if (tagName === 'internal') return 'internal';
+  }
+  // Default to public if no release tag specified
+  return undefined;
+};
+
+/**
+ * Check if an export matches the visibility filter.
+ */
+const matchesVisibility = (exp: SpecExport, visibility: ReleaseTag[] | undefined): boolean => {
+  if (!visibility || visibility.length === 0) {
+    return true;
+  }
+  const tag = getExportReleaseTag(exp);
+  // If no tag, treat as public
+  const effectiveTag = tag ?? 'public';
+  return visibility.includes(effectiveTag);
+};
 
 const toLowerKey = (value: string): string => value.trim().toLowerCase();
 
@@ -86,8 +116,9 @@ export const applyFilters = (
 ): FilterResult<OpenPkgSpec> => {
   const includeLookup = buildLookupMap(options.include);
   const excludeLookup = buildLookupMap(options.exclude);
+  const visibility = options.visibility;
 
-  if (includeLookup.size === 0 && excludeLookup.size === 0) {
+  if (includeLookup.size === 0 && excludeLookup.size === 0 && (!visibility || visibility.length === 0)) {
     return { spec, diagnostics: [], changed: false };
   }
 
@@ -105,12 +136,13 @@ export const applyFilters = (
 
     const allowedByInclude = includeLookup.size === 0 || Boolean(includeMatch);
     const allowedByExclude = !excludeMatch;
+    const allowedByVisibility = matchesVisibility(entry, visibility);
 
     if (includeMatch) {
       includeMatches.add(includeMatch);
     }
 
-    if (allowedByInclude && allowedByExclude) {
+    if (allowedByInclude && allowedByExclude && allowedByVisibility) {
       keptExports.push(entry);
     }
   }

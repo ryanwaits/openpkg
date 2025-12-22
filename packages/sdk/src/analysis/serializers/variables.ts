@@ -37,6 +37,29 @@ export function serializeVariable(
   const typeRefs = typeRegistry.getTypeRefs();
   const referencedTypes = typeRegistry.getReferencedTypes();
 
+  // Check for pre-detected Standard Schema
+  const symbolName = symbol.getName();
+  const detectedSchema = context.detectedSchemas?.get(symbolName);
+
+  if (detectedSchema) {
+    // Use the detected Standard Schema instead of AST-derived type
+    return {
+      id: symbolName,
+      name: symbolName,
+      ...metadata,
+      kind: 'variable',
+      deprecated: isSymbolDeprecated(symbol),
+      schema: detectedSchema.schema,
+      description,
+      source: getSourceLocation(declaration),
+      tags: [
+        ...(parsedDoc?.tags ?? []),
+        { name: 'standardSchema', text: detectedSchema.vendor },
+      ],
+      examples: parsedDoc?.examples,
+    };
+  }
+
   return {
     id: symbol.getName(),
     name: symbol.getName(),

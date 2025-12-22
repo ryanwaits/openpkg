@@ -1,14 +1,19 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
+import { anonymousRateLimit } from './middleware/anonymous-rate-limit';
 import { requireApiKey } from './middleware/api-key-auth';
 import { orgRateLimit } from './middleware/org-rate-limit';
 import { rateLimit } from './middleware/rate-limit';
+import { aiRoute } from './routes/ai';
 import { apiKeysRoute } from './routes/api-keys';
 import { authRoute } from './routes/auth';
 import { badgeRoute } from './routes/badge';
 import { billingRoute } from './routes/billing';
 import { coverageRoute } from './routes/coverage';
+import { demoRoute } from './routes/demo';
+import { githubAppRoute } from './routes/github-app';
+import { invitesRoute } from './routes/invites';
 import { orgsRoute } from './routes/orgs';
 import { planRoute } from './routes/plan';
 
@@ -45,9 +50,13 @@ app.get('/', (c) => {
       badge: '/badge/:owner/:repo',
       billing: '/billing/*',
       coverage: '/coverage/*',
+      github: '/github/* (App install, webhooks)',
+      invites: '/invites/:token',
       orgs: '/orgs/*',
       plan: '/plan',
-      v1: '/v1/* (API key required)',
+      v1: {
+        ai: '/v1/ai/generate (POST), /v1/ai/quota (GET)',
+      },
       health: '/health',
     },
   });
@@ -58,7 +67,26 @@ app.get('/health', (c) => {
 });
 
 // Public endpoints (no auth)
+// Anonymous rate limit: 10 requests per day per IP
+app.use(
+  '/badge/*',
+  anonymousRateLimit({
+    windowMs: 24 * 60 * 60 * 1000, // 24 hours
+    max: 10,
+    message: 'Rate limit reached. Sign up free for 100/day.',
+    upgradeUrl: 'https://doccov.com/signup',
+  }),
+);
 app.route('/badge', badgeRoute);
+
+// Semi-public endpoints (invite info is public, acceptance requires auth)
+app.route('/invites', invitesRoute);
+
+// GitHub App (install/callback need auth, webhook is public)
+app.route('/github', githubAppRoute);
+
+// Demo endpoint (public, rate-limited)
+app.route('/demo', demoRoute);
 
 // Dashboard endpoints (session auth)
 app.route('/auth', authRoute);
@@ -70,7 +98,7 @@ app.route('/plan', planRoute);
 
 // API endpoints (API key required)
 app.use('/v1/*', requireApiKey(), orgRateLimit());
-// TODO: app.route('/v1/analyze', analyzeRoute);
+app.route('/v1/ai', aiRoute);
 
 // Vercel serverless handler + Bun auto-serves this export
 export default app;

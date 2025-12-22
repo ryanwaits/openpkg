@@ -62,9 +62,17 @@
         "$ref": "#/$defs/typeDef"
       }
     },
-    "docs": {
-      "$ref": "#/$defs/docsMetadata",
-      "description": "Aggregate documentation coverage metadata"
+    "examples": {
+      "type": "array",
+      "description": "Package-level usage examples",
+      "items": {
+        "$ref": "#/$defs/example"
+      }
+    },
+    "extensions": {
+      "type": "object",
+      "description": "Custom extension data",
+      "additionalProperties": true
     },
     "generation": {
       "$ref": "#/$defs/generationInfo",
@@ -159,6 +167,27 @@
             "maxTypeDepth": {
               "type": "integer",
               "description": "Maximum type depth used for nested type resolution"
+            },
+            "schemaExtraction": {
+              "type": "object",
+              "description": "Schema extraction method and metadata",
+              "properties": {
+                "method": {
+                  "type": "string",
+                  "description": "How schemas were extracted",
+                  "enum": ["standard-json-schema", "static-ast", "hybrid"]
+                },
+                "runtimeCount": {
+                  "type": "integer",
+                  "description": "Number of schemas extracted via Standard Schema runtime"
+                },
+                "vendors": {
+                  "type": "array",
+                  "description": "Vendors detected (e.g., ['zod', 'valibot'])",
+                  "items": { "type": "string" }
+                }
+              },
+              "additionalProperties": false
             }
           },
           "additionalProperties": false
@@ -313,7 +342,9 @@
             "interface",
             "type",
             "enum",
+            "module",
             "namespace",
+            "reference",
             "external"
           ]
         },
@@ -342,7 +373,7 @@
         "members": {
           "type": "array",
           "description": "Class/interface/enum members",
-          "items": { "type": "object" }
+          "items": { "$ref": "#/$defs/member" }
         },
         "extends": {
           "type": "string",
@@ -362,6 +393,24 @@
         },
         "source": {
           "$ref": "#/$defs/sourceLocation"
+        },
+        "deprecated": {
+          "type": "boolean",
+          "description": "Whether this export is deprecated"
+        },
+        "flags": {
+          "type": "object",
+          "description": "Export flags (readonly, abstract, etc.)",
+          "additionalProperties": true
+        },
+        "schema": {
+          "$ref": "#/$defs/schema",
+          "description": "Inline schema for the export"
+        },
+        "typeParameters": {
+          "type": "array",
+          "description": "Generic type parameters",
+          "items": { "$ref": "#/$defs/typeParameter" }
         },
         "docs": {
           "$ref": "#/$defs/docsMetadata",
@@ -452,7 +501,7 @@
         "members": {
           "type": "array",
           "description": "Members for classes/interfaces/enums",
-          "items": { "type": "object" }
+          "items": { "$ref": "#/$defs/member" }
         },
         "extends": {
           "type": "string",
@@ -472,6 +521,10 @@
         },
         "source": {
           "$ref": "#/$defs/sourceLocation"
+        },
+        "rawComments": {
+          "type": "string",
+          "description": "Raw JSDoc/TSDoc comment text"
         },
         "typeAliasKind": {
           "$ref": "#/$defs/typeAliasKind",
@@ -593,7 +646,7 @@
     },
     "parameter": {
       "type": "object",
-      "required": ["name", "required"],
+      "required": ["name"],
       "properties": {
         "name": {
           "type": "string",
@@ -636,6 +689,26 @@
         }
       }
     },
+    "schemaType": {
+      "type": "string",
+      "description": "Explicit type enum aligned with TypeScript type system",
+      "enum": [
+        "string",
+        "number",
+        "boolean",
+        "integer",
+        "null",
+        "undefined",
+        "any",
+        "unknown",
+        "never",
+        "void",
+        "array",
+        "tuple",
+        "object",
+        "function"
+      ]
+    },
     "schema": {
       "description": "Flexible JSON Schema for type representation",
       "oneOf": [
@@ -648,6 +721,11 @@
             "format": { "type": "string" },
             "enum": { "type": "array" },
             "items": { "$ref": "#/$defs/schema" },
+            "prefixedItems": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/schema" },
+              "description": "Tuple element schemas (draft-2020-12)"
+            },
             "properties": {
               "type": "object",
               "additionalProperties": { "$ref": "#/$defs/schema" }
@@ -668,14 +746,13 @@
             "description": { "type": "string" },
             "minItems": { "type": "integer" },
             "maxItems": { "type": "integer" },
-            "signatures": { "type": "array" }
+            "signatures": { "type": "array", "items": { "$ref": "#/$defs/signature" } }
           }
         }
       ]
     },
     "sourceLocation": {
       "type": "object",
-      "required": ["file", "line"],
       "properties": {
         "file": {
           "type": "string",
@@ -685,6 +762,10 @@
           "type": "integer",
           "description": "Line number in source file",
           "minimum": 1
+        },
+        "url": {
+          "type": "string",
+          "description": "URL to source (e.g., GitHub permalink)"
         }
       }
     },
@@ -826,6 +907,56 @@
           "additionalProperties": false
         }
       ]
+    },
+    "visibility": {
+      "type": "string",
+      "description": "Visibility modifier for class members",
+      "enum": ["public", "protected", "private"]
+    },
+    "member": {
+      "type": "object",
+      "description": "Class/interface/enum member definition",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the member"
+        },
+        "name": {
+          "type": "string",
+          "description": "Member name"
+        },
+        "kind": {
+          "type": "string",
+          "description": "Kind of member (e.g., 'property', 'method', 'constructor')"
+        },
+        "description": {
+          "type": "string",
+          "description": "JSDoc/TSDoc description"
+        },
+        "visibility": {
+          "$ref": "#/$defs/visibility"
+        },
+        "tags": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/tag" }
+        },
+        "flags": {
+          "type": "object",
+          "description": "Member flags (static, readonly, abstract, etc.)",
+          "additionalProperties": true
+        },
+        "schema": {
+          "$ref": "#/$defs/schema"
+        },
+        "signatures": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/signature" }
+        },
+        "decorators": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/decorator" }
+        }
+      }
     },
     "relationType": {
       "type": "string",

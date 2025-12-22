@@ -66,6 +66,25 @@ const qualityConfigSchema: z.ZodObject<{
   rules: z.record(severitySchema).optional(),
 });
 
+/**
+ * Per-path policy configuration schema
+ */
+const policyConfigSchema: z.ZodObject<{
+  path: z.ZodString;
+  minCoverage: z.ZodOptional<z.ZodNumber>;
+  maxDrift: z.ZodOptional<z.ZodNumber>;
+  requireExamples: z.ZodOptional<z.ZodBoolean>;
+}> = z.object({
+  /** Glob pattern to match file paths */
+  path: z.string().min(1),
+  /** Minimum coverage percentage (0-100) */
+  minCoverage: z.number().min(0).max(100).optional(),
+  /** Maximum drift percentage (0-100) */
+  maxDrift: z.number().min(0).max(100).optional(),
+  /** Require @example blocks on matched exports */
+  requireExamples: z.boolean().optional(),
+});
+
 export const docCovConfigSchema: z.ZodObject<{
   include: z.ZodOptional<typeof stringList>;
   exclude: z.ZodOptional<typeof stringList>;
@@ -73,6 +92,7 @@ export const docCovConfigSchema: z.ZodObject<{
   docs: z.ZodOptional<typeof docsConfigSchema>;
   check: z.ZodOptional<typeof checkConfigSchema>;
   quality: z.ZodOptional<typeof qualityConfigSchema>;
+  policies: z.ZodOptional<z.ZodArray<typeof policyConfigSchema>>;
 }> = z.object({
   include: stringList.optional(),
   exclude: stringList.optional(),
@@ -83,14 +103,22 @@ export const docCovConfigSchema: z.ZodObject<{
   check: checkConfigSchema.optional(),
   /** Quality rules configuration */
   quality: qualityConfigSchema.optional(),
+  /** Per-path coverage policies (Pro tier) */
+  policies: z.array(policyConfigSchema).optional(),
 });
 
-import type { CheckConfig, DocCovConfig, DocsConfig, QualityRulesConfig } from '@doccov/sdk';
+import type {
+  CheckConfig,
+  DocCovConfig,
+  DocsConfig,
+  PolicyConfig,
+  QualityRulesConfig,
+} from '@doccov/sdk';
 
 export type DocCovConfigInput = z.infer<typeof docCovConfigSchema>;
 
 // Re-export types from SDK
-export type { CheckConfig, DocsConfig, QualityRulesConfig };
+export type { CheckConfig, DocsConfig, PolicyConfig, QualityRulesConfig };
 
 // NormalizedDocCovConfig is the same as DocCovConfig from SDK
 export type NormalizedDocCovConfig = DocCovConfig;
@@ -138,6 +166,9 @@ export const normalizeConfig = (input: DocCovConfigInput): NormalizedDocCovConfi
     };
   }
 
+  // Policies are passed through directly (already validated by zod)
+  const policies: PolicyConfig[] | undefined = input.policies;
+
   return {
     include,
     exclude,
@@ -145,5 +176,6 @@ export const normalizeConfig = (input: DocCovConfigInput): NormalizedDocCovConfi
     docs,
     check,
     quality,
+    policies,
   };
 };

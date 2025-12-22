@@ -1,5 +1,15 @@
 // Cache utilities
 
+// Analysis context types (for advanced usage)
+export type { DetectedSchemaEntry } from './analysis/context';
+// Runtime schema detection
+export {
+  clearSchemaCache,
+  detectRuntimeSchemas,
+  type SchemaDetectionContext,
+  type SchemaDetectionResult,
+} from './analysis/schema-detection';
+
 // Drift categorization utilities
 export {
   buildExportRegistry,
@@ -34,8 +44,30 @@ export {
   generateReportFromEnriched,
   isCachedReportValid,
   loadCachedReport,
+  renderApiSurface,
   saveReport,
 } from './analysis/report';
+// Coverage history and trends
+export {
+  computeSnapshot,
+  type CoverageSnapshot,
+  type CoverageTrend,
+  type ExtendedTrendAnalysis,
+  formatDelta,
+  generateWeeklySummaries,
+  getExtendedTrend,
+  getTrend,
+  HISTORY_DIR,
+  loadSnapshots,
+  loadSnapshotsForDays,
+  pruneByTier,
+  pruneHistory,
+  renderSparkline,
+  RETENTION_DAYS,
+  type RetentionTier,
+  saveSnapshot,
+  type WeeklySummary,
+} from './analysis/history';
 export type { OpenPkgSpec } from './analysis/spec-types';
 export {
   CACHE_VERSION,
@@ -54,12 +86,38 @@ export {
   saveSpecCache,
   validateSpecCache,
 } from './cache';
+// CODEOWNERS parsing and ownership analysis
+export {
+  analyzeOwnership,
+  analyzeSpecOwnership,
+  type AnalyzeOwnershipOptions,
+  attributeOwners,
+  type CodeOwnerRule,
+  type CodeOwnersFile,
+  findOwners,
+  loadCodeOwners,
+  type OwnerCoverageStats,
+  type OwnershipAnalysisResult,
+  parseCodeOwners,
+} from './codeowners';
+// Contributor analysis (git blame)
+export {
+  analyzeContributors,
+  type AnalyzeContributorsOptions,
+  analyzeSpecContributors,
+  type BlameInfo,
+  type ContributorAnalysisResult,
+  type ContributorStats,
+  getBlameForLines,
+  getFileBlame,
+} from './contributors';
 // Configuration types
 export type {
   CheckConfig,
   DocCovConfig,
   DocsConfig,
   ExampleValidationMode,
+  PolicyConfig,
   QualityRulesConfig,
   QualitySeverity,
 } from './config';
@@ -117,9 +175,20 @@ export {
   validateExamples,
 } from './examples';
 export { extractPackageSpec } from './extractor';
+// Standard JSON Schema extraction (Zod, ArkType, Valibot, etc.)
+export {
+  extractViaStandardSchema,
+  isStandardJSONSchema,
+  KNOWN_VENDORS,
+  type KnownVendor,
+  type StandardJSONSchemaV1,
+  type StandardSchemaOutputOptions,
+  type StandardSchemaResult,
+  tryExtractStandardSchema,
+} from './extraction';
 export type { FilterSource, ResolvedFilters } from './filtering/merge';
 export { mergeFilters, parseListFlag } from './filtering/merge';
-export type { FilterOptions } from './filtering/types';
+export type { FilterOptions, ReleaseTag } from './filtering/types';
 // Fix utilities
 export {
   type ApplyEditsResult,
@@ -189,6 +258,15 @@ export {
 export type { AnalysisResult, AnalyzeOptions, Diagnostic } from './openpkg';
 export { analyze, analyzeFile, DocCov } from './openpkg';
 export type { DocCovOptions } from './options';
+// Policy evaluation engine
+export {
+  evaluatePolicies,
+  type EvaluatePoliciesOptions,
+  evaluatePolicy,
+  type PolicyEvaluationResult,
+  type PolicyFailure,
+  type PolicyResult,
+} from './policies';
 // Quality rules engine
 export {
   type AggregateQualityResult,
@@ -207,6 +285,7 @@ export {
   type QualityViolation,
   type RuleContext,
   STYLE_RULES,
+  TSDOC_RULES,
 } from './quality';
 // Project resolution
 export type { ResolvedTarget, ResolveTargetOptions } from './resolve';
@@ -223,6 +302,7 @@ export type {
   BuildPlanStepResult,
   BuildPlanTarget,
   DetectedPackageManager,
+  FetchGitHubContextOptions,
   GitHubProjectContext,
   GitHubRepoMetadata,
   // Summary

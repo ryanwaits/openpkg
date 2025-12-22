@@ -12,6 +12,11 @@ export type QualitySeverity = 'error' | 'warn' | 'off';
 export interface RuleContext {
   export: SpecExport;
   rawJSDoc?: string;
+  /**
+   * Registry of all exported names/IDs for spec-level rules.
+   * Used by rules like no-forgotten-export to check if referenced types are exported.
+   */
+  exportRegistry?: Set<string>;
 }
 
 /**

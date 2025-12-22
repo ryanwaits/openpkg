@@ -2,8 +2,11 @@ import * as fsSync from 'node:fs';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import type * as TS from 'typescript';
+import type { DetectedSchemaEntry } from './analysis/context';
+import { createProgram } from './analysis/program';
 import type { AnalysisMetadataInternal, GenerationInput } from './analysis/run-analysis';
 import { runAnalysis } from './analysis/run-analysis';
+import { detectRuntimeSchemas } from './analysis/schema-detection';
 import type { OpenPkgSpec } from './analysis/spec-types';
 import {
   type CacheContext,
@@ -99,12 +102,21 @@ export class DocCov {
   ): Promise<AnalysisResult> {
     const resolvedFileName = path.resolve(fileName ?? 'temp.ts');
     const packageDir = resolvePackageDir(resolvedFileName);
+
+    // Try runtime schema detection if analyzing a real file (not temp.ts)
+    // This enables Standard Schema extraction even for in-memory analysis
+    const isRealFile = fileName && !fileName.includes('temp.ts');
+    const detectedSchemas = isRealFile
+      ? await this.detectSchemas(resolvedFileName, packageDir)
+      : undefined;
+
     const analysis = runAnalysis(
       {
         entryFile: resolvedFileName,
         packageDir,
         content: code,
         options: this.options,
+        detectedSchemas,
       },
       analyzeOptions.generationInput,
     );
@@ -148,12 +160,17 @@ export class DocCov {
 
     // Run full analysis
     const content = await fs.readFile(resolvedPath, 'utf-8');
+
+    // Opportunistically detect Standard Schema exports (Zod, ArkType, Valibot)
+    const detectedSchemas = await this.detectSchemas(resolvedPath, packageDir);
+
     const analysis = runAnalysis(
       {
         entryFile: resolvedPath,
         packageDir,
         content,
         options: this.options,
+        detectedSchemas,
       },
       analyzeOptions.generationInput,
     );
@@ -204,14 +221,13 @@ export class DocCov {
       return null;
     }
 
-    // Get source files from cache for validation
-    const sourceFiles = Object.keys(cache.hashes.sourceFiles).map((relativePath) =>
-      path.resolve(cwd, relativePath),
-    );
+    // Get CURRENT source files from a fresh TypeScript program to detect new files
+    // This is the key fix: we must compare against current files, not cached files
+    const currentSourceFiles = this.getCurrentSourceFiles(entryFile, packageDir);
 
     const cacheContext: CacheContext = {
       entryFile,
-      sourceFiles,
+      sourceFiles: currentSourceFiles,
       tsconfigPath,
       packageJsonPath,
       config: {
@@ -226,7 +242,11 @@ export class DocCov {
       return null;
     }
 
-    // Cache hit - reconstruct metadata
+    // Cache hit - reconstruct metadata using cached source files
+    const cachedSourceFiles = Object.keys(cache.hashes.sourceFiles).map((relativePath) =>
+      path.resolve(cwd, relativePath),
+    );
+
     return {
       spec: cache.spec as OpenPkgSpec,
       metadata: {
@@ -235,9 +255,26 @@ export class DocCov {
         packageJsonPath,
         hasNodeModules: true, // Assume true for cached results
         resolveExternalTypes: cache.config.resolveExternalTypes,
-        sourceFiles,
+        sourceFiles: cachedSourceFiles,
       },
     };
+  }
+
+  /**
+   * Get current source files from a fresh TypeScript program.
+   * Used for cache validation to detect new files.
+   */
+  private getCurrentSourceFiles(entryFile: string, baseDir: string): string[] {
+    try {
+      const { program } = createProgram({ entryFile, baseDir });
+      return program
+        .getSourceFiles()
+        .filter((sf) => !sf.isDeclarationFile && sf.fileName.startsWith(baseDir))
+        .map((sf) => sf.fileName);
+    } catch {
+      // If we can't create a program, return empty array to invalidate cache
+      return [];
+    }
   }
 
   /**
@@ -305,6 +342,38 @@ export class DocCov {
         return null;
       }
       current = parent;
+    }
+  }
+
+  /**
+   * Opportunistically detect Standard Schema exports from compiled modules.
+   * Returns undefined if detection fails or no schemas found (fallback to AST).
+   */
+  private async detectSchemas(
+    entryFile: string,
+    packageDir: string,
+  ): Promise<Map<string, DetectedSchemaEntry> | undefined> {
+    try {
+      const result = await detectRuntimeSchemas({
+        baseDir: packageDir,
+        entryFile,
+      });
+
+      if (result.schemas.size === 0) {
+        return undefined;
+      }
+
+      const detected = new Map<string, DetectedSchemaEntry>();
+      for (const [name, schema] of result.schemas) {
+        detected.set(name, {
+          schema: schema.schema,
+          vendor: schema.vendor,
+        });
+      }
+      return detected;
+    } catch {
+      // Runtime detection unavailable - proceed with AST-only analysis
+      return undefined;
     }
   }
 

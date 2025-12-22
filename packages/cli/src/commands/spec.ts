@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { DocCov, type GenerationInput, NodeFileSystem, resolveTarget } from '@doccov/sdk';
+import { DocCov, type GenerationInput, NodeFileSystem, renderApiSurface, resolveTarget } from '@doccov/sdk';
 import { normalize, type OpenPkg as OpenPkgSpec, validateSpec } from '@openpkg-ts/spec';
 import chalk from 'chalk';
 import type { Command } from 'commander';
@@ -10,8 +10,11 @@ import {
   type FilterOptions as CliFilterOptions,
   mergeFilterOptions,
   parseListFlag,
+  parseVisibilityFlag,
 } from '../utils/filter-options';
 import { StepProgress } from '../utils/progress';
+
+export type SpecFormat = 'json' | 'api-surface';
 
 export interface SpecOptions {
   // Core options
@@ -20,10 +23,12 @@ export interface SpecOptions {
 
   // Output
   output: string;
+  format?: SpecFormat;
 
   // Filtering
   include?: string;
   exclude?: string;
+  visibility?: string;
 
   // Type resolution
   skipResolve?: boolean;
@@ -97,10 +102,12 @@ export function registerSpecCommand(
 
     // === Output ===
     .option('-o, --output <file>', 'Output file path', 'openpkg.json')
+    .option('-f, --format <format>', 'Output format: json (default) or api-surface', 'json')
 
     // === Filtering ===
     .option('--include <patterns>', 'Include exports matching pattern (comma-separated)')
     .option('--exclude <patterns>', 'Exclude exports matching pattern (comma-separated)')
+    .option('--visibility <tags>', 'Filter by release stage: public,beta,alpha,internal (comma-separated)')
 
     // === Type resolution ===
     .option('--skip-resolve', 'Skip external type resolution from node_modules')
@@ -154,6 +161,7 @@ export function registerSpecCommand(
         const cliFilters: CliFilterOptions = {
           include: parseListFlag(options.include),
           exclude: parseListFlag(options.exclude),
+          visibility: parseVisibilityFlag(options.visibility),
         };
         const resolvedFilters = mergeFilterOptions(config, cliFilters);
 
@@ -180,11 +188,12 @@ export function registerSpecCommand(
         };
 
         const analyzeOptions =
-          resolvedFilters.include || resolvedFilters.exclude
+          resolvedFilters.include || resolvedFilters.exclude || resolvedFilters.visibility
             ? {
                 filters: {
                   include: resolvedFilters.include,
                   exclude: resolvedFilters.exclude,
+                  visibility: resolvedFilters.visibility,
                 },
                 generationInput,
               }
@@ -210,11 +219,19 @@ export function registerSpecCommand(
         }
         steps.next();
 
-        // Write output
-        const outputPath = path.resolve(process.cwd(), options.output);
-        writeFileSync(outputPath, JSON.stringify(normalized, null, 2));
+        // Write output based on format
+        const format = options.format ?? 'json';
+        const outputPath = path.resolve(options.cwd, options.output);
 
-        steps.complete(`Generated ${options.output}`);
+        if (format === 'api-surface') {
+          const apiSurface = renderApiSurface(normalized);
+          writeFileSync(outputPath, apiSurface);
+          steps.complete(`Generated ${options.output} (API surface)`);
+        } else {
+          writeFileSync(outputPath, JSON.stringify(normalized, null, 2));
+          steps.complete(`Generated ${options.output}`);
+        }
+
         log(chalk.gray(`  ${getArrayLength(normalized.exports)} exports`));
         log(chalk.gray(`  ${getArrayLength(normalized.types)} types`));
 

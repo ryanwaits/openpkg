@@ -148,6 +148,30 @@ export interface CoverageSnapshotsTable {
   createdAt: Generated<Date>;
 }
 
+// ============ Org Invites ============
+export interface OrgInvitesTable {
+  id: string;
+  orgId: string;
+  email: string;
+  role: 'admin' | 'member';
+  token: string;
+  expiresAt: Date;
+  createdBy: string;
+  createdAt: Generated<Date>;
+}
+
+// ============ GitHub Installations ============
+export interface GitHubInstallationsTable {
+  id: string;
+  orgId: string;
+  installationId: string; // GitHub's installation ID
+  accessToken: string | null;
+  tokenExpiresAt: Date | null;
+  repos: string | null; // JSON array of repo names
+  createdAt: Generated<Date>;
+  updatedAt: Generated<Date>;
+}
+
 // ============ Verification (Better Auth) ============
 export interface VerificationTable {
   id: string;
@@ -166,6 +190,8 @@ export interface Database {
   verification: VerificationTable;
   organizations: OrganizationsTable;
   org_members: OrgMembersTable;
+  org_invites: OrgInvitesTable;
+  github_installations: GitHubInstallationsTable;
   api_keys: ApiKeysTable;
   projects: ProjectsTable;
   usage_records: UsageRecordsTable;
@@ -181,6 +207,8 @@ export type Organization = Selectable<OrganizationsTable>;
 export type NewOrganization = Insertable<OrganizationsTable>;
 
 export type OrgMember = Selectable<OrgMembersTable>;
+export type OrgInvite = Selectable<OrgInvitesTable>;
+export type GitHubInstallation = Selectable<GitHubInstallationsTable>;
 export type Project = Selectable<ProjectsTable>;
 export type ApiKey = Selectable<ApiKeysTable>;
 export type CoverageSnapshot = Selectable<CoverageSnapshotsTable>;

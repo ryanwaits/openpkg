@@ -29,7 +29,7 @@ Add a documentation coverage badge:
 ![DocCov](https://api.doccov.com/badge/YOUR_ORG/YOUR_REPO)
 ```
 
-Requires `openpkg.json` committed to your default branch. See [badges docs](./docs/integrations/badges-widgets.md) for options.
+Requires `openpkg.json` committed to your default branch. See [badges docs](./docs/integrations/badges.md) for options.
 
 ## Documentation
 

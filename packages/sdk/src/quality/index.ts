@@ -15,6 +15,7 @@ export {
   getRule,
   getRulesForKind,
   STYLE_RULES,
+  TSDOC_RULES,
 } from './rules';
 export type {
   AggregateQualityResult,

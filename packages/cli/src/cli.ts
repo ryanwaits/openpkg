@@ -9,6 +9,7 @@ import { registerDiffCommand } from './commands/diff';
 import { registerInfoCommand } from './commands/info';
 import { registerInitCommand } from './commands/init';
 import { registerSpecCommand } from './commands/spec';
+import { registerTrendsCommand } from './commands/trends';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -30,6 +31,7 @@ registerSpecCommand(program);
 // Utility commands
 registerDiffCommand(program);
 registerInitCommand(program);
+registerTrendsCommand(program);
 
 program.command('*', { hidden: true }).action(() => {
   program.outputHelp();

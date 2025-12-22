@@ -50,6 +50,21 @@ export interface QualityRulesConfig {
 }
 
 /**
+ * Per-path policy configuration.
+ * Allows setting different coverage requirements for different parts of the codebase.
+ */
+export interface PolicyConfig {
+  /** Glob pattern to match file paths (e.g., "packages/public-api/**") */
+  path: string;
+  /** Minimum coverage percentage required for matched paths (0-100) */
+  minCoverage?: number;
+  /** Maximum drift percentage allowed for matched paths (0-100) */
+  maxDrift?: number;
+  /** Require @example blocks on all matched exports */
+  requireExamples?: boolean;
+}
+
+/**
  * Normalized DocCov configuration.
  * This is the parsed/normalized form used by commands.
  */
@@ -66,6 +81,8 @@ export interface DocCovConfig {
   check?: CheckConfig;
   /** Quality rules configuration */
   quality?: QualityRulesConfig;
+  /** Per-path coverage policies (Pro tier) */
+  policies?: PolicyConfig[];
 }
 
 /**

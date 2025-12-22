@@ -18,6 +18,8 @@ export interface SerializerContext {
   typeRegistry: TypeRegistry;
   /** Maximum depth for type conversion to prevent infinite recursion */
   maxTypeDepth: number;
+  /** Pre-detected Standard Schema results (from runtime detection) */
+  detectedSchemas?: Map<string, { schema: Record<string, unknown>; vendor: string }>;
 }
 
 export function serializeCallSignatures(

@@ -6,6 +6,7 @@
 export type {
   BuildHints,
   DetectedPackageManager,
+  FetchGitHubContextOptions,
   GitHubProjectContext,
   GitHubRepoMetadata,
   WorkspaceConfig,

@@ -1,3 +1,4 @@
+import { getPlanLimits, type Plan } from '@doccov/db';
 import { CustomerPortal, Webhooks } from '@polar-sh/hono';
 import { Hono } from 'hono';
 import { auth } from '../auth/config';
@@ -198,5 +199,69 @@ billingRoute.get('/status', async (c) => {
     hasSubscription: !!org.polarSubscriptionId,
     usage: { aiCalls: org.aiCallsUsed, resetAt: org.aiCallsResetAt },
     portalUrl: org.polarCustomerId ? `${API_URL}/billing/portal?orgId=${orgId}` : null,
+  });
+});
+
+// ============ Usage Details ============
+billingRoute.get('/usage', async (c) => {
+  const orgId = c.req.query('orgId');
+  if (!orgId) return c.json({ error: 'orgId required' }, 400);
+
+  const session = await auth.api.getSession({ headers: c.req.raw.headers });
+  if (!session) return c.json({ error: 'Unauthorized' }, 401);
+
+  // Get org with member count
+  const org = await db
+    .selectFrom('organizations')
+    .innerJoin('org_members', 'org_members.orgId', 'organizations.id')
+    .where('organizations.id', '=', orgId)
+    .where('org_members.userId', '=', session.user.id)
+    .select([
+      'organizations.id',
+      'organizations.plan',
+      'organizations.aiCallsUsed',
+      'organizations.aiCallsResetAt',
+    ])
+    .executeTakeFirst();
+
+  if (!org) return c.json({ error: 'Organization not found' }, 404);
+
+  // Get member count
+  const memberResult = await db
+    .selectFrom('org_members')
+    .where('orgId', '=', orgId)
+    .select(db.fn.countAll<number>().as('count'))
+    .executeTakeFirst();
+
+  const seats = memberResult?.count ?? 1;
+  const limits = getPlanLimits(org.plan as Plan);
+
+  // Calculate next reset date
+  const now = new Date();
+  const resetAt = org.aiCallsResetAt || new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  const shouldReset = !org.aiCallsResetAt || now >= org.aiCallsResetAt;
+  const aiUsed = shouldReset ? 0 : org.aiCallsUsed;
+
+  // Calculate pricing based on plan
+  const pricing: Record<string, number> = { free: 0, team: 15, pro: 49 };
+  const monthlyCost = (pricing[org.plan] ?? 0) * seats;
+
+  return c.json({
+    plan: org.plan,
+    seats,
+    monthlyCost,
+    aiCalls: {
+      used: aiUsed,
+      limit: limits.aiCallsPerMonth === Infinity ? 'unlimited' : limits.aiCallsPerMonth,
+      resetAt: resetAt.toISOString(),
+    },
+    analyses: {
+      limit: limits.analysesPerDay === Infinity ? 'unlimited' : limits.analysesPerDay,
+      resetAt: 'daily',
+    },
+    history: {
+      days: limits.historyDays,
+    },
+    privateRepos: limits.privateRepos === Infinity,
   });
 });

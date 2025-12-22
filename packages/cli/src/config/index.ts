@@ -5,6 +5,7 @@ import type {
   DocCovConfigInput,
   DocsConfig,
   NormalizedDocCovConfig,
+  PolicyConfig,
   QualityRulesConfig,
 } from './schema';
 
@@ -15,7 +16,8 @@ export type {
   CheckConfig,
   DocCovConfigInput,
   DocsConfig,
-  QualityRulesConfig,
   LoadedDocCovConfig,
   NormalizedDocCovConfig,
+  PolicyConfig,
+  QualityRulesConfig,
 };

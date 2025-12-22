@@ -1,4 +1,4 @@
-import { type FilterOptions, mergeFilters, parseListFlag } from '@doccov/sdk';
+import { type FilterOptions, mergeFilters, parseListFlag, type ReleaseTag } from '@doccov/sdk';
 import chalk from 'chalk';
 import type { NormalizedDocCovConfig } from '../config';
 
@@ -7,11 +7,31 @@ export type { FilterOptions };
 export { parseListFlag };
 
 /**
+ * Parse visibility flag into ReleaseTag array.
+ */
+export const parseVisibilityFlag = (value: string | undefined): ReleaseTag[] | undefined => {
+  if (!value) return undefined;
+  const validTags: ReleaseTag[] = ['public', 'beta', 'alpha', 'internal'];
+  const parsed = parseListFlag(value);
+  if (!parsed) return undefined;
+
+  const result: ReleaseTag[] = [];
+  for (const tag of parsed) {
+    const lower = tag.toLowerCase() as ReleaseTag;
+    if (validTags.includes(lower)) {
+      result.push(lower);
+    }
+  }
+  return result.length > 0 ? result : undefined;
+};
+
+/**
  * Resolved filter options with CLI-specific messages.
  */
 export interface ResolvedFilterOptions {
   include?: string[];
   exclude?: string[];
+  visibility?: ReleaseTag[];
   source?: 'config' | 'cli' | 'combined';
   messages: string[];
 }
@@ -45,11 +65,14 @@ export const mergeFilterOptions = (
   if (cliOptions.exclude) {
     messages.push(formatList('apply exclude filters from CLI', cliOptions.exclude));
   }
+  if (cliOptions.visibility) {
+    messages.push(formatList('apply visibility filter from CLI', cliOptions.visibility));
+  }
 
   // Use SDK merge logic
   const resolved = mergeFilters(config, cliOptions);
 
-  if (!resolved.include && !resolved.exclude) {
+  if (!resolved.include && !resolved.exclude && !cliOptions.visibility) {
     return { messages };
   }
 
@@ -59,6 +82,7 @@ export const mergeFilterOptions = (
   return {
     include: resolved.include,
     exclude: resolved.exclude,
+    visibility: cliOptions.visibility,
     source,
     messages,
   };

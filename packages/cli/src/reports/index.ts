@@ -1,3 +1,5 @@
+// Changelog renderer
+export { type ChangelogData, type ChangelogOptions, renderChangelog, renderCompactChangelog } from './changelog-renderer';
 export { renderDiffHtml } from './diff-html';
 // Diff report renderers
 export { type DiffReportData, renderDiffMarkdown } from './diff-markdown';

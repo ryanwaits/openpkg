@@ -76,6 +76,7 @@ export function buildOpenPkgSpec(
     checker: typeChecker,
     typeRegistry,
     maxTypeDepth: context.options.maxDepth,
+    detectedSchemas: context.detectedSchemas,
   };
 
   const moduleSymbol = typeChecker.getSymbolAtLocation(sourceFile);

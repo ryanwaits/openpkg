@@ -129,7 +129,7 @@ export function enrichSpec(spec: OpenPkg, options: EnrichOptions = {}): Enriched
   const enrichedExports: EnrichedExport[] = spec.exports.map((exp) => {
     // Evaluate quality rules (coverage + violations)
     const rawJSDoc = rawJSDocByExport?.get(exp.id);
-    const quality = evaluateExportQuality(exp, rawJSDoc, qualityConfig);
+    const quality = evaluateExportQuality(exp, rawJSDoc, qualityConfig, exportRegistry);
 
     // Compute drift separately
     const drift = computeExportDrift(exp, exportRegistry);

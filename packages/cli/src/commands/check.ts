@@ -1,14 +1,19 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import {
+  analyzeSpecContributors,
+  analyzeSpecOwnership,
   applyEdits,
   categorizeDrifts,
+  type ContributorAnalysisResult,
   createSourceFile,
   DocCov,
   type EnrichedExport,
+  type EnrichedOpenPkg,
   type ExampleTypeError,
   type ExampleValidationResult,
   enrichSpec,
+  evaluatePolicies,
   type FixSuggestion,
   findJSDocLocation,
   generateFixesForExport,
@@ -17,6 +22,8 @@ import {
   type JSDocPatch,
   mergeFixes,
   NodeFileSystem,
+  type OwnershipAnalysisResult,
+  type PolicyEvaluationResult,
   parseExamplesFlag,
   parseJSDocToPatch,
   type QualityViolation,
@@ -41,6 +48,9 @@ import {
   renderMarkdown,
   writeReports,
 } from '../reports';
+import { generateWithFallback, isHostedAPIAvailable } from '../utils/ai-client';
+import { isAIGenerationAvailable } from '../utils/ai-generate';
+import { mergeFilterOptions, parseVisibilityFlag } from '../utils/filter-options';
 import {
   isLLMAssertionParsingAvailable,
   parseAssertionsWithLLM,
@@ -121,6 +131,7 @@ export function registerCheckCommand(
     .option('--skip-resolve', 'Skip external type resolution from node_modules')
     .option('--fix', 'Auto-fix drift issues')
     .option('--write', 'Alias for --fix')
+    .option('--generate', 'AI-generate missing JSDoc (requires --fix and API key)')
     .option('--dry-run', 'Preview fixes without writing (requires --fix)')
     .option('--format <format>', 'Output format: text, json, markdown, html, github', 'text')
     .option('-o, --output <file>', 'Custom output path (overrides default .doccov/ path)')
@@ -129,6 +140,12 @@ export function registerCheckCommand(
     .option('--limit <n>', 'Max exports to show in report tables', '20')
     .option('--max-type-depth <number>', 'Maximum depth for type conversion (default: 20)')
     .option('--no-cache', 'Bypass spec cache and force regeneration')
+    .option(
+      '--visibility <tags>',
+      'Filter by release stage: public,beta,alpha,internal (comma-separated)',
+    )
+    .option('--owners', 'Show coverage breakdown by CODEOWNERS')
+    .option('--contributors', 'Show documentation contributors (git blame)')
     .action(async (entry, options) => {
       try {
         // Parse --examples flag early to determine steps
@@ -169,6 +186,19 @@ export function registerCheckCommand(
 
         const maxDriftRaw = options.maxDrift ?? config?.check?.maxDrift;
         const maxDrift = maxDriftRaw !== undefined ? clampPercentage(maxDriftRaw) : undefined;
+
+        // Parse and merge visibility filters
+        const cliFilters = {
+          include: undefined,
+          exclude: undefined,
+          visibility: parseVisibilityFlag(options.visibility),
+        };
+        const resolvedFilters = mergeFilterOptions(config, cliFilters);
+
+        // Log filter info if any filters are applied
+        if (resolvedFilters.visibility) {
+          log(chalk.dim(`Filtering by visibility: ${resolvedFilters.visibility.join(', ')}`));
+        }
         steps.next();
 
         const resolveExternalTypes = !options.skipResolve;
@@ -181,7 +211,13 @@ export function registerCheckCommand(
           useCache: options.cache !== false,
           cwd: options.cwd,
         });
-        specResult = await doccov.analyzeFileWithDiagnostics(entryFile);
+
+        // Build analysis options with visibility filters
+        const analyzeOptions = resolvedFilters.visibility
+          ? { filters: { visibility: resolvedFilters.visibility } }
+          : {};
+
+        specResult = await doccov.analyzeFileWithDiagnostics(entryFile, analyzeOptions);
 
         if (!specResult) {
           throw new Error('Failed to analyze documentation coverage.');
@@ -206,6 +242,30 @@ export function registerCheckCommand(
           for (const v of exp.docs?.violations ?? []) {
             violations.push({ exportName: exp.name, violation: v });
           }
+        }
+
+        // Evaluate per-path policies if configured
+        let policyResult: PolicyEvaluationResult | undefined;
+        if (config?.policies && config.policies.length > 0) {
+          policyResult = evaluatePolicies(config.policies, spec as EnrichedOpenPkg, {
+            baseDir: targetDir,
+          });
+        }
+
+        // Analyze CODEOWNERS if --owners flag is set
+        let ownershipResult: OwnershipAnalysisResult | undefined;
+        if (options.owners) {
+          ownershipResult = analyzeSpecOwnership(spec as EnrichedOpenPkg, {
+            baseDir: targetDir,
+          }) ?? undefined;
+        }
+
+        // Analyze contributors if --contributors flag is set
+        let contributorResult: ContributorAnalysisResult | undefined;
+        if (options.contributors) {
+          contributorResult = analyzeSpecContributors(spec as EnrichedOpenPkg, {
+            baseDir: targetDir,
+          }) ?? undefined;
         }
 
         // Run example validation using unified SDK function
@@ -419,6 +479,119 @@ export function registerCheckCommand(
           }
         }
 
+        // Handle --generate: AI-generate missing JSDoc for undocumented exports
+        const generatedExportKeys = new Set<string>();
+        if (shouldFix && options.generate) {
+          const hasAIAccess = isHostedAPIAvailable() || isAIGenerationAvailable();
+          if (!hasAIAccess) {
+            log('');
+            log(chalk.yellow('⚠ --generate requires AI access. Options:'));
+            log(chalk.dim('  1. Set DOCCOV_API_KEY for hosted AI (included with Team/Pro plan)'));
+            log(chalk.dim('  2. Set OPENAI_API_KEY or ANTHROPIC_API_KEY for direct API access'));
+          } else {
+            // Find undocumented exports (no description)
+            const undocumented = (spec.exports ?? []).filter((exp) => {
+              // Skip if already has description
+              if (exp.description) return false;
+              // Skip .d.ts files
+              if (exp.source?.file?.endsWith('.d.ts')) return false;
+              // Skip if no source location
+              if (!exp.source?.file) return false;
+              return true;
+            });
+
+            if (undocumented.length > 0) {
+              log('');
+              log(chalk.bold(`Generating JSDoc for ${undocumented.length} undocumented export(s)`));
+              log('');
+
+              const aiResult = await generateWithFallback(undocumented, {
+                maxConcurrent: 3,
+                onProgress: (completed, total, name) => {
+                  log(chalk.dim(`  [${completed}/${total}] ${name}`));
+                },
+                log,
+                packageName: spec.meta?.name,
+              });
+
+              const generated = aiResult.results;
+
+              const edits: JSDocEdit[] = [];
+
+              for (const result of generated) {
+                if (!result.generated) continue;
+
+                const exp = undocumented.find((e) => e.name === result.exportName);
+                if (!exp || !exp.source?.file) continue;
+
+                const filePath = path.resolve(targetDir, exp.source.file);
+                if (!fs.existsSync(filePath)) continue;
+
+                const sourceFile = createSourceFile(filePath);
+                const location = findJSDocLocation(sourceFile, exp.name, exp.source.line);
+                if (!location) continue;
+
+                // Parse existing JSDoc if present (shouldn't be for undocumented)
+                let existingPatch: JSDocPatch = {};
+                if (location.hasExisting && location.existingJSDoc) {
+                  existingPatch = parseJSDocToPatch(location.existingJSDoc);
+                }
+
+                // Merge AI-generated patch with any existing
+                const mergedPatch = { ...existingPatch, ...result.patch };
+                const newJSDoc = serializeJSDoc(mergedPatch, location.indent);
+
+                edits.push({
+                  filePath,
+                  symbolName: exp.name,
+                  startLine: location.startLine,
+                  endLine: location.endLine,
+                  hasExisting: location.hasExisting,
+                  existingJSDoc: location.existingJSDoc,
+                  newJSDoc,
+                  indent: location.indent,
+                });
+
+                generatedExportKeys.add(exp.name);
+              }
+
+              if (edits.length > 0) {
+                if (options.dryRun) {
+                  log('');
+                  log(chalk.bold('Dry run - JSDoc that would be generated:'));
+                  for (const edit of edits) {
+                    const relativePath = path.relative(targetDir, edit.filePath);
+                    log(chalk.cyan(`  ${relativePath}:`));
+                    log(`    ${chalk.bold(edit.symbolName)} [line ${edit.startLine + 1}]`);
+                    log(chalk.green('      + description, params, returns, example'));
+                  }
+                  log('');
+                  log(chalk.gray('Run without --dry-run to apply these changes.'));
+                } else {
+                  const applyResult = await applyEdits(edits);
+                  log('');
+                  log(chalk.green(`✓ Generated JSDoc for ${edits.length} export(s)`));
+
+                  // Show quota info if using hosted API
+                  if (aiResult.source === 'hosted' && aiResult.quotaRemaining !== undefined) {
+                    const remaining =
+                      aiResult.quotaRemaining === 'unlimited'
+                        ? 'unlimited'
+                        : aiResult.quotaRemaining.toLocaleString();
+                    log(chalk.dim(`  AI calls remaining: ${remaining}`));
+                  }
+
+                  if (applyResult.errors.length > 0) {
+                    for (const err of applyResult.errors) {
+                      error(chalk.red(`  ${err.file}: ${err.error}`));
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+
         steps.complete('Check complete');
 
         // Handle --format output for non-text formats
@@ -480,8 +653,15 @@ export function registerCheckCommand(
           const hasQualityErrors =
             violations.filter((v) => v.violation.severity === 'error').length > 0;
           const hasTypecheckErrors = typecheckErrors.length > 0;
+          const policiesFailed = policyResult && !policyResult.allPassed;
 
-          if (coverageFailed || driftFailed || hasQualityErrors || hasTypecheckErrors) {
+          if (
+            coverageFailed ||
+            driftFailed ||
+            hasQualityErrors ||
+            hasTypecheckErrors ||
+            policiesFailed
+          ) {
             process.exit(1);
           }
           return;
@@ -500,6 +680,7 @@ export function registerCheckCommand(
         const hasQualityErrors =
           violations.filter((v) => v.violation.severity === 'error').length > 0;
         const hasTypecheckErrors = typecheckErrors.length > 0;
+        const policiesFailed = policyResult && !policyResult.allPassed;
 
         // Display spec diagnostics (warnings/info) - now that all validation is complete
         if (specWarnings.length > 0 || specInfos.length > 0) {
@@ -574,10 +755,107 @@ export function registerCheckCommand(
           log(`  Quality:    ${parts.join(', ')}`);
         }
 
+        // Show policy results if configured
+        if (policyResult && policyResult.results.length > 0) {
+          log('');
+          log(chalk.bold('  Policies:'));
+          for (const result of policyResult.results) {
+            const status = result.passed ? chalk.green('✓') : chalk.red('✗');
+            const policyPath = result.policy.path;
+            const matchCount = result.matchedExports.length;
+
+            if (result.passed) {
+              log(`    ${status} ${policyPath} (${matchCount} exports)`);
+            } else {
+              log(`    ${status} ${policyPath} (${matchCount} exports)`);
+              for (const failure of result.failures) {
+                log(chalk.red(`        ${failure.message}`));
+              }
+            }
+          }
+        }
+
+        // Show CODEOWNERS breakdown if --owners flag is set
+        if (ownershipResult) {
+          log('');
+          log(chalk.bold('  Owners:'));
+
+          // Sort owners by coverage (lowest first to highlight issues)
+          const sortedOwners = [...ownershipResult.byOwner.values()].sort(
+            (a, b) => a.coverageScore - b.coverageScore,
+          );
+
+          for (const stats of sortedOwners) {
+            const coverageColor =
+              stats.coverageScore >= 80
+                ? chalk.green
+                : stats.coverageScore >= 50
+                  ? chalk.yellow
+                  : chalk.red;
+            const coverageStr = coverageColor(`${stats.coverageScore}%`);
+            const undocCount = stats.undocumentedExports.length;
+
+            log(
+              `    ${stats.owner.padEnd(24)} ${coverageStr.padStart(12)} coverage  (${stats.totalExports} exports${undocCount > 0 ? `, ${undocCount} undoc` : ''})`,
+            );
+          }
+
+          if (ownershipResult.unowned.length > 0) {
+            log(
+              chalk.dim(
+                `    (${ownershipResult.unowned.length} exports have no owner in CODEOWNERS)`,
+              ),
+            );
+          }
+        }
+
+        // Show contributor breakdown if --contributors flag is set
+        if (contributorResult) {
+          log('');
+          log(chalk.bold('  Contributors:'));
+
+          // Sort contributors by documented exports (highest first)
+          const sortedContributors = [...contributorResult.byContributor.values()].sort(
+            (a, b) => b.documentedExports - a.documentedExports,
+          );
+
+          // Show top contributors (limit to 10)
+          const displayLimit = 10;
+          const topContributors = sortedContributors.slice(0, displayLimit);
+
+          for (const stats of topContributors) {
+            const name = stats.name.length > 20 ? stats.name.slice(0, 17) + '...' : stats.name;
+            const lastDate = stats.lastContribution
+              ? stats.lastContribution.toISOString().split('T')[0]
+              : 'unknown';
+
+            log(
+              `    ${name.padEnd(22)} ${String(stats.documentedExports).padStart(4)} exports  (last: ${lastDate})`,
+            );
+          }
+
+          if (sortedContributors.length > displayLimit) {
+            log(
+              chalk.dim(
+                `    ... and ${sortedContributors.length - displayLimit} more contributors`,
+              ),
+            );
+          }
+
+          if (contributorResult.unattributed.length > 0) {
+            log(
+              chalk.dim(
+                `    (${contributorResult.unattributed.length} exports could not be attributed via git blame)`,
+              ),
+            );
+          }
+        }
+
         log('');
 
         // Show pass/fail status
-        const failed = coverageFailed || driftFailed || hasQualityErrors || hasTypecheckErrors;
+        const failed =
+          coverageFailed || driftFailed || hasQualityErrors || hasTypecheckErrors || policiesFailed;
 
         if (!failed) {
           const thresholdParts: string[] = [];
@@ -586,6 +864,11 @@ export function registerCheckCommand(
           }
           if (maxDrift !== undefined) {
             thresholdParts.push(`drift ${driftScore}% ≤ ${maxDrift}%`);
+          }
+          if (policyResult) {
+            thresholdParts.push(
+              `${policyResult.passedCount}/${policyResult.totalPolicies} policies`,
+            );
           }
 
           if (thresholdParts.length > 0) {
@@ -607,6 +890,9 @@ export function registerCheckCommand(
         }
         if (hasTypecheckErrors) {
           log(chalk.red(`✗ ${typecheckErrors.length} example type errors`));
+        }
+        if (policiesFailed && policyResult) {
+          log(chalk.red(`✗ ${policyResult.failedCount} policy failures`));
         }
 
         log('');

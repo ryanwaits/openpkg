@@ -2,7 +2,7 @@
  * Tests for spec diffing and breaking change detection.
  */
 import { describe, expect, test } from 'bun:test';
-import { categorizeBreakingChanges, diffSpec } from '@openpkg-ts/spec';
+import { calculateNextVersion, categorizeBreakingChanges, diffSpec, recommendSemverBump } from '@openpkg-ts/spec';
 import { createDrift, createEnrichedSpec, createExport, createSpec } from './test-helpers';
 
 describe('diffSpec', () => {
@@ -368,5 +368,140 @@ describe('categorizeBreakingChanges', () => {
     expect(categorized).toHaveLength(1);
     expect(categorized[0].severity).toBe('high');
     expect(categorized[0].reason).toBe('methods removed');
+  });
+});
+
+describe('recommendSemverBump', () => {
+  test('recommends major for breaking changes', () => {
+    const diff = {
+      breaking: ['foo', 'bar'],
+      nonBreaking: [],
+      docsOnly: [],
+      coverageDelta: 0,
+      oldCoverage: 100,
+      newCoverage: 100,
+      newUndocumented: [],
+      improvedExports: [],
+      regressedExports: [],
+      driftIntroduced: 0,
+      driftResolved: 0,
+    };
+
+    const result = recommendSemverBump(diff);
+
+    expect(result.bump).toBe('major');
+    expect(result.breakingCount).toBe(2);
+  });
+
+  test('recommends minor for new exports', () => {
+    const diff = {
+      breaking: [],
+      nonBreaking: ['newFn', 'anotherFn'],
+      docsOnly: [],
+      coverageDelta: 0,
+      oldCoverage: 100,
+      newCoverage: 100,
+      newUndocumented: [],
+      improvedExports: [],
+      regressedExports: [],
+      driftIntroduced: 0,
+      driftResolved: 0,
+    };
+
+    const result = recommendSemverBump(diff);
+
+    expect(result.bump).toBe('minor');
+    expect(result.additionCount).toBe(2);
+  });
+
+  test('recommends patch for docs-only changes', () => {
+    const diff = {
+      breaking: [],
+      nonBreaking: [],
+      docsOnly: ['foo'],
+      coverageDelta: 0,
+      oldCoverage: 100,
+      newCoverage: 100,
+      newUndocumented: [],
+      improvedExports: [],
+      regressedExports: [],
+      driftIntroduced: 0,
+      driftResolved: 0,
+    };
+
+    const result = recommendSemverBump(diff);
+
+    expect(result.bump).toBe('patch');
+    expect(result.docsOnlyChanges).toBe(true);
+  });
+
+  test('recommends none for no changes', () => {
+    const diff = {
+      breaking: [],
+      nonBreaking: [],
+      docsOnly: [],
+      coverageDelta: 0,
+      oldCoverage: 100,
+      newCoverage: 100,
+      newUndocumented: [],
+      improvedExports: [],
+      regressedExports: [],
+      driftIntroduced: 0,
+      driftResolved: 0,
+    };
+
+    const result = recommendSemverBump(diff);
+
+    expect(result.bump).toBe('none');
+  });
+
+  test('prioritizes breaking over additions', () => {
+    const diff = {
+      breaking: ['old'],
+      nonBreaking: ['new'],
+      docsOnly: ['docs'],
+      coverageDelta: 0,
+      oldCoverage: 100,
+      newCoverage: 100,
+      newUndocumented: [],
+      improvedExports: [],
+      regressedExports: [],
+      driftIntroduced: 0,
+      driftResolved: 0,
+    };
+
+    const result = recommendSemverBump(diff);
+
+    expect(result.bump).toBe('major');
+  });
+});
+
+describe('calculateNextVersion', () => {
+  test('bumps major version', () => {
+    expect(calculateNextVersion('1.2.3', 'major')).toBe('2.0.0');
+    expect(calculateNextVersion('0.9.5', 'major')).toBe('1.0.0');
+  });
+
+  test('bumps minor version', () => {
+    expect(calculateNextVersion('1.2.3', 'minor')).toBe('1.3.0');
+    expect(calculateNextVersion('2.0.0', 'minor')).toBe('2.1.0');
+  });
+
+  test('bumps patch version', () => {
+    expect(calculateNextVersion('1.2.3', 'patch')).toBe('1.2.4');
+    expect(calculateNextVersion('1.0.0', 'patch')).toBe('1.0.1');
+  });
+
+  test('returns same version for none', () => {
+    expect(calculateNextVersion('1.2.3', 'none')).toBe('1.2.3');
+  });
+
+  test('handles v prefix', () => {
+    expect(calculateNextVersion('v1.2.3', 'major')).toBe('v2.0.0');
+    expect(calculateNextVersion('v1.2.3', 'minor')).toBe('v1.3.0');
+  });
+
+  test('handles unparseable version', () => {
+    expect(calculateNextVersion('not-a-version', 'major')).toBe('not-a-version');
   });
 });

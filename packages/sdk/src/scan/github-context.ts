@@ -86,11 +86,16 @@ async function fetchRawFile(
   repo: string,
   ref: string,
   path: string,
+  authToken?: string,
 ): Promise<string | null> {
   const url = `https://raw.githubusercontent.com/${owner}/${repo}/${ref}/${path}`;
 
   try {
-    const response = await fetch(url);
+    const headers: Record<string, string> = {};
+    if (authToken) {
+      headers.Authorization = `Bearer ${authToken}`;
+    }
+    const response = await fetch(url, { headers });
     if (response.ok) {
       return await response.text();
     }
@@ -103,15 +108,22 @@ async function fetchRawFile(
 /**
  * Fetch repository metadata from GitHub API.
  */
-async function fetchRepoMetadata(owner: string, repo: string): Promise<GitHubRepoMetadata> {
+async function fetchRepoMetadata(
+  owner: string,
+  repo: string,
+  authToken?: string,
+): Promise<GitHubRepoMetadata> {
   const url = `https://api.github.com/repos/${owner}/${repo}`;
 
-  const response = await fetch(url, {
-    headers: {
-      Accept: 'application/vnd.github.v3+json',
-      'User-Agent': 'DocCov-Scanner',
-    },
-  });
+  const headers: Record<string, string> = {
+    Accept: 'application/vnd.github.v3+json',
+    'User-Agent': 'DocCov-Scanner',
+  };
+  if (authToken) {
+    headers.Authorization = `Bearer ${authToken}`;
+  }
+
+  const response = await fetch(url, { headers });
 
   if (!response.ok) {
     throw new Error(`Failed to fetch repository: ${response.status} ${response.statusText}`);
@@ -143,6 +155,7 @@ async function detectPackageManager(
   owner: string,
   repo: string,
   ref: string,
+  authToken?: string,
 ): Promise<{ manager: DetectedPackageManager; lockfile?: { name: string; content: string } }> {
   const lockfiles: Array<{ name: string; manager: DetectedPackageManager }> = [
     { name: 'bun.lockb', manager: 'bun' },
@@ -152,7 +165,7 @@ async function detectPackageManager(
   ];
 
   for (const { name, manager } of lockfiles) {
-    const content = await fetchRawFile(owner, repo, ref, name);
+    const content = await fetchRawFile(owner, repo, ref, name, authToken);
     if (content !== null) {
       return { manager, lockfile: { name, content: content.slice(0, 10000) } }; // Truncate large lockfiles
     }
@@ -169,9 +182,10 @@ async function detectWorkspace(
   owner: string,
   repo: string,
   ref: string,
+  authToken?: string,
 ): Promise<WorkspaceConfig> {
   // Check for pnpm-workspace.yaml first
-  const pnpmWorkspace = await fetchRawFile(owner, repo, ref, 'pnpm-workspace.yaml');
+  const pnpmWorkspace = await fetchRawFile(owner, repo, ref, 'pnpm-workspace.yaml', authToken);
   if (pnpmWorkspace) {
     // Parse packages from pnpm-workspace.yaml (simple YAML parsing)
     const packagesMatch = pnpmWorkspace.match(/packages:\s*\n((?:\s+-\s+['"]?[^\n]+['"]?\n?)+)/);
@@ -189,7 +203,7 @@ async function detectWorkspace(
   }
 
   // Check for lerna.json
-  const lernaJson = await fetchRawFile(owner, repo, ref, 'lerna.json');
+  const lernaJson = await fetchRawFile(owner, repo, ref, 'lerna.json', authToken);
   if (lernaJson) {
     return { isMonorepo: true, tool: 'lerna' };
   }
@@ -275,28 +289,43 @@ function detectBuildHints(packageJson: unknown, tsconfigJson: unknown): BuildHin
 }
 
 /**
+ * Options for fetching GitHub project context.
+ */
+export interface FetchGitHubContextOptions {
+  /** Git ref (branch, tag, or SHA). Defaults to default branch. */
+  ref?: string;
+  /** Auth token for private repos (GitHub App installation token or PAT). */
+  authToken?: string;
+}
+
+/**
  * Fetch complete project context from GitHub.
  */
 export async function fetchGitHubContext(
   repoUrl: string,
-  ref?: string,
+  refOrOptions?: string | FetchGitHubContextOptions,
 ): Promise<GitHubProjectContext> {
   const parsed = parseGitHubUrl(repoUrl);
   if (!parsed) {
     throw new Error(`Invalid GitHub URL: ${repoUrl}`);
   }
 
+  // Normalize options
+  const options: FetchGitHubContextOptions =
+    typeof refOrOptions === 'string' ? { ref: refOrOptions } : (refOrOptions ?? {});
+  const { authToken } = options;
+
   const { owner, repo } = parsed;
 
   // Fetch repository metadata
-  const metadata = await fetchRepoMetadata(owner, repo);
-  const targetRef = ref ?? metadata.defaultBranch;
+  const metadata = await fetchRepoMetadata(owner, repo, authToken);
+  const targetRef = options.ref ?? metadata.defaultBranch;
 
   // Fetch key files in parallel
   const [packageJsonRaw, tsconfigJsonRaw, pmResult] = await Promise.all([
-    fetchRawFile(owner, repo, targetRef, 'package.json'),
-    fetchRawFile(owner, repo, targetRef, 'tsconfig.json'),
-    detectPackageManager(owner, repo, targetRef),
+    fetchRawFile(owner, repo, targetRef, 'package.json', authToken),
+    fetchRawFile(owner, repo, targetRef, 'tsconfig.json', authToken),
+    detectPackageManager(owner, repo, targetRef, authToken),
   ]);
 
   // Parse JSON files
@@ -320,7 +349,7 @@ export async function fetchGitHubContext(
   }
 
   // Detect workspace and build hints
-  const workspace = await detectWorkspace(packageJson, owner, repo, targetRef);
+  const workspace = await detectWorkspace(packageJson, owner, repo, targetRef, authToken);
   const buildHints = detectBuildHints(packageJson, tsconfigJson);
 
   return {
@@ -345,6 +374,7 @@ export async function listWorkspacePackages(
   repo: string,
   ref: string,
   patterns: string[],
+  authToken?: string,
 ): Promise<string[]> {
   // For now, we'll use the GitHub API to list directories
   // This is a simplified implementation - a full version would use glob matching
@@ -356,12 +386,14 @@ export async function listWorkspacePackages(
 
     try {
       const url = `https://api.github.com/repos/${owner}/${repo}/contents/${baseDir}?ref=${ref}`;
-      const response = await fetch(url, {
-        headers: {
-          Accept: 'application/vnd.github.v3+json',
-          'User-Agent': 'DocCov-Scanner',
-        },
-      });
+      const headers: Record<string, string> = {
+        Accept: 'application/vnd.github.v3+json',
+        'User-Agent': 'DocCov-Scanner',
+      };
+      if (authToken) {
+        headers.Authorization = `Bearer ${authToken}`;
+      }
+      const response = await fetch(url, { headers });
 
       if (response.ok) {
         const contents = (await response.json()) as Array<{ name: string; type: string }>;

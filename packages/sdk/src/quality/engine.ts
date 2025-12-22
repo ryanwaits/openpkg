@@ -14,12 +14,14 @@ import type {
  * @param exp - The export to evaluate
  * @param rawJSDoc - Optional raw JSDoc text for regex-based checks
  * @param config - Quality configuration with rule severities
+ * @param exportRegistry - Optional registry of all exported names for spec-level rules
  * @returns Quality result with coverage score and violations
  */
 export function evaluateExportQuality(
   exp: SpecExport,
   rawJSDoc?: string,
   config: QualityConfig = { rules: {} },
+  exportRegistry?: Set<string>,
 ): QualityResult {
   const kind = (exp.kind ?? 'variable') as SpecExportKind;
   const applicableRules = getRulesForKind(kind);
@@ -51,7 +53,7 @@ export function evaluateExportQuality(
     },
   };
 
-  const context: RuleContext = { export: exp, rawJSDoc };
+  const context: RuleContext = { export: exp, rawJSDoc, exportRegistry };
 
   for (const rule of applicableRules) {
     const passed = rule.check(context);

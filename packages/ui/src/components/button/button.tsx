@@ -1,3 +1,4 @@
+import { Slot } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { Loader2 } from 'lucide-react';
 import * as React from 'react';
@@ -56,6 +57,7 @@ const buttonVariants = cva(
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
+  asChild?: boolean;
   isLoading?: boolean;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
@@ -71,6 +73,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       className,
       variant,
       size,
+      asChild = false,
       isLoading,
       leftIcon,
       rightIcon,
@@ -82,6 +85,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref,
   ) => {
+    const Comp = asChild ? Slot : 'button';
     const effectiveSize = variant === 'nav' ? 'nav' : size;
 
     const arrowPaddingClass =
@@ -92,6 +96,21 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             ? 'pl-6 pr-4'
             : 'pl-5 pr-3'
         : '';
+
+    if (asChild) {
+      return (
+        <Slot
+          className={cn(
+            buttonVariants({ variant, size: effectiveSize, className }),
+            arrowPaddingClass,
+          )}
+          ref={ref}
+          {...props}
+        >
+          {children}
+        </Slot>
+      );
+    }
 
     return (
       <button
