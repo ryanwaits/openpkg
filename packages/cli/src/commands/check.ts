@@ -1,32 +1,28 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import {
-  analyzeSpecContributors,
-  analyzeSpecOwnership,
   applyEdits,
   categorizeDrifts,
-  type ContributorAnalysisResult,
   createSourceFile,
   DocCov,
   type EnrichedExport,
-  type EnrichedOpenPkg,
   type ExampleTypeError,
+  type ExampleValidation,
   type ExampleValidationResult,
   enrichSpec,
-  evaluatePolicies,
+  findExportReferences,
   type FixSuggestion,
   findJSDocLocation,
   generateFixesForExport,
   generateReport,
   type JSDocEdit,
   type JSDocPatch,
+  type MarkdownDocFile,
   mergeFixes,
   NodeFileSystem,
-  type OwnershipAnalysisResult,
-  type PolicyEvaluationResult,
   parseExamplesFlag,
   parseJSDocToPatch,
-  type QualityViolation,
+  parseMarkdownFiles,
   resolveTarget,
   serializeJSDoc,
   validateExamples,
@@ -40,6 +36,7 @@ import {
 } from '@openpkg-ts/spec';
 import chalk from 'chalk';
 import type { Command } from 'commander';
+import { glob } from 'glob';
 import { loadDocCovConfig } from '../config';
 import {
   computeStats,
@@ -48,13 +45,7 @@ import {
   renderMarkdown,
   writeReports,
 } from '../reports';
-import { generateWithFallback, isHostedAPIAvailable } from '../utils/ai-client';
-import { isAIGenerationAvailable } from '../utils/ai-generate';
 import { mergeFilterOptions, parseVisibilityFlag } from '../utils/filter-options';
-import {
-  isLLMAssertionParsingAvailable,
-  parseAssertionsWithLLM,
-} from '../utils/llm-assertion-parser';
 import { StepProgress } from '../utils/progress';
 import { clampPercentage } from '../utils/validation';
 
@@ -129,10 +120,11 @@ export function registerCheckCommand(
       'Example validation: presence, typecheck, run (comma-separated). Bare flag runs all.',
     )
     .option('--skip-resolve', 'Skip external type resolution from node_modules')
+    .option('--docs <glob>', 'Glob pattern for markdown docs to check for stale refs', collect, [])
     .option('--fix', 'Auto-fix drift issues')
     .option('--write', 'Alias for --fix')
-    .option('--generate', 'AI-generate missing JSDoc (requires --fix and API key)')
-    .option('--dry-run', 'Preview fixes without writing (requires --fix)')
+    .option('--preview', 'Preview fixes with diff output (implies --fix)')
+    .option('--dry-run', 'Alias for --preview')
     .option('--format <format>', 'Output format: text, json, markdown, html, github', 'text')
     .option('-o, --output <file>', 'Custom output path (overrides default .doccov/ path)')
     .option('--stdout', 'Output to stdout instead of writing to .doccov/')
@@ -144,14 +136,13 @@ export function registerCheckCommand(
       '--visibility <tags>',
       'Filter by release stage: public,beta,alpha,internal (comma-separated)',
     )
-    .option('--owners', 'Show coverage breakdown by CODEOWNERS')
-    .option('--contributors', 'Show documentation contributors (git blame)')
     .action(async (entry, options) => {
       try {
-        // Parse --examples flag early to determine steps
-        const validations = parseExamplesFlag(options.examples);
-        const hasExamples = validations.length > 0;
+        // Parse --examples flag (may be overridden by config later)
+        let validations = parseExamplesFlag(options.examples);
+        let hasExamples = validations.length > 0;
 
+        // Initial step list (may be updated after config load)
         const stepList = [
           { label: 'Resolved target', activeLabel: 'Resolving target' },
           { label: 'Loaded config', activeLabel: 'Loading config' },
@@ -179,11 +170,24 @@ export function registerCheckCommand(
         // Load config to get minCoverage threshold
         const config = await loadDocCovConfig(targetDir);
 
-        // CLI option takes precedence, then config, then undefined (no threshold)
-        const minCoverageRaw = options.minCoverage ?? config?.check?.minCoverage;
-        const minCoverage =
-          minCoverageRaw !== undefined ? clampPercentage(minCoverageRaw) : undefined;
+        // Merge examples config if CLI flag not set
+        if (!hasExamples && config?.check?.examples) {
+          const configExamples = config.check.examples;
+          if (Array.isArray(configExamples)) {
+            validations = configExamples as ExampleValidation[];
+          } else if (typeof configExamples === 'string') {
+            validations = parseExamplesFlag(configExamples);
+          }
+          hasExamples = validations.length > 0;
+        }
 
+        // CLI option takes precedence, then config, then sensible defaults
+        // Default: 80% minCoverage when no config exists
+        const DEFAULT_MIN_COVERAGE = 80;
+        const minCoverageRaw = options.minCoverage ?? config?.check?.minCoverage ?? DEFAULT_MIN_COVERAGE;
+        const minCoverage = clampPercentage(minCoverageRaw);
+
+        // maxDrift has no default - drift is shown but doesn't fail unless configured
         const maxDriftRaw = options.maxDrift ?? config?.check?.maxDrift;
         const maxDrift = maxDriftRaw !== undefined ? clampPercentage(maxDriftRaw) : undefined;
 
@@ -233,40 +237,9 @@ export function registerCheckCommand(
         const specWarnings = specResult.diagnostics.filter((d) => d.severity === 'warning');
         const specInfos = specResult.diagnostics.filter((d) => d.severity === 'info');
 
-        // Normalize --fix / --write
-        const shouldFix = options.fix || options.write;
-
-        // Collect quality violations from enriched spec
-        const violations: Array<{ exportName: string; violation: QualityViolation }> = [];
-        for (const exp of spec.exports ?? []) {
-          for (const v of exp.docs?.violations ?? []) {
-            violations.push({ exportName: exp.name, violation: v });
-          }
-        }
-
-        // Evaluate per-path policies if configured
-        let policyResult: PolicyEvaluationResult | undefined;
-        if (config?.policies && config.policies.length > 0) {
-          policyResult = evaluatePolicies(config.policies, spec as EnrichedOpenPkg, {
-            baseDir: targetDir,
-          });
-        }
-
-        // Analyze CODEOWNERS if --owners flag is set
-        let ownershipResult: OwnershipAnalysisResult | undefined;
-        if (options.owners) {
-          ownershipResult = analyzeSpecOwnership(spec as EnrichedOpenPkg, {
-            baseDir: targetDir,
-          }) ?? undefined;
-        }
-
-        // Analyze contributors if --contributors flag is set
-        let contributorResult: ContributorAnalysisResult | undefined;
-        if (options.contributors) {
-          contributorResult = analyzeSpecContributors(spec as EnrichedOpenPkg, {
-            baseDir: targetDir,
-          }) ?? undefined;
-        }
+        // Normalize --fix / --write / --preview / --dry-run
+        const isPreview = options.preview || options.dryRun;
+        const shouldFix = options.fix || options.write || isPreview;
 
         // Run example validation using unified SDK function
         let exampleResult: ExampleValidationResult | undefined;
@@ -280,12 +253,6 @@ export function registerCheckCommand(
             exportNames: (spec.exports ?? []).map((e) => e.name),
             timeout: 5000,
             installTimeout: 60000,
-            llmAssertionParser: isLLMAssertionParsingAvailable()
-              ? async (example) => {
-                  const result = await parseAssertionsWithLLM(example);
-                  return result;
-                }
-              : undefined,
           });
 
           // Convert typecheck errors to the expected format
@@ -312,6 +279,52 @@ export function registerCheckCommand(
           }
 
           steps.next();
+        }
+
+        // Markdown docs analysis: detect stale references
+        const staleRefs: StaleReference[] = [];
+        let docsPatterns = options.docs as string[];
+
+        // If no --docs flag, try to load from config
+        if (docsPatterns.length === 0 && config?.docs?.include) {
+          docsPatterns = config.docs.include;
+        }
+
+        if (docsPatterns.length > 0) {
+          const markdownFiles = await loadMarkdownFiles(docsPatterns, targetDir);
+
+          if (markdownFiles.length > 0) {
+            // Get all export names from spec
+            const exportNames = (spec.exports ?? []).map((e) => e.name);
+            const exportSet = new Set(exportNames);
+
+            // Check each code block for imports that reference non-existent exports
+            for (const mdFile of markdownFiles) {
+              for (const block of mdFile.codeBlocks) {
+                const codeLines = block.code.split('\n');
+                for (let i = 0; i < codeLines.length; i++) {
+                  const line = codeLines[i];
+                  // Check for imports from the package
+                  const importMatch = line.match(
+                    /import\s*\{([^}]+)\}\s*from\s*['"][^'"]*['"]/,
+                  );
+                  if (importMatch) {
+                    const imports = importMatch[1].split(',').map((s) => s.trim().split(/\s+/)[0]);
+                    for (const imp of imports) {
+                      if (imp && !exportSet.has(imp)) {
+                        staleRefs.push({
+                          file: mdFile.path,
+                          line: block.lineStart + i,
+                          exportName: imp,
+                          context: line.trim(),
+                        });
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
 
         const coverageScore = spec.docs?.coverageScore ?? 0;
@@ -437,29 +450,55 @@ export function registerCheckCommand(
               }
 
               if (edits.length > 0) {
-                if (options.dryRun) {
-                  log(chalk.bold('Dry run - changes that would be made:'));
+                if (isPreview) {
+                  log(chalk.bold('Preview - changes that would be made:'));
                   log('');
 
                   for (const [filePath, fileEdits] of editsByFile) {
                     const relativePath = path.relative(targetDir, filePath);
-                    log(chalk.cyan(`  ${relativePath}:`));
 
                     for (const { export: exp, edit, fixes } of fileEdits) {
-                      const lineInfo = edit.hasExisting
-                        ? `lines ${edit.startLine + 1}-${edit.endLine + 1}`
-                        : `line ${edit.startLine + 1}`;
+                      log(chalk.cyan(`${relativePath}:${edit.startLine + 1}`));
+                      log(chalk.bold(`  ${exp.name}`));
+                      log('');
 
-                      log(`    ${chalk.bold(exp.name)} [${lineInfo}]`);
+                      // Show unified diff
+                      if (edit.hasExisting && edit.existingJSDoc) {
+                        // Show before/after diff
+                        const oldLines = edit.existingJSDoc.split('\n');
+                        const newLines = edit.newJSDoc.split('\n');
 
-                      for (const fix of fixes) {
-                        log(chalk.green(`      + ${fix.description}`));
+                        // Simple diff: show removed then added
+                        for (const line of oldLines) {
+                          log(chalk.red(`  - ${line}`));
+                        }
+                        for (const line of newLines) {
+                          log(chalk.green(`  + ${line}`));
+                        }
+                      } else {
+                        // New JSDoc - just show additions
+                        const newLines = edit.newJSDoc.split('\n');
+                        for (const line of newLines) {
+                          log(chalk.green(`  + ${line}`));
+                        }
                       }
+
+                      log('');
+                      log(chalk.dim(`  Fixes: ${fixes.map((f) => f.description).join(', ')}`));
+                      log('');
                     }
-                    log('');
                   }
 
-                  log(chalk.gray('Run without --dry-run to apply these changes.'));
+                  const totalFixes = Array.from(editsByFile.values()).reduce(
+                    (sum, edits) => sum + edits.reduce((s, e) => s + e.fixes.length, 0),
+                    0,
+                  );
+                  log(
+                    chalk.yellow(
+                      `${totalFixes} fix(es) across ${editsByFile.size} file(s) would be applied.`,
+                    ),
+                  );
+                  log(chalk.gray('Run with --fix to apply these changes.'));
                 } else {
                   const applyResult = await applyEdits(edits);
 
@@ -468,127 +507,33 @@ export function registerCheckCommand(
                       error(chalk.red(`  ${err.file}: ${err.error}`));
                     }
                   }
+
+                  // Show summary of applied fixes
+                  const totalFixes = Array.from(editsByFile.values()).reduce(
+                    (sum, edits) => sum + edits.reduce((s, e) => s + e.fixes.length, 0),
+                    0,
+                  );
+                  log('');
+                  log(
+                    chalk.green(
+                      `✓ Applied ${totalFixes} fix(es) to ${applyResult.filesModified} file(s)`,
+                    ),
+                  );
+
+                  // List files modified
+                  for (const [filePath, fileEdits] of editsByFile) {
+                    const relativePath = path.relative(targetDir, filePath);
+                    const fixCount = fileEdits.reduce((s, e) => s + e.fixes.length, 0);
+                    log(chalk.dim(`  ${relativePath} (${fixCount} fixes)`));
+                  }
                 }
               }
             }
           }
 
-          // Filter out fixed drifts from the evaluation
-          if (!options.dryRun) {
+          // Filter out fixed drifts from the evaluation (only when actually applying)
+          if (!isPreview) {
             driftExports = driftExports.filter((d) => !fixedDriftKeys.has(`${d.name}:${d.issue}`));
-          }
-        }
-
-        // Handle --generate: AI-generate missing JSDoc for undocumented exports
-        const generatedExportKeys = new Set<string>();
-        if (shouldFix && options.generate) {
-          const hasAIAccess = isHostedAPIAvailable() || isAIGenerationAvailable();
-          if (!hasAIAccess) {
-            log('');
-            log(chalk.yellow('⚠ --generate requires AI access. Options:'));
-            log(chalk.dim('  1. Set DOCCOV_API_KEY for hosted AI (included with Team/Pro plan)'));
-            log(chalk.dim('  2. Set OPENAI_API_KEY or ANTHROPIC_API_KEY for direct API access'));
-          } else {
-            // Find undocumented exports (no description)
-            const undocumented = (spec.exports ?? []).filter((exp) => {
-              // Skip if already has description
-              if (exp.description) return false;
-              // Skip .d.ts files
-              if (exp.source?.file?.endsWith('.d.ts')) return false;
-              // Skip if no source location
-              if (!exp.source?.file) return false;
-              return true;
-            });
-
-            if (undocumented.length > 0) {
-              log('');
-              log(chalk.bold(`Generating JSDoc for ${undocumented.length} undocumented export(s)`));
-              log('');
-
-              const aiResult = await generateWithFallback(undocumented, {
-                maxConcurrent: 3,
-                onProgress: (completed, total, name) => {
-                  log(chalk.dim(`  [${completed}/${total}] ${name}`));
-                },
-                log,
-                packageName: spec.meta?.name,
-              });
-
-              const generated = aiResult.results;
-
-              const edits: JSDocEdit[] = [];
-
-              for (const result of generated) {
-                if (!result.generated) continue;
-
-                const exp = undocumented.find((e) => e.name === result.exportName);
-                if (!exp || !exp.source?.file) continue;
-
-                const filePath = path.resolve(targetDir, exp.source.file);
-                if (!fs.existsSync(filePath)) continue;
-
-                const sourceFile = createSourceFile(filePath);
-                const location = findJSDocLocation(sourceFile, exp.name, exp.source.line);
-                if (!location) continue;
-
-                // Parse existing JSDoc if present (shouldn't be for undocumented)
-                let existingPatch: JSDocPatch = {};
-                if (location.hasExisting && location.existingJSDoc) {
-                  existingPatch = parseJSDocToPatch(location.existingJSDoc);
-                }
-
-                // Merge AI-generated patch with any existing
-                const mergedPatch = { ...existingPatch, ...result.patch };
-                const newJSDoc = serializeJSDoc(mergedPatch, location.indent);
-
-                edits.push({
-                  filePath,
-                  symbolName: exp.name,
-                  startLine: location.startLine,
-                  endLine: location.endLine,
-                  hasExisting: location.hasExisting,
-                  existingJSDoc: location.existingJSDoc,
-                  newJSDoc,
-                  indent: location.indent,
-                });
-
-                generatedExportKeys.add(exp.name);
-              }
-
-              if (edits.length > 0) {
-                if (options.dryRun) {
-                  log('');
-                  log(chalk.bold('Dry run - JSDoc that would be generated:'));
-                  for (const edit of edits) {
-                    const relativePath = path.relative(targetDir, edit.filePath);
-                    log(chalk.cyan(`  ${relativePath}:`));
-                    log(`    ${chalk.bold(edit.symbolName)} [line ${edit.startLine + 1}]`);
-                    log(chalk.green('      + description, params, returns, example'));
-                  }
-                  log('');
-                  log(chalk.gray('Run without --dry-run to apply these changes.'));
-                } else {
-                  const applyResult = await applyEdits(edits);
-                  log('');
-                  log(chalk.green(`✓ Generated JSDoc for ${edits.length} export(s)`));
-
-                  // Show quota info if using hosted API
-                  if (aiResult.source === 'hosted' && aiResult.quotaRemaining !== undefined) {
-                    const remaining =
-                      aiResult.quotaRemaining === 'unlimited'
-                        ? 'unlimited'
-                        : aiResult.quotaRemaining.toLocaleString();
-                    log(chalk.dim(`  AI calls remaining: ${remaining}`));
-                  }
-
-                  if (applyResult.errors.length > 0) {
-                    for (const err of applyResult.errors) {
-                      error(chalk.red(`  ${err.file}: ${err.error}`));
-                    }
-                  }
-                }
-              }
-            }
           }
         }
 
@@ -619,7 +564,6 @@ export function registerCheckCommand(
               formatContent = renderGithubSummary(stats, {
                 coverageScore,
                 driftCount: driftExports.length,
-                qualityIssues: violations.length,
               });
               break;
             default:
@@ -648,20 +592,11 @@ export function registerCheckCommand(
               : Math.round((exportsWithDrift / totalExportsForDrift) * 100);
 
           // Still exit with error if thresholds not met
-          const coverageFailed = minCoverage !== undefined && coverageScore < minCoverage;
+          const coverageFailed = coverageScore < minCoverage;
           const driftFailed = maxDrift !== undefined && driftScore > maxDrift;
-          const hasQualityErrors =
-            violations.filter((v) => v.violation.severity === 'error').length > 0;
           const hasTypecheckErrors = typecheckErrors.length > 0;
-          const policiesFailed = policyResult && !policyResult.allPassed;
 
-          if (
-            coverageFailed ||
-            driftFailed ||
-            hasQualityErrors ||
-            hasTypecheckErrors ||
-            policiesFailed
-          ) {
+          if (coverageFailed || driftFailed || hasTypecheckErrors) {
             process.exit(1);
           }
           return;
@@ -675,12 +610,9 @@ export function registerCheckCommand(
             ? 0
             : Math.round((exportsWithDrift / totalExportsForDrift) * 100);
 
-        const coverageFailed = minCoverage !== undefined && coverageScore < minCoverage;
+        const coverageFailed = coverageScore < minCoverage;
         const driftFailed = maxDrift !== undefined && driftScore > maxDrift;
-        const hasQualityErrors =
-          violations.filter((v) => v.violation.severity === 'error').length > 0;
         const hasTypecheckErrors = typecheckErrors.length > 0;
-        const policiesFailed = policyResult && !policyResult.allPassed;
 
         // Display spec diagnostics (warnings/info) - now that all validation is complete
         if (specWarnings.length > 0 || specInfos.length > 0) {
@@ -699,32 +631,26 @@ export function registerCheckCommand(
           }
         }
 
-        // Render concise summary output (like `info` but with more detail)
+        // Render concise summary output
         const pkgName = spec.meta?.name ?? 'unknown';
         const pkgVersion = spec.meta?.version ?? '';
         const totalExports = spec.exports?.length ?? 0;
-        const errorCount = violations.filter((v) => v.violation.severity === 'error').length;
-        const warnCount = violations.filter((v) => v.violation.severity === 'warn').length;
 
         log('');
         log(chalk.bold(`${pkgName}${pkgVersion ? `@${pkgVersion}` : ''}`));
         log('');
         log(`  Exports:    ${totalExports}`);
 
-        // Coverage with pass/fail indicator when threshold is set
-        if (minCoverage !== undefined) {
-          if (coverageFailed) {
-            log(
-              chalk.red(`  Coverage:   ✗ ${coverageScore}%`) + chalk.dim(` (min ${minCoverage}%)`),
-            );
-          } else {
-            log(
-              chalk.green(`  Coverage:   ✓ ${coverageScore}%`) +
-                chalk.dim(` (min ${minCoverage}%)`),
-            );
-          }
+        // Coverage with pass/fail indicator
+        if (coverageFailed) {
+          log(
+            chalk.red(`  Coverage:   ✗ ${coverageScore}%`) + chalk.dim(` (min ${minCoverage}%)`),
+          );
         } else {
-          log(`  Coverage:   ${coverageScore}%`);
+          log(
+            chalk.green(`  Coverage:   ✓ ${coverageScore}%`) +
+              chalk.dim(` (min ${minCoverage}%)`),
+          );
         }
 
         // Drift with pass/fail indicator when threshold is set
@@ -742,157 +668,55 @@ export function registerCheckCommand(
         if (exampleResult) {
           const typecheckCount = exampleResult.typecheck?.errors.length ?? 0;
           if (typecheckCount > 0) {
-            log(`  Examples:   ${typecheckCount} type errors`);
+            log(chalk.yellow(`  Examples:   ${typecheckCount} type error(s)`));
+            // Show first few errors with details
+            for (const err of typecheckErrors.slice(0, 5)) {
+              const loc = `example[${err.error.exampleIndex}]:${err.error.line}:${err.error.column}`;
+              log(chalk.dim(`              ${err.exportName} ${loc}`));
+              log(chalk.red(`                ${err.error.message}`));
+            }
+            if (typecheckErrors.length > 5) {
+              log(chalk.dim(`              ... and ${typecheckErrors.length - 5} more`));
+            }
           } else {
             log(chalk.green(`  Examples:   ✓ validated`));
           }
         }
 
-        if (errorCount > 0 || warnCount > 0) {
-          const parts: string[] = [];
-          if (errorCount > 0) parts.push(`${errorCount} errors`);
-          if (warnCount > 0) parts.push(`${warnCount} warnings`);
-          log(`  Quality:    ${parts.join(', ')}`);
-        }
-
-        // Show policy results if configured
-        if (policyResult && policyResult.results.length > 0) {
-          log('');
-          log(chalk.bold('  Policies:'));
-          for (const result of policyResult.results) {
-            const status = result.passed ? chalk.green('✓') : chalk.red('✗');
-            const policyPath = result.policy.path;
-            const matchCount = result.matchedExports.length;
-
-            if (result.passed) {
-              log(`    ${status} ${policyPath} (${matchCount} exports)`);
-            } else {
-              log(`    ${status} ${policyPath} (${matchCount} exports)`);
-              for (const failure of result.failures) {
-                log(chalk.red(`        ${failure.message}`));
-              }
-            }
+        // Show stale docs references
+        const hasStaleRefs = staleRefs.length > 0;
+        if (hasStaleRefs) {
+          log(chalk.yellow(`  Docs:       ${staleRefs.length} stale ref(s)`));
+          for (const ref of staleRefs.slice(0, 5)) {
+            log(chalk.dim(`              ${ref.file}:${ref.line} - "${ref.exportName}"`));
           }
-        }
-
-        // Show CODEOWNERS breakdown if --owners flag is set
-        if (ownershipResult) {
-          log('');
-          log(chalk.bold('  Owners:'));
-
-          // Sort owners by coverage (lowest first to highlight issues)
-          const sortedOwners = [...ownershipResult.byOwner.values()].sort(
-            (a, b) => a.coverageScore - b.coverageScore,
-          );
-
-          for (const stats of sortedOwners) {
-            const coverageColor =
-              stats.coverageScore >= 80
-                ? chalk.green
-                : stats.coverageScore >= 50
-                  ? chalk.yellow
-                  : chalk.red;
-            const coverageStr = coverageColor(`${stats.coverageScore}%`);
-            const undocCount = stats.undocumentedExports.length;
-
-            log(
-              `    ${stats.owner.padEnd(24)} ${coverageStr.padStart(12)} coverage  (${stats.totalExports} exports${undocCount > 0 ? `, ${undocCount} undoc` : ''})`,
-            );
-          }
-
-          if (ownershipResult.unowned.length > 0) {
-            log(
-              chalk.dim(
-                `    (${ownershipResult.unowned.length} exports have no owner in CODEOWNERS)`,
-              ),
-            );
-          }
-        }
-
-        // Show contributor breakdown if --contributors flag is set
-        if (contributorResult) {
-          log('');
-          log(chalk.bold('  Contributors:'));
-
-          // Sort contributors by documented exports (highest first)
-          const sortedContributors = [...contributorResult.byContributor.values()].sort(
-            (a, b) => b.documentedExports - a.documentedExports,
-          );
-
-          // Show top contributors (limit to 10)
-          const displayLimit = 10;
-          const topContributors = sortedContributors.slice(0, displayLimit);
-
-          for (const stats of topContributors) {
-            const name = stats.name.length > 20 ? stats.name.slice(0, 17) + '...' : stats.name;
-            const lastDate = stats.lastContribution
-              ? stats.lastContribution.toISOString().split('T')[0]
-              : 'unknown';
-
-            log(
-              `    ${name.padEnd(22)} ${String(stats.documentedExports).padStart(4)} exports  (last: ${lastDate})`,
-            );
-          }
-
-          if (sortedContributors.length > displayLimit) {
-            log(
-              chalk.dim(
-                `    ... and ${sortedContributors.length - displayLimit} more contributors`,
-              ),
-            );
-          }
-
-          if (contributorResult.unattributed.length > 0) {
-            log(
-              chalk.dim(
-                `    (${contributorResult.unattributed.length} exports could not be attributed via git blame)`,
-              ),
-            );
+          if (staleRefs.length > 5) {
+            log(chalk.dim(`              ... and ${staleRefs.length - 5} more`));
           }
         }
 
         log('');
 
         // Show pass/fail status
-        const failed =
-          coverageFailed || driftFailed || hasQualityErrors || hasTypecheckErrors || policiesFailed;
+        const failed = coverageFailed || driftFailed || hasTypecheckErrors || hasStaleRefs;
 
         if (!failed) {
           const thresholdParts: string[] = [];
-          if (minCoverage !== undefined) {
-            thresholdParts.push(`coverage ${coverageScore}% ≥ ${minCoverage}%`);
-          }
+          thresholdParts.push(`coverage ${coverageScore}% ≥ ${minCoverage}%`);
           if (maxDrift !== undefined) {
             thresholdParts.push(`drift ${driftScore}% ≤ ${maxDrift}%`);
           }
-          if (policyResult) {
-            thresholdParts.push(
-              `${policyResult.passedCount}/${policyResult.totalPolicies} policies`,
-            );
-          }
 
-          if (thresholdParts.length > 0) {
-            log(chalk.green(`✓ Check passed (${thresholdParts.join(', ')})`));
-          } else {
-            log(chalk.green('✓ Check passed'));
-            log(
-              chalk.dim(
-                '  No thresholds configured. Use --min-coverage or --max-drift to enforce.',
-              ),
-            );
-          }
+          log(chalk.green(`✓ Check passed (${thresholdParts.join(', ')})`));
           return;
         }
 
-        // Show failure reasons (only for non-threshold failures since those are shown inline)
-        if (hasQualityErrors) {
-          log(chalk.red(`✗ ${errorCount} quality errors`));
-        }
+        // Show failure reasons
         if (hasTypecheckErrors) {
           log(chalk.red(`✗ ${typecheckErrors.length} example type errors`));
         }
-        if (policiesFailed && policyResult) {
-          log(chalk.red(`✗ ${policyResult.failedCount} policy failures`));
+        if (hasStaleRefs) {
+          log(chalk.red(`✗ ${staleRefs.length} stale references in docs`));
         }
 
         log('');
@@ -942,3 +766,42 @@ function collectDrift(
   }
   return drifts;
 }
+
+/**
+ * Collect multiple values for an option
+ */
+function collect(value: string, previous: string[]): string[] {
+  return previous.concat([value]);
+}
+
+/**
+ * Load markdown files from glob patterns
+ */
+async function loadMarkdownFiles(patterns: string[], cwd: string): Promise<MarkdownDocFile[]> {
+  const files: Array<{ path: string; content: string }> = [];
+
+  for (const pattern of patterns) {
+    const matches = await glob(pattern, { nodir: true, cwd });
+    for (const filePath of matches) {
+      try {
+        const fullPath = path.resolve(cwd, filePath);
+        const content = fs.readFileSync(fullPath, 'utf-8');
+        files.push({ path: filePath, content });
+      } catch {
+        // Skip files that can't be read
+      }
+    }
+  }
+
+  return parseMarkdownFiles(files);
+}
+
+/**
+ * Stale reference found in markdown docs
+ */
+type StaleReference = {
+  file: string;
+  line: number;
+  exportName: string;
+  context: string;
+};

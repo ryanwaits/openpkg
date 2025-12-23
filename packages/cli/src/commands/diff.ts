@@ -24,7 +24,6 @@ import {
   renderPRComment,
   writeReport,
 } from '../reports';
-import { generateImpactSummary, isAIDocsAnalysisAvailable } from '../utils/docs-impact-ai';
 import { resolveThreshold } from '../utils/validation';
 
 export interface DiffCommandDependencies {
@@ -97,7 +96,6 @@ export function registerDiffCommand(
     .option('--strict <preset>', 'Fail on conditions: ci, release, quality')
     // Docs analysis
     .option('--docs <glob>', 'Glob pattern for markdown docs to check for impact', collect, [])
-    .option('--ai', 'Use AI for deeper analysis and fix suggestions')
     // Caching
     .option('--no-cache', 'Bypass cache and force regeneration')
     // Semver recommendation
@@ -207,11 +205,6 @@ export function registerDiffCommand(
           case 'text':
             printSummary(diff, baseName, headName, fromCache, log);
 
-            // Add AI summary if --ai flag and docs impact exists
-            if (options.ai && diff.docsImpact && hasDocsImpact(diff)) {
-              await printAISummary(diff, log);
-            }
-
             // Write JSON for caching (unless --stdout or already from cache)
             if (!options.stdout) {
               const jsonPath = getDiffReportPath(baseHash, headHash, 'json');
@@ -285,6 +278,7 @@ export function registerDiffCommand(
 
           case 'pr-comment': {
             // PR comment format - always stdout for GitHub Actions
+            const semverRecommendation = recommendSemverBump(diff);
             const content = renderPRComment(
               { diff, baseName, headName, headSpec },
               {
@@ -292,6 +286,7 @@ export function registerDiffCommand(
                 sha: options.sha,
                 minCoverage,
                 limit,
+                semverBump: { bump: semverRecommendation.bump, reason: semverRecommendation.reason },
               },
             );
             log(content);
@@ -488,35 +483,17 @@ function printSummary(
     log(`  Drift:      ${parts.join(', ')}`);
   }
 
+  // Semver recommendation hint
+  const recommendation = recommendSemverBump(diff);
+  const bumpColor =
+    recommendation.bump === 'major'
+      ? chalk.red
+      : recommendation.bump === 'minor'
+        ? chalk.yellow
+        : chalk.green;
+  log(`  Semver:     ${bumpColor(recommendation.bump.toUpperCase())} (${recommendation.reason})`);
+
   log('');
-}
-
-/**
- * Print AI summary for docs impact
- */
-async function printAISummary(diff: SpecDiffWithDocs, log: typeof console.log): Promise<void> {
-  if (!isAIDocsAnalysisAvailable()) {
-    log(chalk.yellow('\n\u26A0 AI analysis unavailable (set OPENAI_API_KEY or ANTHROPIC_API_KEY)'));
-    return;
-  }
-
-  if (!diff.docsImpact) return;
-
-  log(chalk.gray('\nGenerating AI summary...'));
-  const impacts = diff.docsImpact.impactedFiles.flatMap((f) =>
-    f.references.map((r) => ({
-      file: f.file,
-      exportName: r.exportName,
-      changeType: r.changeType,
-      context: r.context,
-    })),
-  );
-  const summary = await generateImpactSummary(impacts);
-  if (summary) {
-    log('');
-    log(chalk.bold('AI Summary'));
-    log(chalk.cyan(`  ${summary}`));
-  }
 }
 
 interface ValidationOptions {

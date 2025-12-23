@@ -46,6 +46,10 @@ inputs:
     description: 'GitHub token for PR comments'
     required: false
     default: ${{ github.token }}
+  auto-commit-spec:
+    description: 'Auto-commit openpkg.json to the branch (PRs only)'
+    required: false
+    default: 'false'
 
 outputs:
   coverage:
@@ -94,6 +98,21 @@ runs:
           ARGS="$ARGS --examples presence"
         fi
         doccov check $ARGS
+
+    - name: Auto-commit spec (PRs only)
+      if: github.event_name == 'pull_request' && inputs.auto-commit-spec == 'true'
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        if [ -f openpkg.json ]; then
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add openpkg.json
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: update openpkg.json [skip ci]"
+            git push origin HEAD:${{ github.head_ref }}
+          fi
+        fi
 
     - name: Generate base spec (PRs only)
       if: github.event_name == 'pull_request'

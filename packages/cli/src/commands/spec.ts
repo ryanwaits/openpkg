@@ -34,6 +34,9 @@ export interface SpecOptions {
   skipResolve?: boolean;
   maxTypeDepth?: string;
 
+  // Schema extraction
+  runtime?: boolean;
+
   // Caching
   cache?: boolean;
 
@@ -113,6 +116,9 @@ export function registerSpecCommand(
     .option('--skip-resolve', 'Skip external type resolution from node_modules')
     .option('--max-type-depth <n>', 'Maximum depth for type conversion', '20')
 
+    // === Schema extraction ===
+    .option('--runtime', 'Enable Standard Schema runtime extraction (richer output for Zod, Valibot, etc.)')
+
     // === Caching ===
     .option('--no-cache', 'Bypass spec cache and force regeneration')
 
@@ -173,6 +179,7 @@ export function registerSpecCommand(
           maxDepth: options.maxTypeDepth ? parseInt(options.maxTypeDepth, 10) : undefined,
           useCache: options.cache !== false,
           cwd: options.cwd,
+          schemaExtraction: options.runtime ? 'hybrid' : 'static',
         });
 
         // Build generation input for spec metadata
@@ -252,6 +259,13 @@ export function registerSpecCommand(
           );
           if (gen.analysis.maxTypeDepth) {
             log(chalk.gray(`  Max type depth:   ${gen.analysis.maxTypeDepth}`));
+          }
+          if (gen.analysis.schemaExtraction) {
+            const se = gen.analysis.schemaExtraction;
+            log(chalk.gray(`  Schema extraction: ${se.method}`));
+            if (se.runtimeCount) {
+              log(chalk.gray(`  Runtime schemas:   ${se.runtimeCount} (${se.vendors?.join(', ')})`));
+            }
           }
           log('');
           log(chalk.bold('Environment'));

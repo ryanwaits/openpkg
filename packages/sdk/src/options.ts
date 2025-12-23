@@ -1,3 +1,5 @@
+import type { SchemaExtractionMode } from './config';
+
 export interface DocCovOptions {
   includePrivate?: boolean;
   followImports?: boolean;
@@ -7,6 +9,14 @@ export interface DocCovOptions {
   useCache?: boolean;
   /** Working directory for cache operations (default: process.cwd()) */
   cwd?: string;
+  /**
+   * Schema extraction mode for validation libraries (Zod, Valibot, etc.)
+   *
+   * - 'static' (default): TypeScript Compiler API only (no runtime)
+   * - 'runtime': Standard Schema runtime extraction (requires built package)
+   * - 'hybrid': Try runtime first, fall back to static
+   */
+  schemaExtraction?: SchemaExtractionMode;
 }
 
 export type NormalizedDocCovOptions = DocCovOptions & {

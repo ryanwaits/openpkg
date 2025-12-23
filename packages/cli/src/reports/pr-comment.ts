@@ -5,7 +5,7 @@
  */
 
 import type { SpecDiffWithDocs } from '@doccov/sdk';
-import type { OpenPkg, SpecDocDrift, SpecExport } from '@openpkg-ts/spec';
+import type { OpenPkg, SemverBump, SpecDocDrift, SpecExport } from '@openpkg-ts/spec';
 
 export interface PRCommentOptions {
   /** GitHub repo URL for file links (e.g. "https://github.com/org/repo") */
@@ -16,6 +16,14 @@ export interface PRCommentOptions {
   minCoverage?: number;
   /** Max items per section (default 10) */
   limit?: number;
+  /** Include badge snippet in comment */
+  includeBadge?: boolean;
+  /** Stale markdown doc references */
+  staleDocsRefs?: Array<{ file: string; line: number; exportName: string }>;
+  /** Number of auto-fixable drift issues */
+  fixableDriftCount?: number;
+  /** Semver recommendation */
+  semverBump?: { bump: SemverBump; reason: string };
 }
 
 export interface PRCommentData {
@@ -35,10 +43,12 @@ export function renderPRComment(data: PRCommentData, opts: PRCommentOptions = {}
   const lines: string[] = [];
 
   // Determine status
+  const hasStaleRefs = (opts.staleDocsRefs?.length ?? 0) > 0;
   const hasIssues =
     diff.newUndocumented.length > 0 ||
     diff.driftIntroduced > 0 ||
     diff.breaking.length > 0 ||
+    hasStaleRefs ||
     (opts.minCoverage !== undefined && diff.newCoverage < opts.minCoverage);
 
   const statusIcon = hasIssues ? (diff.coverageDelta < 0 ? '❌' : '⚠️') : '✅';
@@ -62,6 +72,17 @@ export function renderPRComment(data: PRCommentData, opts: PRCommentOptions = {}
     lines.push(`**Doc drift issues:** ${diff.driftIntroduced}`);
   }
 
+  if (opts.staleDocsRefs && opts.staleDocsRefs.length > 0) {
+    lines.push(`**Stale doc references:** ${opts.staleDocsRefs.length}`);
+  }
+
+  // Semver recommendation
+  if (opts.semverBump) {
+    const emoji =
+      opts.semverBump.bump === 'major' ? '🔴' : opts.semverBump.bump === 'minor' ? '🟡' : '🟢';
+    lines.push(`**Semver:** ${emoji} ${opts.semverBump.bump.toUpperCase()} (${opts.semverBump.reason})`);
+  }
+
   // Undocumented exports section
   if (diff.newUndocumented.length > 0) {
     lines.push('');
@@ -78,8 +99,18 @@ export function renderPRComment(data: PRCommentData, opts: PRCommentOptions = {}
     renderDriftIssues(lines, diff.newUndocumented, headSpec, opts, limit);
   }
 
+  // Stale docs references section
+  if (opts.staleDocsRefs && opts.staleDocsRefs.length > 0) {
+    lines.push('');
+    lines.push('### 📝 Stale documentation references');
+    lines.push('');
+    lines.push('These markdown files reference exports that no longer exist:');
+    lines.push('');
+    renderStaleDocsRefs(lines, opts.staleDocsRefs, opts, limit);
+  }
+
   // How to fix section (contextual)
-  const fixGuidance = renderFixGuidance(diff);
+  const fixGuidance = renderFixGuidance(diff, opts);
   if (fixGuidance) {
     lines.push('');
     lines.push('### How to fix');
@@ -95,6 +126,18 @@ export function renderPRComment(data: PRCommentData, opts: PRCommentOptions = {}
   renderDetailsTable(lines, diff);
   lines.push('');
   lines.push('</details>');
+
+  // Badge snippet (if repo URL provided)
+  if (opts.includeBadge !== false && opts.repoUrl) {
+    const repoMatch = opts.repoUrl.match(/github\.com\/([^/]+)\/([^/]+)/);
+    if (repoMatch) {
+      const [, owner, repo] = repoMatch;
+      lines.push('');
+      lines.push('---');
+      lines.push('');
+      lines.push(`[![DocCov](https://doccov.dev/badge/${owner}/${repo})](https://doccov.dev/${owner}/${repo})`);
+    }
+  }
 
   return lines.join('\n');
 }
@@ -274,9 +317,46 @@ function getMissingSignals(exp: SpecExport): string[] {
 }
 
 /**
+ * Render stale docs references
+ */
+function renderStaleDocsRefs(
+  lines: string[],
+  refs: Array<{ file: string; line: number; exportName: string }>,
+  opts: PRCommentOptions,
+  limit: number,
+): void {
+  // Group by file
+  const byFile = new Map<string, Array<{ line: number; exportName: string }>>();
+  for (const ref of refs) {
+    const list = byFile.get(ref.file) ?? [];
+    list.push({ line: ref.line, exportName: ref.exportName });
+    byFile.set(ref.file, list);
+  }
+
+  let count = 0;
+  for (const [file, fileRefs] of byFile) {
+    if (count >= limit) break;
+
+    const fileLink = buildFileLink(file, opts);
+    lines.push(`📁 ${fileLink}`);
+
+    for (const ref of fileRefs) {
+      if (count >= limit) break;
+      lines.push(`- Line ${ref.line}: \`${ref.exportName}\` does not exist`);
+      count++;
+    }
+    lines.push('');
+  }
+
+  if (refs.length > count) {
+    lines.push(`_...and ${refs.length - count} more stale references_`);
+  }
+}
+
+/**
  * Render contextual fix guidance based on issue types
  */
-function renderFixGuidance(diff: SpecDiffWithDocs): string {
+function renderFixGuidance(diff: SpecDiffWithDocs, opts: PRCommentOptions): string {
   const sections: string[] = [];
 
   if (diff.newUndocumented.length > 0) {
@@ -287,9 +367,20 @@ function renderFixGuidance(diff: SpecDiffWithDocs): string {
   }
 
   if (diff.driftIntroduced > 0) {
+    const fixableNote = opts.fixableDriftCount && opts.fixableDriftCount > 0
+      ? `\n\n**Quick fix:** Run \`npx doccov check --fix\` to auto-fix ${opts.fixableDriftCount} issue(s).`
+      : '';
     sections.push(
       '**For doc drift:**\n' +
-        'Update the code examples in your markdown files to match current signatures.',
+        'Update JSDoc to match current code signatures.' +
+        fixableNote,
+    );
+  }
+
+  if (opts.staleDocsRefs && opts.staleDocsRefs.length > 0) {
+    sections.push(
+      '**For stale docs:**\n' +
+        'Update or remove code examples that reference deleted exports.',
     );
   }
 

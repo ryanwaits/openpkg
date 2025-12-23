@@ -1,4 +1,5 @@
 import type * as TS from 'typescript';
+import { extractSchemaType, isSchemaType } from '../../extract/schema';
 import { formatTypeReference } from '../../utils/parameter-utils';
 import { parseJSDocComment } from '../../utils/tsdoc-utils';
 import { collectReferencedTypes } from '../../utils/type-utils';
@@ -36,33 +37,67 @@ export function serializeVariable(
 
   const typeRefs = typeRegistry.getTypeRefs();
   const referencedTypes = typeRegistry.getReferencedTypes();
-
-  // Check for pre-detected Standard Schema
   const symbolName = symbol.getName();
-  const detectedSchema = context.detectedSchemas?.get(symbolName);
 
-  if (detectedSchema) {
-    // Use the detected Standard Schema instead of AST-derived type
+  // Priority 1: Standard Schema runtime extraction (richest output)
+  // Contains full JSON Schema with formats, patterns, constraints
+  const standardSchema = context.detectedSchemas?.get(symbolName);
+  if (standardSchema) {
     return {
       id: symbolName,
       name: symbolName,
       ...metadata,
       kind: 'variable',
       deprecated: isSymbolDeprecated(symbol),
-      schema: detectedSchema.schema,
+      schema: standardSchema.schema,
       description,
       source: getSourceLocation(declaration),
       tags: [
         ...(parsedDoc?.tags ?? []),
-        { name: 'standardSchema', text: detectedSchema.vendor },
+        { name: 'schemaLibrary', text: standardSchema.vendor },
+        { name: 'schemaSource', text: 'standard-schema' },
       ],
       examples: parsedDoc?.examples,
     };
   }
 
+  // Priority 2: Static schema extraction (Zod, Valibot, TypeBox, ArkType)
+  // TypeScript Compiler API - no runtime needed
+  if (isSchemaType(variableType, checker)) {
+    const schemaResult = extractSchemaType(variableType, checker);
+    if (schemaResult?.outputType) {
+      // Format the extracted output type as the variable's type
+      collectReferencedTypes(schemaResult.outputType, checker, referencedTypes);
+      const outputTypeRef = formatTypeReference(
+        schemaResult.outputType,
+        checker,
+        typeRefs,
+        referencedTypes,
+      );
+
+      return {
+        id: symbolName,
+        name: symbolName,
+        ...metadata,
+        kind: 'variable',
+        deprecated: isSymbolDeprecated(symbol),
+        type: outputTypeRef,
+        description,
+        source: getSourceLocation(declaration),
+        tags: [
+          ...(parsedDoc?.tags ?? []),
+          { name: 'schemaLibrary', text: schemaResult.adapter.id },
+          { name: 'schemaSource', text: 'static-ast' },
+        ],
+        examples: parsedDoc?.examples,
+      };
+    }
+  }
+
+  // Priority 3: Plain variable - no schema extraction
   return {
-    id: symbol.getName(),
-    name: symbol.getName(),
+    id: symbolName,
+    name: symbolName,
     ...metadata,
     kind: 'variable',
     deprecated: isSymbolDeprecated(symbol),

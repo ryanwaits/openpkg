@@ -7,8 +7,6 @@ export type {
   DocCovConfig,
   DocsConfig,
   ExampleValidationMode,
-  PolicyConfig,
-  QualityRulesConfig,
-  QualitySeverity,
+  SchemaExtractionMode,
 } from './types';
 export { defineConfig } from './types';

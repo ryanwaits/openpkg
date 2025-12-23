@@ -8,11 +8,10 @@ export interface InitCommandDependencies {
   fileExists?: typeof fs.existsSync;
   writeFileSync?: typeof fs.writeFileSync;
   readFileSync?: typeof fs.readFileSync;
+  mkdirSync?: typeof fs.mkdirSync;
   log?: typeof console.log;
   error?: typeof console.error;
 }
-
-type ConfigFormat = 'auto' | 'mjs' | 'js' | 'cjs' | 'yaml';
 
 type PackageType = 'module' | 'commonjs' | undefined;
 
@@ -20,6 +19,7 @@ const defaultDependencies: Required<InitCommandDependencies> = {
   fileExists: fs.existsSync,
   writeFileSync: fs.writeFileSync,
   readFileSync: fs.readFileSync,
+  mkdirSync: fs.mkdirSync,
   log: console.log,
   error: console.error,
 };
@@ -28,25 +28,18 @@ export function registerInitCommand(
   program: Command,
   dependencies: InitCommandDependencies = {},
 ): void {
-  const { fileExists, writeFileSync, readFileSync, log, error } = {
+  const { fileExists, writeFileSync, readFileSync, mkdirSync, log, error } = {
     ...defaultDependencies,
     ...dependencies,
   };
 
   program
     .command('init')
-    .description('Create a DocCov configuration file')
+    .description('Initialize DocCov: config, GitHub Action, and badge')
     .option('--cwd <dir>', 'Working directory', process.cwd())
-    .option('--format <format>', 'Config format: auto, mjs, js, cjs, yaml', 'auto')
+    .option('--skip-action', 'Skip GitHub Action workflow creation')
     .action((options) => {
       const cwd = path.resolve(options.cwd as string);
-
-      const formatOption = String(options.format ?? 'auto').toLowerCase();
-      if (!isValidFormat(formatOption)) {
-        error(chalk.red(`Invalid format "${formatOption}". Use auto, mjs, js, cjs, or yaml.`));
-        process.exitCode = 1;
-        return;
-      }
 
       const existing = findExistingConfig(cwd, fileExists);
       if (existing) {
@@ -60,17 +53,10 @@ export function registerInitCommand(
       }
 
       const packageType = detectPackageType(cwd, fileExists, readFileSync);
-      const targetFormat = resolveFormat(formatOption as ConfigFormat, packageType);
+      // Use .ts for TypeScript projects, .mts for others
+      const targetFormat = packageType === 'module' ? 'ts' : 'mts';
 
-      if (targetFormat === 'js' && packageType !== 'module') {
-        log(
-          chalk.yellow(
-            'Package is not marked as "type": "module"; creating doccov.config.js may require enabling ESM.',
-          ),
-        );
-      }
-
-      const fileName = targetFormat === 'yaml' ? 'doccov.yml' : `doccov.config.${targetFormat}`;
+      const fileName = `doccov.config.${targetFormat}`;
       const outputPath = path.join(cwd, fileName);
 
       if (fileExists(outputPath)) {
@@ -79,16 +65,48 @@ export function registerInitCommand(
         return;
       }
 
-      const template = buildTemplate(targetFormat);
+      // 1. Create config
+      const template = buildConfigTemplate();
       writeFileSync(outputPath, template, { encoding: 'utf8' });
+      log(chalk.green(`✓ Created ${fileName}`));
 
-      log(chalk.green(`✓ Created ${path.relative(process.cwd(), outputPath)}`));
+      // 2. Create GitHub Action workflow (unless skipped)
+      if (!options.skipAction) {
+        const workflowDir = path.join(cwd, '.github', 'workflows');
+        const workflowPath = path.join(workflowDir, 'doccov.yml');
+
+        if (!fileExists(workflowPath)) {
+          mkdirSync(workflowDir, { recursive: true });
+          writeFileSync(workflowPath, buildWorkflowTemplate(), { encoding: 'utf8' });
+          log(chalk.green(`✓ Created .github/workflows/doccov.yml`));
+        } else {
+          log(chalk.yellow(`  Skipped .github/workflows/doccov.yml (already exists)`));
+        }
+      }
+
+      // 3. Detect repo info for badge
+      const repoInfo = detectRepoInfo(cwd, fileExists, readFileSync);
+
+      // 4. Output badge snippet
+      log('');
+      log(chalk.bold('Add this badge to your README:'));
+      log('');
+      if (repoInfo) {
+        log(
+          chalk.cyan(
+            `[![DocCov](https://doccov.dev/badge/${repoInfo.owner}/${repoInfo.repo})](https://doccov.dev/${repoInfo.owner}/${repoInfo.repo})`,
+          ),
+        );
+      } else {
+        log(chalk.cyan(`[![DocCov](https://doccov.dev/badge/OWNER/REPO)](https://doccov.dev/OWNER/REPO)`));
+        log(chalk.dim('  Replace OWNER/REPO with your GitHub repo'));
+      }
+      log('');
+
+      // 5. Quick start hint
+      log(chalk.dim('Run `doccov check` to verify your documentation coverage'));
     });
 }
-
-const isValidFormat = (value: string): value is ConfigFormat => {
-  return ['auto', 'mjs', 'js', 'cjs', 'yaml'].includes(value);
-};
 
 const findExistingConfig = (cwd: string, fileExists: typeof fs.existsSync): string | null => {
   let current = path.resolve(cwd);
@@ -158,82 +176,90 @@ const findNearestPackageJson = (cwd: string, fileExists: typeof fs.existsSync): 
   return null;
 };
 
-const resolveFormat = (
-  format: ConfigFormat,
-  packageType: PackageType,
-): 'mjs' | 'js' | 'cjs' | 'yaml' => {
-  if (format === 'yaml') return 'yaml';
-  if (format === 'auto') {
-    return packageType === 'module' ? 'js' : 'mjs';
-  }
-  return format;
-};
+const buildConfigTemplate = (): string => {
+  return `import { defineConfig } from '@doccov/cli/config';
 
-const buildTemplate = (format: 'mjs' | 'js' | 'cjs' | 'yaml'): string => {
-  if (format === 'yaml') {
-    return `# doccov.yml
-# include:
-#   - "MyClass"
-#   - "myFunction"
-# exclude:
-#   - "internal*"
-
-check:
-  # minCoverage: 80
-  # maxDrift: 20
-  # examples: typecheck
-
-quality:
-  rules:
-    # has-description: warn
-    # has-params: off
-    # has-returns: off
-`;
-  }
-
-  const configBody = `{
-  // Filter which exports to analyze
+export default defineConfig({
+  // Filter exports to analyze (optional)
   // include: ['MyClass', 'myFunction'],
   // exclude: ['internal*'],
 
-  // Check command thresholds
   check: {
-    // Minimum documentation coverage percentage (0-100)
-    // minCoverage: 80,
+    // Fail if coverage drops below threshold
+    minCoverage: 80,
 
-    // Maximum drift percentage allowed (0-100)
+    // Fail if drift exceeds threshold
     // maxDrift: 20,
-
-    // Example validation: 'presence' | 'typecheck' | 'run'
-    // examples: 'typecheck',
   },
+});
+`;
+};
 
-  // Quality rule severities: 'error' | 'warn' | 'off'
-  quality: {
-    rules: {
-      // 'has-description': 'warn',
-      // 'has-params': 'off',
-      // 'has-returns': 'off',
-      // 'has-examples': 'off',
-      // 'no-empty-returns': 'warn',
-      // 'consistent-param-style': 'off',
-    },
-  },
-}`;
+const buildWorkflowTemplate = (): string => {
+  return `name: DocCov
 
-  if (format === 'cjs') {
-    return [
-      "const { defineConfig } = require('@doccov/cli/config');",
-      '',
-      `module.exports = defineConfig(${configBody});`,
-      '',
-    ].join('\n');
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  doccov:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: doccov/action@v1
+        with:
+          min-coverage: 80
+          comment-on-pr: true
+`;
+};
+
+const detectRepoInfo = (
+  cwd: string,
+  fileExists: typeof fs.existsSync,
+  readFileSync: typeof fs.readFileSync,
+): { owner: string; repo: string } | null => {
+  // Try to read from package.json repository field
+  const packageJsonPath = findNearestPackageJson(cwd, fileExists);
+  if (packageJsonPath) {
+    try {
+      const raw = readFileSync(packageJsonPath, 'utf8');
+      const parsed = JSON.parse(raw) as { repository?: string | { url?: string } };
+
+      let repoUrl: string | undefined;
+      if (typeof parsed.repository === 'string') {
+        repoUrl = parsed.repository;
+      } else if (parsed.repository?.url) {
+        repoUrl = parsed.repository.url;
+      }
+
+      if (repoUrl) {
+        // Parse GitHub URL: github.com/owner/repo or git+https://github.com/owner/repo.git
+        const match = repoUrl.match(/github\.com[/:]([^/]+)\/([^/.]+)/);
+        if (match) {
+          return { owner: match[1], repo: match[2] };
+        }
+      }
+    } catch {
+      // Ignore
+    }
   }
 
-  return [
-    "import { defineConfig } from '@doccov/cli/config';",
-    '',
-    `export default defineConfig(${configBody});`,
-    '',
-  ].join('\n');
+  // Try to read from .git/config
+  const gitConfigPath = path.join(cwd, '.git', 'config');
+  if (fileExists(gitConfigPath)) {
+    try {
+      const config = readFileSync(gitConfigPath, 'utf8');
+      const match = config.match(/url\s*=\s*.*github\.com[/:]([^/]+)\/([^/.]+)/);
+      if (match) {
+        return { owner: match[1], repo: match[2].replace(/\.git$/, '') };
+      }
+    } catch {
+      // Ignore
+    }
+  }
+
+  return null;
 };

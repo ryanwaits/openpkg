@@ -205,10 +205,114 @@ badgeRoute.get('/:owner/:repo', async (c) => {
   }
 });
 
-// GET /badge/:owner/:repo.svg (alias)
-badgeRoute.get('/:owner/:repo.svg', async (c) => {
+// GET /badge/:owner/:repo/json - Shields.io endpoint format
+// https://shields.io/badges/endpoint-badge
+badgeRoute.get('/:owner/:repo/json', async (c) => {
   const { owner, repo } = c.req.param();
-  const repoName = repo.replace(/\.svg$/, '');
-  const query = new URL(c.req.url).search;
-  return c.redirect(`/badge/${owner}/${repoName}${query}`);
+
+  const ref = c.req.query('ref') ?? c.req.query('branch') ?? 'main';
+  const specPath = c.req.query('path') ?? c.req.query('package') ?? 'openpkg.json';
+
+  try {
+    const spec = await fetchSpec(owner, repo, { ref, path: specPath });
+
+    if (!spec) {
+      return c.json(
+        { schemaVersion: 1, label: 'docs', message: 'not found', color: 'lightgrey' },
+        404,
+        { 'Cache-Control': 'no-cache' },
+      );
+    }
+
+    const validation = validateSpec(spec);
+    if (!validation.ok) {
+      return c.json(
+        { schemaVersion: 1, label: 'docs', message: 'invalid', color: 'lightgrey' },
+        422,
+        { 'Cache-Control': 'no-cache' },
+      );
+    }
+
+    const coverageScore =
+      (spec as { docs?: { coverageScore?: number } }).docs?.coverageScore ??
+      computeCoverageScore(spec);
+
+    return c.json(
+      {
+        schemaVersion: 1,
+        label: 'docs',
+        message: `${coverageScore}%`,
+        color: getColorForScore(coverageScore),
+      },
+      200,
+      { 'Cache-Control': 'public, max-age=300, stale-if-error=3600' },
+    );
+  } catch {
+    return c.json(
+      { schemaVersion: 1, label: 'docs', message: 'error', color: 'red' },
+      500,
+      { 'Cache-Control': 'no-cache' },
+    );
+  }
 });
+
+// GET /badge/:owner/:repo/drift - Drift badge variant
+badgeRoute.get('/:owner/:repo/drift', async (c) => {
+  const { owner, repo } = c.req.param();
+
+  const ref = c.req.query('ref') ?? c.req.query('branch') ?? 'main';
+  const specPath = c.req.query('path') ?? c.req.query('package') ?? 'openpkg.json';
+  const style = (c.req.query('style') ?? 'flat') as BadgeStyle;
+
+  try {
+    const spec = await fetchSpec(owner, repo, { ref, path: specPath });
+
+    if (!spec) {
+      const svg = generateBadgeSvg({
+        label: 'drift',
+        message: 'not found',
+        color: 'lightgrey',
+        style,
+      });
+      return c.body(svg, 404, CACHE_HEADERS_ERROR);
+    }
+
+    // Compute drift score from exports with drift issues
+    const exports = spec.exports ?? [];
+    const exportsWithDrift = exports.filter((e) => {
+      const docs = (e as { docs?: { drift?: unknown[] } }).docs;
+      return docs?.drift && Array.isArray(docs.drift) && docs.drift.length > 0;
+    });
+    const driftScore = exports.length === 0 ? 0 : Math.round((exportsWithDrift.length / exports.length) * 100);
+
+    // Lower drift is better
+    const color = getDriftColor(driftScore);
+
+    const svg = generateBadgeSvg({
+      label: 'drift',
+      message: `${driftScore}%`,
+      color,
+      style,
+    });
+
+    return c.body(svg, 200, CACHE_HEADERS_SUCCESS);
+  } catch {
+    const svg = generateBadgeSvg({
+      label: 'drift',
+      message: 'error',
+      color: 'red',
+      style,
+    });
+    return c.body(svg, 500, CACHE_HEADERS_ERROR);
+  }
+});
+
+function getDriftColor(score: number): BadgeColor {
+  // Inverse of coverage - lower is better
+  if (score <= 5) return 'brightgreen';
+  if (score <= 10) return 'green';
+  if (score <= 20) return 'yellowgreen';
+  if (score <= 30) return 'yellow';
+  if (score <= 50) return 'orange';
+  return 'red';
+}

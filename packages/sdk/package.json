@@ -50,9 +50,13 @@
     "unist-util-visit": "^5.0.0"
   },
   "devDependencies": {
+    "@sinclair/typebox": "^0.34.41",
     "@types/bun": "latest",
     "@types/node": "^20.0.0",
-    "bunup": "latest"
+    "arktype": "^2.1.29",
+    "bunup": "latest",
+    "valibot": "^1.2.0",
+    "zod": "^4.2.1"
   },
   "peerDependencies": {
     "typescript": "^5"

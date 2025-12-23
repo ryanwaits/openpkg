@@ -2,13 +2,36 @@
 
 // Analysis context types (for advanced usage)
 export type { DetectedSchemaEntry } from './analysis/context';
-// Runtime schema detection
+// Runtime schema detection (legacy - now stubbed)
 export {
   clearSchemaCache,
   detectRuntimeSchemas,
   type SchemaDetectionContext,
   type SchemaDetectionResult,
 } from './analysis/schema-detection';
+// Schema extraction (Zod, Valibot, TypeBox, ArkType)
+// Static: TypeScript Compiler API (no runtime)
+// Runtime: Standard Schema (requires built package)
+export {
+  // Static extraction
+  extractSchemaOutputType,
+  extractSchemaType,
+  findAdapter,
+  getRegisteredAdapters,
+  getSupportedLibraries,
+  isSchemaType,
+  type SchemaAdapter,
+  type SchemaExtractionResult,
+  // Standard Schema runtime extraction
+  extractStandardSchemas,
+  extractStandardSchemasFromProject,
+  isStandardJSONSchema,
+  resolveCompiledPath,
+  type ExtractStandardSchemasOptions,
+  type StandardJSONSchemaV1,
+  type StandardSchemaExtractionOutput,
+  type StandardSchemaExtractionResult,
+} from './extract/schema';
 
 // Drift categorization utilities
 export {
@@ -86,40 +109,13 @@ export {
   saveSpecCache,
   validateSpecCache,
 } from './cache';
-// CODEOWNERS parsing and ownership analysis
-export {
-  analyzeOwnership,
-  analyzeSpecOwnership,
-  type AnalyzeOwnershipOptions,
-  attributeOwners,
-  type CodeOwnerRule,
-  type CodeOwnersFile,
-  findOwners,
-  loadCodeOwners,
-  type OwnerCoverageStats,
-  type OwnershipAnalysisResult,
-  parseCodeOwners,
-} from './codeowners';
-// Contributor analysis (git blame)
-export {
-  analyzeContributors,
-  type AnalyzeContributorsOptions,
-  analyzeSpecContributors,
-  type BlameInfo,
-  type ContributorAnalysisResult,
-  type ContributorStats,
-  getBlameForLines,
-  getFileBlame,
-} from './contributors';
 // Configuration types
 export type {
   CheckConfig,
   DocCovConfig,
   DocsConfig,
   ExampleValidationMode,
-  PolicyConfig,
-  QualityRulesConfig,
-  QualitySeverity,
+  SchemaExtractionMode,
 } from './config';
 export { defineConfig } from './config';
 // Project detection (for CLI and API)
@@ -175,17 +171,6 @@ export {
   validateExamples,
 } from './examples';
 export { extractPackageSpec } from './extractor';
-// Standard JSON Schema extraction (Zod, ArkType, Valibot, etc.)
-export {
-  extractViaStandardSchema,
-  isStandardJSONSchema,
-  KNOWN_VENDORS,
-  type KnownVendor,
-  type StandardJSONSchemaV1,
-  type StandardSchemaOutputOptions,
-  type StandardSchemaResult,
-  tryExtractStandardSchema,
-} from './extraction';
 export type { FilterSource, ResolvedFilters } from './filtering/merge';
 export { mergeFilters, parseListFlag } from './filtering/merge';
 export type { FilterOptions, ReleaseTag } from './filtering/types';
@@ -258,35 +243,6 @@ export {
 export type { AnalysisResult, AnalyzeOptions, Diagnostic } from './openpkg';
 export { analyze, analyzeFile, DocCov } from './openpkg';
 export type { DocCovOptions } from './options';
-// Policy evaluation engine
-export {
-  evaluatePolicies,
-  type EvaluatePoliciesOptions,
-  evaluatePolicy,
-  type PolicyEvaluationResult,
-  type PolicyFailure,
-  type PolicyResult,
-} from './policies';
-// Quality rules engine
-export {
-  type AggregateQualityResult,
-  BUILTIN_RULES,
-  CORE_RULES,
-  evaluateExportQuality,
-  evaluateQuality,
-  getCoverageRules,
-  getDefaultConfig,
-  getRule,
-  getRulesForKind,
-  mergeConfig,
-  type QualityConfig,
-  type QualityResult,
-  type QualityRule,
-  type QualityViolation,
-  type RuleContext,
-  STYLE_RULES,
-  TSDOC_RULES,
-} from './quality';
 // Project resolution
 export type { ResolvedTarget, ResolveTargetOptions } from './resolve';
 export { resolveTarget } from './resolve';

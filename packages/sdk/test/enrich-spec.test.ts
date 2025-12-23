@@ -173,19 +173,20 @@ describe('enrichSpec', () => {
     });
   });
 
-  describe('quality violations', () => {
-    test('tracks violations per export', () => {
+  describe('missing documentation', () => {
+    test('tracks missing docs per export', () => {
       const spec = createSpec({
         exports: [createExport({ name: 'foo', kind: 'function' })],
       });
 
       const enriched = enrichSpec(spec);
 
-      // Undocumented function should have violations
-      expect(enriched.exports[0].docs?.violations).toBeDefined();
+      // Undocumented function should have missing items
+      expect(enriched.exports[0].docs?.missing).toBeDefined();
+      expect(enriched.exports[0].docs?.missing).toContain('has-description');
     });
 
-    test('aggregates violations across exports', () => {
+    test('aggregates missing across exports', () => {
       const spec = createSpec({
         exports: [
           createExport({ name: 'foo', kind: 'function' }),
@@ -195,32 +196,20 @@ describe('enrichSpec', () => {
 
       const enriched = enrichSpec(spec);
 
-      // Overall violations should include all
-      expect(enriched.docs?.violations).toBeDefined();
+      // Overall missing should include all
+      expect(enriched.docs?.missing).toBeDefined();
+      expect(enriched.docs?.missing).toContain('has-description');
     });
 
-    test('respects quality config', () => {
+    test('no missing when documented', () => {
       const spec = createSpec({
-        exports: [createExport({ name: 'foo', kind: 'function' })],
+        exports: [createExport({ name: 'foo', kind: 'function', description: 'A function' })],
       });
 
-      // Turn off all rules
-      const qualityConfig = {
-        rules: {
-          'has-description': 'off' as const,
-          'has-examples': 'off' as const,
-        },
-      };
+      const enriched = enrichSpec(spec);
 
-      const enriched = enrichSpec(spec, { qualityConfig });
-
-      // Should have fewer or no violations
-      const violations = enriched.exports[0].docs?.violations ?? [];
-      const descViolation = violations.find((v) => v.ruleId === 'has-description');
-      const exViolation = violations.find((v) => v.ruleId === 'has-examples');
-
-      expect(descViolation).toBeUndefined();
-      expect(exViolation).toBeUndefined();
+      // Documented function should have no missing
+      expect(enriched.exports[0].docs?.missing).toBeUndefined();
     });
   });
 

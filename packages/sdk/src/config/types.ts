@@ -19,6 +19,15 @@ export interface DocsConfig {
 export type ExampleValidationMode = 'presence' | 'typecheck' | 'run';
 
 /**
+ * Schema extraction modes for validation libraries (Zod, Valibot, TypeBox, ArkType).
+ *
+ * - 'static': TypeScript Compiler API only (no runtime, always safe)
+ * - 'runtime': Standard Schema runtime extraction (requires built package)
+ * - 'hybrid': Try runtime first, fall back to static
+ */
+export type SchemaExtractionMode = 'static' | 'runtime' | 'hybrid';
+
+/**
  * Check command configuration options.
  */
 export interface CheckConfig {
@@ -37,34 +46,6 @@ export interface CheckConfig {
 }
 
 /**
- * Quality rule severity level.
- */
-export type QualitySeverity = 'error' | 'warn' | 'off';
-
-/**
- * Quality rules configuration.
- */
-export interface QualityRulesConfig {
-  /** Rule severity overrides */
-  rules?: Record<string, QualitySeverity>;
-}
-
-/**
- * Per-path policy configuration.
- * Allows setting different coverage requirements for different parts of the codebase.
- */
-export interface PolicyConfig {
-  /** Glob pattern to match file paths (e.g., "packages/public-api/**") */
-  path: string;
-  /** Minimum coverage percentage required for matched paths (0-100) */
-  minCoverage?: number;
-  /** Maximum drift percentage allowed for matched paths (0-100) */
-  maxDrift?: number;
-  /** Require @example blocks on all matched exports */
-  requireExamples?: boolean;
-}
-
-/**
  * Normalized DocCov configuration.
  * This is the parsed/normalized form used by commands.
  */
@@ -79,10 +60,17 @@ export interface DocCovConfig {
   docs?: DocsConfig;
   /** Check command configuration */
   check?: CheckConfig;
-  /** Quality rules configuration */
-  quality?: QualityRulesConfig;
-  /** Per-path coverage policies (Pro tier) */
-  policies?: PolicyConfig[];
+  /**
+   * Schema extraction mode for validation libraries.
+   *
+   * - 'static' (default): Safe, uses TypeScript Compiler API
+   * - 'runtime': Uses Standard Schema (requires built package)
+   * - 'hybrid': Tries runtime first, falls back to static
+   *
+   * Runtime extraction provides richer JSON Schema output (formats, patterns)
+   * but requires the package to be built first.
+   */
+  schemaExtraction?: SchemaExtractionMode;
 }
 
 /**
@@ -100,14 +88,8 @@ export interface DocCovConfig {
  * export default defineConfig({
  *   include: ['MyClass', 'myFunction'],
  *   exclude: ['internal*'],
- *   docs: {
- *     include: ['docs/**\/*.md'],
- *   },
- *   quality: {
- *     rules: {
- *       'has-description': 'error',
- *       'has-examples': 'warn',
- *     },
+ *   check: {
+ *     minCoverage: 80,
  *   },
  * });
  * ```
