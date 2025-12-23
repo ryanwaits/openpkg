@@ -1,5 +1,11 @@
 # @doccov/site
 
+## 0.3.0
+
+### Minor Changes
+
+- feat: add spec routes with caching/diff, auth system, cleanup unused pages
+
 ## 0.2.1
 
 ### Patch Changes

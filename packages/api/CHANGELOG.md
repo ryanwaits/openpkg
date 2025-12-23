@@ -1,5 +1,11 @@
 # @doccov/api
 
+## 0.6.0
+
+### Minor Changes
+
+- feat: add spec routes with caching/diff, auth system, cleanup unused pages
+
 ## 0.5.0
 
 ### Minor Changes
