@@ -13,9 +13,9 @@ import { getTokenByInstallationId } from './github-app';
  * Result from remote analysis.
  */
 export interface RemoteAnalysisResult {
-  coveragePercent: number;
-  documentedCount: number;
-  totalCount: number;
+  coverageScore: number;
+  documentedExports: number;
+  totalExports: number;
   driftCount: number;
   qualityErrors: number;
   qualityWarnings: number;
@@ -190,9 +190,9 @@ export async function analyzeRemoteRepo(
 
     // Extract metrics
     const docs = enriched.docs;
-    const coveragePercent = docs?.coverageScore ?? 0;
-    const documentedCount = docs?.documented ?? 0;
-    const totalCount = docs?.total ?? 0;
+    const coverageScore = docs?.coverageScore ?? 0;
+    const documentedExports = docs?.documented ?? 0;
+    const totalExports = docs?.total ?? 0;
     const driftCount = docs?.drift?.length ?? 0;
 
     // Count quality issues
@@ -207,9 +207,9 @@ export async function analyzeRemoteRepo(
     }
 
     return {
-      coveragePercent,
-      documentedCount,
-      totalCount,
+      coverageScore,
+      documentedExports,
+      totalExports,
       driftCount,
       qualityErrors,
       qualityWarnings,
@@ -243,9 +243,9 @@ export function computeAnalysisDiff(
   driftDelta: number;
 } {
   return {
-    coverageDelta: Number((head.coveragePercent - base.coveragePercent).toFixed(1)),
-    documentedDelta: head.documentedCount - base.documentedCount,
-    totalDelta: head.totalCount - base.totalCount,
+    coverageDelta: Number((head.coverageScore - base.coverageScore).toFixed(1)),
+    documentedDelta: head.documentedExports - base.documentedExports,
+    totalDelta: head.totalExports - base.totalExports,
     driftDelta: head.driftCount - base.driftCount,
   };
 }

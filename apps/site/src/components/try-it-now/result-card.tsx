@@ -6,10 +6,9 @@ import { cn } from '@/lib/utils';
 export interface AnalysisSummary {
   packageName: string;
   version: string;
-  coverage: number;
-  exportCount: number;
-  documentedCount: number;
-  undocumentedCount: number;
+  coverageScore: number;
+  totalExports: number;
+  documentedExports: number;
   driftCount: number;
   topUndocumented: string[];
   topDrift: Array<{ name: string; issue: string }>;
@@ -21,18 +20,20 @@ interface ResultCardProps {
 
 export function ResultCard({ summary }: ResultCardProps) {
   const coverageColor =
-    summary.coverage >= 80
+    summary.coverageScore >= 80
       ? 'text-green-500'
-      : summary.coverage >= 50
+      : summary.coverageScore >= 50
         ? 'text-yellow-500'
         : 'text-red-500';
 
   const coverageBg =
-    summary.coverage >= 80
+    summary.coverageScore >= 80
       ? 'bg-green-500/10'
-      : summary.coverage >= 50
+      : summary.coverageScore >= 50
         ? 'bg-yellow-500/10'
         : 'bg-red-500/10';
+
+  const undocumentedCount = summary.totalExports - summary.documentedExports;
 
   return (
     <div className="mt-6 p-6 rounded-lg border bg-card shadow-sm">
@@ -42,17 +43,17 @@ export function ResultCard({ summary }: ResultCardProps) {
           <p className="text-sm text-muted-foreground">v{summary.version}</p>
         </div>
         <div className={cn('text-4xl font-bold px-4 py-2 rounded-lg', coverageColor, coverageBg)}>
-          {summary.coverage}%
+          {summary.coverageScore}%
         </div>
       </div>
 
       <div className="grid grid-cols-3 gap-4 text-center mb-6">
         <div className="p-3 rounded-lg bg-muted/50">
-          <div className="text-2xl font-bold">{summary.exportCount}</div>
+          <div className="text-2xl font-bold">{summary.totalExports}</div>
           <div className="text-xs text-muted-foreground">Exports</div>
         </div>
         <div className="p-3 rounded-lg bg-muted/50">
-          <div className="text-2xl font-bold">{summary.undocumentedCount}</div>
+          <div className="text-2xl font-bold">{undocumentedCount}</div>
           <div className="text-xs text-muted-foreground">Undocumented</div>
         </div>
         <div className="p-3 rounded-lg bg-muted/50">

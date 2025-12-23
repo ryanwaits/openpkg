@@ -92,13 +92,9 @@ coverageRoute.get('/projects/:projectId/history', async (c) => {
       'version',
       'branch',
       'commitSha',
-      'coveragePercent',
-      'documentedCount',
-      'totalCount',
-      'descriptionCount',
-      'paramsCount',
-      'returnsCount',
-      'examplesCount',
+      'coverageScore',
+      'documentedExports',
+      'totalExports',
       'driftCount',
       'source',
       'createdAt',
@@ -129,13 +125,9 @@ coverageRoute.post('/projects/:projectId/snapshots', async (c) => {
     version?: string;
     branch?: string;
     commitSha?: string;
-    coveragePercent: number;
-    documentedCount: number;
-    totalCount: number;
-    descriptionCount?: number;
-    paramsCount?: number;
-    returnsCount?: number;
-    examplesCount?: number;
+    coverageScore: number;
+    documentedExports: number;
+    totalExports: number;
     driftCount?: number;
     source?: 'ci' | 'manual' | 'scheduled';
   }>();
@@ -162,13 +154,9 @@ coverageRoute.post('/projects/:projectId/snapshots', async (c) => {
       version: body.version || null,
       branch: body.branch || null,
       commitSha: body.commitSha || null,
-      coveragePercent: body.coveragePercent,
-      documentedCount: body.documentedCount,
-      totalCount: body.totalCount,
-      descriptionCount: body.descriptionCount || null,
-      paramsCount: body.paramsCount || null,
-      returnsCount: body.returnsCount || null,
-      examplesCount: body.examplesCount || null,
+      coverageScore: body.coverageScore,
+      documentedExports: body.documentedExports,
+      totalExports: body.totalExports,
       driftCount: body.driftCount || 0,
       source: body.source || 'manual',
     })
@@ -179,7 +167,7 @@ coverageRoute.post('/projects/:projectId/snapshots', async (c) => {
   await db
     .updateTable('projects')
     .set({
-      coverageScore: body.coveragePercent,
+      coverageScore: body.coverageScore,
       driftCount: body.driftCount || 0,
       lastAnalyzedAt: new Date(),
     })
@@ -192,9 +180,9 @@ coverageRoute.post('/projects/:projectId/snapshots', async (c) => {
 // Helper: Generate insights from coverage data
 interface Snapshot {
   version: string | null;
-  coveragePercent: number;
-  documentedCount: number;
-  totalCount: number;
+  coverageScore: number;
+  documentedExports: number;
+  totalExports: number;
   driftCount: number;
 }
 
@@ -210,7 +198,7 @@ function generateInsights(snapshots: Snapshot[]): Insight[] {
 
   const first = snapshots[0];
   const last = snapshots[snapshots.length - 1];
-  const diff = last.coveragePercent - first.coveragePercent;
+  const diff = last.coverageScore - first.coverageScore;
 
   // Overall improvement/regression
   if (diff > 0) {
@@ -228,8 +216,8 @@ function generateInsights(snapshots: Snapshot[]): Insight[] {
   }
 
   // Predict time to 100%
-  if (diff > 0 && last.coveragePercent < 100) {
-    const remaining = 100 - last.coveragePercent;
+  if (diff > 0 && last.coverageScore < 100) {
+    const remaining = 100 - last.coverageScore;
     const avgGainPerSnapshot = diff / (snapshots.length - 1);
     if (avgGainPerSnapshot > 0) {
       const snapshotsToComplete = Math.ceil(remaining / avgGainPerSnapshot);
@@ -245,8 +233,7 @@ function generateInsights(snapshots: Snapshot[]): Insight[] {
   const milestones = [50, 75, 90, 100];
   for (const milestone of milestones) {
     const crossedAt = snapshots.findIndex(
-      (s, i) =>
-        i > 0 && s.coveragePercent >= milestone && snapshots[i - 1].coveragePercent < milestone,
+      (s, i) => i > 0 && s.coverageScore >= milestone && snapshots[i - 1].coverageScore < milestone,
     );
     if (crossedAt > 0) {
       insights.push({
@@ -271,7 +258,7 @@ function detectRegression(
   for (let i = 1; i < recent.length; i++) {
     const prev = recent[i - 1];
     const curr = recent[i];
-    const drop = prev.coveragePercent - curr.coveragePercent;
+    const drop = prev.coverageScore - curr.coverageScore;
 
     if (drop >= 3) {
       // 3% or more drop
@@ -279,7 +266,7 @@ function detectRegression(
         fromVersion: prev.version || `v${i}`,
         toVersion: curr.version || `v${i + 1}`,
         coverageDrop: Math.round(drop),
-        exportsLost: prev.documentedCount - curr.documentedCount,
+        exportsLost: prev.documentedExports - curr.documentedExports,
       };
     }
   }

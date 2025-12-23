@@ -38,5 +38,18 @@ interface SessionResponse {
 
 export const authApi = {
   getSession: () => api<SessionResponse>('/auth/session'),
-  signOut: () => api('/auth/sign-out', { method: 'POST' }),
+  signOut: async () => {
+    const res = await fetch(`${API_URL}/auth/sign-out`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({}),
+    });
+    if (!res.ok) {
+      throw new Error(`API error: ${res.status}`);
+    }
+    // Don't parse JSON - endpoint may return empty body
+  },
 };

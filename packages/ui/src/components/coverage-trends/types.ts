@@ -1,16 +1,11 @@
-// Coverage snapshot data point for charts
+// Coverage snapshot data point for charts (matches SDK CoverageSnapshot)
 export interface CoverageDataPoint {
   version: string;
   date: string;
-  coveragePercent: number;
-  documentedCount: number;
-  totalCount: number;
+  coverageScore: number;
+  documentedExports: number;
+  totalExports: number;
   driftCount: number;
-  // Signal breakdown (optional)
-  descriptionPercent?: number;
-  paramsPercent?: number;
-  returnsPercent?: number;
-  examplesPercent?: number;
 }
 
 // Time range options

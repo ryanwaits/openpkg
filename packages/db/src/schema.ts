@@ -128,16 +128,10 @@ export interface CoverageSnapshotsTable {
   branch: string | null;
   commitSha: string | null;
 
-  // Overall coverage
-  coveragePercent: number;
-  documentedCount: number;
-  totalCount: number;
-
-  // Signal breakdown (optional detailed tracking)
-  descriptionCount: number | null;
-  paramsCount: number | null;
-  returnsCount: number | null;
-  examplesCount: number | null;
+  // Overall coverage (matches SDK CoverageSnapshot)
+  coverageScore: number;
+  documentedExports: number;
+  totalExports: number;
 
   // Drift tracking
   driftCount: number;

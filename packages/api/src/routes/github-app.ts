@@ -280,7 +280,7 @@ async function handlePushEvent(payload: {
   const result = await analyzeRemoteRepo(installationId, owner.login, repo, sha);
 
   if (result) {
-    console.log(`[webhook] Analysis complete: ${result.coveragePercent}% coverage`);
+    console.log(`[webhook] Analysis complete: ${result.coverageScore}% coverage`);
 
     // Create check run with analysis results
     await createCheckRun(installationId, owner.login, repo, sha, result);
@@ -289,7 +289,7 @@ async function handlePushEvent(payload: {
     await db
       .updateTable('projects')
       .set({
-        coverageScore: result.coveragePercent,
+        coverageScore: result.coverageScore,
         driftCount: result.driftCount,
         updatedAt: new Date(),
       })
@@ -333,7 +333,7 @@ async function handlePullRequestEvent(payload: {
     return;
   }
 
-  console.log(`[webhook] PR analysis complete: ${headResult.coveragePercent}% coverage`);
+  console.log(`[webhook] PR analysis complete: ${headResult.coverageScore}% coverage`);
 
   // Try to get baseline from database or analyze base
   let diff: ReturnType<typeof computeAnalysisDiff> | null = null;
@@ -349,9 +349,9 @@ async function handlePullRequestEvent(payload: {
     // Use cached baseline for speed
     diff = computeAnalysisDiff(
       {
-        coveragePercent: project.coverageScore,
-        documentedCount: 0,
-        totalCount: 0,
+        coverageScore: project.coverageScore,
+        documentedExports: 0,
+        totalExports: 0,
         driftCount: project.driftCount ?? 0,
         qualityErrors: 0,
         qualityWarnings: 0,

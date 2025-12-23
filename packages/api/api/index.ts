@@ -12,9 +12,10 @@ import type {
   BuildPlanStep,
   BuildPlanStepResult,
   BuildPlanTarget,
+  EnrichedOpenPkg,
   GitHubProjectContext,
 } from '@doccov/sdk';
-import { fetchGitHubContext, parseScanGitHubUrl } from '@doccov/sdk';
+import { enrichSpec, fetchGitHubContext, parseScanGitHubUrl } from '@doccov/sdk';
 import type { OpenPkg } from '@openpkg-ts/spec';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Sandbox } from '@vercel/sandbox';
@@ -163,6 +164,9 @@ const LOCAL_BINARIES = new Set([
   'publint',
   'attw',
   'are-the-types-wrong',
+  // Monorepo tools
+  'lerna',
+  'nx',
 ]);
 
 /**
@@ -213,28 +217,53 @@ interface SpecSummary {
   types: number;
   documented: number;
   undocumented: number;
+  driftCount: number;
+  topUndocumented: string[];
+  topDrift: Array<{ name: string; issue: string }>;
 }
 
 function createSpecSummary(spec: OpenPkg): SpecSummary {
-  const exports = spec.exports?.length ?? 0;
-  const types = spec.types?.length ?? 0;
+  // Enrich spec to get coverage and drift data
+  const enriched = enrichSpec(spec) as EnrichedOpenPkg;
 
-  // Count documented vs undocumented exports
-  const documented =
-    spec.exports?.filter((e) => e.description && e.description.trim().length > 0).length ?? 0;
-  const undocumented = exports - documented;
+  const totalExports = enriched.exports?.length ?? 0;
+  const types = enriched.types?.length ?? 0;
 
-  // Calculate coverage (documented / total * 100)
-  const coverage = exports > 0 ? Math.round((documented / exports) * 100) : 0;
+  // Use SDK coverage data
+  const coverageScore = enriched.docs?.coverageScore ?? 0;
+  const documented = enriched.docs?.documented ?? 0;
+  const undocumented = totalExports - documented;
+
+  // Collect drift issues from enriched exports
+  const driftItems: Array<{ name: string; issue: string }> = [];
+  const undocumentedNames: string[] = [];
+
+  for (const exp of enriched.exports ?? []) {
+    // Collect undocumented exports (no description)
+    if (!exp.description || exp.description.trim().length === 0) {
+      undocumentedNames.push(exp.name);
+    }
+
+    // Collect drift issues
+    for (const drift of exp.docs?.drift ?? []) {
+      driftItems.push({
+        name: exp.name,
+        issue: drift.issue ?? 'Documentation drift detected',
+      });
+    }
+  }
 
   return {
-    name: spec.meta?.name ?? 'unknown',
-    version: spec.meta?.version ?? '0.0.0',
-    coverage,
-    exports,
+    name: enriched.meta?.name ?? 'unknown',
+    version: enriched.meta?.version ?? '0.0.0',
+    coverage: coverageScore,
+    exports: totalExports,
     types,
     documented,
     undocumented,
+    driftCount: driftItems.length,
+    topUndocumented: undocumentedNames.slice(0, 5),
+    topDrift: driftItems.slice(0, 5),
   };
 }
 
@@ -345,6 +374,27 @@ Install Commands by Package Manager:
 - bun with lockfile: ["bun", "install", "--frozen-lockfile"]
 - bun without lockfile: ["bun", "install"]
 
+Monorepo Build Strategy (CRITICAL):
+When a target package is specified in a monorepo, ONLY build that package and its dependencies:
+
+- Lerna monorepos: Use "lerna run build --scope=<package-name> --include-dependencies"
+  Example for @stacks/transactions: ["lerna", "run", "build", "--scope=@stacks/transactions", "--include-dependencies"]
+
+- Turbo monorepos: Use "turbo run build --filter=<package-name>"
+  Example: ["turbo", "run", "build", "--filter=@stacks/transactions"]
+
+- Nx monorepos: Use "nx run <project>:build"
+  Example: ["nx", "run", "transactions:build"]
+
+- pnpm workspaces: Use "pnpm --filter <package-name> run build"
+  Example: ["pnpm", "--filter", "@stacks/transactions", "run", "build"]
+
+- yarn workspaces: Use "yarn workspace <package-name> run build"
+  Example: ["yarn", "workspace", "@stacks/transactions", "run", "build"]
+
+NEVER run a full monorepo build (npm run build at root) when a target package is specified.
+This avoids building 20+ packages when we only need one.
+
 General Guidelines:
 - For TypeScript projects, look for "types" or "exports" fields in package.json
 - For monorepos, focus on the target package if specified
@@ -386,11 +436,22 @@ function transformToBuildPlan(
   context: GitHubProjectContext,
   options: GenerateBuildPlanOptions,
 ): BuildPlan {
+  // Derive package directory from entry points (e.g., "packages/transactions/src/index.ts" -> "packages/transactions")
+  let rootPath: string | undefined;
+  if (options.targetPackage && output.entryPoints.length > 0) {
+    const firstEntry = output.entryPoints[0];
+    // Match patterns like "packages/foo/src/..." or "packages/foo/dist/..."
+    const match = firstEntry.match(/^(packages\/[^/]+)\//);
+    if (match) {
+      rootPath = match[1];
+    }
+  }
+
   const target: BuildPlanTarget = {
     type: 'github',
     repoUrl: `https://github.com/${context.metadata.owner}/${context.metadata.repo}`,
     ref: context.ref,
-    rootPath: options.targetPackage,
+    rootPath,
     entryPoints: output.entryPoints,
   };
 
@@ -745,13 +806,22 @@ async function handleExecute(req: VercelRequest, res: VercelResponse): Promise<v
     const specFilePath = plan.target.rootPath
       ? `${plan.target.rootPath}/openpkg.json`
       : 'openpkg.json';
-    const specStream = await sandbox.readFile({ path: specFilePath });
-    const chunks: Buffer[] = [];
-    for await (const chunk of specStream as AsyncIterable<Buffer>) {
-      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+
+    let spec: OpenPkg;
+    try {
+      const specStream = await sandbox.readFile({ path: specFilePath });
+      const chunks: Buffer[] = [];
+      for await (const chunk of specStream as AsyncIterable<Buffer>) {
+        chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+      }
+      const specContent = Buffer.concat(chunks).toString('utf-8');
+      spec = JSON.parse(specContent) as OpenPkg;
+    } catch (readError) {
+      console.error(`Failed to read ${specFilePath}:`, readError);
+      throw new Error(
+        `Failed to read spec file (${specFilePath}): ${readError instanceof Error ? readError.message : 'Unknown error'}`,
+      );
     }
-    const specContent = Buffer.concat(chunks).toString('utf-8');
-    const spec = JSON.parse(specContent) as OpenPkg;
     const summary = createSpecSummary(spec);
 
     const result = {
@@ -931,13 +1001,22 @@ async function handleExecuteStream(req: VercelRequest, res: VercelResponse): Pro
     const specFilePath = plan.target.rootPath
       ? `${plan.target.rootPath}/openpkg.json`
       : 'openpkg.json';
-    const specStream = await sandbox.readFile({ path: specFilePath });
-    const chunks: Buffer[] = [];
-    for await (const chunk of specStream as AsyncIterable<Buffer>) {
-      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+
+    let spec: OpenPkg;
+    try {
+      const specStream = await sandbox.readFile({ path: specFilePath });
+      const chunks: Buffer[] = [];
+      for await (const chunk of specStream as AsyncIterable<Buffer>) {
+        chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+      }
+      const specContent = Buffer.concat(chunks).toString('utf-8');
+      spec = JSON.parse(specContent) as OpenPkg;
+    } catch (readError) {
+      console.error(`Failed to read ${specFilePath}:`, readError);
+      throw new Error(
+        `Failed to read spec file (${specFilePath}): ${readError instanceof Error ? readError.message : 'Unknown error'}`,
+      );
     }
-    const specContent = Buffer.concat(chunks).toString('utf-8');
-    const spec = JSON.parse(specContent) as OpenPkg;
     const summary = createSpecSummary(spec);
 
     const result = {

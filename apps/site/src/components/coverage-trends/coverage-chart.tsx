@@ -17,9 +17,9 @@ import {
 interface CoverageDataPoint {
   version: string;
   date: string;
-  coveragePercent: number;
-  documentedCount: number;
-  totalCount: number;
+  coverageScore: number;
+  documentedExports: number;
+  totalExports: number;
   driftCount: number;
 }
 
@@ -50,12 +50,12 @@ function ChartTooltip({
       <div className="space-y-1">
         <div className="flex justify-between gap-4">
           <span className="text-muted-foreground">Coverage</span>
-          <span className="font-mono font-medium tabular-nums">{data.coveragePercent}%</span>
+          <span className="font-mono font-medium tabular-nums">{data.coverageScore}%</span>
         </div>
         <div className="flex justify-between gap-4">
           <span className="text-muted-foreground">Documented</span>
           <span className="font-mono tabular-nums">
-            {data.documentedCount}/{data.totalCount}
+            {data.documentedExports}/{data.totalExports}
           </span>
         </div>
         {data.driftCount > 0 && (
@@ -78,8 +78,8 @@ export function CoverageChart({
 }: CoverageChartProps) {
   // Find regressions (coverage drops)
   const _regressionPoints = data.reduce<number[]>((acc, point, index) => {
-    if (index > 0 && point.coveragePercent < data[index - 1].coveragePercent) {
-      acc.push(point.coveragePercent);
+    if (index > 0 && point.coverageScore < data[index - 1].coverageScore) {
+      acc.push(point.coverageScore);
     }
     return acc;
   }, []);
@@ -116,7 +116,7 @@ export function CoverageChart({
             </defs>
             <Area
               type="monotone"
-              dataKey="coveragePercent"
+              dataKey="coverageScore"
               stroke="var(--success)"
               strokeWidth={2}
               fill="url(#coverageGradient)"
@@ -125,7 +125,7 @@ export function CoverageChart({
                 // Highlight regression points
                 const isRegression =
                   data.indexOf(payload) > 0 &&
-                  payload.coveragePercent < data[data.indexOf(payload) - 1].coveragePercent;
+                  payload.coverageScore < data[data.indexOf(payload) - 1].coverageScore;
 
                 return (
                   <circle
@@ -175,7 +175,7 @@ export function CoverageChart({
             <Tooltip content={<ChartTooltip />} />
             <Line
               type="monotone"
-              dataKey="coveragePercent"
+              dataKey="coverageScore"
               stroke="var(--success)"
               strokeWidth={2}
               dot={{ fill: 'var(--success)', r: 4 }}

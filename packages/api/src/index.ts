@@ -16,6 +16,8 @@ import { githubAppRoute } from './routes/github-app';
 import { invitesRoute } from './routes/invites';
 import { orgsRoute } from './routes/orgs';
 import { planRoute } from './routes/plan';
+import { specRoute } from './routes/spec';
+import { specV1Route } from './routes/spec-v1';
 
 const app = new Hono();
 
@@ -54,8 +56,10 @@ app.get('/', (c) => {
       invites: '/invites/:token',
       orgs: '/orgs/*',
       plan: '/plan',
+      spec: '/spec/diff (POST, session auth)',
       v1: {
         ai: '/v1/ai/generate (POST), /v1/ai/quota (GET)',
+        spec: '/v1/spec/diff (POST, API key)',
       },
       health: '/health',
     },
@@ -95,10 +99,12 @@ app.route('/billing', billingRoute);
 app.route('/coverage', coverageRoute);
 app.route('/orgs', orgsRoute);
 app.route('/plan', planRoute);
+app.route('/spec', specRoute);
 
 // API endpoints (API key required)
 app.use('/v1/*', requireApiKey(), orgRateLimit());
 app.route('/v1/ai', aiRoute);
+app.route('/v1/spec', specV1Route);
 
 // Vercel serverless handler + Bun auto-serves this export
 export default app;

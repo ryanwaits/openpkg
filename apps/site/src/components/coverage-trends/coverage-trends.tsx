@@ -45,8 +45,8 @@ export function CoverageTrends({
   const [chartView, setChartView] = React.useState<'coverage' | 'signals'>('coverage');
 
   // Calculate trend from data
-  const latestCoverage = data.length > 0 ? data[data.length - 1].coveragePercent : 0;
-  const previousCoverage = data.length > 1 ? data[data.length - 2].coveragePercent : latestCoverage;
+  const latestCoverage = data.length > 0 ? data[data.length - 1].coverageScore : 0;
+  const previousCoverage = data.length > 1 ? data[data.length - 2].coverageScore : latestCoverage;
   const trendValue = Math.round((latestCoverage - previousCoverage) * 10) / 10;
   const trendDirection: TrendDirection = trendValue > 0 ? 'up' : trendValue < 0 ? 'down' : 'stable';
 
