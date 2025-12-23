@@ -1,5 +1,21 @@
 # @doccov/cli
 
+## 0.19.0
+
+### Minor Changes
+
+- feat: hybrid schema extraction for Zod, Valibot, TypeBox, ArkType
+
+  - Static extraction via TypeScript Compiler API (default, no runtime)
+  - Runtime extraction via Standard Schema spec (opt-in, richer output)
+  - New `--runtime` CLI flag enables hybrid mode
+  - Falls back gracefully from runtime to static extraction
+
+### Patch Changes
+
+- Updated dependencies
+  - @doccov/sdk@0.19.0
+
 ## 0.18.0
 
 ### Minor Changes
