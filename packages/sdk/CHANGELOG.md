@@ -1,5 +1,11 @@
 # @doccov/sdk
 
+## 0.20.0
+
+### Minor Changes
+
+- feat: runtime Standard Schema detection for Zod, Valibot, TypeBox, ArkType
+
 ## 0.19.0
 
 ### Minor Changes
