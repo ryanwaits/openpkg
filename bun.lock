@@ -54,7 +54,7 @@
     },
     "apps/web": {
       "name": "@doccov/web",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@doccov/api-shared": "workspace:*",
         "@doccov/auth": "workspace:*",
@@ -81,7 +81,7 @@
     },
     "packages/api-shared": {
       "name": "@doccov/api-shared",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@doccov/db": "workspace:*",
         "@doccov/sdk": "workspace:*",
@@ -97,7 +97,7 @@
     },
     "packages/auth": {
       "name": "@doccov/auth",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@doccov/db": "workspace:*",
         "better-auth": "^1.4.7",
@@ -148,11 +148,13 @@
     },
     "packages/db": {
       "name": "@doccov/db",
-      "version": "0.1.1",
+      "version": "0.2.0",
       "dependencies": {
         "kysely": "^0.27.4",
+        "pg": "^8.13.0",
       },
       "devDependencies": {
+        "@types/pg": "^8.11.0",
         "typescript": "^5.0.0",
       },
     },
@@ -179,8 +181,8 @@
       "version": "0.1.0",
       "dependencies": {
         "@ai-sdk/anthropic": "^3.0.0",
-        "@doccov/sdk": "workspace:*",
-        "@openpkg-ts/spec": "workspace:*",
+        "@doccov/sdk": "latest",
+        "@openpkg-ts/spec": "latest",
         "@vercel/node": "^3.2.0",
         "@vercel/sandbox": "^1.1.1",
         "ai": "^4.0.0",
@@ -196,7 +198,7 @@
     },
     "packages/sdk": {
       "name": "@doccov/sdk",
-      "version": "0.22.0",
+      "version": "0.22.1",
       "dependencies": {
         "@openpkg-ts/spec": "^0.11.0",
         "@vercel/sandbox": "^1.0.3",
@@ -2151,6 +2153,10 @@
 
     "@doccov/sandbox/@ai-sdk/anthropic": ["@ai-sdk/anthropic@3.0.1", "", { "dependencies": { "@ai-sdk/provider": "3.0.0", "@ai-sdk/provider-utils": "4.0.1" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-MOiwKs76ilEmau/WRMnGWlheTUoB+cbvXCse+SAtpW5ATLreInsuYlspLABn12Dxu3w1Xzke1dT+tmEnxhy9SA=="],
 
+    "@doccov/sandbox/@doccov/sdk": ["@doccov/sdk@0.22.0", "", { "dependencies": { "@openpkg-ts/spec": "^0.11.0", "@vercel/sandbox": "^1.0.3", "mdast": "^3.0.0", "minimatch": "^10.1.1", "remark-mdx": "^3.1.0", "remark-parse": "^11.0.0", "typescript": "^5.0.0", "unified": "^11.0.5", "unist-util-visit": "^5.0.0" } }, "sha512-KBlDEU+4lp/3evloIGGpIjoseoQ19iqa/z7ELHNg501Py/qlKcybdpGlMGoUnQ6+JbZA/TBd6N0nhKTu1Pt1Qw=="],
+
+    "@doccov/sandbox/@openpkg-ts/spec": ["@openpkg-ts/spec@0.11.0", "", { "dependencies": { "ajv": "^8.17.1", "ajv-formats": "^3.0.1" } }, "sha512-J4Pvr9sDPNIVhOHf+kDzxf1KakVZ0IeTb5VMSXfsUMqwCcCej8Oz8D8OrPWk1WwRNcnWXOGDOhbwBE3o1dA3lQ=="],
+
     "@doccov/sandbox/vercel": ["vercel@40.1.0", "", { "dependencies": { "@vercel/build-utils": "9.2.0", "@vercel/fun": "1.1.2", "@vercel/go": "3.2.1", "@vercel/hydrogen": "1.1.0", "@vercel/next": "4.5.0", "@vercel/node": "5.1.0", "@vercel/python": "4.7.1", "@vercel/redwood": "2.2.0", "@vercel/remix-builder": "5.2.0", "@vercel/ruby": "2.2.0", "@vercel/static-build": "2.6.0", "chokidar": "4.0.0" }, "bin": { "vc": "dist/vc.js", "vercel": "dist/vc.js" } }, "sha512-p8FG2zjrCtrhiW8GsJycviMIpKgz/q/rVUFNbucLbWhxfkKp2igF2B//EKsl7FIgmrDK2JW5xpKXU+39tDwJug=="],
 
     "@doccov/sdk/@types/bun": ["@types/bun@1.3.5", "", { "dependencies": { "bun-types": "1.3.5" } }, "sha512-RnygCqNrd3srIPEWBd5LFeUYG7plCoH2Yw9WaZGyNmdTEei+gWaHqydbaIRkIkcbXwhBT94q78QljxN0Sk838w=="],
@@ -2455,6 +2461,8 @@
 
     "@doccov/sandbox/@ai-sdk/anthropic/@ai-sdk/provider-utils": ["@ai-sdk/provider-utils@4.0.1", "", { "dependencies": { "@ai-sdk/provider": "3.0.0", "@standard-schema/spec": "^1.1.0", "eventsource-parser": "^3.0.6" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-de2v8gH9zj47tRI38oSxhQIewmNc+OZjYIOOaMoVWKL65ERSav2PYYZHPSPCrfOeLMkv+Dyh8Y0QGwkO29wMWQ=="],
 
+    "@doccov/sandbox/@doccov/sdk/@openpkg-ts/spec": ["@openpkg-ts/spec@workspace:packages/spec"],
+
     "@doccov/sandbox/vercel/@vercel/build-utils": ["@vercel/build-utils@9.2.0", "", {}, "sha512-e6S+gj+UNsaWH93fRF59HDhNbEypqQlOFJWJcrjrxodmLReXs9lHaYrouPVt3O/3wrQPY1GYKAH7lonQ39Op3Q=="],
 
     "@doccov/sandbox/vercel/@vercel/fun": ["@vercel/fun@1.1.2", "", { "dependencies": { "@tootallnate/once": "2.0.0", "async-listen": "1.2.0", "debug": "4.3.4", "execa": "3.2.0", "fs-extra": "8.1.0", "generic-pool": "3.4.2", "micro": "9.3.5-canary.3", "ms": "2.1.1", "node-fetch": "2.6.7", "path-match": "1.2.4", "promisepipe": "3.0.0", "semver": "7.5.4", "stat-mode": "0.3.0", "stream-to-promise": "2.2.0", "tar": "4.4.18", "tree-kill": "1.2.2", "uid-promise": "1.0.0", "uuid": "3.3.2", "xdg-app-paths": "5.1.0", "yauzl-promise": "2.1.3" } }, "sha512-n13RO1BUy8u6+kzDQ2++BRj4Y5EAiQPt+aV+Tb2HNTmToNr4Mu3dE1kFlaTVTxQzAT3hvIRlVEU/OMvF8LCFJw=="],
@@ -2691,6 +2699,8 @@
 
     "@doccov/sandbox/@ai-sdk/anthropic/@ai-sdk/provider-utils/@standard-schema/spec": ["@standard-schema/spec@1.1.0", "", {}, "sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w=="],
 
+    "@doccov/sandbox/@doccov/sdk/@openpkg-ts/spec/@types/bun": ["@types/bun@1.3.5", "", { "dependencies": { "bun-types": "1.3.5" } }, "sha512-RnygCqNrd3srIPEWBd5LFeUYG7plCoH2Yw9WaZGyNmdTEei+gWaHqydbaIRkIkcbXwhBT94q78QljxN0Sk838w=="],
+
     "@doccov/sandbox/vercel/@vercel/fun/async-listen": ["async-listen@1.2.0", "", {}, "sha512-CcEtRh/oc9Jc4uWeUwdpG/+Mb2YUHKmdaTf0gUr7Wa+bfp4xx70HOb3RuSTJMvqKNB1TkdTfjLdrcz2X4rkkZA=="],
 
     "@doccov/sandbox/vercel/@vercel/fun/debug": ["debug@4.3.4", "", { "dependencies": { "ms": "2.1.2" } }, "sha512-PRWFHuSU3eDtQJPvnNY7Jcket1j0t5OuOsFzPPzsekD52Zl8qUfFIPEiswXqIvHWGVHOgX+7G/vCNNhehwxfkQ=="],
@@ -2884,6 +2894,8 @@
     "@doccov/fumadocs-adapter/bunup/@bunup/dts/oxc-transform/@oxc-transform/binding-win32-arm64-msvc": ["@oxc-transform/binding-win32-arm64-msvc@0.67.0", "", { "os": "win32", "cpu": "arm64" }, "sha512-+E3lOHCk4EuIk6IjshBAARknAUpgH+gHTtZxCPqK4AWYA+Tls2J6C0FVM48uZ4m3rZpAq8ZszM9JZVAkOaynBQ=="],
 
     "@doccov/fumadocs-adapter/bunup/@bunup/dts/oxc-transform/@oxc-transform/binding-win32-x64-msvc": ["@oxc-transform/binding-win32-x64-msvc@0.67.0", "", { "os": "win32", "cpu": "x64" }, "sha512-3pIIFb9g5aFrAODTQVJYitq+ONHgDJ4IYk/7pk+jsG6JpKUkURd0auUlxvriO11fFit5hdwy+wIbU4kBvyRUkg=="],
+
+    "@doccov/sandbox/@doccov/sdk/@openpkg-ts/spec/@types/bun/bun-types": ["bun-types@1.3.5", "", { "dependencies": { "@types/node": "*" } }, "sha512-inmAYe2PFLs0SUbFOWSVD24sg1jFlMPxOjOSSCYqUgn4Hsc3rDc7dFvfVYjFPNHtov6kgUeulV4SxbuIV/stPw=="],
 
     "@doccov/sandbox/vercel/@vercel/fun/debug/ms": ["ms@2.1.2", "", {}, "sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w=="],
 

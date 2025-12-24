@@ -1,5 +1,11 @@
 # @doccov/db
 
+## 0.2.0
+
+### Minor Changes
+
+- refactor: split api into modular packages (api-shared, auth), move migrations to db
+
 ## 0.1.1
 
 ### Patch Changes
