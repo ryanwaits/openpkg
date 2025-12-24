@@ -78,6 +78,22 @@ const WORKER_SCRIPT = `
 const path = require('path');
 const { pathToFileURL } = require('url');
 
+// TypeBox detection: schemas have Symbol.for('TypeBox.Kind') and are JSON Schema
+const TYPEBOX_KIND = Symbol.for('TypeBox.Kind');
+
+function isTypeBoxSchema(obj) {
+  if (!obj || typeof obj !== 'object') return false;
+  // TypeBox schemas always have Kind symbol (Union, Object, String, etc.)
+  // Also check for common JSON Schema props to avoid false positives
+  if (!obj[TYPEBOX_KIND]) return false;
+  return typeof obj.type === 'string' || 'anyOf' in obj || 'oneOf' in obj || 'allOf' in obj;
+}
+
+function sanitizeTypeBoxSchema(schema) {
+  // JSON.stringify removes symbol keys, keeping only JSON Schema props
+  return JSON.parse(JSON.stringify(schema));
+}
+
 async function extract() {
   // With node -e, argv is: [node, arg1, arg2, ...]
   // (the -e script is NOT in argv)
@@ -94,24 +110,36 @@ async function extract() {
       if (name.startsWith('_')) continue;
       if (typeof value !== 'object' || value === null) continue;
 
+      // Priority 1: Standard Schema (Zod 4.2+, ArkType, etc.)
       const std = value['~standard'];
-      if (!std || typeof std !== 'object') continue;
-      if (typeof std.version !== 'number') continue;
-      if (typeof std.vendor !== 'string') continue;
-      if (!std.jsonSchema || typeof std.jsonSchema.output !== 'function') continue;
+      if (std && typeof std === 'object' && typeof std.version === 'number' && typeof std.vendor === 'string' && std.jsonSchema && typeof std.jsonSchema.output === 'function') {
+        try {
+          const outputSchema = std.jsonSchema.output(target);
+          const inputSchema = std.jsonSchema.input ? std.jsonSchema.input(target) : undefined;
+          results.push({
+            exportName: name,
+            vendor: std.vendor,
+            outputSchema,
+            inputSchema
+          });
+        } catch (e) {
+          // Skip schemas that fail to extract
+        }
+        continue;
+      }
 
-      try {
-        const outputSchema = std.jsonSchema.output(target);
-        const inputSchema = std.jsonSchema.input ? std.jsonSchema.input(target) : undefined;
-
-        results.push({
-          exportName: name,
-          vendor: std.vendor,
-          outputSchema,
-          inputSchema
-        });
-      } catch (e) {
-        // Skip schemas that fail to extract
+      // Priority 2: TypeBox (schema IS JSON Schema)
+      if (isTypeBoxSchema(value)) {
+        try {
+          results.push({
+            exportName: name,
+            vendor: 'typebox',
+            outputSchema: sanitizeTypeBoxSchema(value)
+          });
+        } catch (e) {
+          // Skip schemas that fail to extract
+        }
+        continue;
       }
     }
 

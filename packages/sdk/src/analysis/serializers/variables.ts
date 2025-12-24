@@ -39,23 +39,25 @@ export function serializeVariable(
   const referencedTypes = typeRegistry.getReferencedTypes();
   const symbolName = symbol.getName();
 
-  // Priority 1: Standard Schema runtime extraction (richest output)
+  // Priority 1: Runtime schema extraction (richest output)
   // Contains full JSON Schema with formats, patterns, constraints
-  const standardSchema = context.detectedSchemas?.get(symbolName);
-  if (standardSchema) {
+  const runtimeSchema = context.detectedSchemas?.get(symbolName);
+  if (runtimeSchema) {
+    // Determine schema source: typebox-native for TypeBox, standard-schema for others
+    const schemaSource = runtimeSchema.vendor === 'typebox' ? 'typebox-native' : 'standard-schema';
     return {
       id: symbolName,
       name: symbolName,
       ...metadata,
       kind: 'variable',
       deprecated: isSymbolDeprecated(symbol),
-      schema: standardSchema.schema,
+      schema: runtimeSchema.schema,
       description,
       source: getSourceLocation(declaration),
       tags: [
         ...(parsedDoc?.tags ?? []),
-        { name: 'schemaLibrary', text: standardSchema.vendor },
-        { name: 'schemaSource', text: 'standard-schema' },
+        { name: 'schemaLibrary', text: runtimeSchema.vendor },
+        { name: 'schemaSource', text: schemaSource },
       ],
       examples: parsedDoc?.examples,
     };
