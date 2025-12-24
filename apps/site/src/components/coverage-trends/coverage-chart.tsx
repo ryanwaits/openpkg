@@ -120,8 +120,9 @@ export function CoverageChart({
               stroke="var(--success)"
               strokeWidth={2}
               fill="url(#coverageGradient)"
-              dot={(props: { cx: number; cy: number; payload: CoverageDataPoint }) => {
+              dot={(props: { cx?: number; cy?: number; payload?: CoverageDataPoint }) => {
                 const { cx, cy, payload } = props;
+                if (cx == null || cy == null || !payload) return null;
                 // Highlight regression points
                 const isRegression =
                   data.indexOf(payload) > 0 &&
