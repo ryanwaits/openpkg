@@ -1,0 +1,3 @@
+{
+  "/api/badge/[owner]/[repo]/drift/route": "app/api/badge/[owner]/[repo]/drift/route.js"
+}

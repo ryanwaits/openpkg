@@ -1,0 +1,4 @@
+{
+  "framework": "nextjs",
+  "buildCommand": "cd ../../packages/db && bun run migrate && cd ../../apps/web && bun run build"
+}

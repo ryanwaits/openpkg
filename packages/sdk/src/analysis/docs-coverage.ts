@@ -28,19 +28,54 @@ export type DriftResult = {
 };
 
 /**
+ * Information about an export for context-aware suggestions.
+ */
+export interface ExportInfo {
+  name: string;
+  kind: string;
+  isCallable: boolean;
+}
+
+/**
+ * Registry of exports and types for cross-reference validation.
+ */
+export interface ExportRegistry {
+  /** Map of export names to their info (for context-aware suggestions) */
+  exports: Map<string, ExportInfo>;
+  /** Set of type names (interfaces, type aliases, etc.) */
+  types: Set<string>;
+  /** Combined set of all names (for backward compatibility) */
+  all: Set<string>;
+}
+
+/**
  * Build a registry of all export/type names for cross-reference validation.
  */
-export function buildExportRegistry(spec: OpenPkgSpec): Set<string> {
-  const registry = new Set<string>();
+export function buildExportRegistry(spec: OpenPkgSpec): ExportRegistry {
+  const exports = new Map<string, ExportInfo>();
+  const types = new Set<string>();
+  const all = new Set<string>();
+
   for (const entry of spec.exports ?? []) {
-    registry.add(entry.name);
-    registry.add(entry.id);
+    const info: ExportInfo = {
+      name: entry.name,
+      kind: entry.kind ?? 'unknown',
+      isCallable: ['function', 'class'].includes(entry.kind ?? ''),
+    };
+    exports.set(entry.name, info);
+    if (entry.id) exports.set(entry.id, info);
+    all.add(entry.name);
+    if (entry.id) all.add(entry.id);
   }
+
   for (const type of spec.types ?? []) {
-    registry.add(type.name);
-    registry.add(type.id);
+    types.add(type.name);
+    if (type.id) types.add(type.id);
+    all.add(type.name);
+    if (type.id) all.add(type.id);
   }
-  return registry;
+
+  return { exports, types, all };
 }
 
 /**
@@ -50,11 +85,11 @@ export function buildExportRegistry(spec: OpenPkgSpec): Set<string> {
  * @returns Drift results per export
  */
 export function computeDrift(spec: OpenPkgSpec): DriftResult {
-  const exportRegistry = buildExportRegistry(spec);
+  const registry = buildExportRegistry(spec);
   const exports = new Map<string, SpecDocDrift[]>();
 
   for (const entry of spec.exports ?? []) {
-    const drift = computeExportDrift(entry, exportRegistry);
+    const drift = computeExportDrift(entry, registry);
     exports.set(entry.id ?? entry.name, drift);
   }
 
@@ -65,12 +100,12 @@ export function computeDrift(spec: OpenPkgSpec): DriftResult {
  * Compute drift for a single export.
  *
  * @param entry - The export to analyze
- * @param exportRegistry - Registry of known export names for link validation
+ * @param registry - Registry of known exports and types for validation
  * @returns Array of drift issues detected
  */
 export function computeExportDrift(
   entry: SpecExport,
-  exportRegistry?: Set<string>,
+  registry?: ExportRegistry,
 ): SpecDocDrift[] {
   return [
     ...detectParamDrift(entry),
@@ -80,8 +115,8 @@ export function computeExportDrift(
     ...detectGenericConstraintDrift(entry),
     ...detectDeprecatedDrift(entry),
     ...detectVisibilityDrift(entry),
-    ...detectExampleDrift(entry, exportRegistry),
-    ...detectBrokenLinks(entry, exportRegistry),
+    ...detectExampleDrift(entry, registry),
+    ...detectBrokenLinks(entry, registry),
     ...detectExampleSyntaxErrors(entry),
     ...detectAsyncMismatch(entry),
     ...detectPropertyTypeDrift(entry),
@@ -151,15 +186,27 @@ function detectParamDrift(entry: SpecExport): SpecDocDrift[] {
           }
 
           // Property doesn't exist - find closest match among actual properties
-          const suggestion = findClosestMatch(firstProperty, Array.from(properties));
+          const propsArray = Array.from(properties);
+          const suggestion = findClosestMatch(firstProperty, propsArray);
+
+          // Build suggestion: either a close match, or list available properties
+          let suggestionText: string | undefined;
+          if (suggestion) {
+            suggestionText = `Did you mean "${prefix}.${suggestion.value}"?`;
+          } else if (propsArray.length > 0 && propsArray.length <= 8) {
+            // List available properties if there aren't too many
+            const propsList = propsArray.slice(0, 5).map((p) => `${prefix}.${p}`);
+            suggestionText =
+              propsArray.length > 5
+                ? `Available: ${propsList.join(', ')}... (${propsArray.length} total)`
+                : `Available: ${propsList.join(', ')}`;
+          }
+
           drifts.push({
             type: 'param-mismatch',
             target: documentedName,
             issue: `JSDoc documents property "${propertyPath}" on parameter "${prefix}" which does not exist.`,
-            suggestion:
-              suggestion?.distance !== undefined && suggestion.distance <= 3
-                ? `${prefix}.${suggestion.value}`
-                : undefined,
+            suggestion: suggestionText,
           });
           continue;
         }
@@ -171,16 +218,22 @@ function detectParamDrift(entry: SpecExport): SpecDocDrift[] {
     }
 
     // No match found - report drift
-    const suggestion = findClosestMatch(documentedName, Array.from(actualParamNames));
+    const paramsArray = Array.from(actualParamNames);
+    const suggestion = findClosestMatch(documentedName, paramsArray);
+
+    // Build suggestion: either a close match, or list available params
+    let suggestionText: string | undefined;
+    if (suggestion) {
+      suggestionText = `Did you mean "${suggestion.value}"?`;
+    } else if (paramsArray.length > 0 && paramsArray.length <= 6) {
+      suggestionText = `Available parameters: ${paramsArray.join(', ')}`;
+    }
 
     drifts.push({
       type: 'param-mismatch',
       target: documentedName,
       issue: `JSDoc documents parameter "${documentedName}" which is not present in the signature.`,
-      suggestion:
-        suggestion?.distance !== undefined && suggestion.distance <= 3
-          ? suggestion.value
-          : undefined,
+      suggestion: suggestionText,
     });
   }
 
@@ -842,6 +895,27 @@ function buildGenericConstraintSuggestion(
   return `Remove the constraint from @template ${templateName} to match the declaration.`;
 }
 
+/**
+ * Split a camelCase or PascalCase string into words.
+ */
+function splitCamelCase(str: string): string[] {
+  return str
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+    .toLowerCase()
+    .split(/[\s_-]+/)
+    .filter(Boolean);
+}
+
+/**
+ * Find the closest matching candidate using word-based scoring.
+ * Returns undefined if no good match is found (score < 0.5).
+ *
+ * Scoring algorithm:
+ * 1. Word overlap: How many words from source appear in candidate
+ * 2. Suffix matching: Extra weight for matching suffixes (important for API renames)
+ * 3. Levenshtein distance: Normalized edit distance as tiebreaker
+ */
 function findClosestMatch(
   source: string,
   candidates: string[],
@@ -850,29 +924,67 @@ function findClosestMatch(
     return undefined;
   }
 
-  const normalizedSource = source.toLowerCase();
-  const substringCandidate = candidates.find((candidate) => {
-    const normalizedCandidate = candidate.toLowerCase();
-    return (
-      normalizedCandidate.includes(normalizedSource) ||
-      normalizedSource.includes(normalizedCandidate)
-    );
-  });
-
-  if (substringCandidate && substringCandidate !== source) {
-    return { value: substringCandidate, distance: 0 };
-  }
-
-  let best: { value: string; distance: number } | undefined;
+  const sourceWords = splitCamelCase(source);
+  let bestMatch: string | undefined;
+  let bestScore = 0;
 
   for (const candidate of candidates) {
-    const distance = levenshtein(source, candidate);
-    if (!best || distance < best.distance) {
-      best = { value: candidate, distance };
+    // Skip exact matches (not a suggestion if it's the same)
+    if (candidate === source) continue;
+
+    const candidateWords = splitCamelCase(candidate);
+
+    // Calculate word overlap
+    let matchingWords = 0;
+    let suffixMatch = false;
+
+    // Check suffix match (most important for API renames like call→fetchCall)
+    if (sourceWords.length > 0 && candidateWords.length > 0) {
+      const sourceSuffix = sourceWords[sourceWords.length - 1];
+      const candidateSuffix = candidateWords[candidateWords.length - 1];
+      if (sourceSuffix === candidateSuffix) {
+        suffixMatch = true;
+        matchingWords += 1.5; // Weight suffix matches
+      }
+    }
+
+    // Count other matching words (excluding suffix to avoid double-counting)
+    const suffixWord = suffixMatch ? sourceWords[sourceWords.length - 1] : null;
+    for (const word of sourceWords) {
+      if (word !== suffixWord && candidateWords.includes(word)) {
+        matchingWords++;
+      }
+    }
+
+    // Require meaningful overlap: suffix alone isn't enough
+    // (e.g., "utf8ToBytes" → "randomBytes" just shares "Bytes" suffix)
+    if (matchingWords < 2) continue;
+
+    // Word score (0 to 1+)
+    const wordScore = matchingWords / Math.max(sourceWords.length, candidateWords.length);
+
+    // Normalized Levenshtein distance (0 to 1, higher is better)
+    const editDistance = levenshtein(source.toLowerCase(), candidate.toLowerCase());
+    const maxLen = Math.max(source.length, candidate.length);
+    const levScore = 1 - editDistance / maxLen;
+
+    // Combined score with suffix bonus
+    const totalScore = suffixMatch ? wordScore * 1.5 + levScore : wordScore + levScore * 0.5;
+
+    if (totalScore > bestScore && totalScore >= 0.5) {
+      bestScore = totalScore;
+      bestMatch = candidate;
     }
   }
 
-  return best;
+  if (!bestMatch) {
+    return undefined;
+  }
+
+  // Convert score to distance (lower is better, for compatibility)
+  // Score of 0.5 → distance 5, score of 1.0 → distance 0
+  const distance = Math.round((1 - bestScore) * 10);
+  return { value: bestMatch, distance };
 }
 
 function levenshtein(a: string, b: string): number {
@@ -911,8 +1023,27 @@ function levenshtein(a: string, b: string): number {
   return matrix[b.length][a.length];
 }
 
-function detectExampleDrift(entry: SpecExport, exportRegistry?: Set<string>): SpecDocDrift[] {
-  if (!exportRegistry || !entry.examples?.length) return [];
+/**
+ * Determine how an identifier is used in the AST.
+ * Returns 'call' for function calls, 'type' for type annotations, 'value' otherwise.
+ */
+function getIdentifierContext(node: ts.Identifier): 'call' | 'type' | 'value' {
+  const parent = node.parent;
+  if (!parent) return 'value';
+
+  // Function call: foo() or new Foo()
+  if (ts.isCallExpression(parent) && parent.expression === node) return 'call';
+  if (ts.isNewExpression(parent) && parent.expression === node) return 'call';
+
+  // Type reference: const x: Foo or <Foo>
+  if (ts.isTypeReferenceNode(parent)) return 'type';
+  if (ts.isExpressionWithTypeArguments(parent)) return 'type';
+
+  return 'value';
+}
+
+function detectExampleDrift(entry: SpecExport, registry?: ExportRegistry): SpecDocDrift[] {
+  if (!registry || !entry.examples?.length) return [];
 
   const drifts: SpecDocDrift[] = [];
 
@@ -937,10 +1068,10 @@ function detectExampleDrift(entry: SpecExport, exportRegistry?: Set<string>): Sp
     );
 
     const localDeclarations = new Set<string>();
-    const referencedIdentifiers = new Set<string>();
+    // Track identifiers with their usage context
+    const referencedIdentifiers = new Map<string, 'call' | 'type' | 'value'>();
 
     // Walk AST to find local declarations and identifier references
-    // No longer restricted to PascalCase - check all identifiers
     function visit(node: ts.Node) {
       if (ts.isIdentifier(node)) {
         const text = node.text;
@@ -954,7 +1085,12 @@ function detectExampleDrift(entry: SpecExport, exportRegistry?: Set<string>): Sp
           // Track locally declared identifiers so we don't flag them as missing
           localDeclarations.add(text);
         } else if (isIdentifierReference(node) && !isBuiltInIdentifier(text)) {
-          referencedIdentifiers.add(text);
+          // Track with context (prefer 'call' over other contexts if seen multiple times)
+          const context = getIdentifierContext(node);
+          const existing = referencedIdentifiers.get(text);
+          if (!existing || context === 'call') {
+            referencedIdentifiers.set(text, context);
+          }
         }
       }
       ts.forEachChild(node, visit);
@@ -966,15 +1102,35 @@ function detectExampleDrift(entry: SpecExport, exportRegistry?: Set<string>): Sp
       referencedIdentifiers.delete(local);
     }
 
-    // Check if referenced identifiers exist in export registry
-    for (const identifier of referencedIdentifiers) {
-      if (!exportRegistry.has(identifier)) {
-        const suggestion = findClosestMatch(identifier, Array.from(exportRegistry));
+    // Check if referenced identifiers exist in registry
+    for (const [identifier, context] of referencedIdentifiers) {
+      if (!registry.all.has(identifier)) {
+        // Get context-appropriate candidates for suggestions
+        let candidates: string[];
+        if (context === 'call') {
+          // For function calls, only suggest callable exports (functions, classes)
+          candidates = Array.from(registry.exports.values())
+            .filter((e) => e.isCallable)
+            .map((e) => e.name);
+        } else if (context === 'type') {
+          // For type references, suggest types and type-like exports (interfaces, classes)
+          candidates = [
+            ...Array.from(registry.types),
+            ...Array.from(registry.exports.values())
+              .filter((e) => ['class', 'interface', 'type', 'enum'].includes(e.kind))
+              .map((e) => e.name),
+          ];
+        } else {
+          // For value references, suggest all exports (not types)
+          candidates = Array.from(registry.exports.keys());
+        }
+
+        const suggestion = findClosestMatch(identifier, candidates);
 
         // Only report drift if there's a close match (likely typo)
         // or if the identifier looks like a type/class name (PascalCase)
         const isPascal = /^[A-Z]/.test(identifier);
-        const hasCloseMatch = suggestion && suggestion.distance <= 3;
+        const hasCloseMatch = suggestion && suggestion.distance <= 5;
 
         if (hasCloseMatch || isPascal) {
           drifts.push({
@@ -1029,8 +1185,8 @@ function isIdentifierReference(node: ts.Identifier): boolean {
   return true;
 }
 
-function detectBrokenLinks(entry: SpecExport, exportRegistry?: Set<string>): SpecDocDrift[] {
-  if (!exportRegistry) {
+function detectBrokenLinks(entry: SpecExport, registry?: ExportRegistry): SpecDocDrift[] {
+  if (!registry) {
     return [];
   }
 
@@ -1080,17 +1236,15 @@ function detectBrokenLinks(entry: SpecExport, exportRegistry?: Set<string>): Spe
         continue;
       }
 
-      if (!exportRegistry.has(rootName) && !exportRegistry.has(target)) {
-        const suggestion = findClosestMatch(rootName, Array.from(exportRegistry));
+      if (!registry.all.has(rootName) && !registry.all.has(target)) {
+        // For links, suggest from all exports and types
+        const suggestion = findClosestMatch(rootName, Array.from(registry.all));
 
         drifts.push({
           type: 'broken-link',
           target,
           issue: `{${type} ${target}} references a symbol that does not exist.`,
-          suggestion:
-            suggestion && suggestion.distance <= 3
-              ? `Did you mean "${suggestion.value}"?`
-              : undefined,
+          suggestion: suggestion ? `Did you mean "${suggestion.value}"?` : undefined,
         });
       }
     }

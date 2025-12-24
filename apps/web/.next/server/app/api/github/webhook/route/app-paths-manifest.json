@@ -1,0 +1,3 @@
+{
+  "/api/github/webhook/route": "app/api/github/webhook/route.js"
+}

@@ -1,0 +1,3 @@
+{
+  "/api/badge/[owner]/[repo]/route": "app/api/badge/[owner]/[repo]/route.js"
+}

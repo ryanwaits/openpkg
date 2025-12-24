@@ -39,3 +39,5 @@ apps/site/node_modules
 apps/site/.next/
 .cursor
 repo.json
+.vercel
+.env*.local
