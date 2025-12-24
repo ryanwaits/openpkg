@@ -1,5 +1,13 @@
 # @doccov/api
 
+## 0.6.4
+
+### Patch Changes
+
+- Updated dependencies
+  - @doccov/sdk@0.22.0
+  - @openpkg-ts/spec@0.11.0
+
 ## 0.6.3
 
 ### Patch Changes

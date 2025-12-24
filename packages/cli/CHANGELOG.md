@@ -1,5 +1,17 @@
 # @doccov/cli
 
+## 0.22.0
+
+### Minor Changes
+
+- Remove deprecated `tsType` field in favor of `schema`, add CLI warning when `--runtime` requested without built code
+
+### Patch Changes
+
+- Updated dependencies
+  - @doccov/sdk@0.22.0
+  - @openpkg-ts/spec@0.11.0
+
 ## 0.21.0
 
 ### Patch Changes

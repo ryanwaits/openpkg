@@ -1,5 +1,11 @@
 # @openpkg-ts/spec
 
+## 0.11.0
+
+### Minor Changes
+
+- Remove deprecated `tsType` field in favor of `schema`, add CLI warning when `--runtime` requested without built code
+
 ## 0.10.0
 
 ### Minor Changes

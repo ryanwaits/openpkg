@@ -1,6 +1,6 @@
 {
   "name": "@doccov/cli",
-  "version": "0.21.0",
+  "version": "0.22.0",
   "description": "DocCov CLI - Documentation coverage and drift detection for TypeScript",
   "keywords": [
     "typescript",
@@ -48,9 +48,9 @@
   "dependencies": {
     "@ai-sdk/anthropic": "^1.0.0",
     "@ai-sdk/openai": "^1.0.0",
-    "@doccov/sdk": "^0.21.0",
+    "@doccov/sdk": "^0.22.0",
     "@inquirer/prompts": "^7.8.0",
-    "@openpkg-ts/spec": "^0.10.0",
+    "@openpkg-ts/spec": "^0.11.0",
     "ai": "^4.0.0",
     "chalk": "^5.4.1",
     "commander": "^14.0.0",

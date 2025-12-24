@@ -1,6 +1,6 @@
 {
   "name": "@doccov/api",
-  "version": "0.6.3",
+  "version": "0.6.4",
   "description": "DocCov API - Badge endpoint and coverage services",
   "keywords": [
     "doccov",
@@ -29,9 +29,9 @@
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.55",
-    "@doccov/sdk": "^0.21.0",
+    "@doccov/sdk": "^0.22.0",
     "@hono/node-server": "^1.14.3",
-    "@openpkg-ts/spec": "^0.10.0",
+    "@openpkg-ts/spec": "^0.11.0",
     "@polar-sh/hono": "^0.5.3",
     "@vercel/sandbox": "^1.0.3",
     "ai": "^5.0.111",
