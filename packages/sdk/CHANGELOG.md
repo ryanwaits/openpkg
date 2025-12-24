@@ -1,5 +1,11 @@
 # @doccov/sdk
 
+## 0.21.0
+
+### Minor Changes
+
+- feat: runtime TypeBox schema extraction - detect TypeBox schemas via Kind symbol and use directly as JSON Schema, preserving formats/constraints
+
 ## 0.20.0
 
 ### Minor Changes
