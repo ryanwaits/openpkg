@@ -21,6 +21,7 @@ Documentation coverage and drift detection for TypeScript.
 
 - [Overview](./cli/overview.md) - Installation & commands
 - [Configuration](./cli/configuration.md) - `doccov.yml` options
+- [Schema Extraction](./cli/schema-extraction.md) - Static vs runtime modes
 - Commands:
   - [check](./cli/commands/check.md) - Coverage analysis & auto-fix
   - [spec](./cli/commands/spec.md) - Generate OpenPkg spec
@@ -80,3 +81,7 @@ quality:
     has-description: error
     has-examples: warn
 ```
+
+## FAQ
+
+Common questions about entry points, source vs declaration files, schema extraction, and troubleshooting. See [FAQ](./faq.md).

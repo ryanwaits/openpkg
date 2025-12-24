@@ -91,7 +91,6 @@ export function serializeCallSignatures(
     });
 
     const returnType = signature.getReturnType();
-    const returnTypeText = returnType ? checker.typeToString(returnType) : undefined;
     if (returnType) {
       collectReferencedTypes(returnType, checker, referencedTypes);
     }
@@ -140,7 +139,6 @@ export function serializeCallSignatures(
           ? formatTypeReference(returnType, checker, typeRefs, referencedTypes)
           : { type: 'void' },
         description: functionDoc?.returns || '',
-        tsType: returnTypeText,
         ...(typePredicateInfo ? { typePredicate: typePredicateInfo } : {}),
       },
       description: functionDoc?.description || undefined,

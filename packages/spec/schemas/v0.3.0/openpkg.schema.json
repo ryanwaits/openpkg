@@ -747,7 +747,6 @@
               "type": "object",
               "properties": { "propertyName": { "type": "string" } }
             },
-            "tsType": { "type": "string" },
             "description": { "type": "string" },
             "default": { "description": "Default value for the schema" },
             "minimum": { "type": "number", "description": "Minimum value for numbers" },

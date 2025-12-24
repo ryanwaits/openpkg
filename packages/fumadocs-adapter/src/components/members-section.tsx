@@ -16,7 +16,6 @@ function formatSchema(schema: unknown): string {
     if (s.$ref && typeof s.$ref === 'string') {
       return s.$ref.replace('#/types/', '');
     }
-    if (s.tsType) return String(s.tsType);
     if (s.type) return String(s.type);
   }
   return 'unknown';
@@ -80,7 +79,7 @@ function MemberRow({ member }: { member: SpecMember }) {
         const optional = p.required === false ? '?' : '';
         return `${p.name}${optional}: ${formatSchema(p.schema)}`;
       }) ?? [];
-    const returnType = sig.returns?.tsType ?? formatSchema(sig.returns?.schema) ?? 'void';
+    const returnType = formatSchema(sig.returns?.schema) ?? 'void';
     signature = `(${params.join(', ')}): ${returnType}`;
   }
 

@@ -39,23 +39,13 @@ function formatSchema(schema: unknown): string {
     if (s.$ref && typeof s.$ref === 'string') {
       return s.$ref.replace('#/types/', '');
     }
-    if (s.tsType) {
-      const tsType = String(s.tsType);
-      if (tsType.length > 40) return `${tsType.slice(0, 37)}...`;
-      return tsType;
-    }
     if (s.type) return String(s.type);
   }
   return 'unknown';
 }
 
-function formatReturnType(returns: { schema?: SpecSchema; tsType?: string } | undefined): string {
+function formatReturnType(returns: { schema?: SpecSchema } | undefined): string {
   if (!returns) return 'void';
-  if (returns.tsType) {
-    const t = returns.tsType;
-    if (t.length > 40) return `${t.slice(0, 37)}...`;
-    return t;
-  }
   return formatSchema(returns.schema);
 }
 
@@ -166,7 +156,7 @@ export function CollapsibleMethod({
               </span>
               <div className="border-l-2 border-fd-border pl-4 py-2">
                 <span className="font-mono text-sm text-fd-muted-foreground">
-                  {sig.returns.tsType || formatSchema(sig.returns.schema)}
+                  {formatSchema(sig.returns.schema)}
                 </span>
                 {returnDescription && (
                   <p className="text-sm text-fd-muted-foreground mt-1 leading-relaxed">

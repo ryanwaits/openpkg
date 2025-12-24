@@ -20,8 +20,6 @@ function formatSchema(schema: unknown): string {
     }
     // Handle type
     if (s.type) return String(s.type);
-    // Handle tsType
-    if (s.tsType) return String(s.tsType);
   }
   return 'unknown';
 }

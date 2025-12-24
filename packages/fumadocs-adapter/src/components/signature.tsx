@@ -38,7 +38,6 @@ function formatSchema(schema: unknown): string {
     if (s.$ref && typeof s.$ref === 'string') {
       return s.$ref.replace('#/types/', '');
     }
-    if (s.tsType) return String(s.tsType);
     if (s.type) return String(s.type);
   }
   return 'unknown';
@@ -46,7 +45,6 @@ function formatSchema(schema: unknown): string {
 
 function formatReturnType(sig?: SpecSignature): string {
   if (!sig?.returns) return 'void';
-  if (sig.returns.tsType) return sig.returns.tsType;
   return formatSchema(sig.returns.schema);
 }
 

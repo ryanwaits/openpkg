@@ -202,16 +202,6 @@ function extractTypeName(schema: SpecSchema): string | undefined {
     return s.type;
   }
 
-  // Handle tsType if available
-  if (typeof s.tsType === 'string') {
-    // Shorten long type names
-    const tsType = s.tsType as string;
-    if (tsType.length > 30) {
-      return `${tsType.slice(0, 27)}...`;
-    }
-    return tsType;
-  }
-
   return undefined;
 }
 

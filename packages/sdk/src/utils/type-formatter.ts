@@ -133,15 +133,15 @@ export function formatTypeReference(
     if (type.getFlags() & ts.TypeFlags.Object) {
       const objectType = type as TS.ObjectType;
       if (objectType.objectFlags & ts.ObjectFlags.Mapped) {
-        // Preserve the original TS syntax for mapped types
-        return { type: 'object', tsType: typeString };
+        // Mapped types can't be fully represented in JSON Schema
+        return { type: 'object' };
       }
     }
 
     // Handle conditional types (e.g., T extends U ? X : Y)
     if (type.flags & ts.TypeFlags.Conditional) {
-      // Preserve the original TS syntax for conditional types
-      return { type: 'object', tsType: typeString };
+      // Conditional types can't be fully represented in JSON Schema
+      return { type: 'object' };
     }
 
     // Handle union types (e.g., "A | B | undefined")

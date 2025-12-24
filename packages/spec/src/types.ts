@@ -84,8 +84,8 @@ export type SpecSchemaCombinator =
 // Reference
 export type SpecSchemaRef = { $ref: string };
 
-// Fallback for complex TS types
-export type SpecSchemaFallback = { type: string; tsType?: string };
+// Fallback for complex TS types that can't be fully represented in JSON Schema
+export type SpecSchemaFallback = { type: string };
 
 // Generic object for SDK compatibility (allows Record<string, unknown> produced at runtime)
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
@@ -238,7 +238,6 @@ export type SpecSignatureParameter = {
 export type SpecSignatureReturn = {
   schema: SpecSchema;
   description?: string;
-  tsType?: string;
 };
 
 export type SpecSignature = {

@@ -328,7 +328,7 @@ function detectReturnTypeDrift(entry: SpecExport): SpecDocDrift[] {
     return [];
   }
 
-  const declaredRaw = signatureReturn.tsType ?? extractTypeFromSchema(signatureReturn.schema);
+  const declaredRaw = extractTypeFromSchema(signatureReturn.schema);
   const declaredType = normalizeType(declaredRaw) ?? undefined;
 
   if (!declaredType) {
@@ -1216,7 +1216,7 @@ function detectAsyncMismatch(entry: SpecExport): SpecDocDrift[] {
 
   // Check if any signature returns a Promise
   const returnsPromise = signatures.some((sig) => {
-    const returnType = sig.returns?.tsType ?? extractTypeFromSchema(sig.returns?.schema) ?? '';
+    const returnType = extractTypeFromSchema(sig.returns?.schema) ?? '';
     return returnType.startsWith('Promise<') || returnType === 'Promise';
   });
 

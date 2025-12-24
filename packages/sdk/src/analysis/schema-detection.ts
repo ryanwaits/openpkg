@@ -23,6 +23,8 @@ export interface DetectedSchema {
 export interface SchemaDetectionResult {
   schemas: Map<string, DetectedSchema>;
   errors: string[];
+  /** Warning when runtime was requested but compiled JS not found */
+  noCompiledJsWarning?: boolean;
 }
 
 export async function detectRuntimeSchemas(
@@ -36,6 +38,7 @@ export async function detectRuntimeSchemas(
     return {
       schemas: new Map(),
       errors: [],
+      noCompiledJsWarning: true,
     };
   }
 

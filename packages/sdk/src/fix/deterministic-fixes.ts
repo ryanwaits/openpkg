@@ -415,7 +415,7 @@ function generateReturnTypeFix(
   const actualReturn = signature?.returns;
   if (!actualReturn) return null;
 
-  const correctType = actualReturn.tsType ?? stringifySchema(actualReturn.schema);
+  const correctType = stringifySchema(actualReturn.schema);
 
   const updatedReturn: JSDocReturn = {
     ...existingPatch?.returns,

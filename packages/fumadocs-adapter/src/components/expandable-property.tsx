@@ -43,15 +43,6 @@ function formatType(schema: SpecSchema): string {
   if (typeof schema === 'object' && schema !== null) {
     const s = schema as Record<string, unknown>;
 
-    // Use tsType if available (most readable)
-    if (s.tsType && typeof s.tsType === 'string') {
-      const tsType = s.tsType as string;
-      if (tsType.length > 80) {
-        return `${tsType.slice(0, 77)}...`;
-      }
-      return tsType;
-    }
-
     // Handle refs
     if (s.$ref && typeof s.$ref === 'string') {
       return (s.$ref as string).replace('#/types/', '');

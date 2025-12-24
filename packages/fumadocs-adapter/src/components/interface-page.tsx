@@ -6,6 +6,19 @@ import { ExamplesSection } from './examples';
 import { Signature } from './signature';
 import { TypeTable } from './type-table';
 
+function formatSchema(schema: unknown): string {
+  if (!schema) return 'unknown';
+  if (typeof schema === 'string') return schema;
+  if (typeof schema === 'object' && schema !== null) {
+    const s = schema as Record<string, unknown>;
+    if (s.$ref && typeof s.$ref === 'string') {
+      return s.$ref.replace('#/types/', '');
+    }
+    if (s.type) return String(s.type);
+  }
+  return 'unknown';
+}
+
 export interface InterfacePageProps {
   export: SpecExport;
   spec: OpenPkg;
@@ -57,7 +70,7 @@ export function InterfacePage({ export: exp, spec }: InterfacePageProps): React.
             {methods.map((method, index) => {
               const sig = method.signatures?.[0];
               const params = sig?.parameters ?? [];
-              const returnType = sig?.returns?.tsType ?? 'void';
+              const returnType = formatSchema(sig?.returns?.schema);
 
               return (
                 <div key={method.name ?? index} className="rounded-lg border border-fd-border p-4">
@@ -66,10 +79,7 @@ export function InterfacePage({ export: exp, spec }: InterfacePageProps): React.
                     {params
                       .map((p) => {
                         const optional = p.required === false ? '?' : '';
-                        const type =
-                          typeof p.schema === 'string'
-                            ? p.schema
-                            : ((p.schema as Record<string, unknown>)?.tsType ?? 'unknown');
+                        const type = formatSchema(p.schema);
                         return `${p.name}${optional}: ${type}`;
                       })
                       .join(', ')}

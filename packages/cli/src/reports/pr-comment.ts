@@ -5,7 +5,24 @@
  */
 
 import type { SpecDiffWithDocs } from '@doccov/sdk';
-import type { OpenPkg, SemverBump, SpecDocDrift, SpecExport } from '@openpkg-ts/spec';
+import type { OpenPkg, SemverBump, SpecDocDrift, SpecExport, SpecSchema } from '@openpkg-ts/spec';
+
+/**
+ * Extract type string from schema for display
+ */
+function extractReturnType(schema: SpecSchema | undefined): string {
+  if (!schema) return 'void';
+  if (typeof schema === 'string') return schema;
+  if (typeof schema === 'object') {
+    const s = schema as Record<string, unknown>;
+    if (typeof s.type === 'string') return s.type;
+    if (typeof s.$ref === 'string') {
+      const ref = s.$ref as string;
+      return ref.startsWith('#/types/') ? ref.slice('#/types/'.length) : ref;
+    }
+  }
+  return 'unknown';
+}
 
 export interface PRCommentOptions {
   /** GitHub repo URL for file links (e.g. "https://github.com/org/repo") */
@@ -277,7 +294,7 @@ function formatExportSignature(exp: SpecExport): string {
     const sig = exp.signatures[0];
     const params =
       sig.parameters?.map((p) => `${p.name}${p.required === false ? '?' : ''}`).join(', ') ?? '';
-    const ret = sig.returns?.tsType ?? 'void';
+    const ret = extractReturnType(sig.returns?.schema);
     return `${prefix} ${exp.name}(${params}): ${ret}`;
   }
 
@@ -308,7 +325,7 @@ function getMissingSignals(exp: SpecExport): string[] {
     if (undocParams.length > 0) {
       missing.push(`\`@param ${undocParams.map((p) => p.name).join(', ')}\``);
     }
-    if (!sig.returns?.description && sig.returns?.tsType !== 'void') {
+    if (!sig.returns?.description && extractReturnType(sig.returns?.schema) !== 'void') {
       missing.push('`@returns`');
     }
   }

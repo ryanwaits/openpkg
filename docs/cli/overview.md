@@ -40,6 +40,15 @@ All commands support:
 
 Commands read from `doccov.yml`, `doccov.config.js`, or `doccov.config.ts`. See [Configuration](./configuration.md).
 
+## Schema Extraction
+
+DocCov extracts rich type information from validation libraries (Zod, Valibot, TypeBox, ArkType). See [Schema Extraction Guide](./schema-extraction.md) for:
+
+- Static vs runtime extraction modes
+- When to use `--runtime` flag
+- Built vs unbuilt code behavior
+- Library support matrix
+
 ## Output Formats
 
 Most commands support multiple output formats via `--format`:

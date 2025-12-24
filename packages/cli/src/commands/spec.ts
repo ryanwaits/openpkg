@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { DocCov, type GenerationInput, NodeFileSystem, renderApiSurface, resolveTarget } from '@doccov/sdk';
+import { detectPackageManager, DocCov, type GenerationInput, NodeFileSystem, renderApiSurface, resolveTarget } from '@doccov/sdk';
 import { normalize, type OpenPkg as OpenPkgSpec, validateSpec } from '@openpkg-ts/spec';
 import chalk from 'chalk';
 import type { Command } from 'commander';
@@ -241,6 +241,16 @@ export function registerSpecCommand(
 
         log(chalk.gray(`  ${getArrayLength(normalized.exports)} exports`));
         log(chalk.gray(`  ${getArrayLength(normalized.types)} types`));
+
+        // Warn if --runtime was requested but no runtime schemas were extracted
+        const schemaExtraction = normalized.generation?.analysis?.schemaExtraction;
+        if (options.runtime && (!schemaExtraction?.runtimeCount || schemaExtraction.runtimeCount === 0)) {
+          const pm = await detectPackageManager(fileSystem);
+          const buildCmd = pm.name === 'npm' ? 'npm run build' : `${pm.name} run build`;
+          log('');
+          log(chalk.yellow('⚠ Runtime extraction requested but no schemas extracted.'));
+          log(chalk.yellow(`  Ensure project is built (${buildCmd}) and dist/ exists.`));
+        }
 
         // Show verbose generation metadata if requested
         if (options.verbose && normalized.generation) {
