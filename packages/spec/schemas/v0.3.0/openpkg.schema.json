@@ -710,16 +710,18 @@
       ]
     },
     "schema": {
-      "description": "Flexible JSON Schema for type representation",
+      "description": "Flexible JSON Schema for type representation (supports Standard JSON Schema output)",
       "oneOf": [
         { "type": "string" },
         { "type": "boolean" },
         {
           "type": "object",
           "properties": {
+            "$schema": { "type": "string", "description": "JSON Schema draft URI" },
             "type": { "type": "string" },
             "format": { "type": "string" },
             "enum": { "type": "array" },
+            "const": { "description": "Constant value" },
             "items": { "$ref": "#/$defs/schema" },
             "prefixedItems": {
               "type": "array",
@@ -732,7 +734,10 @@
             },
             "required": { "type": "array", "items": { "type": "string" } },
             "additionalProperties": {
-              "oneOf": [{ "type": "boolean" }, { "$ref": "#/$defs/schema" }]
+              "oneOf": [
+                { "type": "boolean" },
+                { "type": "object", "additionalProperties": true }
+              ]
             },
             "anyOf": { "type": "array", "items": { "$ref": "#/$defs/schema" } },
             "allOf": { "type": "array", "items": { "$ref": "#/$defs/schema" } },
@@ -744,8 +749,17 @@
             },
             "tsType": { "type": "string" },
             "description": { "type": "string" },
+            "default": { "description": "Default value for the schema" },
+            "minimum": { "type": "number", "description": "Minimum value for numbers" },
+            "maximum": { "type": "number", "description": "Maximum value for numbers" },
+            "exclusiveMinimum": { "type": "number" },
+            "exclusiveMaximum": { "type": "number" },
+            "minLength": { "type": "integer", "description": "Minimum string length" },
+            "maxLength": { "type": "integer", "description": "Maximum string length" },
+            "pattern": { "type": "string", "description": "Regex pattern for strings" },
             "minItems": { "type": "integer" },
             "maxItems": { "type": "integer" },
+            "uniqueItems": { "type": "boolean" },
             "signatures": { "type": "array", "items": { "$ref": "#/$defs/signature" } }
           }
         }

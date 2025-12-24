@@ -72,9 +72,11 @@ export function isStandardJSONSchema(obj: unknown): obj is StandardJSONSchemaV1 
 /**
  * Worker script that runs in subprocess to extract Standard Schema.
  * This is inlined to avoid file path issues.
+ * Uses dynamic import() to support both ESM and CommonJS modules.
  */
 const WORKER_SCRIPT = `
 const path = require('path');
+const { pathToFileURL } = require('url');
 
 async function extract() {
   // With node -e, argv is: [node, arg1, arg2, ...]
@@ -82,8 +84,9 @@ async function extract() {
   const [modulePath, target] = process.argv.slice(1);
 
   try {
-    // Import the module
-    const mod = require(path.resolve(modulePath));
+    // Import the module using dynamic import (works with ESM and CJS)
+    const absPath = path.resolve(modulePath);
+    const mod = await import(pathToFileURL(absPath).href);
     const results = [];
 
     // Check each export

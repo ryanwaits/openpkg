@@ -346,13 +346,20 @@ export class DocCov {
   }
 
   /**
-   * Opportunistically detect Standard Schema exports from compiled modules.
-   * Returns undefined if detection fails or no schemas found (fallback to AST).
+   * Detect Standard Schema exports from compiled modules.
+   * Only runs when schemaExtraction is 'runtime' or 'hybrid'.
+   * Returns undefined if detection is disabled, fails, or no schemas found.
    */
   private async detectSchemas(
     entryFile: string,
     packageDir: string,
   ): Promise<Map<string, DetectedSchemaEntry> | undefined> {
+    // Only run runtime detection for 'runtime' or 'hybrid' modes
+    const mode = this.options.schemaExtraction ?? 'static';
+    if (mode === 'static') {
+      return undefined;
+    }
+
     try {
       const result = await detectRuntimeSchemas({
         baseDir: packageDir,

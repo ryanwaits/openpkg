@@ -1,29 +1,61 @@
 /**
- * Runtime Schema Detection (Stubbed)
+ * Runtime Schema Detection
  *
- * Standard Schema extraction has been removed. This module provides
- * empty stubs to maintain API compatibility.
+ * Detects and extracts schemas from validation libraries that implement
+ * the Standard Schema interface (Zod 3.24+, ArkType, Valibot, etc.)
  */
+
+import {
+  extractStandardSchemasFromProject,
+  resolveCompiledPath,
+} from '../extract/schema/standard-schema';
 
 export interface SchemaDetectionContext {
   baseDir: string;
   entryFile: string;
 }
 
+export interface DetectedSchema {
+  schema: Record<string, unknown>;
+  vendor: string;
+}
+
 export interface SchemaDetectionResult {
-  schemas: Map<string, never>;
+  schemas: Map<string, DetectedSchema>;
   errors: string[];
 }
 
 export async function detectRuntimeSchemas(
-  _context: SchemaDetectionContext,
+  context: SchemaDetectionContext,
 ): Promise<SchemaDetectionResult> {
+  const { baseDir, entryFile } = context;
+
+  // Check if compiled JS exists
+  const compiledPath = resolveCompiledPath(entryFile, baseDir);
+  if (!compiledPath) {
+    return {
+      schemas: new Map(),
+      errors: [],
+    };
+  }
+
+  // Run Standard Schema extraction
+  const extraction = await extractStandardSchemasFromProject(entryFile, baseDir);
+
+  const schemas = new Map<string, DetectedSchema>();
+  for (const [name, result] of extraction.schemas) {
+    schemas.set(name, {
+      schema: result.outputSchema,
+      vendor: result.vendor,
+    });
+  }
+
   return {
-    schemas: new Map(),
-    errors: [],
+    schemas,
+    errors: extraction.errors,
   };
 }
 
 export function clearSchemaCache(): void {
-  // no-op
+  // no-op (extraction is stateless)
 }
