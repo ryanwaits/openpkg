@@ -4,6 +4,8 @@ node_modules
 # output
 out
 dist
+build
+.next
 *.tgz
 output.json
 
@@ -36,7 +38,6 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 .DS_Store
 
 apps/site/node_modules
-apps/site/.next/
 .cursor
 repo.json
 .vercel
