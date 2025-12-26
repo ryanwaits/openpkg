@@ -14,7 +14,7 @@ export function serializeFunctionExport(
   if (!name) return null;
 
   const declSourceFile = node.getSourceFile();
-  const { description, tags } = getJSDocComment(node);
+  const { description, tags, examples } = getJSDocComment(node);
   const source = getSourceLocation(node, declSourceFile);
 
   const type = ctx.typeChecker.getTypeAtLocation(node);
@@ -40,5 +40,6 @@ export function serializeFunctionExport(
     tags,
     source,
     signatures,
+    ...(examples.length > 0 ? { examples } : {}),
   };
 }

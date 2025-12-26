@@ -12,7 +12,7 @@ export function serializeInterface(
   if (!name) return null;
 
   const declSourceFile = node.getSourceFile();
-  const { description, tags } = getJSDocComment(node);
+  const { description, tags, examples } = getJSDocComment(node);
   const source = getSourceLocation(node, declSourceFile);
 
   // TODO: Extract interface members
@@ -24,5 +24,6 @@ export function serializeInterface(
     tags,
     source,
     members: [],
+    ...(examples.length > 0 ? { examples } : {}),
   };
 }

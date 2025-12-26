@@ -9,7 +9,7 @@ export function serializeEnum(node: ts.EnumDeclaration, ctx: SerializerContext):
   if (!name) return null;
 
   const declSourceFile = node.getSourceFile();
-  const { description, tags } = getJSDocComment(node);
+  const { description, tags, examples } = getJSDocComment(node);
   const source = getSourceLocation(node, declSourceFile);
 
   const members: SpecMember[] = node.members.map((member) => {
@@ -30,5 +30,6 @@ export function serializeEnum(node: ts.EnumDeclaration, ctx: SerializerContext):
     tags,
     source,
     members,
+    ...(examples.length > 0 ? { examples } : {}),
   };
 }

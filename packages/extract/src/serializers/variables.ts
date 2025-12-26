@@ -13,7 +13,7 @@ export function serializeVariable(
   if (!name) return null;
 
   const declSourceFile = node.getSourceFile();
-  const { description, tags } = getJSDocComment(statement);
+  const { description, tags, examples } = getJSDocComment(statement);
   const source = getSourceLocation(node, declSourceFile);
   const type = ctx.typeChecker.getTypeAtLocation(node);
   const typeString = ctx.typeChecker.typeToString(type);
@@ -27,5 +27,6 @@ export function serializeVariable(
     source,
     // Only include type if it's meaningful
     ...(typeString && typeString !== name ? { type: typeString } : {}),
+    ...(examples.length > 0 ? { examples } : {}),
   };
 }

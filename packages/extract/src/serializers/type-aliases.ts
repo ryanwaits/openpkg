@@ -12,7 +12,7 @@ export function serializeTypeAlias(
   if (!name) return null;
 
   const declSourceFile = node.getSourceFile();
-  const { description, tags } = getJSDocComment(node);
+  const { description, tags, examples } = getJSDocComment(node);
   const source = getSourceLocation(node, declSourceFile);
   const type = ctx.typeChecker.getTypeAtLocation(node);
   const typeString = ctx.typeChecker.typeToString(type);
@@ -26,5 +26,6 @@ export function serializeTypeAlias(
     source,
     // Only include type field if it's not just the name itself
     ...(typeString !== name ? { type: typeString } : {}),
+    ...(examples.length > 0 ? { examples } : {}),
   };
 }
