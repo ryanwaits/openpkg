@@ -1,9 +1,9 @@
 import {
   DRIFT_CATEGORIES,
-  isFixableDrift,
   type DriftCategory,
   type DriftType,
   type EnrichedOpenPkg,
+  isFixableDrift,
   type SpecDocDrift,
 } from '@doccov/sdk';
 import type { SpecExportKind } from '@openpkg-ts/spec';

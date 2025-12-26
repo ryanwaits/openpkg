@@ -1,5 +1,5 @@
-import type ts from 'typescript';
 import type { SpecType } from '@openpkg-ts/spec';
+import type ts from 'typescript';
 
 export class TypeRegistry {
   private types = new Map<string, SpecType>();

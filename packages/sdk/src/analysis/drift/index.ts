@@ -1,13 +1,4 @@
 // Drift types and constants (doccov-specific, moved from @openpkg-ts/spec v0.4.0)
-export {
-  DRIFT_CATEGORIES,
-  DRIFT_CATEGORY_LABELS,
-  DRIFT_CATEGORY_DESCRIPTIONS,
-  type DriftType,
-  type SpecDocDrift,
-  type DriftCategory,
-  type SpecDocsMetadata,
-} from './types';
 
 // Categorization utilities
 export {
@@ -16,7 +7,6 @@ export {
   getDriftSummary,
   groupDriftsByCategory,
 } from './categorize';
-
 // Core computation
 export { buildExportRegistry, computeDrift, computeExportDrift } from './compute';
 // Coverage utilities
@@ -30,7 +20,6 @@ export {
   hasNonAssertionComments,
   parseAssertions,
 } from './example-drift';
-
 // Parameter drift detection
 export { detectOptionalityDrift, detectParamDrift, detectParamTypeDrift } from './param-drift';
 // Semantic drift detection
@@ -61,6 +50,15 @@ export type {
   ParsedParamTag,
   SpecMemberWithType,
   SpecMemberWithVisibility,
+} from './types';
+export {
+  DRIFT_CATEGORIES,
+  DRIFT_CATEGORY_DESCRIPTIONS,
+  DRIFT_CATEGORY_LABELS,
+  type DriftCategory,
+  type DriftType,
+  type SpecDocDrift,
+  type SpecDocsMetadata,
 } from './types';
 
 // Utility functions (for advanced usage)

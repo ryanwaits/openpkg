@@ -9,6 +9,10 @@
  * @module types
  */
 
+export type { FilterSource, ResolvedFilters } from '../filtering/merge';
+export { mergeFilters, parseListFlag } from '../filtering/merge';
+// Filter types (re-export from filtering module)
+export type { FilterOptions, ReleaseTag } from '../filtering/types';
 // Report types
 export {
   type CoverageSummary,
@@ -23,8 +27,3 @@ export {
   REPORT_EXTENSIONS,
   REPORT_VERSION,
 } from './report';
-
-// Filter types (re-export from filtering module)
-export type { FilterOptions, ReleaseTag } from '../filtering/types';
-export type { FilterSource, ResolvedFilters } from '../filtering/merge';
-export { mergeFilters, parseListFlag } from '../filtering/merge';

@@ -84,12 +84,7 @@ export type ExampleAnalysis = {
 // Coverage Types
 // ============================================================================
 
-export type MissingDocRule =
-  | 'description'
-  | 'params'
-  | 'returns'
-  | 'examples'
-  | 'throws';
+export type MissingDocRule = 'description' | 'params' | 'returns' | 'examples' | 'throws';
 
 // ============================================================================
 // DocCov Spec (doccov.json schema)

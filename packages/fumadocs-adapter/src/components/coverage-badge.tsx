@@ -1,9 +1,27 @@
 'use client';
 
-import type { SpecDocsMetadata } from '@openpkg-ts/spec';
+/**
+ * Documentation drift information.
+ * Describes a mismatch between docs and code.
+ */
+export interface DocDrift {
+  type: string;
+  issue: string;
+  suggestion?: string;
+}
+
+/**
+ * Documentation metadata for an export.
+ * Contains coverage score, missing docs, and drift issues.
+ */
+export interface DocsMetadata {
+  coverageScore?: number;
+  missing?: string[];
+  drift?: DocDrift[];
+}
 
 export interface CoverageBadgeProps {
-  docs: SpecDocsMetadata;
+  docs: DocsMetadata;
   showMissing?: boolean;
   showDrift?: boolean;
 }

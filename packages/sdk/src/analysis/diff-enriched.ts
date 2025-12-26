@@ -3,8 +3,8 @@
  * Wraps the base @openpkg-ts/spec diffSpec with coverage tracking.
  */
 import { diffSpec, type SpecDiff } from '@openpkg-ts/spec';
-import type { EnrichedOpenPkg, EnrichedExport } from './enrich';
 import type { SpecDocsMetadata } from './drift/types';
+import type { EnrichedExport, EnrichedOpenPkg } from './enrich';
 
 /**
  * Extended diff result with doccov-specific coverage tracking.

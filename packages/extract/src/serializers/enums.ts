@@ -1,12 +1,9 @@
-import ts from 'typescript';
 import type { SpecExport, SpecMember } from '@openpkg-ts/spec';
-import type { SerializerContext } from './context';
+import type ts from 'typescript';
 import { getJSDocComment, getSourceLocation } from '../ast/utils';
+import type { SerializerContext } from './context';
 
-export function serializeEnum(
-  node: ts.EnumDeclaration,
-  ctx: SerializerContext,
-): SpecExport | null {
+export function serializeEnum(node: ts.EnumDeclaration, ctx: SerializerContext): SpecExport | null {
   const symbol = ctx.typeChecker.getSymbolAtLocation(node.name ?? node);
   const name = symbol?.getName() ?? node.name?.getText();
   if (!name) return null;

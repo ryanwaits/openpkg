@@ -98,13 +98,7 @@ function toMap<T extends WithId>(items: T[]): Map<string, T> {
 /**
  * Keys considered documentation-only. Changes to these are non-breaking.
  */
-const DOC_KEYS = new Set([
-  'description',
-  'examples',
-  'tags',
-  'rawComments',
-  'source',
-]);
+const DOC_KEYS = new Set(['description', 'examples', 'tags', 'rawComments', 'source']);
 
 function isDocOnlyChange(a: unknown, b: unknown): boolean {
   const structuralA = normalizeForComparison(removeDocFields(a));

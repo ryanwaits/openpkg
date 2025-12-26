@@ -1,7 +1,7 @@
-import ts from 'typescript';
 import type { SpecExport } from '@openpkg-ts/spec';
-import type { SerializerContext } from './context';
+import type ts from 'typescript';
 import { getJSDocComment, getSourceLocation } from '../ast/utils';
+import type { SerializerContext } from './context';
 
 export function serializeInterface(
   node: ts.InterfaceDeclaration,

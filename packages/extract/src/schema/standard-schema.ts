@@ -1,5 +1,5 @@
-import type ts from 'typescript';
 import type { SpecSchema } from '@openpkg-ts/spec';
+import type ts from 'typescript';
 
 export interface StandardSchemaResult {
   schema: SpecSchema;

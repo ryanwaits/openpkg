@@ -2,9 +2,9 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import {
   DRIFT_CATEGORIES,
-  parseMarkdownFiles,
   type EnrichedExport,
   type MarkdownDocFile,
+  parseMarkdownFiles,
   type SpecDocDrift,
 } from '@doccov/sdk';
 import { glob } from 'glob';

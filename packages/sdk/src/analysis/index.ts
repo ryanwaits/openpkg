@@ -11,48 +11,45 @@
 
 // Context types
 export type { DetectedSchemaEntry } from './context';
-
+// Enriched diff (doccov-specific coverage tracking)
+export {
+  diffEnrichedSpec,
+  type EnrichedSpecDiff,
+} from './diff-enriched';
 // Drift detection and categorization
 export {
   buildExportRegistry,
-  calculateAggregateCoverage,
   type CategorizedDrift,
+  calculateAggregateCoverage,
   categorizeDrift,
   computeDrift,
   computeExportDrift,
-  detectExampleAssertionFailures,
-  detectExampleRuntimeErrors,
   type DriftResult,
   type DriftSummary,
-  ensureSpecCoverage,
+  detectExampleAssertionFailures,
+  detectExampleRuntimeErrors,
   type ExportDriftResult,
+  ensureSpecCoverage,
   formatDriftSummaryLine,
   getDriftSummary,
   groupDriftsByCategory,
   hasNonAssertionComments,
   parseAssertions,
 } from './docs-coverage';
-
 // Enrichment
 export {
   type EnrichedDocsMetadata,
   type EnrichedExport,
   type EnrichedOpenPkg,
-  enrichSpec,
   type EnrichOptions,
+  enrichSpec,
 } from './enrich';
-
-// Enriched diff (doccov-specific coverage tracking)
-export {
-  diffEnrichedSpec,
-  type EnrichedSpecDiff,
-} from './diff-enriched';
 
 // History and trends
 export {
-  computeSnapshot,
   type CoverageSnapshot,
   type CoverageTrend,
+  computeSnapshot,
   type ExtendedTrendAnalysis,
   formatDelta,
   generateWeeklySummaries,
@@ -63,9 +60,9 @@ export {
   loadSnapshotsForDays,
   pruneByTier,
   pruneHistory,
-  renderSparkline,
   RETENTION_DAYS,
   type RetentionTier,
+  renderSparkline,
   saveSnapshot,
   type WeeklySummary,
 } from './history';

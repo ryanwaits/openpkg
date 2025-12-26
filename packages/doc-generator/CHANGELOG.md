@@ -1,0 +1,14 @@
+# @openpkg-ts/doc-generator
+
+## 0.0.1
+
+### Initial Release
+
+- **Core API**: `createDocs()`, `loadSpec()` for loading OpenPkg specs
+- **Query utilities**: `formatSchema()`, `buildSignatureString()`, member filtering and sorting
+- **Renderers**: Markdown/MDX, HTML, JSON output formats
+- **Navigation**: Fumadocs, Docusaurus, and generic nav generation
+- **Search**: Pagefind and Algolia compatible indexes
+- **React components**: Headless (unstyled) and styled (Tailwind v4) variants
+- **CLI**: `generate`, `build`, `dev` commands
+- **Adapter architecture**: Extensible framework integration pattern

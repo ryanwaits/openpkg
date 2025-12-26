@@ -1,17 +1,17 @@
-import ts from 'typescript';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import type { OpenPkg, SpecExport } from '@openpkg-ts/spec';
 import { SCHEMA_VERSION } from '@openpkg-ts/spec';
-import type { ExtractOptions, ExtractResult, Diagnostic } from '../types';
+import ts from 'typescript';
 import { createProgram } from '../compiler/program';
-import { createContext, type SerializerContext } from '../serializers/context';
-import { serializeFunctionExport } from '../serializers/functions';
 import { serializeClass } from '../serializers/classes';
+import { createContext, type SerializerContext } from '../serializers/context';
+import { serializeEnum } from '../serializers/enums';
+import { serializeFunctionExport } from '../serializers/functions';
 import { serializeInterface } from '../serializers/interfaces';
 import { serializeTypeAlias } from '../serializers/type-aliases';
-import { serializeEnum } from '../serializers/enums';
 import { serializeVariable } from '../serializers/variables';
-import * as path from 'node:path';
-import * as fs from 'node:fs';
+import type { Diagnostic, ExtractOptions, ExtractResult } from '../types';
 
 export async function extract(options: ExtractOptions): Promise<ExtractResult> {
   const { entryFile, baseDir, content, maxTypeDepth, resolveExternalTypes } = options;
@@ -164,7 +164,10 @@ function createEmptySpec(entryFile: string): OpenPkg {
   };
 }
 
-async function getPackageMeta(entryFile: string, baseDir?: string): Promise<{ name: string; version?: string; description?: string }> {
+async function getPackageMeta(
+  entryFile: string,
+  baseDir?: string,
+): Promise<{ name: string; version?: string; description?: string }> {
   const searchDir = baseDir ?? path.dirname(entryFile);
   const pkgPath = path.join(searchDir, 'package.json');
 

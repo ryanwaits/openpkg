@@ -1,5 +1,11 @@
 import { isFixableDrift } from '../../fix';
-import { DRIFT_CATEGORIES, type DriftCategory, type SpecDocDrift, type CategorizedDrift, type DriftSummary } from './types';
+import {
+  type CategorizedDrift,
+  DRIFT_CATEGORIES,
+  type DriftCategory,
+  type DriftSummary,
+  type SpecDocDrift,
+} from './types';
 
 /**
  * Categorize a single drift issue.

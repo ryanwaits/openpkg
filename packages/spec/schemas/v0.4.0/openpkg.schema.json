@@ -80,7 +80,18 @@
         "name": { "type": "string" },
         "kind": {
           "type": "string",
-          "enum": ["function", "class", "variable", "interface", "type", "enum", "module", "namespace", "reference", "external"]
+          "enum": [
+            "function",
+            "class",
+            "variable",
+            "interface",
+            "type",
+            "enum",
+            "module",
+            "namespace",
+            "reference",
+            "external"
+          ]
         },
         "description": { "type": "string" },
         "examples": {

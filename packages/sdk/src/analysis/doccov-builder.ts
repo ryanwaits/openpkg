@@ -9,9 +9,9 @@ import type {
 import { DRIFT_CATEGORIES } from '@doccov/spec';
 import type { SpecExport } from '@openpkg-ts/spec';
 import { isFixableDrift } from '../fix';
-import type { OpenPkgSpec } from './spec-types';
 import { buildExportRegistry, computeExportDrift } from './drift/compute';
 import type { ExportRegistry } from './drift/types';
+import type { OpenPkgSpec } from './spec-types';
 
 export interface BuildDocCovOptions {
   openpkgPath: string;

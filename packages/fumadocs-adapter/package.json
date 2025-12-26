@@ -1,11 +1,11 @@
 {
   "name": "@doccov/fumadocs-adapter",
   "version": "0.0.3",
+  "description": "Fumadocs integration for OpenPkg API documentation",
   "type": "module",
   "sideEffects": false,
   "exports": {
     ".": "./src/index.ts",
-    "./server": "./src/server.ts",
     "./components": "./src/components/index.ts",
     "./css": "./src/styles/docskit.css"
   },
@@ -16,17 +16,14 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@openpkg-ts/spec": "../spec"
+    "@openpkg-ts/doc-generator": "workspace:*"
   },
   "peerDependencies": {
-    "@doccov/ui": "../ui",
-    "codehike": "^1.0.0",
-    "react": "^19.0.0"
+    "react": "^18 || ^19"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",
     "bunup": "^0.11.5",
-    "codehike": "^1.0.7",
     "typescript": "^5.0.0"
   }
 }

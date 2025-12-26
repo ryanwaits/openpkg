@@ -1,5 +1,5 @@
-import type ts from 'typescript';
 import type { SpecSchema } from '@openpkg-ts/spec';
+import type ts from 'typescript';
 
 export type SchemaAdapter = {
   name: string;
@@ -14,11 +14,11 @@ export function registerAdapter(adapter: SchemaAdapter): void {
 }
 
 export function findAdapter(node: ts.Node, checker: ts.TypeChecker): SchemaAdapter | undefined {
-  return adapters.find(a => a.detect(node, checker));
+  return adapters.find((a) => a.detect(node, checker));
 }
 
 export function isSchemaType(node: ts.Node, checker: ts.TypeChecker): boolean {
-  return adapters.some(a => a.detect(node, checker));
+  return adapters.some((a) => a.detect(node, checker));
 }
 
 export function extractSchemaType(node: ts.Node, checker: ts.TypeChecker): SpecSchema | null {

@@ -40,9 +40,7 @@ export function normalize(spec: OpenPkg): OpenPkg {
  * Normalize generation metadata to match schema.
  * Schema expects generator to be a string, not an object.
  */
-function normalizeGeneration(
-  gen: OpenPkg['generation'],
-): OpenPkg['generation'] {
+function normalizeGeneration(gen: OpenPkg['generation']): OpenPkg['generation'] {
   if (!gen) return undefined;
 
   // If it has the extended SpecGenerationInfo structure

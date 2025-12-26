@@ -1,8 +1,8 @@
-import { Command } from 'commander';
-import { extract } from '../builder';
-import { normalize, validateSpec } from '@openpkg-ts/spec';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { normalize, validateSpec } from '@openpkg-ts/spec';
+import { Command } from 'commander';
+import { extract } from '../builder';
 
 export function createProgram(): Command {
   const program = new Command('tspec')

@@ -1,8 +1,8 @@
-import ts from 'typescript';
 import type { SpecExport, SpecSignature } from '@openpkg-ts/spec';
-import type { SerializerContext } from './context';
+import type ts from 'typescript';
 import { getJSDocComment, getSourceLocation } from '../ast/utils';
 import { extractParameters } from '../types/parameters';
+import type { SerializerContext } from './context';
 
 export function serializeFunctionExport(
   node: ts.FunctionDeclaration | ts.ArrowFunction,

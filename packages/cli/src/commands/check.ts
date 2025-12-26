@@ -7,9 +7,9 @@
  */
 
 export {
-  registerCheckCommand,
   type CheckCommandDependencies,
   type CollectedDrift,
   type OutputFormat,
+  registerCheckCommand,
   type StaleReference,
 } from './check/index';

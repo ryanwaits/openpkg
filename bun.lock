@@ -54,7 +54,7 @@
     },
     "apps/web": {
       "name": "@doccov/web",
-      "version": "0.1.2",
+      "version": "0.1.3",
       "dependencies": {
         "@doccov/api-shared": "workspace:*",
         "@doccov/auth": "workspace:*",
@@ -81,7 +81,7 @@
     },
     "packages/api-shared": {
       "name": "@doccov/api-shared",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "dependencies": {
         "@doccov/db": "workspace:*",
         "@doccov/sdk": "workspace:*",
@@ -114,7 +114,7 @@
     },
     "packages/cli": {
       "name": "@doccov/cli",
-      "version": "0.23.0",
+      "version": "0.24.0",
       "bin": {
         "doccov": "./dist/cli.js",
       },
@@ -159,9 +159,36 @@
         "typescript": "^5.0.0",
       },
     },
+    "packages/doc-generator": {
+      "name": "@openpkg-ts/doc-generator",
+      "version": "0.0.1",
+      "bin": {
+        "openpkg-docs": "./dist/cli.js",
+      },
+      "dependencies": {
+        "@openpkg-ts/spec": "workspace:*",
+        "commander": "^14.0.0",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/node": "^20.0.0",
+        "@types/react": "^19.0.0",
+        "bunup": "latest",
+        "react": "^19.0.0",
+        "typescript": "^5.0.0",
+      },
+      "peerDependencies": {
+        "react": "^18 || ^19",
+        "tailwindcss": "^4",
+      },
+      "optionalPeers": [
+        "react",
+        "tailwindcss",
+      ],
+    },
     "packages/doccov-spec": {
       "name": "@doccov/spec",
-      "version": "1.0.0",
+      "version": "0.24.0",
       "dependencies": {
         "ajv": "^8.17.1",
         "ajv-formats": "^3.0.1",
@@ -194,18 +221,15 @@
       "name": "@doccov/fumadocs-adapter",
       "version": "0.0.3",
       "dependencies": {
-        "@openpkg-ts/spec": "../spec",
+        "@openpkg-ts/doc-generator": "workspace:*",
       },
       "devDependencies": {
         "@types/react": "^19.0.0",
         "bunup": "^0.11.5",
-        "codehike": "^1.0.7",
         "typescript": "^5.0.0",
       },
       "peerDependencies": {
-        "@doccov/ui": "../ui",
-        "codehike": "^1.0.0",
-        "react": "^19.0.0",
+        "react": "^18 || ^19",
       },
     },
     "packages/sandbox": {
@@ -230,7 +254,7 @@
     },
     "packages/sdk": {
       "name": "@doccov/sdk",
-      "version": "0.23.0",
+      "version": "0.24.0",
       "dependencies": {
         "@doccov/spec": "workspace:*",
         "@openpkg-ts/extract": "workspace:*",
@@ -636,6 +660,8 @@
     "@nodelib/fs.stat": ["@nodelib/fs.stat@2.0.5", "", {}, "sha512-RkhPPp2zrqDAQA/2jNhnztcPAlv64XdhIp7a7454A5ovI7Bukxgt7MX7udwAu3zg1DcpPU0rz3VV1SeaqvY4+A=="],
 
     "@nodelib/fs.walk": ["@nodelib/fs.walk@1.2.8", "", { "dependencies": { "@nodelib/fs.scandir": "2.1.5", "fastq": "^1.6.0" } }, "sha512-oGB+UxlgWcgQkgwo8GcEGwemoTFt3FIO9ababBmaGwXIoBKZ+GTy0pP185beGg7Llih/NSHSV2XAs1lnznocSg=="],
+
+    "@openpkg-ts/doc-generator": ["@openpkg-ts/doc-generator@workspace:packages/doc-generator"],
 
     "@openpkg-ts/extract": ["@openpkg-ts/extract@workspace:packages/extract"],
 
@@ -2183,10 +2209,6 @@
 
     "@doccov/cli/@types/bun": ["@types/bun@1.3.5", "", { "dependencies": { "bun-types": "1.3.5" } }, "sha512-RnygCqNrd3srIPEWBd5LFeUYG7plCoH2Yw9WaZGyNmdTEei+gWaHqydbaIRkIkcbXwhBT94q78QljxN0Sk838w=="],
 
-    "@doccov/fumadocs-adapter/@doccov/ui": ["@doccov/ui@file:packages/ui", { "dependencies": { "@radix-ui/react-collapsible": "^1.1.12", "@radix-ui/react-slot": "^1.1.0", "@radix-ui/react-tabs": "^1.1.13", "class-variance-authority": "^0.7.0", "clsx": "^2.1.0", "codehike": "^1.0.7", "lucide-react": "^0.555.0", "tailwind-merge": "^2.5.0", "zod": "^3.25.0" }, "devDependencies": { "@types/react": "^19.0.0", "@types/react-dom": "^19.0.0", "typescript": "^5.0.0" }, "peerDependencies": { "react": "^19.0.0", "react-dom": "^19.0.0" } }],
-
-    "@doccov/fumadocs-adapter/@openpkg-ts/spec": ["@openpkg-ts/spec@file:packages/spec", { "dependencies": { "ajv": "^8.17.1", "ajv-formats": "^3.0.1" }, "devDependencies": { "@types/bun": "latest", "@types/node": "^20.0.0", "bunup": "latest", "typescript": "^5.0.0" } }],
-
     "@doccov/fumadocs-adapter/bunup": ["bunup@0.11.30", "", { "dependencies": { "@bunup/dts": "0.11.27", "chokidar": "^4.0.3", "coffi": "^0.1.35", "lightningcss": "^1.30.1", "picocolors": "^1.1.1", "tinyexec": "^1.0.1", "tree-kill": "^1.2.2", "zlye": "^0.4.4" }, "peerDependencies": { "typescript": ">=4.5.0" }, "optionalPeers": ["typescript"], "bin": { "bunup": "dist/cli/index.js" } }, "sha512-Y7Fe6ceA247oQRxKAseGeHWMnlCrkyokE4Nf8EGdtf13QLSb0tfjdYVecXZzAaXixLuWdBuIQYVvpn9zeHvSvQ=="],
 
     "@doccov/sandbox/@ai-sdk/anthropic": ["@ai-sdk/anthropic@3.0.1", "", { "dependencies": { "@ai-sdk/provider": "3.0.0", "@ai-sdk/provider-utils": "4.0.1" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-MOiwKs76ilEmau/WRMnGWlheTUoB+cbvXCse+SAtpW5ATLreInsuYlspLABn12Dxu3w1Xzke1dT+tmEnxhy9SA=="],
@@ -2220,6 +2242,8 @@
     "@manypkg/get-packages/@changesets/types": ["@changesets/types@4.1.0", "", {}, "sha512-LDQvVDv5Kb50ny2s25Fhm3d9QSZimsoUGBsUioj6MC3qbMUCuC8GPIvk/M6IvXx3lYhAs0lwWUQLb+VIEUCECw=="],
 
     "@manypkg/get-packages/fs-extra": ["fs-extra@8.1.0", "", { "dependencies": { "graceful-fs": "^4.2.0", "jsonfile": "^4.0.0", "universalify": "^0.1.0" } }, "sha512-yhlQgA6mnOJUKOsRUFsgJdQCvkKhcz8tlZG5HBQfReYZy46OwLcY+Zia0mtdHsOo9y/hP+CxMN0TU9QxoOtG4g=="],
+
+    "@openpkg-ts/doc-generator/@types/bun": ["@types/bun@1.3.5", "", { "dependencies": { "bun-types": "1.3.5" } }, "sha512-RnygCqNrd3srIPEWBd5LFeUYG7plCoH2Yw9WaZGyNmdTEei+gWaHqydbaIRkIkcbXwhBT94q78QljxN0Sk838w=="],
 
     "@openpkg-ts/extract/@types/bun": ["@types/bun@1.3.5", "", { "dependencies": { "bun-types": "1.3.5" } }, "sha512-RnygCqNrd3srIPEWBd5LFeUYG7plCoH2Yw9WaZGyNmdTEei+gWaHqydbaIRkIkcbXwhBT94q78QljxN0Sk838w=="],
 
@@ -2491,12 +2515,6 @@
 
     "@doccov/cli/@types/bun/bun-types": ["bun-types@1.3.5", "", { "dependencies": { "@types/node": "*" } }, "sha512-inmAYe2PFLs0SUbFOWSVD24sg1jFlMPxOjOSSCYqUgn4Hsc3rDc7dFvfVYjFPNHtov6kgUeulV4SxbuIV/stPw=="],
 
-    "@doccov/fumadocs-adapter/@doccov/ui/tailwind-merge": ["tailwind-merge@2.6.0", "", {}, "sha512-P+Vu1qXfzediirmHOC3xKGAYeZtPcV9g76X+xg2FD4tYgR71ewMA35Y3sCz3zhiN/dwefRpJX0yBcgwi1fXNQA=="],
-
-    "@doccov/fumadocs-adapter/@openpkg-ts/spec/@types/bun": ["@types/bun@1.3.5", "", { "dependencies": { "bun-types": "1.3.5" } }, "sha512-RnygCqNrd3srIPEWBd5LFeUYG7plCoH2Yw9WaZGyNmdTEei+gWaHqydbaIRkIkcbXwhBT94q78QljxN0Sk838w=="],
-
-    "@doccov/fumadocs-adapter/@openpkg-ts/spec/bunup": ["bunup@0.16.11", "", { "dependencies": { "@bunup/dts": "^0.14.37", "@bunup/shared": "0.16.10", "chokidar": "^5.0.0", "coffi": "^0.1.37", "lightningcss": "^1.30.2", "picocolors": "^1.1.1", "tinyexec": "^1.0.1", "tree-kill": "^1.2.2", "zlye": "^0.4.4" }, "peerDependencies": { "typescript": "latest" }, "optionalPeers": ["typescript"], "bin": { "bunup": "dist/cli/index.js" } }, "sha512-hy8DeA4HAkG+exZJ92UYQoUd6g1ZCwFtZQKguedomMvnrv/k+5OhkSMetQTrUOb/qSlJFwqG0QyRXLeILU9hlg=="],
-
     "@doccov/fumadocs-adapter/bunup/@bunup/dts": ["@bunup/dts@0.11.27", "", { "dependencies": { "@babel/parser": "^7.28.0", "coffi": "^0.1.31", "oxc-minify": "^0.77.2", "oxc-resolver": "^8.0.0", "oxc-transform": "^0.67.0", "picocolors": "^1.1.1", "std-env": "^3.9.0", "ts-import-resolver": "^0.1.23" }, "peerDependencies": { "typescript": ">=4.5.0" }, "optionalPeers": ["typescript"] }, "sha512-g/GdnSCNhkZqHklx4NQzaH0dftK32Gb4b5fRIxCPl7EmXwwnel8j1DMrBz3fxtljsWV/fumIzYDmaIayrtfKAA=="],
 
     "@doccov/fumadocs-adapter/bunup/chokidar": ["chokidar@4.0.3", "", { "dependencies": { "readdirp": "^4.0.1" } }, "sha512-Qgzu8kfBvo+cA4962jnP1KkS6Dop5NS6g7R5LFYJr4b8Ub94PPQXUksCw9PvXoeXPRRddRNC5C1JQUR2SMGtnA=="],
@@ -2536,6 +2554,8 @@
     "@isaacs/cliui/strip-ansi/ansi-regex": ["ansi-regex@6.2.2", "", {}, "sha512-Bq3SmSpyFHaWjPk8If9yc6svM8c56dB5BAtW4Qbw5jHTwwXXcTLoRMkpDJp6VL0XzlWaCHTXrkFURMYmD0sLqg=="],
 
     "@isaacs/cliui/wrap-ansi/ansi-styles": ["ansi-styles@6.2.3", "", {}, "sha512-4Dj6M28JB+oAH8kFkTLUo+a2jwOFkuqb3yucU0CANcRRUbxS0cP0nZYCGjcc3BNXwRIsUVmDGgzawme7zvJHvg=="],
+
+    "@openpkg-ts/doc-generator/@types/bun/bun-types": ["bun-types@1.3.5", "", { "dependencies": { "@types/node": "*" } }, "sha512-inmAYe2PFLs0SUbFOWSVD24sg1jFlMPxOjOSSCYqUgn4Hsc3rDc7dFvfVYjFPNHtov6kgUeulV4SxbuIV/stPw=="],
 
     "@openpkg-ts/extract/@types/bun/bun-types": ["bun-types@1.3.5", "", { "dependencies": { "@types/node": "*" } }, "sha512-inmAYe2PFLs0SUbFOWSVD24sg1jFlMPxOjOSSCYqUgn4Hsc3rDc7dFvfVYjFPNHtov6kgUeulV4SxbuIV/stPw=="],
 
@@ -2735,10 +2755,6 @@
 
     "wrap-ansi/string-width/emoji-regex": ["emoji-regex@8.0.0", "", {}, "sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A=="],
 
-    "@doccov/fumadocs-adapter/@openpkg-ts/spec/@types/bun/bun-types": ["bun-types@1.3.5", "", { "dependencies": { "@types/node": "*" } }, "sha512-inmAYe2PFLs0SUbFOWSVD24sg1jFlMPxOjOSSCYqUgn4Hsc3rDc7dFvfVYjFPNHtov6kgUeulV4SxbuIV/stPw=="],
-
-    "@doccov/fumadocs-adapter/@openpkg-ts/spec/bunup/chokidar": ["chokidar@5.0.0", "", { "dependencies": { "readdirp": "^5.0.0" } }, "sha512-TQMmc3w+5AxjpL8iIiwebF73dRDF4fBIieAqGn9RGCWaEVwQ6Fb2cGe31Yns0RRIzii5goJ1Y7xbMwo1TxMplw=="],
-
     "@doccov/fumadocs-adapter/bunup/@bunup/dts/oxc-minify": ["oxc-minify@0.77.3", "", { "optionalDependencies": { "@oxc-minify/binding-android-arm64": "0.77.3", "@oxc-minify/binding-darwin-arm64": "0.77.3", "@oxc-minify/binding-darwin-x64": "0.77.3", "@oxc-minify/binding-freebsd-x64": "0.77.3", "@oxc-minify/binding-linux-arm-gnueabihf": "0.77.3", "@oxc-minify/binding-linux-arm-musleabihf": "0.77.3", "@oxc-minify/binding-linux-arm64-gnu": "0.77.3", "@oxc-minify/binding-linux-arm64-musl": "0.77.3", "@oxc-minify/binding-linux-riscv64-gnu": "0.77.3", "@oxc-minify/binding-linux-s390x-gnu": "0.77.3", "@oxc-minify/binding-linux-x64-gnu": "0.77.3", "@oxc-minify/binding-linux-x64-musl": "0.77.3", "@oxc-minify/binding-wasm32-wasi": "0.77.3", "@oxc-minify/binding-win32-arm64-msvc": "0.77.3", "@oxc-minify/binding-win32-x64-msvc": "0.77.3" } }, "sha512-fYCSYazHno31eATVyHNyP2MEEMrVLaKVglac7bIoJC/qlb3x+Vqhv4eUViseOkoGM46rb9k8ZdDwhsEMtFUQhA=="],
 
     "@doccov/fumadocs-adapter/bunup/@bunup/dts/oxc-resolver": ["oxc-resolver@8.0.0", "", { "optionalDependencies": { "@oxc-resolver/binding-darwin-arm64": "8.0.0", "@oxc-resolver/binding-darwin-x64": "8.0.0", "@oxc-resolver/binding-freebsd-x64": "8.0.0", "@oxc-resolver/binding-linux-arm-gnueabihf": "8.0.0", "@oxc-resolver/binding-linux-arm64-gnu": "8.0.0", "@oxc-resolver/binding-linux-arm64-musl": "8.0.0", "@oxc-resolver/binding-linux-riscv64-gnu": "8.0.0", "@oxc-resolver/binding-linux-s390x-gnu": "8.0.0", "@oxc-resolver/binding-linux-x64-gnu": "8.0.0", "@oxc-resolver/binding-linux-x64-musl": "8.0.0", "@oxc-resolver/binding-wasm32-wasi": "8.0.0", "@oxc-resolver/binding-win32-arm64-msvc": "8.0.0", "@oxc-resolver/binding-win32-x64-msvc": "8.0.0" } }, "sha512-qY7JxZ9FPL1n4hcLi5y8JVKVLRUbFLw9PZ0zsK/xdIHJpJOu4DLEGXepyNjPtnTY+WDAj75LR+JjbDHj0sqlBA=="],
@@ -2864,8 +2880,6 @@
     "wrap-ansi-cjs/ansi-styles/color-convert/color-name": ["color-name@1.1.4", "", {}, "sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA=="],
 
     "wrap-ansi/ansi-styles/color-convert/color-name": ["color-name@1.1.4", "", {}, "sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA=="],
-
-    "@doccov/fumadocs-adapter/@openpkg-ts/spec/bunup/chokidar/readdirp": ["readdirp@5.0.0", "", {}, "sha512-9u/XQ1pvrQtYyMpZe7DXKv2p5CNvyVwzUB6uhLAnQwHMSgKMBR62lc7AHljaeteeHXn11XTAaLLUVZYVZyuRBQ=="],
 
     "@doccov/fumadocs-adapter/bunup/@bunup/dts/oxc-minify/@oxc-minify/binding-android-arm64": ["@oxc-minify/binding-android-arm64@0.77.3", "", { "os": "android", "cpu": "arm64" }, "sha512-9bGiDHSkPr6eaP4+/2DQerG+V69Ut4mezL1JtBTk54Iyc6tNsoHa9s+3wJSUHesXEgiHd/IxwuSXRtD9yC3VhQ=="],
 

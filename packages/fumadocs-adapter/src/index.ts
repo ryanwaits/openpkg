@@ -1,7 +1,83 @@
-// Server
+// Re-export core from @openpkg-ts/doc-generator
 
-export type { APIPageProps } from './components/api-page';
-// Components
-export { APIPage } from './components/api-page';
-export type { OpenPkgInstance, OpenPkgOptions } from './server';
-export { createOpenPkg } from './server';
+// Re-export spec types for convenience
+export type {
+  DocsInstance as OpenPkgInstance,
+  LoadOptions as OpenPkgOptions,
+  OpenPkg,
+  SpecExample,
+  SpecExport,
+  SpecExportKind,
+  SpecMember,
+  SpecSchema,
+  SpecSignature,
+  SpecSignatureParameter,
+  SpecTag,
+  SpecType,
+  SpecTypeKind,
+  SpecTypeParameter,
+} from '@openpkg-ts/doc-generator';
+export {
+  type AlgoliaRecord,
+  buildSignatureString,
+  createDocs,
+  createDocs as createOpenPkg,
+  type DocsInstance,
+  type ExportMarkdownOptions,
+  exportToMarkdown,
+  formatParameters,
+  formatReturnType,
+  formatSchema,
+  formatTypeParameters,
+  getMethods,
+  getProperties,
+  groupByVisibility,
+  type HTMLOptions,
+  isMethod,
+  isProperty,
+  type JSONOptions,
+  type LoadOptions,
+  loadSpec,
+  type MarkdownOptions,
+  type NavOptions,
+  type PagefindRecord,
+  resolveTypeRef,
+  type SearchIndex,
+  type SearchOptions,
+  type SearchRecord,
+  sortByKindThenName,
+  sortByName,
+  toAlgoliaRecords,
+  toDocusaurusSidebarJS,
+  toFumadocsMetaJSON,
+  toHTML,
+  toJSON,
+  toJSONString,
+  toMarkdown,
+  toNavigation,
+  toPagefindRecords,
+  toSearchIndex,
+  toSearchIndexJSON,
+} from '@openpkg-ts/doc-generator';
+// Re-export styled components (most common use case)
+export {
+  APIPage,
+  type APIPageProps,
+  ClassPage,
+  type ClassPageProps,
+  EnumPage,
+  type EnumPageProps,
+  FunctionPage,
+  type FunctionPageProps,
+  InterfacePage,
+  type InterfacePageProps,
+  VariablePage,
+  type VariablePageProps,
+} from '@openpkg-ts/doc-generator/react/styled';
+// Re-export CoverageBadge (doccov-specific)
+export {
+  CoverageBadge,
+  type CoverageBadgeProps,
+  type DocDrift,
+  type DocsMetadata,
+} from './components/coverage-badge';

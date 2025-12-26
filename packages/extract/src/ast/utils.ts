@@ -1,11 +1,12 @@
-import ts from 'typescript';
 import type { SpecSource, SpecTag } from '@openpkg-ts/spec';
+import ts from 'typescript';
 
 export function getJSDocComment(node: ts.Node): { description?: string; tags: SpecTag[] } {
   const jsDocTags = ts.getJSDocTags(node);
-  const tags: SpecTag[] = jsDocTags.map(tag => ({
+  const tags: SpecTag[] = jsDocTags.map((tag) => ({
     name: tag.tagName.text,
-    text: typeof tag.comment === 'string' ? tag.comment : ts.getTextOfJSDocComment(tag.comment) ?? '',
+    text:
+      typeof tag.comment === 'string' ? tag.comment : (ts.getTextOfJSDocComment(tag.comment) ?? ''),
   }));
 
   // Get description from first JSDoc comment
@@ -14,9 +15,10 @@ export function getJSDocComment(node: ts.Node): { description?: string; tags: Sp
   if (jsDocComments && jsDocComments.length > 0) {
     const firstDoc = jsDocComments[0];
     if (firstDoc.comment) {
-      description = typeof firstDoc.comment === 'string'
-        ? firstDoc.comment
-        : ts.getTextOfJSDocComment(firstDoc.comment);
+      description =
+        typeof firstDoc.comment === 'string'
+          ? firstDoc.comment
+          : ts.getTextOfJSDocComment(firstDoc.comment);
     }
   }
 

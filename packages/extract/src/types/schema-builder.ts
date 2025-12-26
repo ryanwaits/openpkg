@@ -1,5 +1,5 @@
-import type ts from 'typescript';
 import type { SpecSchema } from '@openpkg-ts/spec';
+import type ts from 'typescript';
 
 export function buildSchema(type: ts.Type, checker: ts.TypeChecker, depth = 0): SpecSchema {
   if (depth > 10) {

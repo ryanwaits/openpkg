@@ -1,7 +1,7 @@
 import {
   DocCov,
-  enrichSpec,
   type ExampleValidation,
+  enrichSpec,
   NodeFileSystem,
   parseExamplesFlag,
   resolveTarget,
@@ -177,7 +177,10 @@ export function registerCheckCommand(
 
         // Run example validation
         let exampleResult;
-        let typecheckErrors: Array<{ exportName: string; error: import('@doccov/sdk').ExampleTypeError }> = [];
+        let typecheckErrors: Array<{
+          exportName: string;
+          error: import('@doccov/sdk').ExampleTypeError;
+        }> = [];
         let runtimeDrifts: CollectedDrift[] = [];
 
         if (hasExamples) {
@@ -213,11 +216,7 @@ export function registerCheckCommand(
 
         // Handle --fix / --preview: auto-fix drift issues
         if (shouldFix && driftExports.length > 0) {
-          const fixResult = await handleFixes(
-            spec,
-            { isPreview, targetDir },
-            { log, error },
-          );
+          const fixResult = await handleFixes(spec, { isPreview, targetDir }, { log, error });
 
           // Filter out fixed drifts from the evaluation (only when actually applying)
           if (!isPreview) {
@@ -286,4 +285,9 @@ export function registerCheckCommand(
 }
 
 // Re-export types for consumers
-export type { CheckCommandDependencies, CollectedDrift, OutputFormat, StaleReference } from './types';
+export type {
+  CheckCommandDependencies,
+  CollectedDrift,
+  OutputFormat,
+  StaleReference,
+} from './types';

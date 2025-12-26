@@ -2,7 +2,8 @@
   "$schema": "https://biomejs.dev/schemas/2.1.2/schema.json",
   "files": {
     "ignoreUnknown": false,
-    "includes": ["**", "!**/dist/**", "!**/.vercel/**", "!**/.next/**"]
+    "include": ["**"],
+    "ignore": ["**/dist", "**/.vercel", "**/.next", "**/node_modules"]
   },
   "linter": {
     "enabled": true,
