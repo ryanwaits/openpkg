@@ -1,5 +1,11 @@
 # @doccov/sdk
 
+## 0.23.0
+
+### Minor Changes
+
+- refactor: modularize api into shared packages with centralized middleware
+
 ## 0.22.1
 
 ### Patch Changes
