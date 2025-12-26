@@ -1,8 +1,8 @@
-import type { SpecDocDrift, SpecExport } from '@openpkg-ts/spec';
+import type { SpecExport } from '@openpkg-ts/spec';
 import ts from 'typescript';
 import { isBuiltInIdentifier } from '../../utils/builtin-detection';
 import type { ExampleRunResult } from '../../utils/example-runner';
-import type { ExportRegistry } from './types';
+import type { ExportRegistry, SpecDocDrift } from './types';
 import { findClosestMatch } from './utils';
 
 // ─────────────────────────────────────────────────────────────────────────────

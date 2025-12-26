@@ -6,14 +6,15 @@ import addFormats from 'ajv-formats';
 import schemaV010 from '../schemas/v0.1.0/openpkg.schema.json';
 import schemaV020 from '../schemas/v0.2.0/openpkg.schema.json';
 import schemaV030 from '../schemas/v0.3.0/openpkg.schema.json';
+import schemaV040 from '../schemas/v0.4.0/openpkg.schema.json';
 
 import type { OpenPkg } from './types';
 
 /** Supported schema versions */
-export type SchemaVersion = '0.1.0' | '0.2.0' | '0.3.0' | 'latest';
+export type SchemaVersion = '0.1.0' | '0.2.0' | '0.3.0' | '0.4.0' | 'latest';
 
 /** Current/latest schema version */
-export const LATEST_VERSION: SchemaVersion = '0.3.0';
+export const LATEST_VERSION: SchemaVersion = '0.4.0';
 
 export type SpecError = {
   instancePath: string;
@@ -26,6 +27,7 @@ const schemas: Record<string, unknown> = {
   '0.1.0': schemaV010,
   '0.2.0': schemaV020,
   '0.3.0': schemaV030,
+  '0.4.0': schemaV040,
 };
 
 // Ajv instance (shared)

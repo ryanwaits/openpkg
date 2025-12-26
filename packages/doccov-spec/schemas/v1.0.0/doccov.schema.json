@@ -1,0 +1,154 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://unpkg.com/@doccov/spec/schemas/v1.0.0/doccov.schema.json",
+  "title": "DocCov Specification",
+  "description": "Documentation coverage analysis specification",
+  "type": "object",
+  "required": ["doccov", "source", "generatedAt", "summary", "exports"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "doccov": { "const": "1.0.0" },
+    "source": { "$ref": "#/$defs/source" },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "summary": { "$ref": "#/$defs/summary" },
+    "exports": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/exportAnalysis" }
+    }
+  },
+  "$defs": {
+    "source": {
+      "type": "object",
+      "required": ["file", "specVersion", "packageName"],
+      "properties": {
+        "file": { "type": "string" },
+        "specVersion": { "type": "string" },
+        "packageName": { "type": "string" },
+        "packageVersion": { "type": "string" }
+      }
+    },
+    "driftType": {
+      "type": "string",
+      "enum": [
+        "param-mismatch",
+        "param-type-mismatch",
+        "return-type-mismatch",
+        "generic-constraint-mismatch",
+        "optionality-mismatch",
+        "deprecated-mismatch",
+        "visibility-mismatch",
+        "async-mismatch",
+        "property-type-drift",
+        "example-drift",
+        "example-syntax-error",
+        "example-runtime-error",
+        "example-assertion-failed",
+        "broken-link"
+      ]
+    },
+    "driftCategory": {
+      "type": "string",
+      "enum": ["structural", "semantic", "example"]
+    },
+    "missingDocRule": {
+      "type": "string",
+      "enum": ["description", "params", "returns", "examples", "throws"]
+    },
+    "drift": {
+      "type": "object",
+      "required": ["type", "issue", "category", "fixable"],
+      "properties": {
+        "type": { "$ref": "#/$defs/driftType" },
+        "target": { "type": "string" },
+        "issue": { "type": "string" },
+        "suggestion": { "type": "string" },
+        "category": { "$ref": "#/$defs/driftCategory" },
+        "fixable": { "type": "boolean" }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "required": ["score", "totalExports", "documentedExports", "missingByRule", "drift"],
+      "properties": {
+        "score": { "type": "number", "minimum": 0, "maximum": 100 },
+        "totalExports": { "type": "integer", "minimum": 0 },
+        "documentedExports": { "type": "integer", "minimum": 0 },
+        "missingByRule": {
+          "type": "object",
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        },
+        "drift": {
+          "type": "object",
+          "required": ["total", "fixable", "byCategory"],
+          "properties": {
+            "total": { "type": "integer", "minimum": 0 },
+            "fixable": { "type": "integer", "minimum": 0 },
+            "byCategory": {
+              "type": "object",
+              "additionalProperties": { "type": "integer", "minimum": 0 }
+            }
+          }
+        },
+        "examples": {
+          "type": "object",
+          "properties": {
+            "total": { "type": "integer", "minimum": 0 },
+            "withExamples": { "type": "integer", "minimum": 0 },
+            "typecheckPassed": { "type": "integer", "minimum": 0 },
+            "typecheckFailed": { "type": "integer", "minimum": 0 },
+            "runtimePassed": { "type": "integer", "minimum": 0 },
+            "runtimeFailed": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    },
+    "exampleTypecheckError": {
+      "type": "object",
+      "required": ["exampleIndex", "line", "column", "message"],
+      "properties": {
+        "exampleIndex": { "type": "integer", "minimum": 0 },
+        "line": { "type": "integer", "minimum": 0 },
+        "column": { "type": "integer", "minimum": 0 },
+        "message": { "type": "string" }
+      }
+    },
+    "exampleRuntimeDrift": {
+      "type": "object",
+      "required": ["exampleIndex", "issue"],
+      "properties": {
+        "exampleIndex": { "type": "integer", "minimum": 0 },
+        "issue": { "type": "string" },
+        "suggestion": { "type": "string" }
+      }
+    },
+    "exampleAnalysis": {
+      "type": "object",
+      "properties": {
+        "typecheckErrors": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/exampleTypecheckError" }
+        },
+        "runtimeDrifts": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/exampleRuntimeDrift" }
+        }
+      }
+    },
+    "exportAnalysis": {
+      "type": "object",
+      "required": ["coverageScore"],
+      "properties": {
+        "coverageScore": { "type": "number", "minimum": 0, "maximum": 100 },
+        "missing": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/missingDocRule" }
+        },
+        "drift": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/drift" }
+        },
+        "examples": { "$ref": "#/$defs/exampleAnalysis" }
+      }
+    }
+  }
+}

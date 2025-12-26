@@ -515,11 +515,11 @@ DocCov outputs the OpenPkg format - an open standard for TypeScript API specific
 - **Open**: Published JSON Schema
 - **Self-contained**: No external references
 - **Portable**: Tool-agnostic
-- **Versioned**: Currently v0.3.0
+- **Versioned**: Currently v0.4.0
 
 ### Schema Location
 
-`packages/spec/schemas/v0.3.0/openpkg.schema.json`
+`packages/spec/schemas/v0.4.0/openpkg.schema.json`
 
 ### Validation
 

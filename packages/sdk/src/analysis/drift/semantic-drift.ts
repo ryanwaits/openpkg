@@ -1,9 +1,10 @@
-import type { SpecDocDrift, SpecExport, SpecTag } from '@openpkg-ts/spec';
+import type { SpecExport, SpecTag } from '@openpkg-ts/spec';
 import type {
   CodeVisibility,
   DocVisibility,
   DocVisibilitySignal,
   ExportRegistry,
+  SpecDocDrift,
   SpecMemberWithVisibility,
 } from './types';
 import { extractTypeFromSchema, findClosestMatch } from './utils';

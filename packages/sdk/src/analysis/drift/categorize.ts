@@ -1,6 +1,5 @@
-import { DRIFT_CATEGORIES, type DriftCategory, type SpecDocDrift } from '@openpkg-ts/spec';
 import { isFixableDrift } from '../../fix';
-import type { CategorizedDrift, DriftSummary } from './types';
+import { DRIFT_CATEGORIES, type DriftCategory, type SpecDocDrift, type CategorizedDrift, type DriftSummary } from './types';
 
 /**
  * Categorize a single drift issue.

@@ -1,4 +1,4 @@
-import type { SpecDocDrift, SpecExport } from '@openpkg-ts/spec';
+import type { SpecExport } from '@openpkg-ts/spec';
 import type { OpenPkgSpec } from '../spec-types';
 import { detectExampleDrift, detectExampleSyntaxErrors } from './example-drift';
 import { detectOptionalityDrift, detectParamDrift, detectParamTypeDrift } from './param-drift';
@@ -13,7 +13,7 @@ import {
   detectPropertyTypeDrift,
   detectReturnTypeDrift,
 } from './type-drift';
-import type { DriftResult, ExportInfo, ExportRegistry } from './types';
+import type { DriftResult, ExportInfo, ExportRegistry, SpecDocDrift } from './types';
 
 /**
  * Build a registry of all export/type names for cross-reference validation.

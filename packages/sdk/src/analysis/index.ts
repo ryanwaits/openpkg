@@ -42,6 +42,12 @@ export {
   type EnrichOptions,
 } from './enrich';
 
+// Enriched diff (doccov-specific coverage tracking)
+export {
+  diffEnrichedSpec,
+  type EnrichedSpecDiff,
+} from './diff-enriched';
+
 // History and trends
 export {
   computeSnapshot,

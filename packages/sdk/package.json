@@ -47,7 +47,9 @@
     "dist"
   ],
   "dependencies": {
-    "@openpkg-ts/spec": "^0.11.0",
+    "@doccov/spec": "workspace:*",
+    "@openpkg-ts/extract": "workspace:*",
+    "@openpkg-ts/spec": "workspace:*",
     "@vercel/sandbox": "^1.0.3",
     "mdast": "^3.0.0",
     "minimatch": "^10.1.1",

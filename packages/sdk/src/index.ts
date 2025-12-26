@@ -32,11 +32,29 @@ export { enrichSpec } from './analysis/enrich';
 export type { EnrichedExport, EnrichedOpenPkg, EnrichOptions } from './analysis/enrich';
 
 // Drift detection (most commonly used)
-export { computeDrift, computeExportDrift, buildExportRegistry } from './analysis/docs-coverage';
-export type { DriftResult, CategorizedDrift, DriftSummary } from './analysis/docs-coverage';
+export {
+  computeDrift,
+  computeExportDrift,
+  buildExportRegistry,
+  DRIFT_CATEGORIES,
+  DRIFT_CATEGORY_LABELS,
+  DRIFT_CATEGORY_DESCRIPTIONS,
+} from './analysis/docs-coverage';
+export type {
+  DriftResult,
+  CategorizedDrift,
+  DriftSummary,
+  DriftType,
+  DriftCategory,
+  SpecDocDrift,
+} from './analysis/docs-coverage';
+
+// DocCov spec builder
+export { buildDocCovSpec } from './analysis/doccov-builder';
+export type { BuildDocCovOptions } from './analysis/doccov-builder';
 
 // Report generation
-export { generateReport } from './analysis/report';
+export { generateReport, renderApiSurface } from './analysis/report';
 
 // Spec types
 export type { OpenPkgSpec } from './analysis/spec-types';
@@ -144,10 +162,16 @@ export {
   formatDelta,
   renderSparkline,
   pruneHistory,
+  pruneByTier,
   HISTORY_DIR,
   RETENTION_DAYS,
 } from './analysis/history';
-export type { CoverageSnapshot, CoverageTrend, ExtendedTrendAnalysis } from './analysis/history';
+export type {
+  CoverageSnapshot,
+  CoverageTrend,
+  ExtendedTrendAnalysis,
+  RetentionTier,
+} from './analysis/history';
 
 // Cache (for advanced usage)
 export {

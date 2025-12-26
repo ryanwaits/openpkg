@@ -1,0 +1,185 @@
+import ts from 'typescript';
+import type { OpenPkg, SpecExport } from '@openpkg-ts/spec';
+import { SCHEMA_VERSION } from '@openpkg-ts/spec';
+import type { ExtractOptions, ExtractResult, Diagnostic } from '../types';
+import { createProgram } from '../compiler/program';
+import { createContext, type SerializerContext } from '../serializers/context';
+import { serializeFunctionExport } from '../serializers/functions';
+import { serializeClass } from '../serializers/classes';
+import { serializeInterface } from '../serializers/interfaces';
+import { serializeTypeAlias } from '../serializers/type-aliases';
+import { serializeEnum } from '../serializers/enums';
+import { serializeVariable } from '../serializers/variables';
+import * as path from 'node:path';
+import * as fs from 'node:fs';
+
+export async function extract(options: ExtractOptions): Promise<ExtractResult> {
+  const { entryFile, baseDir, content, maxTypeDepth, resolveExternalTypes } = options;
+
+  const diagnostics: Diagnostic[] = [];
+  const exports: SpecExport[] = [];
+
+  // Create program
+  const result = createProgram({ entryFile, baseDir, content });
+  const { program, sourceFile } = result;
+
+  if (!sourceFile) {
+    return {
+      spec: createEmptySpec(entryFile),
+      diagnostics: [{ message: `Could not load source file: ${entryFile}`, severity: 'error' }],
+    };
+  }
+
+  const ctx = createContext(program, sourceFile, { maxTypeDepth, resolveExternalTypes });
+  const typeChecker = program.getTypeChecker();
+
+  // Get module symbol and its exports (handles re-exports properly)
+  const moduleSymbol = typeChecker.getSymbolAtLocation(sourceFile);
+  if (!moduleSymbol) {
+    return {
+      spec: createEmptySpec(entryFile),
+      diagnostics: [{ message: 'Could not get module symbol', severity: 'warning' }],
+    };
+  }
+
+  const exportedSymbols = typeChecker.getExportsOfModule(moduleSymbol);
+
+  for (const symbol of exportedSymbols) {
+    try {
+      const { declaration, targetSymbol } = resolveExportTarget(symbol, typeChecker);
+      if (!declaration) continue;
+
+      const exportName = symbol.getName();
+      const exp = serializeDeclaration(declaration, targetSymbol, exportName, ctx);
+      if (exp) exports.push(exp);
+    } catch (err) {
+      diagnostics.push({
+        message: `Failed to serialize ${symbol.getName()}: ${err}`,
+        severity: 'warning',
+      });
+    }
+  }
+
+  // Get package metadata
+  const meta = await getPackageMeta(entryFile, baseDir);
+
+  const spec: OpenPkg = {
+    openpkg: SCHEMA_VERSION,
+    meta,
+    exports,
+    types: ctx.typeRegistry.getAll(),
+    generation: {
+      generator: '@openpkg-ts/extract',
+      timestamp: new Date().toISOString(),
+    },
+  };
+
+  return { spec, diagnostics };
+}
+
+/**
+ * Follows export aliases back to the declaration that carries the type info.
+ */
+function resolveExportTarget(
+  symbol: ts.Symbol,
+  checker: ts.TypeChecker,
+): { declaration?: ts.Declaration; targetSymbol: ts.Symbol } {
+  let targetSymbol = symbol;
+
+  // Use getAliasedSymbol to follow the full alias chain (handles re-exports)
+  if (symbol.flags & ts.SymbolFlags.Alias) {
+    const aliasTarget = checker.getAliasedSymbol(symbol);
+    if (aliasTarget && aliasTarget !== symbol) {
+      targetSymbol = aliasTarget;
+    }
+  }
+
+  const declarations = targetSymbol.declarations ?? [];
+  const declaration =
+    targetSymbol.valueDeclaration ||
+    declarations.find((decl) => decl.kind !== ts.SyntaxKind.ExportSpecifier) ||
+    declarations[0];
+
+  return { declaration, targetSymbol };
+}
+
+function serializeDeclaration(
+  declaration: ts.Declaration,
+  symbol: ts.Symbol,
+  exportName: string,
+  ctx: SerializerContext,
+): SpecExport | null {
+  let result: SpecExport | null = null;
+
+  if (ts.isFunctionDeclaration(declaration)) {
+    result = serializeFunctionExport(declaration, ctx);
+  } else if (ts.isClassDeclaration(declaration)) {
+    result = serializeClass(declaration, ctx);
+  } else if (ts.isInterfaceDeclaration(declaration)) {
+    result = serializeInterface(declaration, ctx);
+  } else if (ts.isTypeAliasDeclaration(declaration)) {
+    result = serializeTypeAlias(declaration, ctx);
+  } else if (ts.isEnumDeclaration(declaration)) {
+    result = serializeEnum(declaration, ctx);
+  } else if (ts.isVariableDeclaration(declaration)) {
+    // Find the parent variable statement for JSDoc
+    const varStatement = declaration.parent?.parent as ts.VariableStatement | undefined;
+    if (varStatement && ts.isVariableStatement(varStatement)) {
+      result = serializeVariable(declaration, varStatement, ctx);
+    }
+  }
+
+  // Apply export name (handles re-exports with different names)
+  if (result) {
+    result = withExportName(result, exportName);
+  }
+
+  return result;
+}
+
+/**
+ * Rewrite entry to use the public export name when re-exported.
+ */
+function withExportName(entry: SpecExport, exportName: string): SpecExport {
+  if (entry.name === exportName) {
+    return entry;
+  }
+  // Keep original name in the entry but use exportName as id
+  return {
+    ...entry,
+    id: exportName,
+    name: entry.name, // Original declaration name
+  };
+}
+
+function createEmptySpec(entryFile: string): OpenPkg {
+  return {
+    openpkg: SCHEMA_VERSION,
+    meta: { name: path.basename(entryFile, path.extname(entryFile)) },
+    exports: [],
+    generation: {
+      generator: '@openpkg-ts/extract',
+      timestamp: new Date().toISOString(),
+    },
+  };
+}
+
+async function getPackageMeta(entryFile: string, baseDir?: string): Promise<{ name: string; version?: string; description?: string }> {
+  const searchDir = baseDir ?? path.dirname(entryFile);
+  const pkgPath = path.join(searchDir, 'package.json');
+
+  try {
+    if (fs.existsSync(pkgPath)) {
+      const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
+      return {
+        name: pkg.name ?? path.basename(searchDir),
+        version: pkg.version,
+        description: pkg.description,
+      };
+    }
+  } catch {
+    // Ignore errors
+  }
+
+  return { name: path.basename(searchDir) };
+}

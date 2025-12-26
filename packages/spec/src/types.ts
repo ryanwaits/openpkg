@@ -1,13 +1,6 @@
 export type SpecTag = {
   name: string;
   text: string;
-  // Structured fields for known JSDoc tags
-  paramName?: string;
-  typeAnnotation?: string;
-  reference?: string;
-  language?: string;
-  version?: string;
-  reason?: string;
 };
 
 // Priority 2: Type alias structural representation
@@ -110,114 +103,26 @@ export type SpecExample = {
   title?: string;
   description?: string;
   language?: SpecExampleLanguage;
-  runnable?: boolean;
-  expectedOutput?: string;
-  tags?: string[];
-};
-
-// Priority 3: Related exports linking
-export type SpecRelationType =
-  | 'uses'
-  | 'returns'
-  | 'implements'
-  | 'extends'
-  | 'see-also'
-  | 'companion';
-
-export type SpecRelation = {
-  type: SpecRelationType;
-  target: string;
-  description?: string;
 };
 
 export type SpecExtension = Record<string, unknown>;
 
-/**
- * All possible drift type identifiers.
- */
-export type DriftType =
-  | 'param-mismatch'
-  | 'param-type-mismatch'
-  | 'return-type-mismatch'
-  | 'generic-constraint-mismatch'
-  | 'optionality-mismatch'
-  | 'deprecated-mismatch'
-  | 'visibility-mismatch'
-  | 'async-mismatch'
-  | 'property-type-drift'
-  | 'example-drift'
-  | 'example-syntax-error'
-  | 'example-runtime-error'
-  | 'example-assertion-failed'
-  | 'broken-link';
-
-export type SpecDocDrift = {
-  type: DriftType;
-  target?: string;
-  issue: string;
-  suggestion?: string;
+/** Presentation metadata for an export/type (moved from inline fields) */
+export type SpecPresentationMeta = {
+  slug?: string;
+  displayName?: string;
+  category?: string;
+  importPath?: string;
+  alias?: string;
 };
 
-/**
- * Drift categories group related drift types for progressive disclosure.
- *
- * - `structural`: Signature/type mismatches (mostly auto-fixable via JSDoc)
- * - `semantic`: Metadata/visibility/reference issues
- * - `example`: Code example problems
- */
-export type DriftCategory = 'structural' | 'semantic' | 'example';
-
-/**
- * Maps each drift type to its category.
- */
-export const DRIFT_CATEGORIES: Record<DriftType, DriftCategory> = {
-  // Structural: signature/type mismatches (auto-fixable via JSDoc)
-  'param-mismatch': 'structural',
-  'param-type-mismatch': 'structural',
-  'return-type-mismatch': 'structural',
-  'optionality-mismatch': 'structural',
-  'generic-constraint-mismatch': 'structural',
-  'property-type-drift': 'structural',
-  'async-mismatch': 'structural',
-
-  // Semantic: metadata/visibility mismatches
-  'deprecated-mismatch': 'semantic',
-  'visibility-mismatch': 'semantic',
-  'broken-link': 'semantic',
-
-  // Example: code example issues
-  'example-drift': 'example',
-  'example-syntax-error': 'example',
-  'example-runtime-error': 'example',
-  'example-assertion-failed': 'example',
-};
-
-/**
- * Human-readable category labels.
- */
-export const DRIFT_CATEGORY_LABELS: Record<DriftCategory, string> = {
-  structural: 'Signature mismatches',
-  semantic: 'Metadata issues',
-  example: 'Example problems',
-};
-
-/**
- * Category descriptions for help text.
- */
-export const DRIFT_CATEGORY_DESCRIPTIONS: Record<DriftCategory, string> = {
-  structural: "JSDoc types or parameters don't match the actual code signature",
-  semantic: 'Deprecation, visibility, or reference issues',
-  example: "@example code has errors or doesn't work correctly",
+/** Extensions structure with typed presentation field */
+export type SpecExtensions = {
+  presentation?: Record<string, SpecPresentationMeta>;
+  [key: string]: unknown;
 };
 
 export type SpecVisibility = 'public' | 'protected' | 'private';
-
-export type SpecDocsMetadata = {
-  coverageScore?: number;
-  /** Rule IDs that failed quality checks */
-  missing?: string[];
-  drift?: SpecDocDrift[];
-};
 
 export type SpecTypeParameter = {
   name: string;
@@ -280,11 +185,6 @@ export type SpecTypeKind = 'class' | 'interface' | 'type' | 'enum' | 'external';
 export type SpecExport = {
   id: string;
   name: string;
-  slug?: string;
-  displayName?: string;
-  alias?: string;
-  category?: string;
-  importPath?: string;
   kind: SpecExportKind;
   signatures?: SpecSignature[];
   typeParameters?: SpecTypeParameter[];
@@ -299,27 +199,15 @@ export type SpecExport = {
   tags?: SpecTag[];
   extends?: string;
   implements?: string[];
-  // Priority 2: Type alias structural fields
   typeAliasKind?: SpecTypeAliasKind;
   conditionalType?: SpecConditionalType;
   mappedType?: SpecMappedType;
-  // Priority 2: Decorators
   decorators?: SpecDecorator[];
-  // Priority 2: Module augmentation
-  isAugmentation?: boolean;
-  augmentedModule?: string;
-  // Priority 3: Related exports linking
-  related?: SpecRelation[];
 };
 
 export type SpecType = {
   id: string;
   name: string;
-  slug?: string;
-  displayName?: string;
-  alias?: string;
-  category?: string;
-  importPath?: string;
   kind: SpecTypeKind;
   description?: string;
   schema?: SpecSchema;
@@ -330,12 +218,9 @@ export type SpecType = {
   rawComments?: string;
   extends?: string;
   implements?: string[];
-  // Priority 2: Type alias structural fields
   typeAliasKind?: SpecTypeAliasKind;
   conditionalType?: SpecConditionalType;
   mappedType?: SpecMappedType;
-  // Priority 3: Related exports linking
-  related?: SpecRelation[];
 };
 
 export type OpenPkgMeta = {
@@ -441,7 +326,13 @@ export type SpecGenerationInfo = {
 };
 
 /** Supported OpenPkg spec versions */
-export type OpenPkgVersion = '0.2.0' | '0.3.0';
+export type OpenPkgVersion = '0.2.0' | '0.3.0' | '0.4.0';
+
+/** Minimal generation metadata for v0.4.0 */
+export type SpecGenerationMeta = {
+  generator?: string;
+  timestamp?: string;
+};
 
 export type OpenPkg = {
   $schema?: string;
@@ -450,7 +341,7 @@ export type OpenPkg = {
   exports: SpecExport[];
   types?: SpecType[];
   examples?: SpecExample[];
-  extensions?: SpecExtension;
-  /** Required metadata about how this spec was generated */
-  generation: SpecGenerationInfo;
+  extensions?: SpecExtensions;
+  /** Optional generation metadata (minimal in v0.4.0) */
+  generation?: SpecGenerationMeta | SpecGenerationInfo;
 };

@@ -8,14 +8,17 @@ Documentation coverage and drift detection for TypeScript.
 |---------|-------------|-----|
 | `@doccov/cli` | Command-line interface | [![npm](https://img.shields.io/npm/v/@doccov/cli)](https://npmjs.com/package/@doccov/cli) |
 | `@doccov/sdk` | Programmatic API | [![npm](https://img.shields.io/npm/v/@doccov/sdk)](https://npmjs.com/package/@doccov/sdk) |
-| `@openpkg-ts/spec` | Schema, types, validation | [![npm](https://img.shields.io/npm/v/@openpkg-ts/spec)](https://npmjs.com/package/@openpkg-ts/spec) |
+| `@doccov/spec` | DocCov schema, drift types | [![npm](https://img.shields.io/npm/v/@doccov/spec)](https://npmjs.com/package/@doccov/spec) |
+| `@openpkg-ts/spec` | OpenPkg schema, types, validation | [![npm](https://img.shields.io/npm/v/@openpkg-ts/spec)](https://npmjs.com/package/@openpkg-ts/spec) |
+| `@openpkg-ts/extract` | TypeScript extraction CLI (`tspec`) | [![npm](https://img.shields.io/npm/v/@openpkg-ts/extract)](https://npmjs.com/package/@openpkg-ts/extract) |
 
 ## Naming Convention
 
 | Name | Usage | Examples |
 |------|-------|----------|
-| **DocCov** | Product name, CLI tool | `@doccov/cli`, `doccov.yml` |
-| **OpenPkg** | Specification format | `openpkg.json` output |
+| **DocCov** | Product name, coverage analysis | `@doccov/cli`, `doccov.json` |
+| **OpenPkg** | TypeScript API spec format | `openpkg.json`, `@openpkg-ts/spec` |
+| **tspec** | Standalone TS extraction CLI | `tspec src/index.ts -o openpkg.json` |
 
 ## CLI Reference
 
@@ -29,6 +32,11 @@ Documentation coverage and drift detection for TypeScript.
   - [info](./cli/commands/info.md) - Quick summary
   - [init](./cli/commands/init.md) - Create config
   - [trends](./cli/commands/trends.md) - Track history
+- [tspec CLI](./cli/tspec.md) - Standalone TypeScript extraction
+
+## Architecture
+
+- [OpenPkg & DocCov Separation](./architecture/openpkg-doccov-separation.md) - Two-spec architecture
 
 ## SDK Reference
 

@@ -1,8 +1,12 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import type { EnrichedExport, MarkdownDocFile } from '@doccov/sdk';
-import { parseMarkdownFiles } from '@doccov/sdk';
-import { DRIFT_CATEGORIES, type SpecDocDrift } from '@openpkg-ts/spec';
+import {
+  DRIFT_CATEGORIES,
+  parseMarkdownFiles,
+  type EnrichedExport,
+  type MarkdownDocFile,
+  type SpecDocDrift,
+} from '@doccov/sdk';
 import { glob } from 'glob';
 import type { CollectedDrift } from './types';
 

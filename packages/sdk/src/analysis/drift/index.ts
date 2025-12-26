@@ -1,4 +1,13 @@
-// Types
+// Drift types and constants (doccov-specific, moved from @openpkg-ts/spec v0.4.0)
+export {
+  DRIFT_CATEGORIES,
+  DRIFT_CATEGORY_LABELS,
+  DRIFT_CATEGORY_DESCRIPTIONS,
+  type DriftType,
+  type SpecDocDrift,
+  type DriftCategory,
+  type SpecDocsMetadata,
+} from './types';
 
 // Categorization utilities
 export {

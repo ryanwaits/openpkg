@@ -1,11 +1,4 @@
-import type { OpenPkg, SpecDocsMetadata, SpecExport, SpecExportKind } from './types';
-
-/**
- * Export with optional docs metadata for diff comparison.
- * Pure OpenPkg specs won't have docs; enriched specs will.
- */
-type ExportWithDocs = SpecExport & { docs?: SpecDocsMetadata };
-type SpecWithDocs = OpenPkg & { docs?: SpecDocsMetadata; exports: ExportWithDocs[] };
+import type { OpenPkg, SpecExport, SpecExportKind } from './types';
 
 export type BreakingSeverity = 'high' | 'medium' | 'low';
 
@@ -26,91 +19,29 @@ export interface MemberChangeInfo {
 }
 
 export type SpecDiff = {
-  // Structural changes
   breaking: string[];
   nonBreaking: string[];
   docsOnly: string[];
-  // Coverage delta
-  coverageDelta: number;
-  oldCoverage: number;
-  newCoverage: number;
-  // Docs health changes
-  newUndocumented: string[];
-  improvedExports: string[];
-  regressedExports: string[];
-  driftIntroduced: number;
-  driftResolved: number;
 };
 
 /**
  * Compare two OpenPkg specs and compute differences.
- * If specs are enriched (have docs metadata), coverage changes are tracked.
- * For pure structural specs, coverage fields will be 0.
  */
-export function diffSpec(oldSpec: SpecWithDocs, newSpec: SpecWithDocs): SpecDiff {
+export function diffSpec(oldSpec: OpenPkg, newSpec: OpenPkg): SpecDiff {
   const result: SpecDiff = {
     breaking: [],
     nonBreaking: [],
     docsOnly: [],
-    coverageDelta: 0,
-    oldCoverage: 0,
-    newCoverage: 0,
-    newUndocumented: [],
-    improvedExports: [],
-    regressedExports: [],
-    driftIntroduced: 0,
-    driftResolved: 0,
   };
 
   diffCollections(result, oldSpec.exports, newSpec.exports);
   diffCollections(result, oldSpec.types ?? [], newSpec.types ?? []);
 
-  // Calculate coverage delta
-  result.oldCoverage = oldSpec.docs?.coverageScore ?? 0;
-  result.newCoverage = newSpec.docs?.coverageScore ?? 0;
-  result.coverageDelta = Math.round((result.newCoverage - result.oldCoverage) * 10) / 10;
-
-  // Analyze docs health changes
-  const oldExportMap = toExportMap(oldSpec.exports);
-  const newExportMap = toExportMap(newSpec.exports);
-
-  for (const [id, newExport] of newExportMap.entries()) {
-    const oldExport = oldExportMap.get(id);
-    const newScore = newExport.docs?.coverageScore ?? 0;
-    const newDriftCount = newExport.docs?.drift?.length ?? 0;
-
-    if (!oldExport) {
-      // New export - check if undocumented
-      if (newScore < 100 || (newExport.docs?.missing?.length ?? 0) > 0) {
-        result.newUndocumented.push(id);
-      }
-      result.driftIntroduced += newDriftCount;
-      continue;
-    }
-
-    const oldScore = oldExport.docs?.coverageScore ?? 0;
-    const oldDriftCount = oldExport.docs?.drift?.length ?? 0;
-
-    // Track coverage changes per export
-    if (newScore > oldScore) {
-      result.improvedExports.push(id);
-    } else if (newScore < oldScore) {
-      result.regressedExports.push(id);
-    }
-
-    // Track drift changes
-    if (newDriftCount > oldDriftCount) {
-      result.driftIntroduced += newDriftCount - oldDriftCount;
-    } else if (oldDriftCount > newDriftCount) {
-      result.driftResolved += oldDriftCount - newDriftCount;
-    }
-  }
-
   return result;
 }
 
-function toExportMap(exports: ExportWithDocs[]): Map<string, ExportWithDocs> {
-  const map = new Map<string, ExportWithDocs>();
+function toExportMap(exports: SpecExport[]): Map<string, SpecExport> {
+  const map = new Map<string, SpecExport>();
   for (const exp of exports) {
     if (exp && typeof exp.id === 'string') {
       map.set(exp.id, exp);
@@ -165,30 +96,14 @@ function toMap<T extends WithId>(items: T[]): Map<string, T> {
 }
 
 /**
- * Keys that are considered documentation/presentation only.
- * Changes to these fields are classified as docsOnly, not breaking.
+ * Keys considered documentation-only. Changes to these are non-breaking.
  */
 const DOC_KEYS = new Set([
-  // Core documentation
   'description',
   'examples',
   'tags',
   'rawComments',
-
-  // Source info (doesn't affect API)
   'source',
-
-  // Presentation/metadata
-  'docs',
-  'displayName',
-  'slug',
-  'importPath',
-  'category',
-
-  // Coverage metadata
-  'coverageScore',
-  'missing',
-  'drift',
 ]);
 
 function isDocOnlyChange(a: unknown, b: unknown): boolean {
@@ -250,17 +165,11 @@ function sortKeys(value: unknown): unknown {
 
 /**
  * Categorize breaking changes by severity
- *
- * @param breaking - Array of breaking change IDs
- * @param oldSpec - Previous spec version
- * @param newSpec - Current spec version
- * @param memberChanges - Optional member-level changes for classes
- * @returns Categorized breaking changes sorted by severity (high first)
  */
 export function categorizeBreakingChanges(
   breaking: string[],
-  oldSpec: SpecWithDocs,
-  newSpec: SpecWithDocs,
+  oldSpec: OpenPkg,
+  newSpec: OpenPkg,
   memberChanges?: MemberChangeInfo[],
 ): CategorizedBreaking[] {
   const oldExportMap = toExportMap(oldSpec.exports);

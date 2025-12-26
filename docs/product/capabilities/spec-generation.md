@@ -1,6 +1,6 @@
 # Spec Generation (OpenPkg)
 
-> Last updated: 2024-12-08
+> Last updated: 2024-12-26
 
 Deep dive into DocCov's OpenPkg specification generation.
 
@@ -8,19 +8,31 @@ Deep dive into DocCov's OpenPkg specification generation.
 
 ## Overview
 
-DocCov generates structured specifications in the **OpenPkg** format - an open standard for TypeScript API documentation.
+DocCov uses two separate specifications:
 
-OpenPkg is a **pure structural format** - it captures what your package exports without quality metrics. Coverage scoring and drift detection are separate concerns handled by DocCov's analysis layer.
+| Spec | Format | Purpose |
+|------|--------|---------|
+| **OpenPkg** | `openpkg.json` | Pure TypeScript API structure |
+| **DocCov** | `doccov.json` | Coverage analysis & drift detection |
+
+OpenPkg is a **pure structural format** - it captures what your package exports without quality metrics. The DocCov spec references OpenPkg and adds coverage scoring, missing doc rules, and drift analysis.
+
+### Extraction Tools
+
+| Tool | Package | Use Case |
+|------|---------|----------|
+| `doccov spec` | `@doccov/cli` | Within DocCov workflow |
+| `tspec` | `@openpkg-ts/extract` | Standalone extraction |
 
 ---
 
 ## OpenPkg Format
 
 ### Version
-Current: `0.3.0`
+Current: `0.4.0`
 
 ### Schema
-JSON Schema published at: `packages/spec/schemas/v0.3.0/openpkg.schema.json`
+JSON Schema published at: `packages/spec/schemas/v0.4.0/openpkg.schema.json`
 
 ### Structure
 
@@ -29,16 +41,17 @@ OpenPkg is a pure structural format:
 ```typescript
 interface OpenPkg {
   $schema?: string;           // Schema reference
-  openpkg: string;            // Version (e.g., "0.3.0")
+  openpkg: string;            // Version (e.g., "0.4.0")
   meta: OpenPkgMeta;          // Package metadata
   exports: SpecExport[];      // Public exports
   types?: SpecType[];         // Supporting type definitions
   examples?: SpecExample[];   // Global examples
-  extensions?: SpecExtension; // Custom extensions
+  extensions?: SpecExtensions; // Custom extensions
+  generation?: SpecGenerationMeta; // Generator info
 }
 ```
 
-> **Note**: Coverage data (`docs.coverageScore`, `docs.missing`, `docs.drift`) is computed by DocCov using `enrichSpec()` and is not part of the OpenPkg schema.
+> **Note**: Coverage data is stored in a separate `doccov.json` file using the DocCov spec (`@doccov/spec`), not in OpenPkg.
 
 ---
 
@@ -73,8 +86,11 @@ interface OpenPkg {
 ### Generate Pure OpenPkg Spec
 
 ```bash
-# Generate structural API spec
+# Using doccov
 doccov spec -o openpkg.json
+
+# Using standalone tspec
+tspec -o openpkg.json
 
 # With filtering
 doccov spec --include "Client*" --exclude "*Internal"
@@ -84,8 +100,8 @@ The output is a pure structural specification:
 
 ```json
 {
-  "$schema": "https://openpkg.dev/schemas/v0.3.0/openpkg.schema.json",
-  "openpkg": "0.3.0",
+  "$schema": "https://openpkg.dev/schemas/v0.4.0/openpkg.schema.json",
+  "openpkg": "0.4.0",
   "meta": {
     "name": "my-package",
     "version": "1.0.0",
@@ -99,7 +115,11 @@ The output is a pure structural specification:
       "description": "Creates a new user",
       "signatures": [...]
     }
-  ]
+  ],
+  "generation": {
+    "generator": "@doccov/cli@0.21.0",
+    "timestamp": "2024-12-26T10:00:00Z"
+  }
 }
 ```
 
@@ -139,16 +159,32 @@ console.log(enriched.exports[0].docs?.missing); // ['examples']
 
 ---
 
-## OpenPkg vs Enriched Spec
+## OpenPkg vs DocCov Spec
 
-| Aspect | OpenPkg (Pure) | EnrichedOpenPkg |
-|--------|----------------|-----------------|
+| Aspect | OpenPkg (`openpkg.json`) | DocCov (`doccov.json`) |
+|--------|--------------------------|------------------------|
 | Purpose | Structural API description | Quality analysis |
-| Output by | `doccov spec` | `enrichSpec()` or `doccov check --format json` |
+| Output by | `doccov spec` or `tspec` | `doccov check --format json` |
 | Coverage scores | No | Yes |
-| Missing signals | No | Yes |
+| Missing doc rules | No | Yes |
 | Drift detection | No | Yes |
-| Portability | Open standard, any tool | DocCov-specific |
+| Portability | Open standard, tool-agnostic | DocCov-specific |
+| Package | `@openpkg-ts/spec` | `@doccov/spec` |
+
+### DocCov Spec Structure
+
+```typescript
+interface DocCovSpec {
+  doccov: '0.1.0';
+  source: {
+    file: string;           // References openpkg.json
+    specVersion: string;    // OpenPkg version used
+    packageName: string;
+  };
+  summary: DocCovSummary;   // Aggregate scores
+  exports: Record<string, ExportAnalysis>;
+}
+```
 
 ---
 

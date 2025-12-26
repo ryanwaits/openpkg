@@ -1,10 +1,11 @@
-import type { OpenPkg, SpecDocDrift, SpecDocsMetadata, SpecExport } from '@openpkg-ts/spec';
+import type { OpenPkg, SpecExport } from '@openpkg-ts/spec';
 import {
   buildExportRegistry,
   computeExportDrift,
   type DriftSummary,
   getDriftSummary,
 } from './docs-coverage';
+import type { SpecDocDrift, SpecDocsMetadata } from './drift/types';
 
 /**
  * An enriched export with computed documentation metadata.

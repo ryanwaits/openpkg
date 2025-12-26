@@ -1,11 +1,12 @@
-import { type EnrichedOpenPkg, isFixableDrift } from '@doccov/sdk';
 import {
   DRIFT_CATEGORIES,
+  isFixableDrift,
   type DriftCategory,
   type DriftType,
+  type EnrichedOpenPkg,
   type SpecDocDrift,
-  type SpecExportKind,
-} from '@openpkg-ts/spec';
+} from '@doccov/sdk';
+import type { SpecExportKind } from '@openpkg-ts/spec';
 
 export type SignalStats = { covered: number; total: number; pct: number };
 

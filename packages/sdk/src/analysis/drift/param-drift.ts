@@ -1,5 +1,5 @@
-import type { SpecDocDrift, SpecExport } from '@openpkg-ts/spec';
-import type { ParsedParamTag } from './types';
+import type { SpecExport } from '@openpkg-ts/spec';
+import type { ParsedParamTag, SpecDocDrift } from './types';
 import {
   buildParamTypeMismatchIssue,
   extractParamFromTag,

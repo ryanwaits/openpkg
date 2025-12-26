@@ -3,7 +3,10 @@
   "changelog": "@changesets/cli/changelog",
   "commit": false,
   "fixed": [],
-  "linked": [["@doccov/sdk", "@doccov/cli"]],
+  "linked": [
+    ["@doccov/sdk", "@doccov/cli", "@doccov/spec"],
+    ["@openpkg-ts/spec", "@openpkg-ts/extract"]
+  ],
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",

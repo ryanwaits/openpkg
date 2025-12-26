@@ -1,0 +1,164 @@
+// ============================================================================
+// Drift Types
+// ============================================================================
+
+export type DriftType =
+  | 'param-mismatch'
+  | 'param-type-mismatch'
+  | 'return-type-mismatch'
+  | 'generic-constraint-mismatch'
+  | 'optionality-mismatch'
+  | 'deprecated-mismatch'
+  | 'visibility-mismatch'
+  | 'async-mismatch'
+  | 'property-type-drift'
+  | 'example-drift'
+  | 'example-syntax-error'
+  | 'example-runtime-error'
+  | 'example-assertion-failed'
+  | 'broken-link';
+
+export type DriftCategory = 'structural' | 'semantic' | 'example';
+
+export const DRIFT_CATEGORIES: Record<DriftType, DriftCategory> = {
+  'param-mismatch': 'structural',
+  'param-type-mismatch': 'structural',
+  'return-type-mismatch': 'structural',
+  'optionality-mismatch': 'structural',
+  'generic-constraint-mismatch': 'structural',
+  'property-type-drift': 'structural',
+  'async-mismatch': 'structural',
+  'deprecated-mismatch': 'semantic',
+  'visibility-mismatch': 'semantic',
+  'broken-link': 'semantic',
+  'example-drift': 'example',
+  'example-syntax-error': 'example',
+  'example-runtime-error': 'example',
+  'example-assertion-failed': 'example',
+};
+
+export const DRIFT_CATEGORY_LABELS: Record<DriftCategory, string> = {
+  structural: 'Signature mismatches',
+  semantic: 'Metadata issues',
+  example: 'Example problems',
+};
+
+export const DRIFT_CATEGORY_DESCRIPTIONS: Record<DriftCategory, string> = {
+  structural: "JSDoc types or parameters don't match the actual code signature",
+  semantic: 'Deprecation, visibility, or reference issues',
+  example: "@example code has errors or doesn't work correctly",
+};
+
+export type DocCovDrift = {
+  type: DriftType;
+  target?: string;
+  issue: string;
+  suggestion?: string;
+  category: DriftCategory;
+  fixable: boolean;
+};
+
+// ============================================================================
+// Example Validation Types
+// ============================================================================
+
+export type ExampleTypecheckError = {
+  exampleIndex: number;
+  line: number;
+  column: number;
+  message: string;
+};
+
+export type ExampleRuntimeDrift = {
+  exampleIndex: number;
+  issue: string;
+  suggestion?: string;
+};
+
+export type ExampleAnalysis = {
+  typecheckErrors?: ExampleTypecheckError[];
+  runtimeDrifts?: ExampleRuntimeDrift[];
+};
+
+// ============================================================================
+// Coverage Types
+// ============================================================================
+
+export type MissingDocRule =
+  | 'description'
+  | 'params'
+  | 'returns'
+  | 'examples'
+  | 'throws';
+
+// ============================================================================
+// DocCov Spec (doccov.json schema)
+// ============================================================================
+
+export type DocCovSpecVersion = '0.1.0';
+
+export type DocCovSpec = {
+  $schema?: string;
+  doccov: DocCovSpecVersion;
+
+  /** Reference to source openpkg spec */
+  source: {
+    file: string;
+    specVersion: string;
+    packageName: string;
+    packageVersion?: string;
+  };
+
+  generatedAt: string;
+
+  /** Aggregate coverage summary */
+  summary: DocCovSummary;
+
+  /** Per-export analysis, keyed by openpkg export ID */
+  exports: Record<string, ExportAnalysis>;
+};
+
+export type DocCovSummary = {
+  /** Overall coverage score (0-100) */
+  score: number;
+
+  /** Total exports analyzed */
+  totalExports: number;
+
+  /** Exports with complete documentation */
+  documentedExports: number;
+
+  /** Missing documentation by rule */
+  missingByRule: Record<MissingDocRule, number>;
+
+  /** Drift summary */
+  drift: {
+    total: number;
+    fixable: number;
+    byCategory: Record<DriftCategory, number>;
+  };
+
+  /** Example validation summary (if run) */
+  examples?: {
+    total: number;
+    withExamples: number;
+    typecheckPassed?: number;
+    typecheckFailed?: number;
+    runtimePassed?: number;
+    runtimeFailed?: number;
+  };
+};
+
+export type ExportAnalysis = {
+  /** Coverage score for this export (0-100) */
+  coverageScore: number;
+
+  /** Missing documentation rules */
+  missing?: MissingDocRule[];
+
+  /** Drift issues */
+  drift?: DocCovDrift[];
+
+  /** Example validation results */
+  examples?: ExampleAnalysis;
+};

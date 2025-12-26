@@ -8,6 +8,7 @@ import {
   diffSpec,
   recommendSemverBump,
 } from '@openpkg-ts/spec';
+import { diffEnrichedSpec } from '../src/analysis/diff-enriched';
 import { createDrift, createEnrichedSpec, createExport, createSpec } from './test-helpers';
 
 describe('diffSpec', () => {
@@ -126,7 +127,7 @@ describe('diffSpec', () => {
       const oldSpec = createEnrichedSpec({ coverageScore: 50 });
       const newSpec = createEnrichedSpec({ coverageScore: 75 });
 
-      const diff = diffSpec(oldSpec, newSpec);
+      const diff = diffEnrichedSpec(oldSpec as any, newSpec as any);
 
       expect(diff.oldCoverage).toBe(50);
       expect(diff.newCoverage).toBe(75);
@@ -137,7 +138,7 @@ describe('diffSpec', () => {
       const oldSpec = createEnrichedSpec({ coverageScore: 80 });
       const newSpec = createEnrichedSpec({ coverageScore: 60 });
 
-      const diff = diffSpec(oldSpec, newSpec);
+      const diff = diffEnrichedSpec(oldSpec as any, newSpec as any);
 
       expect(diff.coverageDelta).toBe(-20);
     });
@@ -146,7 +147,7 @@ describe('diffSpec', () => {
       const oldSpec = createSpec({ exports: [] });
       const newSpec = createSpec({ exports: [] });
 
-      const diff = diffSpec(oldSpec as any, newSpec as any);
+      const diff = diffEnrichedSpec(oldSpec as any, newSpec as any);
 
       expect(diff.oldCoverage).toBe(0);
       expect(diff.newCoverage).toBe(0);
@@ -165,7 +166,7 @@ describe('diffSpec', () => {
         ],
       });
 
-      const diff = diffSpec(oldSpec, newSpec);
+      const diff = diffEnrichedSpec(oldSpec as any, newSpec as any);
 
       expect(diff.newUndocumented).toContain('foo');
     });
@@ -185,7 +186,7 @@ describe('diffSpec', () => {
         ],
       });
 
-      const diff = diffSpec(oldSpec, newSpec);
+      const diff = diffEnrichedSpec(oldSpec as any, newSpec as any);
 
       expect(diff.driftIntroduced).toBe(1);
     });
@@ -203,7 +204,7 @@ describe('diffSpec', () => {
         exports: [{ ...createExport({ name: 'foo' }), docs: { coverageScore: 100 } } as any],
       });
 
-      const diff = diffSpec(oldSpec, newSpec);
+      const diff = diffEnrichedSpec(oldSpec as any, newSpec as any);
 
       expect(diff.driftResolved).toBe(2);
     });
@@ -218,7 +219,7 @@ describe('diffSpec', () => {
         exports: [{ ...createExport({ name: 'foo' }), docs: { coverageScore: 100 } } as any],
       });
 
-      const diff = diffSpec(oldSpec, newSpec);
+      const diff = diffEnrichedSpec(oldSpec as any, newSpec as any);
 
       expect(diff.improvedExports).toContain('foo');
     });
@@ -231,7 +232,7 @@ describe('diffSpec', () => {
         exports: [{ ...createExport({ name: 'foo' }), docs: { coverageScore: 50 } } as any],
       });
 
-      const diff = diffSpec(oldSpec, newSpec);
+      const diff = diffEnrichedSpec(oldSpec as any, newSpec as any);
 
       expect(diff.regressedExports).toContain('foo');
     });

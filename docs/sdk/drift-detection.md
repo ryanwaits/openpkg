@@ -2,6 +2,8 @@
 
 Detect discrepancies between documentation and actual code.
 
+> **Types:** Drift types are defined in `@doccov/spec`
+
 ## Drift Types
 
 | Type | Category | Description |
@@ -62,14 +64,17 @@ const summary = getDriftSummary(drifts);
 // summary.fixable: number
 ```
 
-## SpecDocDrift Type
+## DocCovDrift Type
 
 ```typescript
-interface SpecDocDrift {
+// From @doccov/spec
+interface DocCovDrift {
   type: DriftType;
   target?: string;      // e.g., param name
   issue: string;        // Human-readable description
   suggestion?: string;  // Fix suggestion
+  category: DriftCategory;  // structural | semantic | example
+  fixable: boolean;     // Can be auto-fixed
 }
 ```
 

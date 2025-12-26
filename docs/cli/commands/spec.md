@@ -2,6 +2,8 @@
 
 Generate OpenPkg specification from TypeScript source.
 
+> **Note:** For standalone extraction without DocCov, use [`tspec`](../tspec.md).
+
 ## Usage
 
 ```bash
@@ -66,8 +68,8 @@ OpenPkg spec with:
 
 ```json
 {
-  "$schema": "https://openpkg.dev/schemas/v0.3.0/openpkg.schema.json",
-  "openpkg": "0.3.0",
+  "$schema": "https://openpkg.dev/schemas/v0.4.0/openpkg.schema.json",
+  "openpkg": "0.4.0",
   "meta": {
     "name": "@myorg/core",
     "version": "1.0.0"
@@ -75,13 +77,8 @@ OpenPkg spec with:
   "exports": [...],
   "types": [...],
   "generation": {
-    "timestamp": "2024-01-15T10:00:00Z",
-    "generator": { "name": "@doccov/cli", "version": "0.17.0" },
-    "analysis": {
-      "entryPoint": "src/index.ts",
-      "entryPointSource": "types",
-      "isDeclarationOnly": false
-    }
+    "generator": "@doccov/cli@0.21.0",
+    "timestamp": "2024-01-15T10:00:00Z"
   }
 }
 ```

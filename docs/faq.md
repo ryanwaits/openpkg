@@ -1,5 +1,37 @@
 # Frequently Asked Questions
 
+## OpenPkg vs DocCov
+
+### What's the difference between openpkg.json and doccov.json?
+
+| File | Purpose | Created By |
+|------|---------|------------|
+| `openpkg.json` | Pure API structure (exports, types, signatures) | `doccov spec` or `tspec` |
+| `doccov.json` | Coverage scores, drift issues, missing docs | `doccov check --format json` |
+
+OpenPkg is **tool-agnostic** - any tool can consume it. DocCov spec is specific to DocCov's analysis.
+
+### When should I use tspec vs doccov spec?
+
+| Tool | Use When |
+|------|----------|
+| `tspec` | Standalone extraction, minimal deps, no DocCov config |
+| `doccov spec` | Already using DocCov, want `doccov.yml` config |
+
+Both produce identical `openpkg.json` output.
+
+### What packages do I need?
+
+| Need | Install |
+|------|---------|
+| Just OpenPkg types | `@openpkg-ts/spec` |
+| Standalone extraction | `@openpkg-ts/extract` |
+| Coverage analysis | `@doccov/cli` (includes extraction) |
+| Programmatic SDK | `@doccov/sdk` |
+| Drift types only | `@doccov/spec` |
+
+---
+
 ## Entry Point Detection
 
 ### How does DocCov find my entry point?

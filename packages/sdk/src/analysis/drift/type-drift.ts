@@ -1,5 +1,5 @@
-import type { SpecDocDrift, SpecExport } from '@openpkg-ts/spec';
-import type { SpecMemberWithType } from './types';
+import type { SpecExport } from '@openpkg-ts/spec';
+import type { SpecDocDrift, SpecMemberWithType } from './types';
 import {
   buildGenericConstraintMismatchIssue,
   buildGenericConstraintSuggestion,

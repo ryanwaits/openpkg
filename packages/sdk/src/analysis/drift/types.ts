@@ -1,4 +1,90 @@
-import type { DriftCategory, SpecDocDrift, SpecSchema, SpecTag } from '@openpkg-ts/spec';
+import type { SpecSchema, SpecTag } from '@openpkg-ts/spec';
+
+// ============================================================================
+// Doccov-specific Drift Types (moved from @openpkg-ts/spec v0.4.0)
+// ============================================================================
+
+/**
+ * All possible drift type identifiers.
+ */
+export type DriftType =
+  | 'param-mismatch'
+  | 'param-type-mismatch'
+  | 'return-type-mismatch'
+  | 'generic-constraint-mismatch'
+  | 'optionality-mismatch'
+  | 'deprecated-mismatch'
+  | 'visibility-mismatch'
+  | 'async-mismatch'
+  | 'property-type-drift'
+  | 'example-drift'
+  | 'example-syntax-error'
+  | 'example-runtime-error'
+  | 'example-assertion-failed'
+  | 'broken-link';
+
+export type SpecDocDrift = {
+  type: DriftType;
+  target?: string;
+  issue: string;
+  suggestion?: string;
+};
+
+/**
+ * Drift categories group related drift types for progressive disclosure.
+ */
+export type DriftCategory = 'structural' | 'semantic' | 'example';
+
+/**
+ * Maps each drift type to its category.
+ */
+export const DRIFT_CATEGORIES: Record<DriftType, DriftCategory> = {
+  // Structural: signature/type mismatches
+  'param-mismatch': 'structural',
+  'param-type-mismatch': 'structural',
+  'return-type-mismatch': 'structural',
+  'optionality-mismatch': 'structural',
+  'generic-constraint-mismatch': 'structural',
+  'property-type-drift': 'structural',
+  'async-mismatch': 'structural',
+
+  // Semantic: metadata/visibility mismatches
+  'deprecated-mismatch': 'semantic',
+  'visibility-mismatch': 'semantic',
+  'broken-link': 'semantic',
+
+  // Example: code example issues
+  'example-drift': 'example',
+  'example-syntax-error': 'example',
+  'example-runtime-error': 'example',
+  'example-assertion-failed': 'example',
+};
+
+/**
+ * Human-readable category labels.
+ */
+export const DRIFT_CATEGORY_LABELS: Record<DriftCategory, string> = {
+  structural: 'Signature mismatches',
+  semantic: 'Metadata issues',
+  example: 'Example problems',
+};
+
+/**
+ * Category descriptions for help text.
+ */
+export const DRIFT_CATEGORY_DESCRIPTIONS: Record<DriftCategory, string> = {
+  structural: "JSDoc types or parameters don't match the actual code signature",
+  semantic: 'Deprecation, visibility, or reference issues',
+  example: "@example code has errors or doesn't work correctly",
+};
+
+export type SpecDocsMetadata = {
+  coverageScore?: number;
+  missing?: string[];
+  drift?: SpecDocDrift[];
+};
+
+// ============================================================================
 
 /**
  * Result of computing drift for a single export.

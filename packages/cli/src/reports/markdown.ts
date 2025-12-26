@@ -1,4 +1,4 @@
-import { DRIFT_CATEGORY_LABELS, type DriftCategory } from '@openpkg-ts/spec';
+import { DRIFT_CATEGORY_LABELS, type DriftCategory } from '@doccov/sdk';
 import type { ReportStats } from './stats';
 
 function bar(pct: number, width = 10): string {

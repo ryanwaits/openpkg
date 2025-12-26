@@ -3,7 +3,8 @@
  * These generate structural fixes based on drift type without LLM.
  */
 
-import type { SpecDocDrift, SpecExport } from '@openpkg-ts/spec';
+import type { SpecExport } from '@openpkg-ts/spec';
+import type { SpecDocDrift } from '../analysis/drift/types';
 import type { JSDocParam, JSDocPatch, JSDocReturn } from './jsdoc-writer';
 
 /**

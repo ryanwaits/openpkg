@@ -1,5 +1,4 @@
-import type { DriftCategory, SpecDocDrift } from '@openpkg-ts/spec';
-import type { CategorizedDrift } from '../analysis/docs-coverage';
+import type { CategorizedDrift, DriftCategory, SpecDocDrift } from '../analysis/drift/types';
 
 /**
  * DocCov report schema version.

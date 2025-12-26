@@ -1,6 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import {
+  buildDocCovSpec,
   DocCov,
   detectPackageManager,
   type GenerationInput,
@@ -8,6 +9,7 @@ import {
   renderApiSurface,
   resolveTarget,
 } from '@doccov/sdk';
+import { validateDocCovSpec } from '@doccov/spec';
 import { normalize, type OpenPkg as OpenPkgSpec, validateSpec } from '@openpkg-ts/spec';
 import chalk from 'chalk';
 import type { Command } from 'commander';
@@ -31,6 +33,7 @@ export interface SpecOptions {
   // Output
   output: string;
   format?: SpecFormat;
+  openpkgOnly?: boolean;
 
   // Filtering
   include?: string;
@@ -104,15 +107,16 @@ export function registerSpecCommand(
 
   program
     .command('spec [entry]')
-    .description('Generate OpenPkg specification (JSON)')
+    .description('Generate OpenPkg + DocCov specifications')
 
     // === Core options ===
     .option('--cwd <dir>', 'Working directory', process.cwd())
     .option('-p, --package <name>', 'Target package name (for monorepos)')
 
     // === Output ===
-    .option('-o, --output <file>', 'Output file path', 'openpkg.json')
+    .option('-o, --output <dir>', 'Output directory', '.doccov')
     .option('-f, --format <format>', 'Output format: json (default) or api-surface', 'json')
+    .option('--openpkg-only', 'Only generate openpkg.json (skip coverage analysis)')
 
     // === Filtering ===
     .option('--include <patterns>', 'Include exports matching pattern (comma-separated)')
@@ -143,13 +147,17 @@ export function registerSpecCommand(
 
     .action(async (entry: string | undefined, options: SpecOptions) => {
       try {
-        const steps = new StepProgress([
+        const stepsList = [
           { label: 'Resolved target', activeLabel: 'Resolving target' },
           { label: 'Loaded config', activeLabel: 'Loading config' },
           { label: 'Generated spec', activeLabel: 'Generating spec' },
           { label: 'Validated schema', activeLabel: 'Validating schema' },
-          { label: 'Wrote output', activeLabel: 'Writing output' },
-        ]);
+        ];
+        if (!options.openpkgOnly) {
+          stepsList.push({ label: 'Built coverage analysis', activeLabel: 'Building coverage' });
+        }
+        stepsList.push({ label: 'Wrote output', activeLabel: 'Writing output' });
+        const steps = new StepProgress(stepsList);
         steps.start();
 
         // Resolve target directory and entry point
@@ -239,21 +247,61 @@ export function registerSpecCommand(
         }
         steps.next();
 
+        // Build DocCov spec (unless --openpkg-only)
+        let doccovSpec = null;
+        if (!options.openpkgOnly) {
+          doccovSpec = buildDocCovSpec({
+            openpkgPath: 'openpkg.json',
+            openpkg: normalized,
+            packagePath: targetDir,
+          });
+
+          // Validate doccov spec
+          const doccovValidation = validateDocCovSpec(doccovSpec);
+          if (!doccovValidation.ok) {
+            error(chalk.red('DocCov spec failed schema validation'));
+            for (const err of doccovValidation.errors) {
+              error(chalk.red(`doccov: ${err.instancePath || '/'} ${err.message}`));
+            }
+            process.exit(1);
+          }
+          steps.next();
+        }
+
         // Write output based on format
         const format = options.format ?? 'json';
-        const outputPath = path.resolve(options.cwd, options.output);
+        const outputDir = path.resolve(options.cwd, options.output);
+
+        // Create output directory
+        fs.mkdirSync(outputDir, { recursive: true });
 
         if (format === 'api-surface') {
           const apiSurface = renderApiSurface(normalized);
-          writeFileSync(outputPath, apiSurface);
-          steps.complete(`Generated ${options.output} (API surface)`);
+          const apiSurfacePath = path.join(outputDir, 'api-surface.txt');
+          writeFileSync(apiSurfacePath, apiSurface);
+          steps.complete(`Generated ${options.output}/ (API surface)`);
         } else {
-          writeFileSync(outputPath, JSON.stringify(normalized, null, 2));
-          steps.complete(`Generated ${options.output}`);
-        }
+          // Write openpkg.json
+          const openpkgPath = path.join(outputDir, 'openpkg.json');
+          writeFileSync(openpkgPath, JSON.stringify(normalized, null, 2));
 
-        log(chalk.gray(`  ${getArrayLength(normalized.exports)} exports`));
-        log(chalk.gray(`  ${getArrayLength(normalized.types)} types`));
+          // Write doccov.json (unless --openpkg-only)
+          if (doccovSpec) {
+            const doccovPath = path.join(outputDir, 'doccov.json');
+            writeFileSync(doccovPath, JSON.stringify(doccovSpec, null, 2));
+            steps.complete(`Generated ${options.output}/`);
+            log(chalk.gray(`  openpkg.json: ${getArrayLength(normalized.exports)} exports`));
+            log(
+              chalk.gray(
+                `  doccov.json:  ${doccovSpec.summary.score}% coverage, ${doccovSpec.summary.drift.total} drift issues`,
+              ),
+            );
+          } else {
+            steps.complete(`Generated ${options.output}/openpkg.json`);
+            log(chalk.gray(`  ${getArrayLength(normalized.exports)} exports`));
+            log(chalk.gray(`  ${getArrayLength(normalized.types)} types`));
+          }
+        }
 
         // Warn if --runtime was requested but no runtime schemas were extracted
         const schemaExtraction = normalized.generation?.analysis?.schemaExtraction;
