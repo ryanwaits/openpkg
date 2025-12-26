@@ -1,5 +1,11 @@
 # @openpkg-ts/doc-generator
 
+## 0.1.1
+
+### Patch Changes
+
+- fix @openpkg-ts/spec dependency to use published version
+
 ## 0.1.0
 
 ### Minor Changes
