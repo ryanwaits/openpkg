@@ -34,7 +34,7 @@ DocCov focuses on **documentation quality** - measuring, validating, and enforci
 **What it is**: Generating API reference documentation websites.
 
 **Status**: **We built this!** DocCov now includes:
-- `@doccov/fumadocs-adapter` - React components for Fumadocs
+- `@openpkg-ts/fumadocs-adapter` - React components for Fumadocs
 - `@doccov/ui` - 50+ shared UI components
 - Full page components for functions, classes, interfaces, enums, variables
 - Coverage badges and drift indicators in rendered docs

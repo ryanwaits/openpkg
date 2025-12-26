@@ -544,7 +544,7 @@ DocCov provides a complete solution for rendering API reference documentation.
 
 | Package | Purpose |
 |---------|---------|
-| `@doccov/fumadocs-adapter` | React components for Fumadocs integration |
+| `@openpkg-ts/fumadocs-adapter` | React components for Fumadocs integration |
 | `@doccov/ui` | Shared UI component library (50+ components) |
 
 ### Page Components
@@ -582,11 +582,11 @@ DocCov provides a complete solution for rendering API reference documentation.
 
 ```tsx
 // 1. Load spec
-import { createOpenPkg } from '@doccov/fumadocs-adapter/server';
+import { createOpenPkg } from '@openpkg-ts/fumadocs-adapter/server';
 const openpkg = createOpenPkg('./openpkg.json');
 
 // 2. Create route
-import { APIPage } from '@doccov/fumadocs-adapter';
+import { APIPage } from '@openpkg-ts/fumadocs-adapter';
 
 export default function Page({ params }) {
   const exp = openpkg.getExport(params.slug);

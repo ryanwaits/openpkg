@@ -45,7 +45,7 @@ DocCov now offers **both** documentation quality enforcement **and** API referen
 
 ### DocCov Approach
 - **Framework integration**: Embeds into your existing Fumadocs site
-- **React components**: Use `@doccov/fumadocs-adapter` components
+- **React components**: Use `@openpkg-ts/fumadocs-adapter` components
 - **Quality signals built-in**: Coverage badges, drift indicators on every page
 - **Unified docs**: API reference lives alongside guides and tutorials
 - **Modern stack**: CodeHike syntax highlighting, Radix UI primitives
@@ -132,13 +132,13 @@ doccov spec -o openpkg.json
 
 ### Step 2: Install Fumadocs Adapter
 ```bash
-npm install @doccov/fumadocs-adapter
+npm install @openpkg-ts/fumadocs-adapter
 ```
 
 ### Step 3: Add to Fumadocs Config
 ```typescript
 // fumadocs.config.ts
-import { createOpenPkg } from '@doccov/fumadocs-adapter/server';
+import { createOpenPkg } from '@openpkg-ts/fumadocs-adapter/server';
 
 export const openpkg = createOpenPkg('./openpkg.json');
 ```
@@ -146,7 +146,7 @@ export const openpkg = createOpenPkg('./openpkg.json');
 ### Step 4: Create API Routes
 ```tsx
 // app/api/[slug]/page.tsx
-import { APIPage } from '@doccov/fumadocs-adapter';
+import { APIPage } from '@openpkg-ts/fumadocs-adapter';
 import { openpkg } from '@/fumadocs.config';
 
 export default function Page({ params }) {

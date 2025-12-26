@@ -144,7 +144,7 @@ See: [Won't Do](./wont-do.md)
 **Former gap**: TypeDoc generates complete API reference websites.
 
 **Current state**: DocCov now provides full API reference site generation via:
-- `@doccov/fumadocs-adapter` - React components for Fumadocs integration
+- `@openpkg-ts/fumadocs-adapter` - React components for Fumadocs integration
 - `@doccov/ui` - 50+ shared UI components
 - Page components for functions, classes, interfaces, enums, variables
 - Coverage badges and drift indicators embedded in docs

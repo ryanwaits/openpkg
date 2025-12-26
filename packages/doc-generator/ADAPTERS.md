@@ -11,7 +11,7 @@ Guide for creating adapters that integrate `@openpkg-ts/doc-generator` with doc 
 ├── Query utilities
 └── Adapter types
 
-@doccov/fumadocs-adapter (thin wrapper)
+@openpkg-ts/fumadocs-adapter (thin wrapper)
 ├── Re-exports from doc-generator
 ├── CoverageBadge (doccov-specific)
 └── Fumadocs CSS overrides

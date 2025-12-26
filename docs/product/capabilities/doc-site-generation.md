@@ -8,7 +8,7 @@ DocCov provides a complete solution for rendering API reference documentation vi
 
 ## Overview
 
-DocCov isn't just about quality enforcement - it also generates beautiful, interactive API reference documentation. The Fumadocs adapter (`@doccov/fumadocs-adapter`) provides React components that render OpenPkg specs as polished documentation pages.
+DocCov isn't just about quality enforcement - it also generates beautiful, interactive API reference documentation. The Fumadocs adapter (`@openpkg-ts/fumadocs-adapter`) provides React components that render OpenPkg specs as polished documentation pages.
 
 **Key differentiator**: Unlike TypeDoc or api-documenter, DocCov embeds quality signals (coverage badges, drift indicators) directly into the rendered documentation.
 
@@ -18,7 +18,7 @@ DocCov isn't just about quality enforcement - it also generates beautiful, inter
 
 | Package | Purpose |
 |---------|---------|
-| `@doccov/fumadocs-adapter` | React components for Fumadocs integration |
+| `@openpkg-ts/fumadocs-adapter` | React components for Fumadocs integration |
 | `@doccov/ui` | Shared UI component library (50+ components) |
 
 ---
@@ -29,7 +29,7 @@ DocCov isn't just about quality enforcement - it also generates beautiful, inter
 
 ```typescript
 // lib/openpkg.ts
-import { createOpenPkg } from '@doccov/fumadocs-adapter/server';
+import { createOpenPkg } from '@openpkg-ts/fumadocs-adapter/server';
 
 // Load from JSON file
 export const openpkg = createOpenPkg('./openpkg.json');
@@ -61,7 +61,7 @@ interface OpenPkgInstance {
 Main entry point - dispatches to the appropriate page component based on export kind.
 
 ```tsx
-import { APIPage } from '@doccov/fumadocs-adapter';
+import { APIPage } from '@openpkg-ts/fumadocs-adapter';
 
 export default function Page({ params }) {
   const exp = openpkg.getExport(params.slug);
@@ -261,7 +261,7 @@ CSS variables mapped to Fumadocs color system:
 ### 1. Install Packages
 
 ```bash
-npm install @doccov/fumadocs-adapter @doccov/ui
+npm install @openpkg-ts/fumadocs-adapter @doccov/ui
 ```
 
 ### 2. Generate Spec
@@ -274,7 +274,7 @@ doccov spec -o openpkg.json
 
 ```typescript
 // lib/openpkg.ts
-import { createOpenPkg } from '@doccov/fumadocs-adapter/server';
+import { createOpenPkg } from '@openpkg-ts/fumadocs-adapter/server';
 export const openpkg = createOpenPkg('./openpkg.json');
 ```
 
@@ -282,7 +282,7 @@ export const openpkg = createOpenPkg('./openpkg.json');
 
 ```tsx
 // app/api/reference/[slug]/page.tsx
-import { APIPage } from '@doccov/fumadocs-adapter';
+import { APIPage } from '@openpkg-ts/fumadocs-adapter';
 import { openpkg } from '@/lib/openpkg';
 import { notFound } from 'next/navigation';
 

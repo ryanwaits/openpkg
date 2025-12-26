@@ -1,4 +1,4 @@
-# @doccov/fumadocs-adapter
+# @openpkg-ts/fumadocs-adapter
 
 ## 0.1.0
 

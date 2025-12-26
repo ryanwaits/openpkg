@@ -5,13 +5,13 @@
  * to work within Fumadocs themes.
  *
  * Import this in your global CSS:
- *   @import '@doccov/fumadocs-adapter/css';
+ *   @import '@openpkg-ts/fumadocs-adapter/css';
  *
  * Or add these variables to your Tailwind CSS:
  *   @import 'tailwindcss';
  *   @import 'fumadocs-ui/css/neutral.css';
  *   @import 'fumadocs-ui/css/preset.css';
- *   @import '@doccov/fumadocs-adapter/css';
+ *   @import '@openpkg-ts/fumadocs-adapter/css';
  */
 
 @layer base {
