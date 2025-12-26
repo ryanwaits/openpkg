@@ -1,5 +1,11 @@
 # @openpkg-ts/fumadocs-adapter
 
+## 0.2.2
+
+### Patch Changes
+
+- fix package exports to point to dist/ instead of src/ for bundler compatibility
+
 ## 0.2.1
 
 ### Patch Changes
