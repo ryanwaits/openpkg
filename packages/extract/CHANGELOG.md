@@ -1,5 +1,11 @@
 # @openpkg-ts/extract
 
+## 0.11.2
+
+### Patch Changes
+
+- Parse @example JSDoc tags into examples array with code and language fields
+
 ## 0.11.1
 
 ### Patch Changes
