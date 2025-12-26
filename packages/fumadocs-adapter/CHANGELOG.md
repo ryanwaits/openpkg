@@ -1,5 +1,11 @@
 # @openpkg-ts/fumadocs-adapter
 
+## 0.2.1
+
+### Patch Changes
+
+- version bump for republish
+
 ## 0.2.0
 
 ### Minor Changes
