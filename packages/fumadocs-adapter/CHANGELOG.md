@@ -1,5 +1,11 @@
 # @openpkg-ts/fumadocs-adapter
 
+## 0.2.3
+
+### Patch Changes
+
+- fix: bump doc-generator dep for Turbopack compatibility
+
 ## 0.2.2
 
 ### Patch Changes
