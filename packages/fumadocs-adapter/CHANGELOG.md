@@ -1,5 +1,11 @@
 # @openpkg-ts/fumadocs-adapter
 
+## 0.2.0
+
+### Minor Changes
+
+- Rename package from @doccov/fumadocs-adapter to @openpkg-ts/fumadocs-adapter
+
 ## 0.1.0
 
 ### Minor Changes
