@@ -1,5 +1,5 @@
-import { NextResponse, type NextRequest } from 'next/server';
 import { checkRateLimit } from '@doccov/api-shared/middleware/rate-limit';
+import { type NextRequest, NextResponse } from 'next/server';
 
 // Rate limit configs by route pattern
 const RATE_LIMITS: Record<string, { windowMs: number; max: number }> = {
@@ -48,7 +48,7 @@ export function middleware(request: NextRequest) {
     if (!result.ok) {
       const response = NextResponse.json(
         { error: 'Too many requests', retryAfter: Math.ceil((result.resetAt - Date.now()) / 1000) },
-        { status: 429 }
+        { status: 429 },
       );
       response.headers.set('X-RateLimit-Limit', String(result.limit));
       response.headers.set('X-RateLimit-Remaining', '0');

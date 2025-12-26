@@ -190,7 +190,7 @@ function formatSignature(name: string, signature: SpecSignature): string {
       const typeStr =
         typeof p.schema === 'string'
           ? p.schema
-          : (p.schema as { type?: string })?.type ?? 'unknown';
+          : ((p.schema as { type?: string })?.type ?? 'unknown');
       return `${rest}${p.name}${optional}: ${typeStr}`;
     })
     .join(', ');
@@ -198,7 +198,7 @@ function formatSignature(name: string, signature: SpecSignature): string {
   const returnType = signature.returns
     ? typeof signature.returns.schema === 'string'
       ? signature.returns.schema
-      : (signature.returns.schema as { type?: string })?.type ?? 'unknown'
+      : ((signature.returns.schema as { type?: string })?.type ?? 'unknown')
     : 'void';
 
   const typeParams = signature.typeParameters?.length
@@ -240,7 +240,7 @@ function formatExportToApiSurface(exp: SpecExport): string {
       const typeStr =
         typeof exp.type === 'string'
           ? exp.type
-          : (exp.type as { type?: string })?.type ?? '{ ... }';
+          : ((exp.type as { type?: string })?.type ?? '{ ... }');
       lines.push(`\`\`\`typescript\ntype ${exp.name} = ${typeStr}\n\`\`\``);
       break;
     }
@@ -248,7 +248,7 @@ function formatExportToApiSurface(exp: SpecExport): string {
       const typeStr =
         typeof exp.type === 'string'
           ? exp.type
-          : (exp.type as { type?: string })?.type ?? 'unknown';
+          : ((exp.type as { type?: string })?.type ?? 'unknown');
       lines.push(`\`\`\`typescript\nconst ${exp.name}: ${typeStr}\n\`\`\``);
       break;
     }
@@ -281,7 +281,7 @@ function formatTypeToApiSurface(type: SpecType): string {
       const typeStr =
         typeof type.type === 'string'
           ? type.type
-          : (type.type as { type?: string })?.type ?? '{ ... }';
+          : ((type.type as { type?: string })?.type ?? '{ ... }');
       lines.push(`\`\`\`typescript\ntype ${type.name} = ${typeStr}\n\`\`\``);
       break;
     }
@@ -364,7 +364,7 @@ export function renderApiSurface(spec: OpenPkg): string {
     const exports = exportsByKind[kind];
     if (!exports || exports.length === 0) continue;
 
-    const kindTitle = kind.charAt(0).toUpperCase() + kind.slice(1) + 's';
+    const kindTitle = `${kind.charAt(0).toUpperCase() + kind.slice(1)}s`;
     lines.push(`## ${kindTitle}`);
     lines.push('');
 
@@ -380,7 +380,7 @@ export function renderApiSurface(spec: OpenPkg): string {
     const exports = exportsByKind[kind];
     if (!exports || exports.length === 0) continue;
 
-    const kindTitle = kind.charAt(0).toUpperCase() + kind.slice(1) + 's';
+    const kindTitle = `${kind.charAt(0).toUpperCase() + kind.slice(1)}s`;
     lines.push(`## ${kindTitle}`);
     lines.push('');
 

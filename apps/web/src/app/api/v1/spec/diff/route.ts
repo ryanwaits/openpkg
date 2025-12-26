@@ -1,5 +1,5 @@
-import { z } from 'zod';
 import { validateApiKey } from '@doccov/api-shared';
+import { z } from 'zod';
 import { db } from '@/lib/db';
 import { getInstallationToken } from '@/lib/github-app';
 
@@ -18,9 +18,7 @@ const SpecsDiffSchema = z.object({
   mode: z.literal('specs'),
   baseSpec: z.object({}).passthrough(),
   headSpec: z.object({}).passthrough(),
-  markdownFiles: z
-    .array(z.object({ path: z.string(), content: z.string() }))
-    .optional(),
+  markdownFiles: z.array(z.object({ path: z.string(), content: z.string() })).optional(),
 });
 
 const DiffRequestSchema = z.discriminatedUnion('mode', [GitHubDiffSchema, SpecsDiffSchema]);
@@ -31,7 +29,7 @@ export async function POST(request: Request) {
   if (!validation.ok) {
     return Response.json(
       { error: validation.error, docs: validation.docs, upgrade: validation.upgrade },
-      { status: validation.status }
+      { status: validation.status },
     );
   }
 
@@ -60,8 +58,11 @@ export async function POST(request: Request) {
       const accessToken = await getInstallationToken(org.id);
       if (!accessToken) {
         return Response.json(
-          { error: 'No GitHub App installation found', hint: 'Install the DocCov GitHub App to compare repos' },
-          { status: 403 }
+          {
+            error: 'No GitHub App installation found',
+            hint: 'Install the DocCov GitHub App to compare repos',
+          },
+          { status: 403 },
         );
       }
 

@@ -26,7 +26,7 @@ export type ApiKeyValidationResult =
  */
 export async function validateApiKey(
   request: Request,
-  db: Kysely<Database>
+  db: Kysely<Database>,
 ): Promise<ApiKeyValidationResult> {
   const authHeader = request.headers.get('Authorization');
 
@@ -64,10 +64,7 @@ export async function validateApiKey(
     .innerJoin('organizations', 'organizations.id', 'api_keys.orgId')
     .where('api_keys.keyHash', '=', keyHash)
     .where((eb) =>
-      eb.or([
-        eb('api_keys.expiresAt', 'is', null),
-        eb('api_keys.expiresAt', '>', new Date()),
-      ])
+      eb.or([eb('api_keys.expiresAt', 'is', null), eb('api_keys.expiresAt', '>', new Date())]),
     )
     .select([
       'api_keys.id as keyId',

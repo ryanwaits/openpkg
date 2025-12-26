@@ -26,7 +26,7 @@ async function importPrivateKey(pem: string) {
     binaryKey,
     { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
     false,
-    ['sign']
+    ['sign'],
   );
 }
 
@@ -79,7 +79,7 @@ export async function getInstallationToken(orgId: string): Promise<string | null
           Accept: 'application/vnd.github+json',
           'X-GitHub-Api-Version': '2022-11-28',
         },
-      }
+      },
     );
 
     if (!response.ok) {

@@ -97,7 +97,9 @@ export function renderPRComment(data: PRCommentData, opts: PRCommentOptions = {}
   if (opts.semverBump) {
     const emoji =
       opts.semverBump.bump === 'major' ? '🔴' : opts.semverBump.bump === 'minor' ? '🟡' : '🟢';
-    lines.push(`**Semver:** ${emoji} ${opts.semverBump.bump.toUpperCase()} (${opts.semverBump.reason})`);
+    lines.push(
+      `**Semver:** ${emoji} ${opts.semverBump.bump.toUpperCase()} (${opts.semverBump.reason})`,
+    );
   }
 
   // Undocumented exports section
@@ -152,7 +154,9 @@ export function renderPRComment(data: PRCommentData, opts: PRCommentOptions = {}
       lines.push('');
       lines.push('---');
       lines.push('');
-      lines.push(`[![DocCov](https://doccov.dev/badge/${owner}/${repo})](https://doccov.dev/${owner}/${repo})`);
+      lines.push(
+        `[![DocCov](https://doccov.dev/badge/${owner}/${repo})](https://doccov.dev/${owner}/${repo})`,
+      );
     }
   }
 
@@ -285,10 +289,26 @@ function buildFileLink(file: string, opts: PRCommentOptions): string {
 }
 
 /**
+ * Get export keyword from kind
+ */
+function getExportKeyword(kind: string): string {
+  switch (kind) {
+    case 'type':
+      return 'type';
+    case 'interface':
+      return 'interface';
+    case 'class':
+      return 'class';
+    default:
+      return 'function';
+  }
+}
+
+/**
  * Format export signature for display
  */
 function formatExportSignature(exp: SpecExport): string {
-  const prefix = `export ${exp.kind === 'type' ? 'type' : exp.kind === 'interface' ? 'interface' : exp.kind === 'class' ? 'class' : 'function'}`;
+  const prefix = `export ${getExportKeyword(exp.kind)}`;
 
   if (exp.kind === 'function' && exp.signatures?.[0]) {
     const sig = exp.signatures[0];
@@ -384,20 +404,18 @@ function renderFixGuidance(diff: SpecDiffWithDocs, opts: PRCommentOptions): stri
   }
 
   if (diff.driftIntroduced > 0) {
-    const fixableNote = opts.fixableDriftCount && opts.fixableDriftCount > 0
-      ? `\n\n**Quick fix:** Run \`npx doccov check --fix\` to auto-fix ${opts.fixableDriftCount} issue(s).`
-      : '';
+    const fixableNote =
+      opts.fixableDriftCount && opts.fixableDriftCount > 0
+        ? `\n\n**Quick fix:** Run \`npx doccov check --fix\` to auto-fix ${opts.fixableDriftCount} issue(s).`
+        : '';
     sections.push(
-      '**For doc drift:**\n' +
-        'Update JSDoc to match current code signatures.' +
-        fixableNote,
+      `**For doc drift:**\nUpdate JSDoc to match current code signatures.${fixableNote}`,
     );
   }
 
   if (opts.staleDocsRefs && opts.staleDocsRefs.length > 0) {
     sections.push(
-      '**For stale docs:**\n' +
-        'Update or remove code examples that reference deleted exports.',
+      '**For stale docs:**\n' + 'Update or remove code examples that reference deleted exports.',
     );
   }
 

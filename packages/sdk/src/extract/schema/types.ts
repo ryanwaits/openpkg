@@ -55,9 +55,11 @@ export interface SchemaExtractionResult {
  */
 export function isTypeReference(type: TS.Type): type is TS.TypeReference {
   return !!(
-    (type.flags & 524288) && // TypeFlags.Object
-    (type as TS.ObjectType).objectFlags &&
-    ((type as TS.ObjectType).objectFlags & 4) // ObjectFlags.Reference
+    (
+      type.flags & 524288 && // TypeFlags.Object
+      (type as TS.ObjectType).objectFlags &&
+      (type as TS.ObjectType).objectFlags & 4
+    ) // ObjectFlags.Reference
   );
 }
 

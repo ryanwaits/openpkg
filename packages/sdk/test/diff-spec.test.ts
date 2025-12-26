@@ -2,7 +2,12 @@
  * Tests for spec diffing and breaking change detection.
  */
 import { describe, expect, test } from 'bun:test';
-import { calculateNextVersion, categorizeBreakingChanges, diffSpec, recommendSemverBump } from '@openpkg-ts/spec';
+import {
+  calculateNextVersion,
+  categorizeBreakingChanges,
+  diffSpec,
+  recommendSemverBump,
+} from '@openpkg-ts/spec';
 import { createDrift, createEnrichedSpec, createExport, createSpec } from './test-helpers';
 
 describe('diffSpec', () => {

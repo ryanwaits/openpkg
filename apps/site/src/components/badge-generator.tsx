@@ -12,10 +12,7 @@ export function BadgeGenerator() {
 
   const parseGitHubUrl = (url: string): { owner: string; repo: string } | null => {
     // Handle various GitHub URL formats
-    const patterns = [
-      /github\.com\/([^/]+)\/([^/.\s]+)/,
-      /^([^/]+)\/([^/.\s]+)$/,
-    ];
+    const patterns = [/github\.com\/([^/]+)\/([^/.\s]+)/, /^([^/]+)\/([^/.\s]+)$/];
 
     for (const pattern of patterns) {
       const match = url.match(pattern);
@@ -68,7 +65,7 @@ export function BadgeGenerator() {
         <div className="space-y-3">
           {/* Preview */}
           <div className="flex justify-center p-4 bg-muted rounded-lg">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
+            {/* biome-ignore lint/performance/noImgElement: external badge URL can't use next/image */}
             <img
               src={`https://doccov.dev/badge/${parsed?.owner}/${parsed?.repo}`}
               alt="DocCov badge preview"

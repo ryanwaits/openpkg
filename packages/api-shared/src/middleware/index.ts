@@ -1,8 +1,8 @@
-export { validateApiKey, type ApiKeyContext, type ApiKeyValidationResult } from './api-key';
+export { type ApiKeyContext, type ApiKeyValidationResult, validateApiKey } from './api-key';
 export {
   checkRateLimit,
   getClientIp,
-  withRateLimitHeaders,
   type RateLimitOptions,
   type RateLimitResult,
+  withRateLimitHeaders,
 } from './rate-limit';

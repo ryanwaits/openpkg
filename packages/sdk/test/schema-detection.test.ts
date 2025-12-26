@@ -6,10 +6,7 @@
  * See schema-adapters.test.ts for the new static extraction tests.
  */
 import { describe, expect, test } from 'bun:test';
-import {
-  clearSchemaCache,
-  detectRuntimeSchemas,
-} from '../src/analysis/schema-detection';
+import { detectRuntimeSchemas } from '../src/analysis/schema-detection';
 
 describe('detectRuntimeSchemas (stubbed)', () => {
   test('returns empty schemas (runtime detection removed)', async () => {
@@ -21,11 +18,6 @@ describe('detectRuntimeSchemas (stubbed)', () => {
     // Runtime detection is stubbed - always returns empty
     expect(result.schemas.size).toBe(0);
     expect(result.errors).toHaveLength(0);
-  });
-
-  test('clearSchemaCache is no-op', () => {
-    // Should not throw
-    expect(() => clearSchemaCache()).not.toThrow();
   });
 });
 

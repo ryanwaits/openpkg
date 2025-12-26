@@ -5,7 +5,7 @@ import { computeCoverageScore, fetchSpec, getColorForScore } from '@/lib/badge';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ owner: string; repo: string }> }
+  { params }: { params: Promise<{ owner: string; repo: string }> },
 ) {
   const { owner, repo } = await params;
   const searchParams = request.nextUrl.searchParams;
@@ -19,7 +19,7 @@ export async function GET(
     if (!spec) {
       return NextResponse.json(
         { schemaVersion: 1, label: 'docs', message: 'not found', color: 'lightgrey' },
-        { status: 404, headers: { 'Cache-Control': 'no-cache' } }
+        { status: 404, headers: { 'Cache-Control': 'no-cache' } },
       );
     }
 
@@ -27,7 +27,7 @@ export async function GET(
     if (!validation.ok) {
       return NextResponse.json(
         { schemaVersion: 1, label: 'docs', message: 'invalid', color: 'lightgrey' },
-        { status: 422, headers: { 'Cache-Control': 'no-cache' } }
+        { status: 422, headers: { 'Cache-Control': 'no-cache' } },
       );
     }
 
@@ -42,12 +42,12 @@ export async function GET(
         message: `${coverageScore}%`,
         color: getColorForScore(coverageScore),
       },
-      { status: 200, headers: { 'Cache-Control': 'public, max-age=300, stale-if-error=3600' } }
+      { status: 200, headers: { 'Cache-Control': 'public, max-age=300, stale-if-error=3600' } },
     );
   } catch {
     return NextResponse.json(
       { schemaVersion: 1, label: 'docs', message: 'error', color: 'red' },
-      { status: 500, headers: { 'Cache-Control': 'no-cache' } }
+      { status: 500, headers: { 'Cache-Control': 'no-cache' } },
     );
   }
 }

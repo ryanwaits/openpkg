@@ -5,10 +5,7 @@ import { getSession } from '@/lib/session';
 const SITE_URL = process.env.SITE_URL || 'http://localhost:3000';
 
 // GET /orgs/:slug/invites - List pending invites
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ slug: string }> }
-) {
+export async function GET(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const session = await getSession(request);
   if (!session) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
@@ -42,17 +39,14 @@ export async function GET(
 }
 
 // POST /orgs/:slug/invites - Create invite
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ slug: string }> }
-) {
+export async function POST(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const session = await getSession(request);
   if (!session) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const { slug } = await params;
-  const body = await request.json() as { email: string; role: 'admin' | 'member' };
+  const body = (await request.json()) as { email: string; role: 'admin' | 'member' };
 
   // Verify owner/admin
   const org = await db

@@ -98,7 +98,11 @@ export function registerInitCommand(
           ),
         );
       } else {
-        log(chalk.cyan(`[![DocCov](https://doccov.dev/badge/OWNER/REPO)](https://doccov.dev/OWNER/REPO)`));
+        log(
+          chalk.cyan(
+            `[![DocCov](https://doccov.dev/badge/OWNER/REPO)](https://doccov.dev/OWNER/REPO)`,
+          ),
+        );
         log(chalk.dim('  Replace OWNER/REPO with your GitHub repo'));
       }
       log('');

@@ -39,7 +39,7 @@ export const CategorySchema: z.ZodType<Category> = z.lazy(() =>
   z.object({
     name: z.string(),
     subcategories: z.array(CategorySchema),
-  })
+  }),
 );
 
 // Extend
@@ -55,12 +55,18 @@ const Schema2 = z.object({ bar: z.number() });
 export const MergedSchema = Schema1.merge(Schema2);
 
 // Pick/Omit
-export const PickedSchema = z.object({ a: z.string(), b: z.number(), c: z.boolean() }).pick({ a: true, b: true });
-export const OmittedSchema = z.object({ a: z.string(), b: z.number(), c: z.boolean() }).omit({ c: true });
+export const PickedSchema = z
+  .object({ a: z.string(), b: z.number(), c: z.boolean() })
+  .pick({ a: true, b: true });
+export const OmittedSchema = z
+  .object({ a: z.string(), b: z.number(), c: z.boolean() })
+  .omit({ c: true });
 
 // Partial/Required
 export const PartialSchema = z.object({ name: z.string(), age: z.number() }).partial();
-export const RequiredSchema = z.object({ name: z.string().optional(), age: z.number().optional() }).required();
+export const RequiredSchema = z
+  .object({ name: z.string().optional(), age: z.number().optional() })
+  .required();
 
 // Record
 export const RecordSchema = z.record(z.string(), z.number());

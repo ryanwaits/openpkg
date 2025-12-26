@@ -513,4 +513,3 @@ export function getExtendedTrend(
     dataRange,
   };
 }
-

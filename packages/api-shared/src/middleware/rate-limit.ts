@@ -99,10 +99,7 @@ export function getClientIp(request: Request): string {
  * Check rate limit for a request
  * Returns result with ok=true if under limit, ok=false if rate limited
  */
-export function checkRateLimit(
-  request: Request,
-  options: RateLimitOptions
-): RateLimitResult {
+export function checkRateLimit(request: Request, options: RateLimitOptions): RateLimitResult {
   const { windowMs, max, prefix = 'ratelimit' } = options;
   const ip = getClientIp(request);
   const key = `${prefix}:${ip}`;
@@ -120,10 +117,7 @@ export function checkRateLimit(
 /**
  * Add rate limit headers to a Response
  */
-export function withRateLimitHeaders(
-  response: Response,
-  result: RateLimitResult
-): Response {
+export function withRateLimitHeaders(response: Response, result: RateLimitResult): Response {
   const headers = new Headers(response.headers);
   headers.set('X-RateLimit-Limit', String(result.limit));
   headers.set('X-RateLimit-Remaining', String(result.remaining));

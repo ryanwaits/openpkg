@@ -4,7 +4,7 @@ import { getSession } from '@/lib/session';
 // DELETE /orgs/:slug/invites/:inviteId - Delete invite
 export async function DELETE(
   request: Request,
-  { params }: { params: Promise<{ slug: string; inviteId: string }> }
+  { params }: { params: Promise<{ slug: string; inviteId: string }> },
 ) {
   const session = await getSession(request);
   if (!session) {

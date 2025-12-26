@@ -58,7 +58,3 @@ export async function detectRuntimeSchemas(
     errors: extraction.errors,
   };
 }
-
-export function clearSchemaCache(): void {
-  // no-op (extraction is stateless)
-}

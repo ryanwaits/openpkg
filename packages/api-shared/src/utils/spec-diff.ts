@@ -5,8 +5,8 @@
 
 import {
   diffSpecWithDocs,
-  parseMarkdownFiles,
   type MarkdownDocFile,
+  parseMarkdownFiles,
   type SpecDiffWithDocs,
 } from '@doccov/sdk';
 import type { OpenPkg } from '@openpkg-ts/spec';
@@ -17,7 +17,7 @@ import type { OpenPkg } from '@openpkg-ts/spec';
 export function diffSpecs(
   baseSpec: OpenPkg,
   headSpec: OpenPkg,
-  markdownFiles?: Array<{ path: string; content: string }>
+  markdownFiles?: Array<{ path: string; content: string }>,
 ): SpecDiffWithDocs {
   const parsedMarkdown = markdownFiles ? parseMarkdownFiles(markdownFiles) : undefined;
 
@@ -29,12 +29,15 @@ export function diffSpecs(
 /**
  * Format diff for API response
  */
-export function formatDiffResponse(diff: SpecDiffWithDocs, metadata?: {
-  base?: { ref: string; sha: string };
-  head?: { ref: string; sha: string };
-  generatedAt?: string;
-  cached?: boolean;
-}) {
+export function formatDiffResponse(
+  diff: SpecDiffWithDocs,
+  metadata?: {
+    base?: { ref: string; sha: string };
+    head?: { ref: string; sha: string };
+    generatedAt?: string;
+    cached?: boolean;
+  },
+) {
   return {
     breaking: diff.breaking,
     nonBreaking: diff.nonBreaking,

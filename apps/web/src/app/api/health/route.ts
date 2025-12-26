@@ -16,11 +16,14 @@ export async function GET() {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    return NextResponse.json({
-      status: 'error',
-      db: 'disconnected',
-      error: error instanceof Error ? error.message : 'Unknown error',
-      timestamp: new Date().toISOString(),
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        status: 'error',
+        db: 'disconnected',
+        error: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString(),
+      },
+      { status: 500 },
+    );
   }
 }

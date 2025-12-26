@@ -2,10 +2,7 @@ import { db } from '@/lib/db';
 import { getSession } from '@/lib/session';
 
 // DELETE /api-keys/:keyId - Revoke key
-export async function DELETE(
-  request: Request,
-  { params }: { params: Promise<{ keyId: string }> }
-) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ keyId: string }> }) {
   const session = await getSession(request);
   if (!session) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });

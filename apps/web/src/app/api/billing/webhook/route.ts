@@ -10,7 +10,7 @@ async function verifyPolarWebhook(body: string, signature: string): Promise<bool
       encoder.encode(POLAR_WEBHOOK_SECRET),
       { name: 'HMAC', hash: 'SHA-256' },
       false,
-      ['sign']
+      ['sign'],
     );
 
     const sig = await crypto.subtle.sign('HMAC', key, encoder.encode(body));
@@ -27,7 +27,8 @@ async function verifyPolarWebhook(body: string, signature: string): Promise<bool
 
 // POST /billing/webhook - Polar webhook handler with TRANSACTION support
 export async function POST(request: Request) {
-  const signature = request.headers.get('polar-signature') || request.headers.get('x-polar-signature');
+  const signature =
+    request.headers.get('polar-signature') || request.headers.get('x-polar-signature');
 
   if (!signature) {
     return Response.json({ error: 'Missing signature' }, { status: 400 });

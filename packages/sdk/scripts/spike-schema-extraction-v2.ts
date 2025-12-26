@@ -31,12 +31,16 @@ function createProgram(filePath: string) {
   return { program, checker, sourceFile };
 }
 
-function getExportType(checker: ts.TypeChecker, sourceFile: ts.SourceFile, exportName: string): ts.Type | null {
+function getExportType(
+  checker: ts.TypeChecker,
+  sourceFile: ts.SourceFile,
+  exportName: string,
+): ts.Type | null {
   const moduleSymbol = checker.getSymbolAtLocation(sourceFile);
   if (!moduleSymbol) return null;
 
   const exports = checker.getExportsOfModule(moduleSymbol);
-  const symbol = exports.find(s => s.name === exportName);
+  const symbol = exports.find((s) => s.name === exportName);
   if (!symbol) return null;
 
   return checker.getTypeOfSymbol(symbol);
@@ -131,7 +135,7 @@ function testStrategy(
   name: string,
   file: string,
   exportName: string,
-  extractor: (checker: ts.TypeChecker, type: ts.Type) => ts.Type | null
+  extractor: (checker: ts.TypeChecker, type: ts.Type) => ts.Type | null,
 ): void {
   const filePath = path.join(FIXTURES_DIR, file);
   const { checker, sourceFile } = createProgram(filePath);
@@ -160,7 +164,9 @@ function testStrategy(
   const outputType = extractor(checker, type);
   if (outputType) {
     console.log('\n✅ EXTRACTED OUTPUT TYPE:');
-    console.log(`   ${checker.typeToString(outputType, undefined, ts.TypeFormatFlags.NoTruncation)}`);
+    console.log(
+      `   ${checker.typeToString(outputType, undefined, ts.TypeFormatFlags.NoTruncation)}`,
+    );
 
     // If it's an object, show its properties
     if (outputType.flags & ts.TypeFlags.Object) {
@@ -169,7 +175,7 @@ function testStrategy(
         console.log('\n   Properties:');
         for (const p of props) {
           const pType = checker.getTypeOfSymbol(p);
-          const optional = (p.flags & ts.SymbolFlags.Optional) ? '?' : '';
+          const optional = p.flags & ts.SymbolFlags.Optional ? '?' : '';
           console.log(`     ${p.name}${optional}: ${checker.typeToString(pType)}`);
         }
       }
@@ -184,12 +190,22 @@ console.log('🔬 Schema Output Type Extraction - Strategy Testing\n');
 
 // ArkType - should work directly
 testStrategy('ArkType UserSchema', 'arktype-basic.ts', 'UserSchema', extractArkTypeOutput);
-testStrategy('ArkType StringArraySchema', 'arktype-basic.ts', 'StringArraySchema', extractArkTypeOutput);
+testStrategy(
+  'ArkType StringArraySchema',
+  'arktype-basic.ts',
+  'StringArraySchema',
+  extractArkTypeOutput,
+);
 testStrategy('ArkType StatusSchema', 'arktype-basic.ts', 'StatusSchema', extractArkTypeOutput);
 
 // Valibot - should work via ~types.output
 testStrategy('Valibot UserSchema', 'valibot-basic.ts', 'UserSchema', extractValibotOutput);
-testStrategy('Valibot StringArraySchema', 'valibot-basic.ts', 'StringArraySchema', extractValibotOutput);
+testStrategy(
+  'Valibot StringArraySchema',
+  'valibot-basic.ts',
+  'StringArraySchema',
+  extractValibotOutput,
+);
 
 // Zod - try _output property
 testStrategy('Zod UserSchema', 'zod-basic.ts', 'UserSchema', extractZodOutput);
@@ -197,7 +213,12 @@ testStrategy('Zod StringArraySchema', 'zod-basic.ts', 'StringArraySchema', extra
 
 // TypeBox - try static property
 testStrategy('TypeBox UserSchema', 'typebox-basic.ts', 'UserSchema', extractTypeBoxOutput);
-testStrategy('TypeBox StringArraySchema', 'typebox-basic.ts', 'StringArraySchema', extractTypeBoxOutput);
+testStrategy(
+  'TypeBox StringArraySchema',
+  'typebox-basic.ts',
+  'StringArraySchema',
+  extractTypeBoxOutput,
+);
 
 // Additional exploration for problematic libraries
 console.log('\n\n📊 ADDITIONAL EXPLORATION');
@@ -215,7 +236,13 @@ if (zodSource) {
       const propType = zodChecker.getTypeOfSymbol(prop);
       const typeStr = zodChecker.typeToString(propType, undefined, ts.TypeFormatFlags.NoTruncation);
       // Highlight properties that look promising
-      if (prop.name.includes('output') || prop.name.includes('type') || prop.name.includes('infer') || prop.name === '_type' || prop.name === '_output') {
+      if (
+        prop.name.includes('output') ||
+        prop.name.includes('type') ||
+        prop.name.includes('infer') ||
+        prop.name === '_type' ||
+        prop.name === '_output'
+      ) {
         console.log(`  ⭐ ${prop.name}: ${typeStr.substring(0, 150)}`);
       }
     }
@@ -233,7 +260,12 @@ if (tbSource) {
       const propType = tbChecker.getTypeOfSymbol(prop);
       const typeStr = tbChecker.typeToString(propType, undefined, ts.TypeFormatFlags.NoTruncation);
       // Highlight properties that look promising
-      if (prop.name.includes('static') || prop.name.includes('type') || prop.name.includes('Type') || prop.name === 'static') {
+      if (
+        prop.name.includes('static') ||
+        prop.name.includes('type') ||
+        prop.name.includes('Type') ||
+        prop.name === 'static'
+      ) {
         console.log(`  ⭐ ${prop.name}: ${typeStr.substring(0, 150)}`);
       }
     }

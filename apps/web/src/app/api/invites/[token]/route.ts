@@ -1,10 +1,7 @@
 import { db } from '@/lib/db';
 
 // GET /invites/:token - Get invite info (public)
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ token: string }> }
-) {
+export async function GET(_request: Request, { params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
 
   const invite = await db

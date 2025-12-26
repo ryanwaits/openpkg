@@ -178,7 +178,9 @@ export function registerDiffCommand(
             log('');
             log(chalk.bold('Semver Recommendation'));
             log(`  Current version:    ${currentVersion}`);
-            log(`  Recommended:        ${chalk.cyan(nextVersion)} (${chalk.yellow(recommendation.bump.toUpperCase())})`);
+            log(
+              `  Recommended:        ${chalk.cyan(nextVersion)} (${chalk.yellow(recommendation.bump.toUpperCase())})`,
+            );
             log(`  Reason:             ${recommendation.reason}`);
           }
           return;
@@ -286,7 +288,10 @@ export function registerDiffCommand(
                 sha: options.sha,
                 minCoverage,
                 limit,
-                semverBump: { bump: semverRecommendation.bump, reason: semverRecommendation.reason },
+                semverBump: {
+                  bump: semverRecommendation.bump,
+                  reason: semverRecommendation.reason,
+                },
               },
             );
             log(content);

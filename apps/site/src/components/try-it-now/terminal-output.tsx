@@ -27,7 +27,7 @@ export function TerminalOutput({ lines, isRunning }: TerminalOutputProps) {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [lines]);
+  }, []);
 
   return (
     <div className="mt-6 rounded-lg overflow-hidden border border-border shadow-lg">
@@ -43,7 +43,7 @@ export function TerminalOutput({ lines, isRunning }: TerminalOutputProps) {
       <div className="bg-[#0d1117] p-4 font-mono text-sm max-h-72 overflow-y-auto min-h-[120px]">
         {lines.map((line, i) => (
           <div
-            key={i}
+            key={`${line.type}-${line.text.slice(0, 20)}-${i}`}
             className={cn(
               'leading-relaxed py-0.5',
               line.type === 'command' && 'text-green-400',

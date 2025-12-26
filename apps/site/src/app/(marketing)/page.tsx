@@ -1,8 +1,16 @@
 import { Button } from '@doccov/ui/button';
-import { AlertTriangle, BadgeCheck, CheckCircle, Clock, Code2, GitPullRequest, Sparkles } from 'lucide-react';
+import {
+  AlertTriangle,
+  BadgeCheck,
+  CheckCircle,
+  Clock,
+  Code2,
+  GitPullRequest,
+  Sparkles,
+} from 'lucide-react';
 import Link from 'next/link';
-import { TryItNow } from '@/components/try-it-now';
 import { BadgeGenerator } from '@/components/badge-generator';
+import { TryItNow } from '@/components/try-it-now';
 
 export default function Home() {
   return (
@@ -36,7 +44,11 @@ export default function Home() {
                 <Link href="#quick-start">Get Your Badge</Link>
               </Button>
               <Button size="lg" variant="ghost" asChild>
-                <a href="https://github.com/doccov/doccov" target="_blank" rel="noopener noreferrer">
+                <a
+                  href="https://github.com/doccov/doccov"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   View on GitHub
                 </a>
               </Button>
@@ -55,8 +67,8 @@ export default function Home() {
             </div>
             <h3 className="text-lg font-semibold">The Problem</h3>
             <p className="text-muted-foreground">
-              Code coverage badges are everywhere. But your docs? Users have no idea if they&apos;re complete,
-              accurate, or even exist.
+              Code coverage badges are everywhere. But your docs? Users have no idea if they&apos;re
+              complete, accurate, or even exist.
             </p>
           </div>
 
@@ -67,8 +79,8 @@ export default function Home() {
             </div>
             <h3 className="text-lg font-semibold">The Promise</h3>
             <p className="text-muted-foreground">
-              A badge that proves your docs are documented. Like code coverage, but for JSDoc.
-              Show &quot;docs 90%&quot; in your README.
+              A badge that proves your docs are documented. Like code coverage, but for JSDoc. Show
+              &quot;docs 90%&quot; in your README.
             </p>
           </div>
 
@@ -79,8 +91,8 @@ export default function Home() {
             </div>
             <h3 className="text-lg font-semibold">The Proof</h3>
             <p className="text-muted-foreground">
-              Works out of the box for 80% of TypeScript repos. Zero config.
-              Auto-detects your entry point and tsconfig.
+              Works out of the box for 80% of TypeScript repos. Zero config. Auto-detects your entry
+              point and tsconfig.
             </p>
           </div>
         </div>
@@ -163,7 +175,8 @@ export default function Home() {
               </div>
               <h3 className="font-semibold">Zero Config</h3>
               <p className="text-sm text-muted-foreground">
-                Auto-detects entry points, tsconfig, and applies sensible defaults (80% coverage threshold)
+                Auto-detects entry points, tsconfig, and applies sensible defaults (80% coverage
+                threshold)
               </p>
             </div>
             <div className="space-y-3">
@@ -181,7 +194,8 @@ export default function Home() {
               </div>
               <h3 className="font-semibold">Drift Detection</h3>
               <p className="text-sm text-muted-foreground">
-                Catches when docs and code fall out of sync. Auto-fix with <code className="text-xs bg-muted px-1 rounded">--fix</code>
+                Catches when docs and code fall out of sync. Auto-fix with{' '}
+                <code className="text-xs bg-muted px-1 rounded">--fix</code>
               </p>
             </div>
           </div>

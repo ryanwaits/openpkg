@@ -13,7 +13,7 @@ const CACHE_HEADERS_ERROR = {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ owner: string; repo: string }> }
+  { params }: { params: Promise<{ owner: string; repo: string }> },
 ) {
   const { owner, repo } = await params;
   const searchParams = request.nextUrl.searchParams;

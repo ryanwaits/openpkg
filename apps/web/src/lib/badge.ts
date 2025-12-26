@@ -9,7 +9,7 @@ export type BadgeStyle = 'flat' | 'flat-square' | 'for-the-badge';
 export async function fetchSpec(
   owner: string,
   repo: string,
-  options: { ref?: string; path?: string } = {}
+  options: { ref?: string; path?: string } = {},
 ): Promise<OpenPkg | null> {
   const ref = options.ref ?? 'main';
   const specPath = options.path ?? 'openpkg.json';

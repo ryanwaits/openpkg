@@ -6,14 +6,9 @@ import type {
   SpecGenerationInfo,
 } from '@openpkg-ts/spec';
 import type * as TS from 'typescript';
-import type { SchemaExtractionMode } from '../config';
-import {
-  extractStandardSchemasFromProject,
-  type StandardSchemaExtractionResult,
-} from '../extract/schema';
 import { ts } from '../ts-module';
 import { isBuiltInType } from '../utils/type-utils';
-import type { AnalysisContextInput, DetectedSchemaEntry } from './context';
+import type { AnalysisContextInput } from './context';
 import { createAnalysisContext } from './context';
 import { buildOpenPkgSpec } from './spec-builder';
 import type { OpenPkgSpec } from './spec-types';

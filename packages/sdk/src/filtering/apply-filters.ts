@@ -118,7 +118,11 @@ export const applyFilters = (
   const excludeLookup = buildLookupMap(options.exclude);
   const visibility = options.visibility;
 
-  if (includeLookup.size === 0 && excludeLookup.size === 0 && (!visibility || visibility.length === 0)) {
+  if (
+    includeLookup.size === 0 &&
+    excludeLookup.size === 0 &&
+    (!visibility || visibility.length === 0)
+  ) {
     return { spec, diagnostics: [], changed: false };
   }
 

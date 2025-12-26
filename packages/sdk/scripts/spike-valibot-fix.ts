@@ -26,12 +26,16 @@ function createProgram(filePath: string) {
   return { program, checker, sourceFile };
 }
 
-function getExportType(checker: ts.TypeChecker, sourceFile: ts.SourceFile, exportName: string): ts.Type | null {
+function getExportType(
+  checker: ts.TypeChecker,
+  sourceFile: ts.SourceFile,
+  exportName: string,
+): ts.Type | null {
   const moduleSymbol = checker.getSymbolAtLocation(sourceFile);
   if (!moduleSymbol) return null;
 
   const exports = checker.getExportsOfModule(moduleSymbol);
-  const symbol = exports.find(s => s.name === exportName);
+  const symbol = exports.find((s) => s.name === exportName);
   if (!symbol) return null;
 
   return checker.getTypeOfSymbol(symbol);
@@ -63,7 +67,9 @@ for (const prop of props) {
   // Try to access properties that might contain the output type
   if (name.includes('types') || name.includes('~') || name === '~types') {
     const propType = checker.getTypeOfSymbol(prop);
-    console.log(`  Full type: ${checker.typeToString(propType, undefined, ts.TypeFormatFlags.NoTruncation)}`);
+    console.log(
+      `  Full type: ${checker.typeToString(propType, undefined, ts.TypeFormatFlags.NoTruncation)}`,
+    );
 
     // Check if this has 'output' property
     const outputProp = propType.getProperty('output');
@@ -88,12 +94,14 @@ const typesSymbol1 = type.getProperty('~types');
 console.log(`getProperty('~types'): ${typesSymbol1 ? 'FOUND' : 'NOT FOUND'}`);
 
 // Method 2: Find by iterating
-const typesSymbol2 = props.find(p => p.name === '~types');
+const typesSymbol2 = props.find((p) => p.name === '~types');
 console.log(`find by name '~types': ${typesSymbol2 ? 'FOUND' : 'NOT FOUND'}`);
 
 // Method 3: Look for any property containing 'types'
-const typesSymbol3 = props.find(p => p.name.includes('types'));
-console.log(`find containing 'types': ${typesSymbol3 ? `FOUND (name: ${typesSymbol3.name})` : 'NOT FOUND'}`);
+const typesSymbol3 = props.find((p) => p.name.includes('types'));
+console.log(
+  `find containing 'types': ${typesSymbol3 ? `FOUND (name: ${typesSymbol3.name})` : 'NOT FOUND'}`,
+);
 
 // If we found it, extract the output
 if (typesSymbol3) {

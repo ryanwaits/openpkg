@@ -2,10 +2,7 @@ import { db } from '@/lib/db';
 import { getSession } from '@/lib/session';
 
 // GET /orgs/:slug - Get single org by slug
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ slug: string }> }
-) {
+export async function GET(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const session = await getSession(request);
   if (!session) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });

@@ -4,8 +4,8 @@ import { Button } from '@doccov/ui/button';
 import { Github } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
-import { useAuth } from '../../../lib/auth-context';
 import { authClient } from '../../../lib/auth-client';
+import { useAuth } from '../../../lib/auth-context';
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -23,7 +23,7 @@ export default function LoginPage() {
         setIsLoading(false);
       }
     },
-    [refetch, router]
+    [refetch, router],
   );
 
   useEffect(() => {
@@ -50,7 +50,7 @@ export default function LoginPage() {
         const popup = window.open(
           result.data.url,
           'oauth-popup',
-          `width=${width},height=${height},left=${left},top=${top},popup=yes`
+          `width=${width},height=${height},left=${left},top=${top},popup=yes`,
         );
 
         if (!popup) {

@@ -13,7 +13,7 @@ export async function GET(request: Request) {
   if (!validation.ok) {
     return Response.json(
       { error: validation.error, docs: validation.docs, upgrade: validation.upgrade },
-      { status: validation.status }
+      { status: validation.status },
     );
   }
 

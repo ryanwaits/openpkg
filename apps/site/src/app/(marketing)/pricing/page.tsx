@@ -1,7 +1,7 @@
 'use client';
 
-import { Fragment } from 'react';
 import { Check, X } from 'lucide-react';
+import { Fragment } from 'react';
 import { PricingCard } from '@/components/pricing-card';
 
 const tiers = [

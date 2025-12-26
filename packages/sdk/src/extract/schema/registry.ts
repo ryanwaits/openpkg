@@ -5,11 +5,11 @@
  * and extract output types from schema validation libraries.
  */
 import type * as TS from 'typescript';
-import type { SchemaAdapter, SchemaExtractionResult } from './types';
-import { zodAdapter } from './adapters/zod';
-import { valibotAdapter } from './adapters/valibot';
-import { typeboxAdapter } from './adapters/typebox';
 import { arktypeAdapter } from './adapters/arktype';
+import { typeboxAdapter } from './adapters/typebox';
+import { valibotAdapter } from './adapters/valibot';
+import { zodAdapter } from './adapters/zod';
+import type { SchemaAdapter, SchemaExtractionResult } from './types';
 
 /**
  * Registered adapters in order of check priority.

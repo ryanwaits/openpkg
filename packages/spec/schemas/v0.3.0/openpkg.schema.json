@@ -734,10 +734,7 @@
             },
             "required": { "type": "array", "items": { "type": "string" } },
             "additionalProperties": {
-              "oneOf": [
-                { "type": "boolean" },
-                { "type": "object", "additionalProperties": true }
-              ]
+              "oneOf": [{ "type": "boolean" }, { "type": "object", "additionalProperties": true }]
             },
             "anyOf": { "type": "array", "items": { "$ref": "#/$defs/schema" } },
             "allOf": { "type": "array", "items": { "$ref": "#/$defs/schema" } },

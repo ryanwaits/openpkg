@@ -12,10 +12,8 @@ const GenerateRequestSchema = z.object({
       name: z.string(),
       kind: z.string(),
       signature: z.string().optional(),
-      members: z
-        .array(z.object({ name: z.string(), type: z.string().optional() }))
-        .optional(),
-    })
+      members: z.array(z.object({ name: z.string(), type: z.string().optional() })).optional(),
+    }),
   ),
   packageName: z.string().optional(),
 });
@@ -61,7 +59,7 @@ async function checkAndUpdateQuota(
   plan: string,
   currentUsed: number,
   resetAt: Date | null,
-  callCount: number
+  callCount: number,
 ): Promise<{ allowed: boolean; remaining: number; resetAt: Date; error?: string }> {
   const limits = getPlanLimits(plan as Plan);
   const monthlyLimit = limits.aiCallsPerMonth;
@@ -110,12 +108,20 @@ async function checkAndUpdateQuota(
 }
 
 async function generateJSDocForExport(
-  exp: { name: string; kind: string; signature?: string; members?: { name: string; type?: string }[] },
-  packageName?: string
+  exp: {
+    name: string;
+    kind: string;
+    signature?: string;
+    members?: { name: string; type?: string }[];
+  },
+  packageName?: string,
 ): Promise<JSDocGenerationResult> {
   const membersContext =
     exp.members && exp.members.length > 0
-      ? `\n\nMembers:\n${exp.members.slice(0, 10).map((m) => `  - ${m.name}${m.type ? `: ${m.type}` : ''}`).join('\n')}`
+      ? `\n\nMembers:\n${exp.members
+          .slice(0, 10)
+          .map((m) => `  - ${m.name}${m.type ? `: ${m.type}` : ''}`)
+          .join('\n')}`
       : '';
 
   const prompt = `Generate JSDoc documentation for this TypeScript export.
@@ -131,8 +137,8 @@ Requirements:
 - Example: provide a working code snippet showing typical usage
 - Be concise but informative`;
 
-  // biome-ignore lint/suspicious/noExplicitAny: AI SDK type mismatch
   const { object } = await generateObject({
+    // biome-ignore lint/suspicious/noExplicitAny: AI SDK type mismatch
     model: getModel() as any,
     schema: JSDocGenerationSchema,
     prompt,
@@ -147,7 +153,7 @@ export async function POST(request: Request) {
   if (!validation.ok) {
     return Response.json(
       { error: validation.error, docs: validation.docs, upgrade: validation.upgrade },
-      { status: validation.status }
+      { status: validation.status },
     );
   }
 
@@ -174,7 +180,7 @@ export async function POST(request: Request) {
     org.plan,
     org.aiCallsUsed,
     org.aiCallsResetAt,
-    body.exports.length
+    body.exports.length,
   );
 
   if (!quotaCheck.allowed) {
@@ -184,7 +190,7 @@ export async function POST(request: Request) {
         remaining: quotaCheck.remaining,
         resetAt: quotaCheck.resetAt.toISOString(),
       },
-      { status: 429 }
+      { status: 429 },
     );
   }
 

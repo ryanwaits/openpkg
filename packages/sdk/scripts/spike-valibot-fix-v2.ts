@@ -23,12 +23,16 @@ function createProgram(filePath: string) {
   return { program, checker, sourceFile };
 }
 
-function getExportType(checker: ts.TypeChecker, sourceFile: ts.SourceFile, exportName: string): ts.Type | null {
+function getExportType(
+  checker: ts.TypeChecker,
+  sourceFile: ts.SourceFile,
+  exportName: string,
+): ts.Type | null {
   const moduleSymbol = checker.getSymbolAtLocation(sourceFile);
   if (!moduleSymbol) return null;
 
   const exports = checker.getExportsOfModule(moduleSymbol);
-  const symbol = exports.find(s => s.name === exportName);
+  const symbol = exports.find((s) => s.name === exportName);
   if (!symbol) return null;
 
   return checker.getTypeOfSymbol(symbol);
@@ -37,11 +41,11 @@ function getExportType(checker: ts.TypeChecker, sourceFile: ts.SourceFile, expor
 /**
  * Get the non-nullable part of a type (remove undefined/null from union)
  */
-function getNonNullableType(type: ts.Type, checker: ts.TypeChecker): ts.Type {
+function getNonNullableType(type: ts.Type, _checker: ts.TypeChecker): ts.Type {
   // If it's a union, filter out undefined and null
   if (type.isUnion()) {
-    const nonNullableTypes = type.types.filter(t =>
-      !(t.flags & ts.TypeFlags.Undefined) && !(t.flags & ts.TypeFlags.Null)
+    const nonNullableTypes = type.types.filter(
+      (t) => !(t.flags & ts.TypeFlags.Undefined) && !(t.flags & ts.TypeFlags.Null),
     );
 
     if (nonNullableTypes.length === 1) {
@@ -104,7 +108,9 @@ for (const exportName of exports) {
 
   const outputType = extractValibotOutput(checker, type);
   if (outputType) {
-    console.log(`  ✅ OUTPUT: ${checker.typeToString(outputType, undefined, ts.TypeFormatFlags.NoTruncation)}`);
+    console.log(
+      `  ✅ OUTPUT: ${checker.typeToString(outputType, undefined, ts.TypeFormatFlags.NoTruncation)}`,
+    );
   } else {
     console.log('  ❌ Could not extract output');
   }

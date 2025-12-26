@@ -1,6 +1,13 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { detectPackageManager, DocCov, type GenerationInput, NodeFileSystem, renderApiSurface, resolveTarget } from '@doccov/sdk';
+import {
+  DocCov,
+  detectPackageManager,
+  type GenerationInput,
+  NodeFileSystem,
+  renderApiSurface,
+  resolveTarget,
+} from '@doccov/sdk';
 import { normalize, type OpenPkg as OpenPkgSpec, validateSpec } from '@openpkg-ts/spec';
 import chalk from 'chalk';
 import type { Command } from 'commander';
@@ -110,14 +117,20 @@ export function registerSpecCommand(
     // === Filtering ===
     .option('--include <patterns>', 'Include exports matching pattern (comma-separated)')
     .option('--exclude <patterns>', 'Exclude exports matching pattern (comma-separated)')
-    .option('--visibility <tags>', 'Filter by release stage: public,beta,alpha,internal (comma-separated)')
+    .option(
+      '--visibility <tags>',
+      'Filter by release stage: public,beta,alpha,internal (comma-separated)',
+    )
 
     // === Type resolution ===
     .option('--skip-resolve', 'Skip external type resolution from node_modules')
     .option('--max-type-depth <n>', 'Maximum depth for type conversion', '20')
 
     // === Schema extraction ===
-    .option('--runtime', 'Enable Standard Schema runtime extraction (richer output for Zod, Valibot, etc.)')
+    .option(
+      '--runtime',
+      'Enable Standard Schema runtime extraction (richer output for Zod, Valibot, etc.)',
+    )
 
     // === Caching ===
     .option('--no-cache', 'Bypass spec cache and force regeneration')
@@ -244,7 +257,10 @@ export function registerSpecCommand(
 
         // Warn if --runtime was requested but no runtime schemas were extracted
         const schemaExtraction = normalized.generation?.analysis?.schemaExtraction;
-        if (options.runtime && (!schemaExtraction?.runtimeCount || schemaExtraction.runtimeCount === 0)) {
+        if (
+          options.runtime &&
+          (!schemaExtraction?.runtimeCount || schemaExtraction.runtimeCount === 0)
+        ) {
           const pm = await detectPackageManager(fileSystem);
           const buildCmd = pm.name === 'npm' ? 'npm run build' : `${pm.name} run build`;
           log('');
@@ -274,7 +290,9 @@ export function registerSpecCommand(
             const se = gen.analysis.schemaExtraction;
             log(chalk.gray(`  Schema extraction: ${se.method}`));
             if (se.runtimeCount) {
-              log(chalk.gray(`  Runtime schemas:   ${se.runtimeCount} (${se.vendors?.join(', ')})`));
+              log(
+                chalk.gray(`  Runtime schemas:   ${se.runtimeCount} (${se.vendors?.join(', ')})`),
+              );
             }
           }
           log('');

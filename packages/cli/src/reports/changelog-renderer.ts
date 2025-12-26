@@ -49,7 +49,7 @@ export function renderChangelog(data: ChangelogData, options: ChangelogOptions =
   const date =
     options.date instanceof Date
       ? options.date.toISOString().split('T')[0]
-      : options.date ?? new Date().toISOString().split('T')[0];
+      : (options.date ?? new Date().toISOString().split('T')[0]);
 
   lines.push(`## [${version}] - ${date}`);
   lines.push('');
@@ -181,4 +181,3 @@ export function renderCompactChangelog(
 
   return result;
 }
-

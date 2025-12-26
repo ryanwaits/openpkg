@@ -10,7 +10,7 @@ async function verifyWebhookSignature(body: string, signature: string): Promise<
       encoder.encode(GITHUB_APP_WEBHOOK_SECRET),
       { name: 'HMAC', hash: 'SHA-256' },
       false,
-      ['sign']
+      ['sign'],
     );
 
     const sig = await crypto.subtle.sign('HMAC', key, encoder.encode(body));
@@ -73,7 +73,9 @@ export async function POST(request: Request) {
 
         const { owner, name: repo } = payload.repository;
         const sha = payload.after;
-        console.log(`[webhook] Push to ${owner.login}/${repo}@${defaultBranch} (${sha.slice(0, 7)})`);
+        console.log(
+          `[webhook] Push to ${owner.login}/${repo}@${defaultBranch} (${sha.slice(0, 7)})`,
+        );
 
         // TODO: Call sandbox API for analysis
         // This will be implemented when sandbox package is ready
@@ -91,7 +93,9 @@ export async function POST(request: Request) {
         const prNumber = pull_request.number;
         const headSha = pull_request.head.sha;
 
-        console.log(`[webhook] PR #${prNumber} ${action} on ${owner.login}/${repo} (${headSha.slice(0, 7)})`);
+        console.log(
+          `[webhook] PR #${prNumber} ${action} on ${owner.login}/${repo} (${headSha.slice(0, 7)})`,
+        );
 
         // TODO: Call sandbox API for PR analysis
         // This will be implemented when sandbox package is ready

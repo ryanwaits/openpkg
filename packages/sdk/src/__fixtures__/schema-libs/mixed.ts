@@ -2,9 +2,10 @@
  * Mixed Schema Libraries Fixture
  * Tests handling multiple schema libraries in one file
  */
-import { z } from 'zod';
+
+import { type Static, Type } from '@sinclair/typebox';
 import * as v from 'valibot';
-import { Type, type Static } from '@sinclair/typebox';
+import { z } from 'zod';
 
 // Zod schema
 export const ZodUserSchema = z.object({

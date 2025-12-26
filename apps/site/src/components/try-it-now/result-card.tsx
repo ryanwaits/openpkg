@@ -70,11 +70,8 @@ export function ResultCard({ summary }: ResultCardProps) {
                 Undocumented Exports
               </h4>
               <div className="flex flex-wrap gap-2">
-                {summary.topUndocumented.map((name, i) => (
-                  <code
-                    key={i}
-                    className="px-2 py-1 text-xs bg-muted rounded font-mono"
-                  >
+                {summary.topUndocumented.map((name) => (
+                  <code key={name} className="px-2 py-1 text-xs bg-muted rounded font-mono">
                     {name}
                   </code>
                 ))}
@@ -86,8 +83,8 @@ export function ResultCard({ summary }: ResultCardProps) {
             <div>
               <h4 className="text-sm font-medium mb-2 text-muted-foreground">Top Drift Issues</h4>
               <ul className="text-sm text-muted-foreground space-y-1">
-                {summary.topDrift.map((d, i) => (
-                  <li key={i} className="flex items-start gap-2">
+                {summary.topDrift.map((d) => (
+                  <li key={d.name} className="flex items-start gap-2">
                     <code className="text-foreground font-mono text-xs shrink-0">{d.name}</code>
                     <span className="text-xs">{d.issue}</span>
                   </li>
@@ -107,7 +104,9 @@ export function ResultCard({ summary }: ResultCardProps) {
           target="_blank"
           rel="noopener noreferrer"
         >
-          <Button size="sm" variant="secondary">View Source</Button>
+          <Button size="sm" variant="secondary">
+            View Source
+          </Button>
         </a>
       </div>
     </div>

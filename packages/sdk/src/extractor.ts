@@ -29,7 +29,12 @@ export async function extractPackageSpec(
         });
       }
     }
-    // Note: errors are silently ignored - we fall back to static extraction
+
+    if (extraction.errors.length > 0) {
+      console.warn(
+        `[doccov] Schema extraction warnings:\n${extraction.errors.map((e) => `  - ${e}`).join('\n')}`,
+      );
+    }
   }
 
   const result = runAnalysis({

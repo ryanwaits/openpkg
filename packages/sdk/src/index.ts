@@ -1,235 +1,263 @@
-// Cache utilities
+/**
+ * DocCov SDK - Documentation coverage and drift detection for TypeScript.
+ *
+ * This is the main entry point with core functionality.
+ * For specialized utilities, use subpath imports:
+ *
+ * @example
+ * ```ts
+ * // Core API (this module)
+ * import { DocCov, enrichSpec, computeDrift } from '@doccov/sdk';
+ *
+ * // Analysis utilities
+ * import { generateReport, computeSnapshot } from '@doccov/sdk/analysis';
+ *
+ * // Type definitions
+ * import type { DocCovReport, FilterOptions } from '@doccov/sdk/types';
+ * ```
+ *
+ * @module @doccov/sdk
+ */
 
-// Analysis context types (for advanced usage)
-export type { DetectedSchemaEntry } from './analysis/context';
-// Runtime schema detection (legacy - now stubbed)
-export {
-  clearSchemaCache,
-  detectRuntimeSchemas,
-  type SchemaDetectionContext,
-  type SchemaDetectionResult,
-} from './analysis/schema-detection';
-// Schema extraction (Zod, Valibot, TypeBox, ArkType)
-// Static: TypeScript Compiler API (no runtime)
-// Runtime: Standard Schema (requires built package)
-export {
-  // Static extraction
-  extractSchemaOutputType,
-  extractSchemaType,
-  findAdapter,
-  getRegisteredAdapters,
-  getSupportedLibraries,
-  isSchemaType,
-  type SchemaAdapter,
-  type SchemaExtractionResult,
-  // Standard Schema runtime extraction
-  extractStandardSchemas,
-  extractStandardSchemasFromProject,
-  isStandardJSONSchema,
-  resolveCompiledPath,
-  type ExtractStandardSchemasOptions,
-  type StandardJSONSchemaV1,
-  type StandardSchemaExtractionOutput,
-  type StandardSchemaExtractionResult,
-} from './extract/schema';
+// ─────────────────────────────────────────────────────────────────────────────
+// Core Analysis API
+// ─────────────────────────────────────────────────────────────────────────────
 
-// Drift categorization utilities
-export {
-  buildExportRegistry,
-  type CategorizedDrift,
-  calculateAggregateCoverage,
-  categorizeDrift,
-  computeDrift,
-  computeExportDrift,
-  type DriftResult,
-  type DriftSummary,
-  detectExampleAssertionFailures,
-  detectExampleRuntimeErrors,
-  type ExportDriftResult,
-  ensureSpecCoverage,
-  formatDriftSummaryLine,
-  getDriftSummary,
-  groupDriftsByCategory,
-  hasNonAssertionComments,
-  parseAssertions,
-} from './analysis/docs-coverage';
-// Enrichment and coverage analysis
-export {
-  type EnrichedDocsMetadata,
-  type EnrichedExport,
-  type EnrichedOpenPkg,
-  type EnrichOptions,
-  enrichSpec,
-} from './analysis/enrich';
+export { DocCov, analyze, analyzeFile } from './openpkg';
+export type { AnalysisResult, AnalyzeOptions, Diagnostic } from './openpkg';
+export type { DocCovOptions } from './options';
+
+// Enrichment (most commonly used)
+export { enrichSpec } from './analysis/enrich';
+export type { EnrichedExport, EnrichedOpenPkg, EnrichOptions } from './analysis/enrich';
+
+// Drift detection (most commonly used)
+export { computeDrift, computeExportDrift, buildExportRegistry } from './analysis/docs-coverage';
+export type { DriftResult, CategorizedDrift, DriftSummary } from './analysis/docs-coverage';
+
 // Report generation
-export {
-  generateReport,
-  generateReportFromEnriched,
-  isCachedReportValid,
-  loadCachedReport,
-  renderApiSurface,
-  saveReport,
-} from './analysis/report';
-// Coverage history and trends
-export {
-  computeSnapshot,
-  type CoverageSnapshot,
-  type CoverageTrend,
-  type ExtendedTrendAnalysis,
-  formatDelta,
-  generateWeeklySummaries,
-  getExtendedTrend,
-  getTrend,
-  HISTORY_DIR,
-  loadSnapshots,
-  loadSnapshotsForDays,
-  pruneByTier,
-  pruneHistory,
-  renderSparkline,
-  RETENTION_DAYS,
-  type RetentionTier,
-  saveSnapshot,
-  type WeeklySummary,
-} from './analysis/history';
+export { generateReport } from './analysis/report';
+
+// Spec types
 export type { OpenPkgSpec } from './analysis/spec-types';
-export {
-  CACHE_VERSION,
-  type CacheContext,
-  type CacheValidationResult,
-  clearSpecCache,
-  diffHashes,
-  getSpecCachePath,
-  hashFile,
-  hashFiles,
-  hashString,
-  loadSpecCache,
-  SPEC_CACHE_FILE,
-  type SpecCache,
-  type SpecCacheConfig,
-  saveSpecCache,
-  validateSpecCache,
-} from './cache';
-// Configuration types
-export type {
-  CheckConfig,
-  DocCovConfig,
-  DocsConfig,
-  ExampleValidationMode,
-  SchemaExtractionMode,
-} from './config';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Configuration
+// ─────────────────────────────────────────────────────────────────────────────
+
 export { defineConfig } from './config';
-// Project detection (for CLI and API)
-export {
-  type AnalyzeProjectOptions,
-  // High-level API
-  analyzeProject,
-  type BuildInfo,
-  detectBuildInfo,
-  detectEntryPoint,
-  detectMonorepo,
-  // Detection functions
-  detectPackageManager,
-  type EntryPointInfo,
-  type EntryPointSource,
-  // Types
-  type FileSystem,
-  findPackageByName,
-  formatPackageList,
-  getInstallCommand,
-  getPrimaryBuildScript,
-  getRunCommand,
-  type MonorepoInfo,
-  type MonorepoType,
-  // FileSystem implementations
-  NodeFileSystem,
-  type PackageExports,
-  type PackageJson,
-  type PackageManager,
-  type PackageManagerInfo,
-  type ProjectInfo,
-  readPackageJson,
-  SandboxFileSystem,
-  // Utilities
-  safeParseJson,
-  type WorkspacePackage,
-} from './detect';
-// Unified example validation
-export {
-  ALL_VALIDATIONS,
-  type ExampleValidation,
-  type ExampleValidationOptions,
-  type ExampleValidationResult,
-  type ExampleValidationTypeError,
-  type LLMAssertion,
-  type PresenceResult,
-  parseExamplesFlag,
-  type RuntimeDrift,
-  type RunValidationResult,
-  shouldValidate,
-  type TypecheckValidationResult,
-  VALIDATION_INFO,
-  validateExamples,
+export type { DocCovConfig, CheckConfig, DocsConfig } from './config';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Project Resolution & Detection
+// ─────────────────────────────────────────────────────────────────────────────
+
+export { resolveTarget } from './resolve';
+export type { ResolvedTarget, ResolveTargetOptions } from './resolve';
+
+export { analyzeProject, detectPackageManager, NodeFileSystem } from './detect';
+export type { FileSystem, PackageJson, ProjectInfo, PackageManager } from './detect';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Example Validation
+// ─────────────────────────────────────────────────────────────────────────────
+
+export { validateExamples, parseExamplesFlag } from './examples';
+export type {
+  ExampleValidation,
+  ExampleValidationResult,
+  ExampleValidationOptions,
 } from './examples';
-export { extractPackageSpec } from './extractor';
-export type { FilterSource, ResolvedFilters } from './filtering/merge';
-export { mergeFilters, parseListFlag } from './filtering/merge';
-export type { FilterOptions, ReleaseTag } from './filtering/types';
-// Fix utilities
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Fix Utilities
+// ─────────────────────────────────────────────────────────────────────────────
+
 export {
-  type ApplyEditsResult,
   applyEdits,
-  applyPatchToJSDoc,
   categorizeDrifts,
   createSourceFile,
-  type FixSuggestion,
-  type FixType,
   findJSDocLocation,
-  generateFix,
   generateFixesForExport,
   isFixableDrift,
-  type JSDocEdit,
-  type JSDocParam,
-  type JSDocPatch,
-  type JSDocReturn,
-  type JSDocTag,
   mergeFixes,
   parseJSDocToPatch,
   serializeJSDoc,
 } from './fix';
-// GitHub utilities
-export type { ParsedGitHubUrl } from './github';
+export type { JSDocEdit, JSDocPatch, FixSuggestion } from './fix';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Markdown Analysis
+// ─────────────────────────────────────────────────────────────────────────────
+
+export { parseMarkdownFiles, findExportReferences } from './markdown';
+export type { MarkdownDocFile, MarkdownCodeBlock } from './markdown';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Report Types (commonly needed)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type { DocCovReport, ExportCoverageData, CoverageSummary } from './types/report';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Filter Types (commonly needed)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type { FilterOptions, ReleaseTag } from './filtering/types';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Typecheck
+// ─────────────────────────────────────────────────────────────────────────────
+
+export { typecheckExamples } from './typecheck';
+export type { ExampleTypeError, TypecheckResult } from './typecheck';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Legacy exports (for backward compatibility)
+// Consider migrating to subpath imports: @doccov/sdk/analysis, @doccov/sdk/types
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Analysis (migrate to @doccov/sdk/analysis)
 export {
-  buildCloneUrl,
-  buildDisplayUrl,
-  buildRawUrl,
+  categorizeDrift,
+  groupDriftsByCategory,
+  getDriftSummary,
+  formatDriftSummaryLine,
+  calculateAggregateCoverage,
+  ensureSpecCoverage,
+  detectExampleRuntimeErrors,
+  detectExampleAssertionFailures,
+  hasNonAssertionComments,
+  parseAssertions,
+} from './analysis/docs-coverage';
+export type { ExportDriftResult } from './analysis/docs-coverage';
+export type { EnrichedDocsMetadata } from './analysis/enrich';
+
+export { generateReportFromEnriched, saveReport, loadCachedReport } from './analysis/report';
+
+export {
+  computeSnapshot,
+  saveSnapshot,
+  loadSnapshots,
+  getTrend,
+  getExtendedTrend,
+  formatDelta,
+  renderSparkline,
+  pruneHistory,
+  HISTORY_DIR,
+  RETENTION_DAYS,
+} from './analysis/history';
+export type { CoverageSnapshot, CoverageTrend, ExtendedTrendAnalysis } from './analysis/history';
+
+// Cache (for advanced usage)
+export {
+  loadSpecCache,
+  saveSpecCache,
+  clearSpecCache,
+  validateSpecCache,
+  hashFiles,
+  hashFile,
+  hashString,
+  getSpecCachePath,
+  diffHashes,
+  CACHE_VERSION,
+  SPEC_CACHE_FILE,
+} from './cache';
+export type { SpecCache, CacheContext, CacheValidationResult, SpecCacheConfig } from './cache';
+
+// Detection (for advanced usage)
+export {
+  detectEntryPoint,
+  detectBuildInfo,
+  detectMonorepo,
+  findPackageByName,
+  formatPackageList,
+  getInstallCommand,
+  getRunCommand,
+  getPrimaryBuildScript,
+  readPackageJson,
+  safeParseJson,
+  SandboxFileSystem,
+} from './detect';
+export type {
+  AnalyzeProjectOptions,
+  BuildInfo,
+  EntryPointInfo,
+  EntryPointSource,
+  MonorepoInfo,
+  MonorepoType,
+  PackageExports,
+  PackageManagerInfo,
+  WorkspacePackage,
+} from './detect';
+
+// Schema extraction
+export {
+  extractSchemaType,
+  extractSchemaOutputType,
+  findAdapter,
+  getRegisteredAdapters,
+  getSupportedLibraries,
+  isSchemaType,
+  extractStandardSchemas,
+  extractStandardSchemasFromProject,
+  isStandardJSONSchema,
+  resolveCompiledPath,
+} from './extract/schema';
+export type {
+  SchemaAdapter,
+  SchemaExtractionResult,
+  ExtractStandardSchemasOptions,
+  StandardJSONSchemaV1,
+  StandardSchemaExtractionOutput,
+  StandardSchemaExtractionResult,
+} from './extract/schema';
+
+export { extractPackageSpec } from './extractor';
+
+// Schema detection
+export { detectRuntimeSchemas } from './analysis/schema-detection';
+export type { SchemaDetectionContext, SchemaDetectionResult } from './analysis/schema-detection';
+
+// Examples (additional exports)
+export { ALL_VALIDATIONS, VALIDATION_INFO, shouldValidate } from './examples';
+export type {
+  ExampleValidationTypeError,
+  LLMAssertion,
+  PresenceResult,
+  RuntimeDrift,
+  RunValidationResult,
+  TypecheckValidationResult,
+} from './examples';
+
+// Fix (additional exports)
+export { applyPatchToJSDoc, generateFix } from './fix';
+export type { ApplyEditsResult, FixType, JSDocParam, JSDocReturn, JSDocTag } from './fix';
+
+// GitHub
+export {
+  parseGitHubUrl,
   fetchSpec,
   fetchSpecFromGitHub,
-  parseGitHubUrl,
+  buildRawUrl,
+  buildCloneUrl,
+  buildDisplayUrl,
 } from './github';
-// Dependency installation
-export type { CommandResult, CommandRunner, InstallOptions, InstallResult } from './install';
-export { createNodeCommandRunner, installDependencies } from './install';
-// Markdown/MDX analysis
-export type {
-  DiffWithDocsOptions,
-  DocsChangeType,
-  DocsImpact,
-  DocsImpactReference,
-  DocsImpactResult,
-  ExportReference,
-  MarkdownCodeBlock,
-  MarkdownDocFile,
-  MemberChange,
-  SpecDiffWithDocs,
-} from './markdown';
+export type { ParsedGitHubUrl } from './github';
+
+// Install
+export { installDependencies, createNodeCommandRunner } from './install';
+export type { InstallOptions, InstallResult, CommandRunner, CommandResult } from './install';
+
+// Markdown (additional exports)
 export {
+  parseMarkdownFile,
   analyzeDocsImpact,
-  blockReferencesExport,
   diffSpecWithDocs,
+  blockReferencesExport,
   extractFunctionCalls,
   extractImports,
   findDeprecatedReferences,
-  findExportReferences,
   findRemovedReferences,
   getDocsImpactSummary,
   getDocumentedExports,
@@ -237,20 +265,27 @@ export {
   hasDocsForExport,
   hasDocsImpact,
   isExecutableLang,
-  parseMarkdownFile,
-  parseMarkdownFiles,
 } from './markdown';
-export type { AnalysisResult, AnalyzeOptions, Diagnostic } from './openpkg';
-export { analyze, analyzeFile, DocCov } from './openpkg';
-export type { DocCovOptions } from './options';
-// Project resolution
-export type { ResolvedTarget, ResolveTargetOptions } from './resolve';
-export { resolveTarget } from './resolve';
-// Scan types and utilities
 export type {
-  // GitHub context types
+  DiffWithDocsOptions,
+  DocsChangeType,
+  DocsImpact,
+  DocsImpactReference,
+  DocsImpactResult,
+  ExportReference,
+  MemberChange,
+  SpecDiffWithDocs,
+} from './markdown';
+
+// Filtering
+export { mergeFilters, parseListFlag } from './filtering/merge';
+export type { FilterSource, ResolvedFilters } from './filtering/merge';
+
+// Scan
+export { extractSpecSummary, fetchGitHubContext, listWorkspacePackages } from './scan';
+export { parseGitHubUrl as parseScanGitHubUrl } from './scan';
+export type {
   BuildHints,
-  // Build plan types
   BuildPlan,
   BuildPlanEnvironment,
   BuildPlanExecutionResult,
@@ -261,43 +296,37 @@ export type {
   FetchGitHubContextOptions,
   GitHubProjectContext,
   GitHubRepoMetadata,
-  // Summary
   SpecSummary,
   SummaryDriftIssue,
   WorkspaceConfig,
 } from './scan';
+
+// Typecheck (additional exports)
+export { typecheckExample } from './typecheck';
+export type { TypecheckOptions } from './typecheck';
+
+// Report types (additional exports)
 export {
-  extractSpecSummary,
-  fetchGitHubContext,
-  listWorkspacePackages,
-  parseGitHubUrl as parseScanGitHubUrl,
-} from './scan';
-// Example typechecker
-export {
-  type ExampleTypeError,
-  type TypecheckOptions,
-  type TypecheckResult,
-  typecheckExample,
-  typecheckExamples,
-} from './typecheck';
-// Report types
-export {
-  type CoverageSummary,
   DEFAULT_REPORT_DIR,
   DEFAULT_REPORT_PATH,
-  type DocCovReport,
-  type DriftReport,
-  type DriftReportSummary,
-  type ExportCoverageData,
   getDiffReportPath,
   getReportPath,
   REPORT_EXTENSIONS,
   REPORT_VERSION,
 } from './types/report';
+export type { DriftReport, DriftReportSummary } from './types/report';
+
+// Example runner
+export { runExample, runExamples, runExamplesWithPackage } from './utils/example-runner';
 export type {
   ExampleRunResult,
   RunExampleOptions,
   RunExamplesWithPackageOptions,
   RunExamplesWithPackageResult,
 } from './utils/example-runner';
-export { runExample, runExamples, runExamplesWithPackage } from './utils/example-runner';
+
+// Config types (additional)
+export type { ExampleValidationMode, SchemaExtractionMode } from './config';
+
+// Context types
+export type { DetectedSchemaEntry } from './analysis/context';

@@ -2,7 +2,7 @@
  * TypeBox Basic Fixtures
  * Tests TypeBox schema patterns for type extraction
  */
-import { Type, type Static } from '@sinclair/typebox';
+import { type Static, Type } from '@sinclair/typebox';
 
 // Basic primitives
 export const StringSchema = Type.String();
@@ -54,10 +54,7 @@ export const TupleSchema = Type.Tuple([Type.String(), Type.Number(), Type.Boolea
 
 // Intersect
 export const BaseSchema = Type.Object({ id: Type.String() });
-export const ExtendedSchema = Type.Intersect([
-  BaseSchema,
-  Type.Object({ name: Type.String() }),
-]);
+export const ExtendedSchema = Type.Intersect([BaseSchema, Type.Object({ name: Type.String() })]);
 
 // Pick/Omit
 export const FullSchema = Type.Object({ a: Type.String(), b: Type.Number(), c: Type.Boolean() });

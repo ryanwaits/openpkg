@@ -62,7 +62,7 @@ export async function GET(request: Request) {
         error: 'No GitHub App installation found',
         installUrl: `/github/install?orgId=${orgId}`,
       },
-      { status: 404 }
+      { status: 404 },
     );
   }
 

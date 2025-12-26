@@ -44,7 +44,11 @@ function analyzeFile(filePath: string): ExportInfo[] {
 
   if (configPath) {
     const configFile = ts.readConfigFile(configPath, ts.sys.readFile);
-    const parsed = ts.parseJsonConfigFileContent(configFile.config, ts.sys, path.dirname(configPath));
+    const parsed = ts.parseJsonConfigFileContent(
+      configFile.config,
+      ts.sys,
+      path.dirname(configPath),
+    );
     compilerOptions = { ...compilerOptions, ...parsed.options };
   }
 
@@ -81,16 +85,20 @@ function analyzeFile(filePath: string): ExportInfo[] {
     const typeString = checker.typeToString(type, undefined, ts.TypeFormatFlags.NoTruncation);
     const flags = getTypeFlags(type.flags);
 
-    const isTypeRef = !!(type.flags & ts.TypeFlags.Object) &&
-                      !!(type as ts.ObjectType).objectFlags &&
-                      !!((type as ts.ObjectType).objectFlags & ts.ObjectFlags.Reference);
+    const isTypeRef =
+      !!(type.flags & ts.TypeFlags.Object) &&
+      !!(type as ts.ObjectType).objectFlags &&
+      !!((type as ts.ObjectType).objectFlags & ts.ObjectFlags.Reference);
 
     let typeArgs: string[] | undefined;
     if (isTypeRef) {
       const typeRef = type as ts.TypeReference;
       const args = checker.getTypeArguments(typeRef);
       if (args && args.length > 0) {
-        typeArgs = args.map((arg, i) => `[${i}] ${checker.typeToString(arg, undefined, ts.TypeFormatFlags.NoTruncation)}`);
+        typeArgs = args.map(
+          (arg, i) =>
+            `[${i}] ${checker.typeToString(arg, undefined, ts.TypeFormatFlags.NoTruncation)}`,
+        );
       }
     }
 
@@ -108,13 +116,15 @@ function analyzeFile(filePath: string): ExportInfo[] {
 }
 
 function printExports(title: string, exports: ExportInfo[]): void {
-  console.log('\n' + '='.repeat(80));
+  console.log(`\n${'='.repeat(80)}`);
   console.log(`📦 ${title}`);
   console.log('='.repeat(80));
 
   for (const exp of exports) {
     console.log(`\n🔹 ${exp.name}`);
-    console.log(`   Type: ${exp.typeString.substring(0, 200)}${exp.typeString.length > 200 ? '...' : ''}`);
+    console.log(
+      `   Type: ${exp.typeString.substring(0, 200)}${exp.typeString.length > 200 ? '...' : ''}`,
+    );
     console.log(`   Flags: ${exp.typeFlags.join(', ')}`);
     console.log(`   Is TypeReference: ${exp.isTypeReference}`);
     if (exp.typeArguments) {
@@ -128,7 +138,7 @@ function printExports(title: string, exports: ExportInfo[]): void {
 
 // Deeper analysis for specific schema patterns
 function analyzeSchemaPattern(filePath: string, exportName: string): void {
-  const configPath = ts.findConfigFile(FIXTURES_DIR, ts.sys.fileExists, 'tsconfig.json');
+  const _configPath = ts.findConfigFile(FIXTURES_DIR, ts.sys.fileExists, 'tsconfig.json');
 
   const compilerOptions: ts.CompilerOptions = {
     target: ts.ScriptTarget.Latest,
@@ -149,7 +159,7 @@ function analyzeSchemaPattern(filePath: string, exportName: string): void {
   if (!moduleSymbol) return;
 
   const exportedSymbols = checker.getExportsOfModule(moduleSymbol);
-  const symbol = exportedSymbols.find(s => s.name === exportName);
+  const symbol = exportedSymbols.find((s) => s.name === exportName);
 
   if (!symbol) {
     console.log(`Export ${exportName} not found`);
@@ -158,21 +168,30 @@ function analyzeSchemaPattern(filePath: string, exportName: string): void {
 
   const type = checker.getTypeOfSymbol(symbol);
 
-  console.log('\n' + '-'.repeat(60));
+  console.log(`\n${'-'.repeat(60)}`);
   console.log(`Deep Analysis: ${exportName}`);
   console.log('-'.repeat(60));
 
   // Full type string
   console.log('\nFull Type String:');
-  console.log(checker.typeToString(type, undefined, ts.TypeFormatFlags.NoTruncation | ts.TypeFormatFlags.MultilineObjectLiterals));
+  console.log(
+    checker.typeToString(
+      type,
+      undefined,
+      ts.TypeFormatFlags.NoTruncation | ts.TypeFormatFlags.MultilineObjectLiterals,
+    ),
+  );
 
   // Check if it's an object type with call signatures
   if (type.flags & ts.TypeFlags.Object) {
     const objType = type as ts.ObjectType;
-    console.log('\nObject Flags:', Object.entries(ts.ObjectFlags)
-      .filter(([_, v]) => typeof v === 'number' && (objType.objectFlags & v) !== 0)
-      .map(([k]) => k)
-      .join(', '));
+    console.log(
+      '\nObject Flags:',
+      Object.entries(ts.ObjectFlags)
+        .filter(([_, v]) => typeof v === 'number' && (objType.objectFlags & v) !== 0)
+        .map(([k]) => k)
+        .join(', '),
+    );
 
     // Get properties
     const props = type.getProperties();
@@ -211,7 +230,10 @@ function analyzeSchemaPattern(filePath: string, exportName: string): void {
     // Get the target type (for generics)
     if ('target' in objType && objType.target) {
       const target = objType.target as ts.GenericType;
-      console.log('\nTarget Type:', checker.typeToString(target as unknown as ts.Type).substring(0, 100));
+      console.log(
+        '\nTarget Type:',
+        checker.typeToString(target as unknown as ts.Type).substring(0, 100),
+      );
     }
   }
 }

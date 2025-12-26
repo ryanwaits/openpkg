@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useCallback } from 'react';
 import { Button } from '@doccov/ui/button';
-import { TerminalOutput, type TerminalLine } from './terminal-output';
-import { ResultCard, type AnalysisSummary } from './result-card';
+import { useCallback, useState } from 'react';
+import { type AnalysisSummary, ResultCard } from './result-card';
+import { type TerminalLine, TerminalOutput } from './terminal-output';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -47,147 +47,95 @@ export function TryItNow() {
   /**
    * Analyze npm package (existing flow)
    */
-  const analyzeNpmPackage = useCallback(async (pkg: string) => {
-    if (isRunning || !pkg.trim()) return;
+  const analyzeNpmPackage = useCallback(
+    async (pkg: string) => {
+      if (isRunning || !pkg.trim()) return;
 
-    const trimmedPkg = pkg.trim();
-    setIsRunning(true);
-    setLines([{ type: 'command', text: `doccov check ${trimmedPkg}` }]);
-    setResult(null);
-    setError(null);
-    setRepoInfo(null);
+      const trimmedPkg = pkg.trim();
+      setIsRunning(true);
+      setLines([{ type: 'command', text: `doccov check ${trimmedPkg}` }]);
+      setResult(null);
+      setError(null);
+      setRepoInfo(null);
 
-    try {
-      const eventSource = new EventSource(
-        `${API_URL}/demo/analyze?package=${encodeURIComponent(trimmedPkg)}`,
-      );
+      try {
+        const eventSource = new EventSource(
+          `${API_URL}/demo/analyze?package=${encodeURIComponent(trimmedPkg)}`,
+        );
 
-      eventSource.addEventListener('progress', (e) => {
-        try {
-          const data = JSON.parse(e.data);
-          setLines((prev) => [
-            ...prev,
-            {
-              type: data.type === 'status' ? 'status' : 'log',
-              text: data.message,
-              step: data.step,
-            },
-          ]);
-        } catch {
-          // Ignore parse errors
-        }
-      });
-
-      eventSource.addEventListener('complete', (e) => {
-        try {
-          const data = JSON.parse(e.data);
-          if (data.data) {
-            setResult(data.data);
+        eventSource.addEventListener('progress', (e) => {
+          try {
+            const data = JSON.parse(e.data);
             setLines((prev) => [
               ...prev,
-              { type: 'success', text: `Coverage: ${data.data.coverage}%` },
+              {
+                type: data.type === 'status' ? 'status' : 'log',
+                text: data.message,
+                step: data.step,
+              },
             ]);
+          } catch {
+            // Ignore parse errors
           }
-        } catch {
-          // Ignore parse errors
-        }
-        eventSource.close();
-        setIsRunning(false);
-      });
-
-      eventSource.addEventListener('error', (e) => {
-        try {
-          const event = e as MessageEvent;
-          if (event.data) {
-            const data = JSON.parse(event.data);
-            setLines((prev) => [...prev, { type: 'error', text: data.message || 'Analysis failed' }]);
-            setError(data.message);
-          } else {
-            setLines((prev) => [...prev, { type: 'error', text: 'Connection failed' }]);
-            setError('Connection failed');
-          }
-        } catch {
-          setLines((prev) => [...prev, { type: 'error', text: 'Analysis failed' }]);
-          setError('Analysis failed');
-        }
-        eventSource.close();
-        setIsRunning(false);
-      });
-
-      eventSource.onerror = () => {
-        if (eventSource.readyState === EventSource.CLOSED) {
-          return;
-        }
-        setLines((prev) => [...prev, { type: 'error', text: 'Connection lost' }]);
-        setError('Connection lost');
-        eventSource.close();
-        setIsRunning(false);
-      };
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to connect';
-      setLines((prev) => [...prev, { type: 'error', text: message }]);
-      setError(message);
-      setIsRunning(false);
-    }
-  }, [isRunning]);
-
-  /**
-   * Detect packages in GitHub repo (for monorepos)
-   */
-  const detectRepo = useCallback(async (url: string) => {
-    if (isRunning || !url.trim()) return;
-
-    setIsRunning(true);
-    setLines([{ type: 'command', text: `doccov detect ${url}` }]);
-    setResult(null);
-    setError(null);
-    setRepoInfo(null);
-
-    try {
-      setLines((prev) => [...prev, { type: 'status', text: 'Detecting repository structure...' }]);
-
-      const res = await fetch(`${API_URL}/demo/detect`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Detection failed');
-      }
-
-      if (data.isMonorepo && data.packages.length > 0) {
-        // Show package selector
-        const publicPackages = data.packages.filter((p: WorkspacePackage) => !p.private);
-        setRepoInfo({
-          url,
-          owner: data.owner,
-          repo: data.repo,
-          packages: publicPackages,
         });
-        setLines((prev) => [
-          ...prev,
-          { type: 'log', text: `Monorepo detected (${data.packageManager})` },
-          { type: 'success', text: `Found ${publicPackages.length} public packages` },
-        ]);
+
+        eventSource.addEventListener('complete', (e) => {
+          try {
+            const data = JSON.parse(e.data);
+            if (data.data) {
+              setResult(data.data);
+              setLines((prev) => [
+                ...prev,
+                { type: 'success', text: `Coverage: ${data.data.coverage}%` },
+              ]);
+            }
+          } catch {
+            // Ignore parse errors
+          }
+          eventSource.close();
+          setIsRunning(false);
+        });
+
+        eventSource.addEventListener('error', (e) => {
+          try {
+            const event = e as MessageEvent;
+            if (event.data) {
+              const data = JSON.parse(event.data);
+              setLines((prev) => [
+                ...prev,
+                { type: 'error', text: data.message || 'Analysis failed' },
+              ]);
+              setError(data.message);
+            } else {
+              setLines((prev) => [...prev, { type: 'error', text: 'Connection failed' }]);
+              setError('Connection failed');
+            }
+          } catch {
+            setLines((prev) => [...prev, { type: 'error', text: 'Analysis failed' }]);
+            setError('Analysis failed');
+          }
+          eventSource.close();
+          setIsRunning(false);
+        });
+
+        eventSource.onerror = () => {
+          if (eventSource.readyState === EventSource.CLOSED) {
+            return;
+          }
+          setLines((prev) => [...prev, { type: 'error', text: 'Connection lost' }]);
+          setError('Connection lost');
+          eventSource.close();
+          setIsRunning(false);
+        };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to connect';
+        setLines((prev) => [...prev, { type: 'error', text: message }]);
+        setError(message);
         setIsRunning(false);
-      } else {
-        // Single package repo - analyze directly
-        setLines((prev) => [
-          ...prev,
-          { type: 'log', text: `Single package repo (${data.packageManager})` },
-        ]);
-        analyzeRepo(url);
       }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Detection failed';
-      setLines((prev) => [...prev, { type: 'error', text: message }]);
-      setError(message);
-      setIsRunning(false);
-    }
-  }, [isRunning]);
+    },
+    [isRunning],
+  );
 
   /**
    * Analyze GitHub repo directly
@@ -195,10 +143,7 @@ export function TryItNow() {
   const analyzeRepo = useCallback(async (url: string, pkg?: string) => {
     setIsRunning(true);
     if (pkg) {
-      setLines((prev) => [
-        ...prev,
-        { type: 'command', text: `doccov check ${pkg}` },
-      ]);
+      setLines((prev) => [...prev, { type: 'command', text: `doccov check ${pkg}` }]);
     }
     setResult(null);
     setError(null);
@@ -247,7 +192,10 @@ export function TryItNow() {
           const event = e as MessageEvent;
           if (event.data) {
             const data = JSON.parse(event.data);
-            setLines((prev) => [...prev, { type: 'error', text: data.message || 'Analysis failed' }]);
+            setLines((prev) => [
+              ...prev,
+              { type: 'error', text: data.message || 'Analysis failed' },
+            ]);
             setError(data.message);
           } else {
             setLines((prev) => [...prev, { type: 'error', text: 'Connection failed' }]);
@@ -277,6 +225,70 @@ export function TryItNow() {
       setIsRunning(false);
     }
   }, []);
+
+  /**
+   * Detect packages in GitHub repo (for monorepos)
+   */
+  const detectRepo = useCallback(
+    async (url: string) => {
+      if (isRunning || !url.trim()) return;
+
+      setIsRunning(true);
+      setLines([{ type: 'command', text: `doccov detect ${url}` }]);
+      setResult(null);
+      setError(null);
+      setRepoInfo(null);
+
+      try {
+        setLines((prev) => [
+          ...prev,
+          { type: 'status', text: 'Detecting repository structure...' },
+        ]);
+
+        const res = await fetch(`${API_URL}/demo/detect`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || 'Detection failed');
+        }
+
+        if (data.isMonorepo && data.packages.length > 0) {
+          // Show package selector
+          const publicPackages = data.packages.filter((p: WorkspacePackage) => !p.private);
+          setRepoInfo({
+            url,
+            owner: data.owner,
+            repo: data.repo,
+            packages: publicPackages,
+          });
+          setLines((prev) => [
+            ...prev,
+            { type: 'log', text: `Monorepo detected (${data.packageManager})` },
+            { type: 'success', text: `Found ${publicPackages.length} public packages` },
+          ]);
+          setIsRunning(false);
+        } else {
+          // Single package repo - analyze directly
+          setLines((prev) => [
+            ...prev,
+            { type: 'log', text: `Single package repo (${data.packageManager})` },
+          ]);
+          analyzeRepo(url);
+        }
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Detection failed';
+        setLines((prev) => [...prev, { type: 'error', text: message }]);
+        setError(message);
+        setIsRunning(false);
+      }
+    },
+    [isRunning, analyzeRepo],
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -336,6 +348,7 @@ export function TryItNow() {
           <span className="text-sm text-muted-foreground py-1">Try:</span>
           {POPULAR_PACKAGES.map(({ name, label }) => (
             <button
+              type="button"
               key={name}
               onClick={() => handlePackageClick(name)}
               disabled={isRunning}
@@ -355,6 +368,7 @@ export function TryItNow() {
             <div className="flex flex-wrap gap-2">
               {repoInfo.packages.map((pkg) => (
                 <button
+                  type="button"
                   key={pkg.name}
                   onClick={() => handleRepoPackageClick(pkg)}
                   disabled={isRunning}
@@ -371,11 +385,13 @@ export function TryItNow() {
 
         {result && <ResultCard summary={result} />}
 
-        {error && error.includes('limit') && (
+        {error?.includes('limit') && (
           <div className="mt-4 p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-center">
             <p className="text-sm text-yellow-600 dark:text-yellow-400 mb-2">{error}</p>
             <a href="/pricing">
-              <Button size="sm" variant="secondary">Sign up for unlimited access</Button>
+              <Button size="sm" variant="secondary">
+                Sign up for unlimited access
+              </Button>
             </a>
           </div>
         )}

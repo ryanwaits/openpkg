@@ -12,34 +12,31 @@
  * 2. Standard Schema (runtime) - richer output when available
  */
 
-// Types
-export type { SchemaAdapter, SchemaExtractionResult } from './types';
-export { isTypeReference, getNonNullableType } from './types';
-
+export { arktypeAdapter } from './adapters/arktype';
+export { typeboxAdapter } from './adapters/typebox';
+export { valibotAdapter } from './adapters/valibot';
+// Individual adapters (for extension/testing)
+export { zodAdapter } from './adapters/zod';
 // Registry (main API - static extraction)
 export {
-  findAdapter,
-  isSchemaType,
   extractSchemaOutputType,
   extractSchemaType,
+  findAdapter,
   getRegisteredAdapters,
   getSupportedLibraries,
+  isSchemaType,
 } from './registry';
-
 // Standard Schema (runtime extraction)
 export {
+  type ExtractStandardSchemasOptions,
   extractStandardSchemas,
   extractStandardSchemasFromProject,
   isStandardJSONSchema,
   resolveCompiledPath,
-  type ExtractStandardSchemasOptions,
   type StandardJSONSchemaV1,
   type StandardSchemaExtractionOutput,
   type StandardSchemaExtractionResult,
 } from './standard-schema';
-
-// Individual adapters (for extension/testing)
-export { zodAdapter } from './adapters/zod';
-export { valibotAdapter } from './adapters/valibot';
-export { typeboxAdapter } from './adapters/typebox';
-export { arktypeAdapter } from './adapters/arktype';
+// Types
+export type { SchemaAdapter, SchemaExtractionResult } from './types';
+export { getNonNullableType, isTypeReference } from './types';

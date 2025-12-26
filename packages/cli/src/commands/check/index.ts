@@ -1,0 +1,289 @@
+import {
+  DocCov,
+  enrichSpec,
+  type ExampleValidation,
+  NodeFileSystem,
+  parseExamplesFlag,
+  resolveTarget,
+} from '@doccov/sdk';
+import chalk from 'chalk';
+import type { Command } from 'commander';
+import { loadDocCovConfig } from '../../config';
+import { mergeFilterOptions, parseVisibilityFlag } from '../../utils/filter-options';
+import { StepProgress } from '../../utils/progress';
+import { clampPercentage } from '../../utils/validation';
+import { handleFixes } from './fix-handler';
+import { displayTextOutput, handleNonTextOutput } from './output';
+import type { CheckCommandDependencies, CollectedDrift, OutputFormat } from './types';
+import { collect, collectDrift } from './utils';
+import { runExampleValidation, validateMarkdownDocs } from './validation';
+
+const defaultDependencies: Required<CheckCommandDependencies> = {
+  createDocCov: (options) => new DocCov(options),
+  log: console.log,
+  error: console.error,
+};
+
+export function registerCheckCommand(
+  program: Command,
+  dependencies: CheckCommandDependencies = {},
+): void {
+  const { createDocCov, log, error } = {
+    ...defaultDependencies,
+    ...dependencies,
+  };
+
+  program
+    .command('check [entry]')
+    .description('Check documentation coverage and output reports')
+    .option('--cwd <dir>', 'Working directory', process.cwd())
+    .option('--package <name>', 'Target package name (for monorepos)')
+    .option('--min-coverage <percentage>', 'Minimum docs coverage percentage (0-100)', (value) =>
+      Number(value),
+    )
+    .option('--max-drift <percentage>', 'Maximum drift percentage allowed (0-100)', (value) =>
+      Number(value),
+    )
+    .option(
+      '--examples [mode]',
+      'Example validation: presence, typecheck, run (comma-separated). Bare flag runs all.',
+    )
+    .option('--skip-resolve', 'Skip external type resolution from node_modules')
+    .option('--docs <glob>', 'Glob pattern for markdown docs to check for stale refs', collect, [])
+    .option('--fix', 'Auto-fix drift issues')
+    .option('--preview', 'Preview fixes with diff output (implies --fix)')
+    .option('--format <format>', 'Output format: text, json, markdown, html, github', 'text')
+    .option('-o, --output <file>', 'Custom output path (overrides default .doccov/ path)')
+    .option('--stdout', 'Output to stdout instead of writing to .doccov/')
+    .option('--update-snapshot', 'Force regenerate .doccov/report.json')
+    .option('--limit <n>', 'Max exports to show in report tables', '20')
+    .option(
+      '--max-type-depth <number>',
+      'Maximum depth for type conversion (default: 20)',
+      (value) => {
+        const n = parseInt(value, 10);
+        if (Number.isNaN(n) || n < 1)
+          throw new Error('--max-type-depth must be a positive integer');
+        return n;
+      },
+    )
+    .option('--no-cache', 'Bypass spec cache and force regeneration')
+    .option(
+      '--visibility <tags>',
+      'Filter by release stage: public,beta,alpha,internal (comma-separated)',
+    )
+    .action(async (entry, options) => {
+      try {
+        // Parse --examples flag (may be overridden by config later)
+        let validations = parseExamplesFlag(options.examples);
+        let hasExamples = validations.length > 0;
+
+        // Initial step list (may be updated after config load)
+        const stepList = [
+          { label: 'Resolved target', activeLabel: 'Resolving target' },
+          { label: 'Loaded config', activeLabel: 'Loading config' },
+          { label: 'Generated spec', activeLabel: 'Generating spec' },
+          { label: 'Enriched spec', activeLabel: 'Enriching spec' },
+          ...(hasExamples
+            ? [{ label: 'Validated examples', activeLabel: 'Validating examples' }]
+            : []),
+          { label: 'Processed results', activeLabel: 'Processing results' },
+        ];
+        const steps = new StepProgress(stepList);
+        steps.start();
+
+        // Resolve target directory and entry point
+        const fileSystem = new NodeFileSystem(options.cwd);
+        const resolved = await resolveTarget(fileSystem, {
+          cwd: options.cwd,
+          package: options.package,
+          entry: entry as string | undefined,
+        });
+
+        const { targetDir, entryFile } = resolved;
+        steps.next();
+
+        // Load config to get minCoverage threshold
+        const config = await loadDocCovConfig(targetDir);
+
+        // Merge examples config if CLI flag not set
+        if (!hasExamples && config?.check?.examples) {
+          const configExamples = config.check.examples;
+          if (Array.isArray(configExamples)) {
+            validations = configExamples as ExampleValidation[];
+          } else if (typeof configExamples === 'string') {
+            validations = parseExamplesFlag(configExamples);
+          }
+          hasExamples = validations.length > 0;
+        }
+
+        // CLI option takes precedence, then config, then sensible defaults
+        const DEFAULT_MIN_COVERAGE = 80;
+        const minCoverageRaw =
+          options.minCoverage ?? config?.check?.minCoverage ?? DEFAULT_MIN_COVERAGE;
+        const minCoverage = clampPercentage(minCoverageRaw);
+
+        // maxDrift has no default - drift is shown but doesn't fail unless configured
+        const maxDriftRaw = options.maxDrift ?? config?.check?.maxDrift;
+        const maxDrift = maxDriftRaw !== undefined ? clampPercentage(maxDriftRaw) : undefined;
+
+        // Parse and merge visibility filters
+        const cliFilters = {
+          include: undefined,
+          exclude: undefined,
+          visibility: parseVisibilityFlag(options.visibility),
+        };
+        const resolvedFilters = mergeFilterOptions(config, cliFilters);
+
+        // Log filter info if any filters are applied
+        if (resolvedFilters.visibility) {
+          log(chalk.dim(`Filtering by visibility: ${resolvedFilters.visibility.join(', ')}`));
+        }
+        steps.next();
+
+        const resolveExternalTypes = !options.skipResolve;
+
+        const doccov = createDocCov({
+          resolveExternalTypes,
+          maxDepth: options.maxTypeDepth,
+          useCache: options.cache !== false,
+          cwd: options.cwd,
+        });
+
+        // Build analysis options with visibility filters
+        const analyzeOptions = resolvedFilters.visibility
+          ? { filters: { visibility: resolvedFilters.visibility } }
+          : {};
+
+        const specResult = await doccov.analyzeFileWithDiagnostics(entryFile, analyzeOptions);
+
+        if (!specResult) {
+          throw new Error('Failed to analyze documentation coverage.');
+        }
+        steps.next();
+
+        // Enrich the spec with coverage data
+        const spec = enrichSpec(specResult.spec);
+        const format = (options.format ?? 'text') as OutputFormat;
+        steps.next();
+
+        // Collect spec diagnostics for later display
+        const specWarnings = specResult.diagnostics.filter((d) => d.severity === 'warning');
+        const specInfos = specResult.diagnostics.filter((d) => d.severity === 'info');
+
+        // Normalize --fix / --preview
+        const isPreview = options.preview;
+        const shouldFix = options.fix || isPreview;
+
+        // Run example validation
+        let exampleResult;
+        let typecheckErrors: Array<{ exportName: string; error: import('@doccov/sdk').ExampleTypeError }> = [];
+        let runtimeDrifts: CollectedDrift[] = [];
+
+        if (hasExamples) {
+          const validation = await runExampleValidation(spec, {
+            validations,
+            targetDir,
+          });
+          exampleResult = validation.result;
+          typecheckErrors = validation.typecheckErrors;
+          runtimeDrifts = validation.runtimeDrifts;
+          steps.next();
+        }
+
+        // Markdown docs analysis: detect stale references
+        let docsPatterns = options.docs as string[];
+        if (docsPatterns.length === 0 && config?.docs?.include) {
+          docsPatterns = config.docs.include;
+        }
+
+        const staleRefs = await validateMarkdownDocs({
+          docsPatterns,
+          targetDir,
+          exportNames: (spec.exports ?? []).map((e) => e.name),
+        });
+
+        const coverageScore = spec.docs?.coverageScore ?? 0;
+
+        // Collect drift issues - exclude example-category drifts unless --examples is used
+        const allDriftExports = [...collectDrift(spec.exports ?? []), ...runtimeDrifts];
+        let driftExports = hasExamples
+          ? allDriftExports
+          : allDriftExports.filter((d) => d.category !== 'example');
+
+        // Handle --fix / --preview: auto-fix drift issues
+        if (shouldFix && driftExports.length > 0) {
+          const fixResult = await handleFixes(
+            spec,
+            { isPreview, targetDir },
+            { log, error },
+          );
+
+          // Filter out fixed drifts from the evaluation (only when actually applying)
+          if (!isPreview) {
+            driftExports = driftExports.filter(
+              (d) => !fixResult.fixedDriftKeys.has(`${d.name}:${d.issue}`),
+            );
+          }
+        }
+
+        steps.complete('Check complete');
+
+        // Handle --format output for non-text formats
+        if (format !== 'text') {
+          const passed = handleNonTextOutput(
+            {
+              format,
+              spec,
+              rawSpec: specResult.spec,
+              coverageScore,
+              minCoverage,
+              maxDrift,
+              driftExports,
+              typecheckErrors,
+              limit: parseInt(options.limit, 10) || 20,
+              stdout: options.stdout,
+              outputPath: options.output,
+              cwd: options.cwd,
+            },
+            { log },
+          );
+
+          if (!passed) {
+            process.exit(1);
+          }
+          return;
+        }
+
+        // Display text output
+        const passed = displayTextOutput(
+          {
+            spec,
+            coverageScore,
+            minCoverage,
+            maxDrift,
+            driftExports,
+            typecheckErrors,
+            staleRefs,
+            exampleResult,
+            specWarnings,
+            specInfos,
+          },
+          { log },
+        );
+
+        if (!passed) {
+          process.exit(1);
+        }
+      } catch (commandError) {
+        error(
+          chalk.red('Error:'),
+          commandError instanceof Error ? commandError.message : commandError,
+        );
+        process.exit(1);
+      }
+    });
+}
+
+// Re-export types for consumers
+export type { CheckCommandDependencies, CollectedDrift, OutputFormat, StaleReference } from './types';

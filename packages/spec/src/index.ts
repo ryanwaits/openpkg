@@ -2,8 +2,8 @@ export * from './constants';
 export { dereference } from './deref';
 export {
   type BreakingSeverity,
-  calculateNextVersion,
   type CategorizedBreaking,
+  calculateNextVersion,
   categorizeBreakingChanges,
   diffSpec,
   type MemberChangeInfo,

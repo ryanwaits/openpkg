@@ -3,10 +3,7 @@ import { db } from '@/lib/db';
 import { getSession } from '@/lib/session';
 
 // GET /orgs/:slug/projects - List org's projects
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ slug: string }> }
-) {
+export async function GET(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const session = await getSession(request);
   if (!session) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
@@ -36,17 +33,14 @@ export async function GET(
 }
 
 // POST /orgs/:slug/projects - Create a project
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ slug: string }> }
-) {
+export async function POST(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const session = await getSession(request);
   if (!session) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const { slug } = await params;
-  const body = await request.json() as { name: string; fullName: string; isPrivate?: boolean };
+  const body = (await request.json()) as { name: string; fullName: string; isPrivate?: boolean };
 
   const membership = await db
     .selectFrom('org_members')

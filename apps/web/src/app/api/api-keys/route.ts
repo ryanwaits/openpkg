@@ -45,7 +45,7 @@ export async function POST(request: Request) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { orgId, name, expiresIn } = await request.json() as {
+  const { orgId, name, expiresIn } = (await request.json()) as {
     orgId: string;
     name: string;
     expiresIn?: number;
@@ -74,7 +74,7 @@ export async function POST(request: Request) {
         error: 'API keys require a paid plan',
         upgrade: 'https://doccov.com/pricing',
       },
-      { status: 403 }
+      { status: 403 },
     );
   }
 
@@ -103,6 +103,6 @@ export async function POST(request: Request) {
       expiresAt,
       message: 'Save this key now. It cannot be retrieved again.',
     },
-    { status: 201 }
+    { status: 201 },
   );
 }

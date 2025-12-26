@@ -85,7 +85,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref,
   ) => {
-    const Comp = asChild ? Slot : 'button';
+    const _Comp = asChild ? Slot : 'button';
     const effectiveSize = variant === 'nav' ? 'nav' : size;
 
     const arrowPaddingClass =

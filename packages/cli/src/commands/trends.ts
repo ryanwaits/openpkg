@@ -8,18 +8,16 @@ import * as path from 'node:path';
 import {
   type CoverageSnapshot,
   type CoverageTrend,
-  type ExtendedTrendAnalysis,
   formatDelta,
   getExtendedTrend,
   getTrend,
   loadSnapshots,
   pruneByTier,
   pruneHistory,
-  renderSparkline,
-  type RetentionTier,
   RETENTION_DAYS,
+  type RetentionTier,
+  renderSparkline,
   saveSnapshot,
-  type WeeklySummary,
 } from '@doccov/sdk';
 import type { OpenPkg } from '@openpkg-ts/spec';
 import chalk from 'chalk';
@@ -94,13 +92,17 @@ export function registerTrendsCommand(program: Command): void {
       if (options.prune) {
         // If prune is a number, use count-based pruning
         const keepCount = parseInt(options.prune, 10);
-        if (!isNaN(keepCount)) {
+        if (!Number.isNaN(keepCount)) {
           const deleted = pruneHistory(cwd, keepCount);
-          console.log(chalk.green(`Pruned ${deleted} old snapshots, kept ${keepCount} most recent`));
+          console.log(
+            chalk.green(`Pruned ${deleted} old snapshots, kept ${keepCount} most recent`),
+          );
         } else {
           // Otherwise prune by tier
           const deleted = pruneByTier(cwd, tier);
-          console.log(chalk.green(`Pruned ${deleted} snapshots older than ${RETENTION_DAYS[tier]} days`));
+          console.log(
+            chalk.green(`Pruned ${deleted} snapshots older than ${RETENTION_DAYS[tier]} days`),
+          );
         }
         return;
       }
@@ -155,15 +157,24 @@ export function registerTrendsCommand(program: Command): void {
         const output: CoverageTrend = {
           current: snapshots[0],
           history: snapshots.slice(1),
-          delta: snapshots.length > 1 ? snapshots[0].coverageScore - snapshots[1].coverageScore : undefined,
-          sparkline: snapshots.slice(0, 10).map((s) => s.coverageScore).reverse(),
+          delta:
+            snapshots.length > 1
+              ? snapshots[0].coverageScore - snapshots[1].coverageScore
+              : undefined,
+          sparkline: snapshots
+            .slice(0, 10)
+            .map((s) => s.coverageScore)
+            .reverse(),
         };
         console.log(JSON.stringify(output, null, 2));
         return;
       }
 
       // Display trend header
-      const sparklineData = snapshots.slice(0, 10).map((s) => s.coverageScore).reverse();
+      const sparklineData = snapshots
+        .slice(0, 10)
+        .map((s) => s.coverageScore)
+        .reverse();
       const sparkline = renderSparkline(sparklineData);
 
       console.log(chalk.bold('Coverage Trends'));
@@ -210,9 +221,10 @@ export function registerTrendsCommand(program: Command): void {
             console.log('');
 
             // Projections
-            const projColor = extended.projected30d >= extended.trend.current.coverageScore
-              ? chalk.green
-              : chalk.red;
+            const projColor =
+              extended.projected30d >= extended.trend.current.coverageScore
+                ? chalk.green
+                : chalk.red;
             console.log(`  Projected (30d): ${projColor(`${extended.projected30d}%`)}`);
             console.log(`  All-time high:   ${chalk.green(`${extended.allTimeHigh}%`)}`);
             console.log(`  All-time low:    ${chalk.red(`${extended.allTimeLow}%`)}`);
@@ -233,7 +245,8 @@ export function registerTrendsCommand(program: Command): void {
                 const week = extended.weeklySummaries[i];
                 const weekStart = formatWeekDate(week.weekStart);
                 const weekEnd = formatWeekDate(week.weekEnd);
-                const deltaColor = week.delta > 0 ? chalk.green : week.delta < 0 ? chalk.red : chalk.gray;
+                const deltaColor =
+                  week.delta > 0 ? chalk.green : week.delta < 0 ? chalk.red : chalk.gray;
                 const deltaStr = week.delta > 0 ? `+${week.delta}%` : `${week.delta}%`;
 
                 console.log(
@@ -242,7 +255,9 @@ export function registerTrendsCommand(program: Command): void {
               }
 
               if (extended.weeklySummaries.length > weekLimit) {
-                console.log(chalk.gray(`  ... and ${extended.weeklySummaries.length - weekLimit} more weeks`));
+                console.log(
+                  chalk.gray(`  ... and ${extended.weeklySummaries.length - weekLimit} more weeks`),
+                );
               }
               console.log('');
             }
@@ -268,4 +283,3 @@ export function registerTrendsCommand(program: Command): void {
       }
     });
 }
-

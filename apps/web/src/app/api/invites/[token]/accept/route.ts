@@ -3,10 +3,7 @@ import { db } from '@/lib/db';
 import { getSession } from '@/lib/session';
 
 // POST /invites/:token/accept - Accept invite (requires auth)
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ token: string }> }
-) {
+export async function POST(request: Request, { params }: { params: Promise<{ token: string }> }) {
   const session = await getSession(request);
   if (!session) {
     return Response.json({ error: 'Unauthorized - please sign in first' }, { status: 401 });

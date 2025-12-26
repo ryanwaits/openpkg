@@ -6,7 +6,7 @@ export async function createPersonalOrg(
   db: Kysely<Database>,
   userId: string,
   userName: string | null,
-  email: string
+  email: string,
 ) {
   const orgId = nanoid(21);
   const baseName = userName || email.split('@')[0];

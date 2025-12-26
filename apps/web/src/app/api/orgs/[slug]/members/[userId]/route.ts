@@ -4,7 +4,7 @@ import { getSession } from '@/lib/session';
 // PATCH /orgs/:slug/members/:userId - Update member role
 export async function PATCH(
   request: Request,
-  { params }: { params: Promise<{ slug: string; userId: string }> }
+  { params }: { params: Promise<{ slug: string; userId: string }> },
 ) {
   const session = await getSession(request);
   if (!session) {
@@ -12,7 +12,7 @@ export async function PATCH(
   }
 
   const { slug, userId } = await params;
-  const body = await request.json() as { role: 'admin' | 'member' };
+  const body = (await request.json()) as { role: 'admin' | 'member' };
 
   // Verify owner
   const org = await db
@@ -57,7 +57,7 @@ export async function PATCH(
 // DELETE /orgs/:slug/members/:userId - Remove member
 export async function DELETE(
   request: Request,
-  { params }: { params: Promise<{ slug: string; userId: string }> }
+  { params }: { params: Promise<{ slug: string; userId: string }> },
 ) {
   const session = await getSession(request);
   if (!session) {

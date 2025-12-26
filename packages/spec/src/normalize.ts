@@ -6,7 +6,7 @@ const arrayFieldsByExport: Array<keyof SpecExport> = ['signatures', 'members', '
 const arrayFieldsByType: Array<keyof SpecType> = ['members', 'tags'];
 
 export function normalize(spec: OpenPkg): OpenPkg {
-  const normalized: OpenPkg = JSON.parse(JSON.stringify(spec));
+  const normalized: OpenPkg = structuredClone(spec);
 
   normalized.meta = {
     ecosystem: normalized.meta?.ecosystem ?? DEFAULT_ECOSYSTEM,
@@ -27,7 +27,7 @@ export function normalize(spec: OpenPkg): OpenPkg {
 }
 
 function normalizeExport(item: SpecExport): SpecExport {
-  const clone: SpecExport = JSON.parse(JSON.stringify(item));
+  const clone: SpecExport = structuredClone(item);
   for (const field of arrayFieldsByExport) {
     if (!Array.isArray(clone[field] as unknown)) {
       (clone as Record<string, unknown>)[field as string] = [];
@@ -37,7 +37,7 @@ function normalizeExport(item: SpecExport): SpecExport {
 }
 
 function normalizeType(item: SpecType): SpecType {
-  const clone: SpecType = JSON.parse(JSON.stringify(item));
+  const clone: SpecType = structuredClone(item);
   for (const field of arrayFieldsByType) {
     if (!Array.isArray(clone[field] as unknown)) {
       (clone as Record<string, unknown>)[field as string] = [];

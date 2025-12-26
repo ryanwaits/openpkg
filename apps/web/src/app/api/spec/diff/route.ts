@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { db } from '@/lib/db';
-import { getSession } from '@/lib/session';
 import { getInstallationToken } from '@/lib/github-app';
+import { getSession } from '@/lib/session';
 
 const SANDBOX_URL = process.env.SANDBOX_URL;
 
@@ -18,9 +18,7 @@ const SpecsDiffSchema = z.object({
   mode: z.literal('specs'),
   baseSpec: z.object({}).passthrough(),
   headSpec: z.object({}).passthrough(),
-  markdownFiles: z
-    .array(z.object({ path: z.string(), content: z.string() }))
-    .optional(),
+  markdownFiles: z.array(z.object({ path: z.string(), content: z.string() })).optional(),
 });
 
 const DiffRequestSchema = z.discriminatedUnion('mode', [GitHubDiffSchema, SpecsDiffSchema]);
@@ -61,8 +59,11 @@ export async function POST(request: Request) {
 
       if (!installation) {
         return Response.json(
-          { error: 'No GitHub App installation found', hint: 'Install the DocCov GitHub App to compare repos' },
-          { status: 403 }
+          {
+            error: 'No GitHub App installation found',
+            hint: 'Install the DocCov GitHub App to compare repos',
+          },
+          { status: 403 },
         );
       }
 

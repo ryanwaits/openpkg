@@ -51,10 +51,34 @@ function getSandboxRuntime(_runtime: string): 'node22' {
 }
 
 const LOCAL_BINARIES = new Set([
-  'turbo', 'tsc', 'tsup', 'esbuild', 'vite', 'rollup', 'webpack', 'parcel',
-  'swc', 'bunchee', 'unbuild', 'microbundle', 'preconstruct', 'changesets',
-  'eslint', 'prettier', 'vitest', 'jest', 'mocha', 'ava', 'c8', 'nyc',
-  'size-limit', 'publint', 'attw', 'are-the-types-wrong', 'lerna', 'nx',
+  'turbo',
+  'tsc',
+  'tsup',
+  'esbuild',
+  'vite',
+  'rollup',
+  'webpack',
+  'parcel',
+  'swc',
+  'bunchee',
+  'unbuild',
+  'microbundle',
+  'preconstruct',
+  'changesets',
+  'eslint',
+  'prettier',
+  'vitest',
+  'jest',
+  'mocha',
+  'ava',
+  'c8',
+  'nyc',
+  'size-limit',
+  'publint',
+  'attw',
+  'are-the-types-wrong',
+  'lerna',
+  'nx',
 ]);
 
 function wrapLocalBinary(
@@ -411,7 +435,10 @@ async function handlePlan(req: VercelRequest, res: VercelResponse): Promise<void
 
     json(
       res,
-      { error: 'Failed to generate build plan', message: error instanceof Error ? error.message : 'Unknown error' },
+      {
+        error: 'Failed to generate build plan',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      },
       500,
     );
   }
@@ -450,7 +477,11 @@ async function handleExecute(req: VercelRequest, res: VercelResponse): Promise<v
 
       try {
         const normalizedCwd = normalizeCwd(step.cwd);
-        const { cmd, args } = wrapLocalBinary(step.command, step.args, plan.environment.packageManager);
+        const { cmd, args } = wrapLocalBinary(
+          step.command,
+          step.args,
+          plan.environment.packageManager,
+        );
         const result = await sandbox.runCommand({
           cmd,
           args,
@@ -622,7 +653,11 @@ async function handleExecuteStream(req: VercelRequest, res: VercelResponse): Pro
 
       try {
         const normalizedCwd = normalizeCwd(step.cwd);
-        const { cmd, args } = wrapLocalBinary(step.command, step.args, plan.environment.packageManager);
+        const { cmd, args } = wrapLocalBinary(
+          step.command,
+          step.args,
+          plan.environment.packageManager,
+        );
         const result = await sandbox.runCommand({
           cmd,
           args,
@@ -789,7 +824,7 @@ async function fetchSpecFromGitHub(
   owner: string,
   repo: string,
   ref: string,
-  accessToken: string
+  accessToken: string,
 ): Promise<OpenPkg | null> {
   const url = `https://raw.githubusercontent.com/${owner}/${repo}/${ref}/openpkg.json`;
 
@@ -815,7 +850,7 @@ async function resolveRefToSha(
   owner: string,
   repo: string,
   ref: string,
-  accessToken: string
+  accessToken: string,
 ): Promise<string> {
   if (/^[a-f0-9]{40}$/i.test(ref)) {
     return ref;
@@ -894,7 +929,11 @@ async function handleDiff(req: VercelRequest, res: VercelResponse): Promise<void
       const { owner, repo, base, head, accessToken } = body;
 
       if (!owner || !repo || !base || !head || !accessToken) {
-        json(res, { error: 'owner, repo, base, head, and accessToken required for github mode' }, 400);
+        json(
+          res,
+          { error: 'owner, repo, base, head, and accessToken required for github mode' },
+          400,
+        );
         return;
       }
 

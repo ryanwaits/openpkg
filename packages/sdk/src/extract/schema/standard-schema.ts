@@ -105,8 +105,19 @@ async function extract() {
     const mod = await import(pathToFileURL(absPath).href);
     const results = [];
 
-    // Check each export
+    // Build exports map - handle both ESM and CJS (where exports are in mod.default)
+    const exports = {};
     for (const [name, value] of Object.entries(mod)) {
+      if (name === 'default' && typeof value === 'object' && value !== null) {
+        // CJS module: spread default exports
+        Object.assign(exports, value);
+      } else if (name !== 'default') {
+        exports[name] = value;
+      }
+    }
+
+    // Check each export
+    for (const [name, value] of Object.entries(exports)) {
       if (name.startsWith('_')) continue;
       if (typeof value !== 'object' || value === null) continue;
 
