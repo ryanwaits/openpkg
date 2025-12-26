@@ -1,5 +1,11 @@
 # @openpkg-ts/doc-generator
 
+## 0.1.2
+
+### Patch Changes
+
+- fix: separate server/client builds to prevent node:module error in Turbopack
+
 ## 0.1.1
 
 ### Patch Changes
