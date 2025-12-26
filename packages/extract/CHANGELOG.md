@@ -1,8 +1,8 @@
-# @doccov/fumadocs-adapter
+# @openpkg-ts/extract
 
-## 0.1.0
+## 0.11.1
 
-### Minor Changes
+### Patch Changes
 
 - Initial release of @openpkg-ts/doc-generator
 
@@ -15,19 +15,5 @@
   - CLI: generate, build, dev commands
   - Adapter architecture: Extensible framework integration pattern
 
-### Patch Changes
-
 - Updated dependencies
-  - @openpkg-ts/doc-generator@0.1.0
-
-## 0.0.3
-
-### Patch Changes
-
-- Remove deprecated `tsType` field in favor of `schema`, add CLI warning when `--runtime` requested without built code
-
-## 0.0.2
-
-### Patch Changes
-
-- update components and configuration
+  - @openpkg-ts/spec@0.11.1

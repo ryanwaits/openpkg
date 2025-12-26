@@ -1,5 +1,25 @@
 # @doccov/cli
 
+## 0.24.1
+
+### Patch Changes
+
+- Initial release of @openpkg-ts/doc-generator
+
+  - Core API: createDocs(), loadSpec() for loading OpenPkg specs
+  - Query utilities: formatSchema(), buildSignatureString(), member filtering and sorting
+  - Renderers: Markdown/MDX, HTML, JSON output formats
+  - Navigation: Fumadocs, Docusaurus, and generic nav generation
+  - Search: Pagefind and Algolia compatible indexes
+  - React components: Headless (unstyled) and styled (Tailwind v4) variants
+  - CLI: generate, build, dev commands
+  - Adapter architecture: Extensible framework integration pattern
+
+- Updated dependencies
+  - @doccov/sdk@0.24.1
+  - @openpkg-ts/spec@0.11.1
+  - @doccov/spec@0.24.1
+
 ## 0.24.0
 
 ### Patch Changes
