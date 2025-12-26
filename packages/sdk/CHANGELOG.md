@@ -1,5 +1,16 @@
 # @doccov/sdk
 
+## 0.24.0
+
+### Minor Changes
+
+- Consolidate drift types in SDK, simplify spec package, add source extraction to spec command
+
+### Patch Changes
+
+- Updated dependencies
+  - @doccov/spec@0.24.0
+
 ## 0.23.0
 
 ### Minor Changes
