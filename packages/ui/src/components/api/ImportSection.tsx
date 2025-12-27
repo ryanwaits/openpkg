@@ -1,8 +1,8 @@
 'use client';
 
-import { cn } from '@doccov/ui/lib/utils';
 import { Check, Copy } from 'lucide-react';
 import { useState } from 'react';
+import { cn } from '../../lib/utils';
 
 export interface ImportSectionProps {
   /** Import statement text */
@@ -15,10 +15,7 @@ export interface ImportSectionProps {
  * Displays a copyable import statement with one-click copy.
  * Monospace styling with copy button.
  */
-export function ImportSection({
-  importStatement,
-  className,
-}: ImportSectionProps): React.ReactNode {
+export function ImportSection({ importStatement, className }: ImportSectionProps): React.ReactNode {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
@@ -35,9 +32,7 @@ export function ImportSection({
         className,
       )}
     >
-      <code className="font-mono text-sm text-foreground overflow-x-auto">
-        {importStatement}
-      </code>
+      <code className="font-mono text-sm text-foreground overflow-x-auto">{importStatement}</code>
       <button
         type="button"
         onClick={handleCopy}

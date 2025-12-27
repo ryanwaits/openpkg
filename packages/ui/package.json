@@ -18,6 +18,7 @@
     "./pr-coverage": "./src/components/pr-coverage/index.ts",
     "./drift-command-center": "./src/components/drift-command-center/index.ts",
     "./coverage-trends": "./src/components/coverage-trends/index.ts",
+    "./api": "./src/components/api/index.ts",
     "./lib/utils": "./src/lib/utils.ts",
     "./components/pr-coverage": "./src/components/pr-coverage/index.ts"
   },

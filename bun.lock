@@ -161,11 +161,12 @@
     },
     "packages/doc-generator": {
       "name": "@openpkg-ts/doc-generator",
-      "version": "0.2.2",
+      "version": "0.2.4",
       "bin": {
         "openpkg-docs": "./dist/cli.js",
       },
       "dependencies": {
+        "@doccov/ui": "^0.1.1",
         "@openpkg-ts/spec": "^0.11.1",
         "commander": "^14.0.0",
       },
@@ -219,7 +220,7 @@
     },
     "packages/fumadocs-adapter": {
       "name": "@openpkg-ts/fumadocs-adapter",
-      "version": "0.3.0",
+      "version": "0.3.2",
       "dependencies": {
         "@openpkg-ts/doc-generator": "^0.2.2",
       },

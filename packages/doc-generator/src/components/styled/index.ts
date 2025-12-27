@@ -1,11 +1,13 @@
 // Styled components - pre-styled with Tailwind v4
 
+// Re-export from @doccov/ui
+export { CodeTabs, ImportSection, type CodeTab, type CodeTabsProps, type ImportSectionProps } from '@doccov/ui/api';
+
+// Local components (spec-specific)
 export type { APIPageProps } from './APIPage';
 export { APIPage } from './APIPage';
 export type { ClassPageProps } from './ClassPage';
 export { ClassPage } from './ClassPage';
-export type { CodeTab, CodeTabsProps } from './CodeTabs';
-export { CodeTabs } from './CodeTabs';
 export type { EnumPageProps } from './EnumPage';
 export { EnumPage } from './EnumPage';
 export type { ExportCardProps } from './ExportCard';
@@ -14,8 +16,6 @@ export type { ExportIndexPageProps } from './ExportIndexPage';
 export { ExportIndexPage } from './ExportIndexPage';
 export type { FunctionPageProps } from './FunctionPage';
 export { FunctionPage } from './FunctionPage';
-export type { ImportSectionProps } from './ImportSection';
-export { ImportSection } from './ImportSection';
 export type { InterfacePageProps } from './InterfacePage';
 export { InterfacePage } from './InterfacePage';
 export type { NestedPropertyItemProps, ParameterItemProps } from './ParameterItem';

@@ -14,8 +14,40 @@
  *   @import '@openpkg-ts/fumadocs-adapter/css';
  */
 
+/* Tailwind v4 theme - shadcn-style color utilities */
+@theme {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+}
+
 @layer base {
   :root {
+    /* shadcn/ui style variables mapped to Fumadocs */
+    --background: var(--color-fd-background);
+    --foreground: var(--color-fd-foreground);
+    --card: var(--color-fd-card);
+    --card-foreground: var(--color-fd-card-foreground, var(--color-fd-foreground));
+    --muted: var(--color-fd-muted);
+    --muted-foreground: var(--color-fd-muted-foreground);
+    --border: var(--color-fd-border);
+    --primary: var(--color-fd-primary);
+    --primary-foreground: var(--color-fd-primary-foreground, hsl(0 0% 100%));
+    --secondary: var(--color-fd-secondary);
+    --secondary-foreground: var(--color-fd-secondary-foreground, var(--color-fd-foreground));
+    --accent: var(--color-fd-accent);
+    --accent-foreground: var(--color-fd-accent-foreground, var(--color-fd-foreground));
+
     /* Docskit code block colors - mapped to Fumadocs variables */
     --dk-background: var(--color-fd-card, hsl(0 0% 3%));
     --dk-border: var(--color-fd-border, hsl(0 0% 18%));
@@ -116,6 +148,33 @@
   }
   .bg-api-accent-muted {
     background-color: var(--api-accent-muted);
+  }
+}
+
+/* Stripe-style FunctionPage layout */
+@layer components {
+  .doccov-function-page {
+    /* Full width within container */
+    width: 100%;
+  }
+
+  /* Mobile-first: stack layout on small screens */
+  @media (max-width: 1023px) {
+    .doccov-function-page aside {
+      margin-top: 2rem;
+      position: relative;
+      top: auto;
+      max-height: none;
+      overflow-y: visible;
+    }
+  }
+
+  /* Large screens: two-column with sticky sidebar */
+  @media (min-width: 1024px) {
+    .doccov-function-page {
+      /* Prevent overflow in grid */
+      overflow: visible;
+    }
   }
 }
 

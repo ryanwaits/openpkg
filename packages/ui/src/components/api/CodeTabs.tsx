@@ -1,8 +1,8 @@
 'use client';
 
-import { cn } from '@doccov/ui/lib/utils';
 import { Check, Copy } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
+import { cn } from '../../lib/utils';
 
 export interface CodeTab {
   /** Tab label */
@@ -18,17 +18,20 @@ export interface CodeTabsProps {
   tabs: CodeTab[];
   /** Default selected tab index */
   defaultIndex?: number;
+  /** Enable sticky positioning for the header */
+  sticky?: boolean;
   /** Custom className */
   className?: string;
 }
 
 /**
  * Tabbed code block wrapper with copy button per tab.
- * Integrates with any code rendering component.
+ * Uses docskit --dk-* CSS variables for consistent theming.
  */
 export function CodeTabs({
   tabs,
   defaultIndex = 0,
+  sticky = false,
   className,
 }: CodeTabsProps): React.ReactNode {
   const [activeIndex, setActiveIndex] = useState(defaultIndex);
@@ -48,12 +51,18 @@ export function CodeTabs({
   return (
     <div
       className={cn(
-        'group rounded-lg border border-border overflow-hidden',
+        'group rounded-lg border border-dk-border bg-dk-background overflow-hidden',
+        'selection:bg-dk-selection selection:text-current',
         className,
       )}
     >
-      {/* Tab list */}
-      <div className="flex items-center border-b border-border bg-muted/30">
+      {/* Tab list - uses docskit styling */}
+      <div
+        className={cn(
+          'flex items-center border-b border-dk-border bg-dk-tabs-background',
+          sticky && 'sticky top-0 z-10',
+        )}
+      >
         <div className="flex-1 flex items-stretch">
           {tabs.map((tab, index) => (
             <button
@@ -61,11 +70,11 @@ export function CodeTabs({
               type="button"
               onClick={() => setActiveIndex(index)}
               className={cn(
-                'px-4 py-2 text-sm font-mono transition-colors',
-                'border-r border-border last:border-r-0',
+                'px-4 py-2 text-sm font-mono transition-colors duration-200',
+                'border-r border-dk-border last:border-r-0',
                 index === activeIndex
-                  ? 'text-foreground bg-background/50'
-                  : 'text-muted-foreground hover:text-foreground',
+                  ? 'text-dk-tab-active-foreground bg-dk-background/50'
+                  : 'text-dk-tab-inactive-foreground hover:text-dk-tab-active-foreground',
               )}
             >
               {tab.label}
@@ -78,7 +87,7 @@ export function CodeTabs({
           onClick={handleCopy}
           className={cn(
             'p-2 mx-2',
-            'text-muted-foreground hover:text-foreground',
+            'text-dk-tab-inactive-foreground hover:text-dk-tab-active-foreground',
             'opacity-0 group-hover:opacity-100 transition-opacity',
             'cursor-pointer',
           )}
@@ -88,7 +97,7 @@ export function CodeTabs({
         </button>
       </div>
       {/* Tab content */}
-      <div className="bg-background">{activeTab?.content}</div>
+      <div className="bg-dk-background">{activeTab?.content}</div>
     </div>
   );
 }
