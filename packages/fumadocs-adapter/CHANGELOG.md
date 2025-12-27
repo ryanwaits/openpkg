@@ -1,5 +1,13 @@
 # @openpkg-ts/fumadocs-adapter
 
+## 0.4.2
+
+### Patch Changes
+
+- Fix @doccov/ui build - separate entry points to avoid duplicate exports
+- Updated dependencies
+  - @openpkg-ts/doc-generator@0.3.2
+
 ## 0.4.1
 
 ### Patch Changes

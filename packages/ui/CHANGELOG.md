@@ -1,5 +1,11 @@
 # @doccov/ui
 
+## 0.2.2
+
+### Patch Changes
+
+- Fix @doccov/ui build - separate entry points to avoid duplicate exports
+
 ## 0.2.1
 
 ### Patch Changes
