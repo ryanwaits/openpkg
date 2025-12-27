@@ -1,5 +1,11 @@
 # @openpkg-ts/doc-generator
 
+## 0.2.2
+
+### Patch Changes
+
+- Add Fumadocs virtual source and loader plugin for seamless integration
+
 ## 0.2.1
 
 ### Patch Changes

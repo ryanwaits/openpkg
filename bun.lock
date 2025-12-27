@@ -161,7 +161,7 @@
     },
     "packages/doc-generator": {
       "name": "@openpkg-ts/doc-generator",
-      "version": "0.2.1",
+      "version": "0.2.2",
       "bin": {
         "openpkg-docs": "./dist/cli.js",
       },
@@ -219,9 +219,9 @@
     },
     "packages/fumadocs-adapter": {
       "name": "@openpkg-ts/fumadocs-adapter",
-      "version": "0.2.5",
+      "version": "0.3.0",
       "dependencies": {
-        "@openpkg-ts/doc-generator": "^0.2.0",
+        "@openpkg-ts/doc-generator": "^0.2.2",
       },
       "devDependencies": {
         "@types/react": "^19.0.0",
@@ -230,7 +230,7 @@
         "typescript": "^5.0.0",
       },
       "peerDependencies": {
-        "fumadocs-core": "^16.4.0",
+        "fumadocs-core": "^16.0.0",
         "react": "^18 || ^19",
       },
     },
