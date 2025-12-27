@@ -18,6 +18,38 @@
     "./lib/utils": {
       "types": "./dist/lib/utils.d.ts",
       "import": "./dist/lib/utils.js"
+    },
+    "./button": {
+      "types": "./dist/button/index.d.ts",
+      "import": "./dist/button/index.js"
+    },
+    "./badge": {
+      "types": "./dist/badge/index.d.ts",
+      "import": "./dist/badge/index.js"
+    },
+    "./breadcrumb": {
+      "types": "./dist/breadcrumb/index.d.ts",
+      "import": "./dist/breadcrumb/index.js"
+    },
+    "./input": {
+      "types": "./dist/input/index.d.ts",
+      "import": "./dist/input/index.js"
+    },
+    "./tabs": {
+      "types": "./dist/tabs/index.d.ts",
+      "import": "./dist/tabs/index.js"
+    },
+    "./file-chip": {
+      "types": "./dist/file-chip/index.d.ts",
+      "import": "./dist/file-chip/index.js"
+    },
+    "./file-change-row": {
+      "types": "./dist/file-change-row/index.d.ts",
+      "import": "./dist/file-change-row/index.js"
+    },
+    "./coverage-trends": {
+      "types": "./dist/coverage-trends/index.d.ts",
+      "import": "./dist/coverage-trends/index.js"
     }
   },
   "scripts": {
