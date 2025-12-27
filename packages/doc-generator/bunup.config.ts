@@ -22,5 +22,9 @@ export default defineConfig([
     target: 'browser',
     splitting: false, // Prevent shared chunks with server build
     external: ['react', 'react-dom', 'tailwindcss'],
+    // Force production JSX runtime (jsx-runtime, not jsx-dev-runtime)
+    define: {
+      'process.env.NODE_ENV': '"production"',
+    },
   },
 ]);
