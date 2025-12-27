@@ -1,5 +1,21 @@
 # @openpkg-ts/fumadocs-adapter
 
+## 0.4.0
+
+### Minor Changes
+
+- Extract shared API components to @doccov/ui package
+
+  - New @doccov/ui/api entry: ParameterItem, TypeBadge, ImportSection, CodeTabs, ExportCard
+  - Updated FunctionPage, InterfacePage, ClassPage, ExportIndexPage with improved layouts
+  - Added Tailwind v4 theme vars and Stripe-style function page CSS
+  - Re-export components through doc-generator and fumadocs-adapter
+
+### Patch Changes
+
+- Updated dependencies
+  - @openpkg-ts/doc-generator@0.3.0
+
 ## 0.3.2
 
 ### Patch Changes
