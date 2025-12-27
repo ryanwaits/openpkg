@@ -96,7 +96,7 @@ export function ExportIndexPage({
                 key={exp.id}
                 name={exp.name}
                 description={exp.description}
-                href={`${baseHref}/${exp.id}`}
+                href={`${baseHref}/${group.kind}s/${exp.id}`}
                 kind={exp.kind as ExportKind}
               />
             ))}
