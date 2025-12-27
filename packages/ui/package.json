@@ -8,12 +8,12 @@
   ],
   "exports": {
     "./api": {
-      "types": "./dist/components/api/index.d.ts",
-      "import": "./dist/components/api/index.js"
+      "types": "./dist/api/index.d.ts",
+      "import": "./dist/api/index.js"
     },
     "./docskit": {
-      "types": "./dist/components/docskit/index.d.ts",
-      "import": "./dist/components/docskit/index.js"
+      "types": "./dist/docskit/index.d.ts",
+      "import": "./dist/docskit/index.js"
     },
     "./lib/utils": {
       "types": "./dist/lib/utils.d.ts",
