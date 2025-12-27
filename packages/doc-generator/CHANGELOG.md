@@ -1,5 +1,13 @@
 # @openpkg-ts/doc-generator
 
+## 0.3.1
+
+### Patch Changes
+
+- Publish @doccov/ui and bump dependent packages
+- Updated dependencies
+  - @doccov/ui@0.2.1
+
 ## 0.3.0
 
 ### Minor Changes

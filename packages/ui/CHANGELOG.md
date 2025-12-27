@@ -1,5 +1,11 @@
 # @doccov/ui
 
+## 0.2.1
+
+### Patch Changes
+
+- Publish @doccov/ui and bump dependent packages
+
 ## 0.2.0
 
 ### Minor Changes

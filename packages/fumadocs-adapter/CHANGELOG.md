@@ -1,5 +1,13 @@
 # @openpkg-ts/fumadocs-adapter
 
+## 0.4.1
+
+### Patch Changes
+
+- Publish @doccov/ui and bump dependent packages
+- Updated dependencies
+  - @openpkg-ts/doc-generator@0.3.1
+
 ## 0.4.0
 
 ### Minor Changes
