@@ -1,5 +1,11 @@
 # @openpkg-ts/doc-generator
 
+## 0.2.1
+
+### Patch Changes
+
+- fix: export new styled components from react-styled entry
+
 ## 0.2.0
 
 ### Minor Changes
