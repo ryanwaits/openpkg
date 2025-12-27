@@ -1,5 +1,11 @@
 # @openpkg-ts/fumadocs-adapter
 
+## 0.2.5
+
+### Patch Changes
+
+- fix: bump doc-generator dep for styled component exports
+
 ## 0.2.4
 
 ### Patch Changes
