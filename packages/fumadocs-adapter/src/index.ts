@@ -1,4 +1,18 @@
-// Re-export core from @openpkg-ts/doc-generator
+// Re-export Fumadocs source integration
+export {
+  openpkgSource,
+  type OpenPkgMetaData,
+  type OpenPkgPageData,
+  type OpenPkgSourceOptions,
+} from './source';
+
+// Re-export Fumadocs plugin integration
+export {
+  openpkgPlugin,
+  KindBadge,
+  type KindBadgeProps,
+  type OpenpkgPluginOptions,
+} from './plugin';
 
 // Re-export spec types for convenience
 export type {

@@ -64,6 +64,10 @@ export function ExportIndexPage({
   description,
   className,
 }: ExportIndexPageProps): ReactNode {
+  if (process.env.NODE_ENV !== 'production' && !baseHref) {
+    console.warn('[ExportIndexPage] baseHref is undefined - links will be broken');
+  }
+
   const groups = groupByKind(spec.exports);
 
   return (
