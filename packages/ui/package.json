@@ -1,28 +1,25 @@
 {
   "name": "@doccov/ui",
   "version": "0.2.0",
-  "private": true,
   "type": "module",
   "sideEffects": false,
+  "files": ["dist"],
   "exports": {
-    "./button": "./src/components/button/index.ts",
-    "./badge": "./src/components/badge/index.ts",
-    "./input": "./src/components/input/index.ts",
-    "./breadcrumb": "./src/components/breadcrumb/index.ts",
-    "./tabs": "./src/components/tabs/index.ts",
-    "./collapsible": "./src/components/collapsible/index.ts",
-    "./file-change-row": "./src/components/file-change-row/index.ts",
-    "./file-chip": "./src/components/file-chip/index.ts",
-    "./docskit": "./src/components/docskit/index.ts",
-    "./fix-workflow": "./src/components/fix-workflow/index.ts",
-    "./pr-coverage": "./src/components/pr-coverage/index.ts",
-    "./drift-command-center": "./src/components/drift-command-center/index.ts",
-    "./coverage-trends": "./src/components/coverage-trends/index.ts",
-    "./api": "./src/components/api/index.ts",
-    "./lib/utils": "./src/lib/utils.ts",
-    "./components/pr-coverage": "./src/components/pr-coverage/index.ts"
+    "./api": {
+      "types": "./dist/components/api/index.d.ts",
+      "import": "./dist/components/api/index.js"
+    },
+    "./docskit": {
+      "types": "./dist/components/docskit/index.d.ts",
+      "import": "./dist/components/docskit/index.js"
+    },
+    "./lib/utils": {
+      "types": "./dist/lib/utils.d.ts",
+      "import": "./dist/lib/utils.js"
+    }
   },
   "scripts": {
+    "build": "bunup",
     "lint": "biome check src/",
     "lint:fix": "biome check --write src/",
     "typecheck": "tsc --noEmit"
@@ -45,6 +42,7 @@
   "devDependencies": {
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "bunup": "latest",
     "typescript": "^5.0.0"
   }
 }
