@@ -1,5 +1,13 @@
 # @openpkg-ts/doc-generator
 
+## 0.3.3
+
+### Patch Changes
+
+- chore: bump @doccov/ui dependency with fixed exports
+- Updated dependencies
+  - @doccov/ui@0.2.3
+
 ## 0.3.2
 
 ### Patch Changes

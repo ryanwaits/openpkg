@@ -1,5 +1,11 @@
 # @doccov/ui
 
+## 0.2.3
+
+### Patch Changes
+
+- fix: add missing component exports (button, badge, breadcrumb, input, tabs, file-chip, file-change-row, coverage-trends)
+
 ## 0.2.2
 
 ### Patch Changes
