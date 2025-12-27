@@ -1,5 +1,11 @@
 # @openpkg-ts/doc-generator
 
+## 0.2.3
+
+### Patch Changes
+
+- fix: force production JSX runtime in client bundle to prevent jsxDEV errors in Next.js builds
+
 ## 0.2.2
 
 ### Patch Changes

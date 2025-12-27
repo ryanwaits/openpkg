@@ -1,5 +1,13 @@
 # @openpkg-ts/fumadocs-adapter
 
+## 0.3.1
+
+### Patch Changes
+
+- chore: bump doc-generator dependency with JSX runtime fix
+- Updated dependencies
+  - @openpkg-ts/doc-generator@0.2.3
+
 ## 0.3.0
 
 ### Minor Changes
