@@ -1,5 +1,20 @@
 # @openpkg-ts/doc-generator
 
+## 0.2.0
+
+### Minor Changes
+
+- feat(doc-generator): add AI SDK-style API reference components
+
+  - Add CodeTabs: tabbed code blocks with copy button
+  - Add ExportCard: clickable cards for export index grid
+  - Add ExportIndexPage: category-grouped exports grid
+  - Add ImportSection: copyable import statement display
+  - Add ParameterItem: expandable nested params display
+  - Update FunctionPage with improved layout
+  - Update APIPage to support index mode
+  - Add CSS vars for new components
+
 ## 0.1.2
 
 ### Patch Changes
