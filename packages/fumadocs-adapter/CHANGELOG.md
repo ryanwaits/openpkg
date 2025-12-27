@@ -1,5 +1,13 @@
 # @openpkg-ts/fumadocs-adapter
 
+## 0.3.2
+
+### Patch Changes
+
+- chore: bump doc-generator with ExportIndexPage link fix
+- Updated dependencies
+  - @openpkg-ts/doc-generator@0.2.4
+
 ## 0.3.1
 
 ### Patch Changes

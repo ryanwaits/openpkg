@@ -1,5 +1,11 @@
 # @openpkg-ts/doc-generator
 
+## 0.2.4
+
+### Patch Changes
+
+- fix: include kind folder in ExportIndexPage card links (e.g., /api/functions/add instead of /api/add)
+
 ## 0.2.3
 
 ### Patch Changes
