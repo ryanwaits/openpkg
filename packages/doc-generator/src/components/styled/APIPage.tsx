@@ -4,6 +4,7 @@ import type { OpenPkg } from '@openpkg-ts/spec';
 import type { DocsInstance } from '../../core/loader';
 import { ClassPage } from './ClassPage';
 import { EnumPage } from './EnumPage';
+import { ExportIndexPage } from './ExportIndexPage';
 import { FunctionPage } from './FunctionPage';
 import { InterfacePage } from './InterfacePage';
 import { VariablePage } from './VariablePage';
@@ -13,8 +14,12 @@ export interface APIPageProps {
   spec?: OpenPkg;
   /** Or docs instance from createDocs() */
   instance?: DocsInstance;
-  /** Export ID to render */
-  id: string;
+  /** Export ID to render, or undefined for index page */
+  id?: string;
+  /** Base href for index page links (required when id is undefined) */
+  baseHref?: string;
+  /** Description for index page */
+  description?: string;
   /** Custom code example renderer */
   renderExample?: (code: string, filename: string) => React.ReactNode;
 }
@@ -40,33 +45,50 @@ function NoSpec() {
 }
 
 /**
- * Main styled API page component that renders documentation for a single export.
+ * Main styled API page component that renders documentation.
+ *
+ * Renders either:
+ * - Index page (when id is undefined) showing all exports in a grid
+ * - Detail page (when id is provided) showing specific export docs
  *
  * @example
  * ```tsx
- * import { APIPage } from '@openpkg-ts/doc-generator/react/styled'
- * import spec from './openpkg.json'
+ * // Index mode - show all exports
+ * <APIPage spec={spec} baseHref="/docs/api" />
+ * ```
  *
+ * @example
+ * ```tsx
+ * // Detail mode - show specific export
  * <APIPage spec={spec} id="createClient" />
  * ```
- *
- * @example
- * ```tsx
- * // With docs instance
- * import { APIPage } from '@openpkg-ts/doc-generator/react/styled'
- * import { createDocs } from '@openpkg-ts/doc-generator'
- *
- * const docs = createDocs('./openpkg.json')
- * <APIPage instance={docs} id="createClient" />
- * ```
  */
-export function APIPage({ spec, instance, id, renderExample }: APIPageProps): React.ReactNode {
+export function APIPage({
+  spec,
+  instance,
+  id,
+  baseHref = '',
+  description,
+  renderExample,
+}: APIPageProps): React.ReactNode {
   const resolvedSpec = spec ?? instance?.spec;
 
   if (!resolvedSpec) {
     return <NoSpec />;
   }
 
+  // Index mode: show all exports
+  if (!id) {
+    return (
+      <ExportIndexPage
+        spec={resolvedSpec}
+        baseHref={baseHref}
+        description={description}
+      />
+    );
+  }
+
+  // Detail mode: find and render specific export
   const exp = resolvedSpec.exports.find((e) => e.id === id);
 
   if (!exp) {

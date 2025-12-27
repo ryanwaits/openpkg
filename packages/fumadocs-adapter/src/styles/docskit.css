@@ -27,9 +27,23 @@
     /* Line highlight colors */
     --dk-line-bg: transparent;
     --dk-line-border: transparent;
+
+    /* API Reference Typography */
+    --api-font-mono: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace);
+    --api-font-display: var(--font-sans, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif);
+
+    /* API Reference Colors (dark mode first) */
+    --api-bg-primary: var(--color-fd-background, hsl(0 0% 3%));
+    --api-bg-secondary: var(--color-fd-muted, hsl(0 0% 10%));
+    --api-bg-card: var(--color-fd-card, hsl(0 0% 6%));
+    --api-border: var(--color-fd-border, hsl(0 0% 18%));
+    --api-text-primary: var(--color-fd-foreground, hsl(0 0% 98%));
+    --api-text-secondary: var(--color-fd-muted-foreground, hsl(0 0% 60%));
+    --api-accent: var(--color-fd-primary, hsl(220 70% 55%));
+    --api-accent-muted: var(--color-fd-primary, hsl(220 70% 55%) / 0.15);
   }
 
-  /* Light mode overrides if needed */
+  /* Light mode overrides */
   .light,
   [data-theme="light"] {
     --dk-background: var(--color-fd-card, hsl(0 0% 98%));
@@ -37,6 +51,16 @@
     --dk-tabs-background: var(--color-fd-muted, hsl(0 0% 95%));
     --dk-tab-inactive-foreground: var(--color-fd-muted-foreground, hsl(0 0% 45%));
     --dk-tab-active-foreground: var(--color-fd-foreground, hsl(0 0% 10%));
+
+    /* API Reference Colors (light mode) */
+    --api-bg-primary: var(--color-fd-background, hsl(0 0% 100%));
+    --api-bg-secondary: var(--color-fd-muted, hsl(0 0% 96%));
+    --api-bg-card: var(--color-fd-card, hsl(0 0% 99%));
+    --api-border: var(--color-fd-border, hsl(0 0% 85%));
+    --api-text-primary: var(--color-fd-foreground, hsl(0 0% 10%));
+    --api-text-secondary: var(--color-fd-muted-foreground, hsl(0 0% 45%));
+    --api-accent: var(--color-fd-primary, hsl(220 70% 50%));
+    --api-accent-muted: var(--color-fd-primary, hsl(220 70% 50%) / 0.1);
   }
 }
 
@@ -60,6 +84,38 @@
   .selection\:bg-dk-selection::selection,
   .selection\:bg-dk-selection *::selection {
     background-color: var(--dk-selection);
+  }
+
+  /* API Reference utilities */
+  .font-api-mono {
+    font-family: var(--api-font-mono);
+  }
+  .font-api-display {
+    font-family: var(--api-font-display);
+  }
+  .bg-api-primary {
+    background-color: var(--api-bg-primary);
+  }
+  .bg-api-secondary {
+    background-color: var(--api-bg-secondary);
+  }
+  .bg-api-card {
+    background-color: var(--api-bg-card);
+  }
+  .border-api {
+    border-color: var(--api-border);
+  }
+  .text-api-primary {
+    color: var(--api-text-primary);
+  }
+  .text-api-secondary {
+    color: var(--api-text-secondary);
+  }
+  .text-api-accent {
+    color: var(--api-accent);
+  }
+  .bg-api-accent-muted {
+    background-color: var(--api-accent-muted);
   }
 }
 
